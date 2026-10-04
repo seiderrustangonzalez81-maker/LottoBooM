@@ -577,10 +577,10 @@
     "model": "sorteos.sorteo",
     "pk": 42,
     "fields": {
-      "nombre": "Loteka 7:50 PM",
+      "nombre": "Loteka 1:30 PM",
       "activo": true,
       "minutos_cierre": 10,
-      "horarios": {"invierno": {"lunes": "18:50", "martes": "18:50", "miercoles": "18:50", "jueves": "18:50", "viernes": "18:50", "sabado": "18:50", "domingo": "18:50"}, "verano": {"lunes": "19:50", "martes": "19:50", "miercoles": "19:50", "jueves": "19:50", "viernes": "19:50", "sabado": "19:50", "domingo": "19:50"}},
+      "horarios": {"invierno": {"lunes": "13:30", "martes": "13:30", "miercoles": "13:30", "jueves": "13:30", "viernes": "13:30", "sabado": "13:30", "domingo": "13:30"}, "verano": {"lunes": "13:30", "martes": "13:30", "miercoles": "13:30", "jueves": "13:30", "viernes": "13:30", "sabado": "13:30", "domingo": "13:30"}},
       "origen": "dominicano",
       "creado_en": "2026-08-26T18:00:00Z",
       "actualizado_en": "2026-08-26T18:00:00Z",

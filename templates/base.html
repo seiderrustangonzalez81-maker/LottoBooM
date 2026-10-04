@@ -186,7 +186,26 @@
         font-size: 1.4rem;
         width: auto;
     }
-    .sidebar.collapsed .sidebar-menu .menu-item.active {
+    .sidebar.collapsed /* FIX_PRESTAMO_V1: badge "Nuevo" amarillo */
+    .menu-item.menu-item-nuevo { position: relative; }
+    .menu-item.menu-item-nuevo .badge-nuevo {
+        background: #facc15;
+        color: #422006;
+        font-size: 0.6rem;
+        font-weight: 800;
+        padding: 2px 7px;
+        border-radius: 10px;
+        margin-left: auto;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+        animation: badgeNuevoPulse 1.8s ease-in-out infinite;
+    }
+    @keyframes badgeNuevoPulse {
+        0%,100% { box-shadow: 0 0 0 0 rgba(250,204,21,.6); }
+        50%     { box-shadow: 0 0 0 6px rgba(250,204,21,0); }
+    }
+
+    .sidebar-menu .menu-item.active {
         border-left: none;
         border-radius: 12px;
         background: rgba(108, 60, 225, 0.1);
@@ -1312,6 +1331,12 @@
             <span class="emoji">💳</span><span class="text">Mis Postpagos</span>
         </a>
 
+        {% if mostrar_link_prestamos %}
+        <a href="{% url 'roles:mis_prestamos' %}" class="menu-item menu-prestamos-link {% if not perfil_prestamo_badge_visto %}menu-item-nuevo{% endif %}">
+            <i class="fas fa-hand-holding-usd"></i> <span class="text">Préstamos</span>
+            {% if not perfil_prestamo_badge_visto %}<span class="badge-nuevo">Nuevo</span>{% endif %}
+        </a>
+        {% endif %}
         <a href="{% url 'usuarios:mis_fondos' %}" class="menu-item">
             <span class="emoji">💰</span><span class="text">Mis Fondos</span>
         </a>

@@ -800,7 +800,51 @@ def get_red_del_auditor(user):
 # FIX_POSTPAGO_V2: descuento postpago con acreditación al gestor
 
 # FASE1_POSTPAGO_V1_HELPER
-def _aplicar_ingreso_a_fondo(cliente, gestor, forma_pago, monto):
+def _es_cliente_frecuente(user, gestor):
+    """
+    FIX_PRESTAMO_V1: >=10 boletas ACTIVAS creadas en los últimos 7 días
+    con ese gestor específico.
+    """
+    from datetime import timedelta
+    from django.utils import timezone as _tz
+    from jugadas.models import Boleta
+    if not user or not gestor:
+        return False
+    corte = _tz.now() - timedelta(days=7)
+    return Boleta.objects.filter(
+        usuario=user,
+        destinatario=gestor,
+        estado='activa',
+        creado_en__gte=corte,
+    ).count() >= 10
+
+
+def _gestores_comunes_frecuentes(user, otro_cliente):
+    """Devuelve lista de gestores con los que ambos son frecuentes."""
+    from jugadas.models import Boleta
+    from django.db.models import Count, Q
+    from django.utils import timezone as _tz
+    from datetime import timedelta
+
+    corte = _tz.now() - timedelta(days=7)
+    gestores_user = set(
+        Boleta.objects.filter(usuario=user, estado='activa', creado_en__gte=corte)
+        .values_list('destinatario_id', flat=True)
+    )
+    gestores_otro = set(
+        Boleta.objects.filter(usuario=otro_cliente, estado='activa', creado_en__gte=corte)
+        .values_list('destinatario_id', flat=True)
+    )
+    comunes = gestores_user & gestores_otro
+    resultado = []
+    for gid in comunes:
+        if Boleta.objects.filter(usuario=user, destinatario_id=gid, estado='activa', creado_en__gte=corte).count() >= 10 \
+           and Boleta.objects.filter(usuario=otro_cliente, destinatario_id=gid, estado='activa', creado_en__gte=corte).count() >= 10:
+            resultado.append(gid)
+    return resultado
+
+
+def _aplicar_ingreso_a_fondo(cliente, gestor, forma_pago, monto, _skip_prestamos=False, _return_detalle=False):
     """
     Aplica un ingreso (recarga/premio) al cliente:
     1. Si hay Postpago con saldo < 0 para (gestor, forma_pago), paga la deuda.
@@ -849,6 +893,101 @@ def _aplicar_ingreso_a_fondo(cliente, gestor, forma_pago, monto):
             except Exception:
                 pass
 
+        # ═══ FIX_PRESTAMO_INGRESO_V1: cobrar préstamos FIFO ═══
+        descuento_prestamo = Decimal('0.00')
+        pagos_prestamos = []
+        if not _skip_prestamos and monto > 0:
+            from roles.models import Prestamo
+            sobrante = monto
+            prestamos = Prestamo.objects.select_for_update().filter(
+                solicitante=cliente,
+                forma_pago=forma_pago,
+                estado='aprobado',
+                saldo_pendiente__gt=0,
+            )
+            if gestor:
+                prestamos = prestamos.filter(gestor=gestor)
+            prestamos = prestamos.order_by('fecha_aprobacion', 'id')
+
+            for p_obj in prestamos:
+                if sobrante <= 0:
+                    break
+                pago = min(sobrante, p_obj.saldo_pendiente)
+                p_obj.saldo_pendiente -= pago
+                p_obj.monto_pagado += pago
+                if p_obj.saldo_pendiente <= 0:
+                    p_obj.estado = 'saldado'
+                    p_obj.fecha_saldado = timezone.now()
+                    p_obj.saldo_pendiente = Decimal('0.00')
+                p_obj.save(update_fields=['saldo_pendiente', 'monto_pagado', 'estado', 'fecha_saldado'])
+
+                # Acreditar al prestamista (sin recursión de préstamos)
+                try:
+                    _aplicar_ingreso_a_fondo(
+                        cliente=p_obj.prestamista,
+                        gestor=p_obj.gestor or gestor,
+                        forma_pago=forma_pago,
+                        monto=pago,
+                        _skip_prestamos=True,
+                    )
+                except Exception as e:
+                    logger.warning(f"[FIX_PRESTAMO_INGRESO_V1] Error acreditando prestamista: {e}")
+
+                # Movimiento descriptivo
+                try:
+                    MovimientoFondo.objects.create(
+                        emisor=cliente, receptor=p_obj.prestamista, forma_pago=forma_pago,
+                        monto=pago, tipo='pago_deuda', estado='confirmado',
+                        motivo=f"Cobro automático préstamo #{p_obj.id}",
+                        datos_transferencia={
+                            'prestamo_id': p_obj.id,
+                            'tipo_operacion': 'cobro_automatico_prestamo',
+                            'prestamista': p_obj.prestamista.username,
+                        },
+                        nota=f"Cobro automático al recibir ingreso",
+                    )
+                except Exception:
+                    pass
+
+                # Notificaciones
+                try:
+                    _crear_notificacion(
+                        usuario=p_obj.prestamista,
+                        tipo='prestamo',
+                        mensaje=f"💰 Recibiste ${pago} del préstamo a {cliente.username} (cobro automático).",
+                        datos={'prestamo_id': p_obj.id, 'monto': float(pago), 'url_detalle': '/roles/mis-prestamos/'},
+                        prioridad='media', categoria='financiera',
+                    )
+                    if p_obj.estado == 'saldado':
+                        _crear_notificacion(
+                            usuario=cliente,
+                            tipo='prestamo',
+                            mensaje=f"🎉 Préstamo #{p_obj.id} con {p_obj.prestamista.username} totalmente saldado.",
+                            datos={'prestamo_id': p_obj.id, 'url_detalle': '/roles/mis-prestamos/'},
+                            prioridad='media', categoria='financiera',
+                        )
+                        _crear_notificacion(
+                            usuario=p_obj.prestamista,
+                            tipo='prestamo',
+                            mensaje=f"🎉 Préstamo #{p_obj.id} a {cliente.username} totalmente saldado.",
+                            datos={'prestamo_id': p_obj.id, 'url_detalle': '/roles/mis-prestamos/'},
+                            prioridad='media', categoria='financiera',
+                        )
+                except Exception:
+                    pass
+
+                sobrante -= pago
+                descuento_prestamo += pago
+                pagos_prestamos.append({
+                    'prestamo_id': p_obj.id,
+                    'prestamista': p_obj.prestamista.username,
+                    'monto': float(pago),
+                })
+
+            monto = sobrante
+
+        # ═══ FIN FIX_PRESTAMO_INGRESO_V1 ═══
+
         al_fondo = monto
         if al_fondo > 0:
             fondo, _ = Fondo.objects.select_for_update().get_or_create(
@@ -877,6 +1016,8 @@ def _aplicar_ingreso_a_fondo(cliente, gestor, forma_pago, monto):
             except Exception:
                 pass
 
+        if _return_detalle:
+            return al_fondo, pagado, descuento_prestamo, pagos_prestamos
         return al_fondo, pagado
 
 # ============================================================

@@ -1,89 +1,52 @@
-{% extends "base.html" %}
-{% load static %}
-
-{% block page_title %}Solicitar Préstamo{% endblock %}
-{% block page_subtitle %}Solicita un préstamo a otros usuarios o bancos{% endblock %}
-
-{% block extra_css %}
-<style>
-    .card { border-radius: 16px; border: none; box-shadow: 0 4px 20px rgba(0,0,0,0.04); }
-    .card-header { border-radius: 16px 16px 0 0 !important; background: linear-gradient(135deg, #6C3CE1, #8B5CF6); color: #fff; padding: 0.8rem 1.5rem; font-weight: 700; }
-    .form-label { font-weight: 600; font-size: 0.85rem; color: #1a1a2e; }
-    .form-control, .form-select { border-radius: 10px; border: 1px solid #e5e7eb; padding: 0.4rem 0.8rem; font-size: 0.85rem; }
-    .form-control:focus, .form-select:focus { border-color: #8B5CF6; box-shadow: 0 0 0 3px rgba(139,92,246,0.08); }
-    .info-box { background: #f8fafc; border-radius: 12px; padding: 1rem; border: 1px solid #e5e7eb; }
-</style>
-{% endblock %}
-
+{% extends 'base.html' %}
 {% block content %}
-<div class="container-fluid px-0">
-    <div class="row justify-content-center">
-        <div class="col-lg-8">
-            <div class="card shadow-sm">
-                <div class="card-header">
-                    <i class="fas fa-hand-holding-usd me-2"></i> Solicitar Préstamo
-                </div>
-                <div class="card-body">
+<div class="content-container">
+  <h4>➕ Solicitar préstamo</h4>
 
-                    {% if no_comercial %}
-                        <div class="alert alert-warning">
-                            <i class="fas fa-exclamation-triangle"></i>
-                            No tienes un comercial asignado. No puedes solicitar préstamos.
-                            <br><small>Contacta a un banco o superadmin para que te asigne un comercial.</small>
-                        </div>
-                        <a href="{% url 'usuarios:perfil_cliente' %}" class="btn btn-secondary">Volver</a>
-                    {% else %}
-
-                    <div class="info-box mb-3">
-                        <div class="d-flex justify-content-between">
-                            <span><strong>Tu comercial:</strong> {{ comercial.username }}</span>
-                            <span><strong>Disponibles:</strong> {{ clientes_disponibles|length }} prestamistas</span>
-                        </div>
-                    </div>
-
-                    <form method="post">
-                        {% csrf_token %}
-
-                        <div class="mb-3">
-                            <label for="prestamista" class="form-label">👤 Selecciona un prestamista</label>
-                            <select name="prestamista" id="prestamista" class="form-select" required>
-                                <option value="">— Selecciona —</option>
-                                {% for cliente in clientes_disponibles %}
-                                    <option value="{{ cliente.id }}">{{ cliente.username }} (Saldo: ${{ cliente.fondo_total|floatformat:2 }})</option>
-                                {% empty %}
-                                    <option value="" disabled>No hay prestamistas disponibles</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-
-                        <div class="mb-3">
-                            <label for="monto" class="form-label">💰 Monto a solicitar</label>
-                            <div class="input-group">
-                                <span class="input-group-text">$</span>
-                                <input type="number" name="monto" id="monto" class="form-control" step="0.01" min="0.01" placeholder="Ej: 100.00" required>
-                            </div>
-                            <small class="text-muted">El prestamista debe tener fondos suficientes.</small>
-                        </div>
-
-                        <div class="mb-3">
-                            <label for="motivo" class="form-label">📝 Motivo (opcional)</label>
-                            <textarea name="motivo" id="motivo" class="form-control" rows="2" placeholder="Describe el motivo del préstamo..."></textarea>
-                        </div>
-
-                        <div class="d-flex gap-2">
-                            <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-paper-plane"></i> Enviar solicitud
-                            </button>
-                            <a href="{% url 'roles:mis_solicitudes' 'prestamo' %}" class="btn btn-secondary">
-                                <i class="fas fa-arrow-left"></i> Volver
-                            </a>
-                        </div>
-                    </form>
-
-                    {% endif %}
-                </div>
-            </div>
-        </div>
+  <form method="post">
+    {% csrf_token %}
+    <div class="mb-3">
+      <label class="form-label">Cliente prestamista</label>
+      <select name="prestamista_id" class="form-select" required>
+        <option value="">— Elegir —</option>
+        {% for c in candidatos %}
+          <option value="{{ c.cliente.id }}" data-gestor="{{ c.gestor.id }}">
+            {{ c.cliente.username }} (gestor: {{ c.gestor.username }})
+          </option>
+        {% endfor %}
+      </select>
     </div>
+
+    <input type="hidden" name="gestor_id" id="gestor_id">
+
+    <div class="mb-3">
+      <label class="form-label">Forma de pago</label>
+      <select name="forma_pago_id" class="form-select" required>
+        {% for fp in candidatos.0.formas_pago %}
+          <option value="{{ fp.id }}">{{ fp.nombre }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label">Monto</label>
+      <input type="number" name="monto" step="0.01" min="0.01" class="form-control" required>
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label">Motivo (opcional)</label>
+      <textarea name="motivo" class="form-control" rows="2"></textarea>
+    </div>
+
+    <button class="btn btn-primary">Enviar solicitud</button>
+    <a href="{% url 'roles:mis_prestamos' %}" class="btn btn-secondary">Cancelar</a>
+  </form>
+
+  <script>
+    document.querySelector('select[name="prestamista_id"]').addEventListener('change', function(){
+      var opt = this.options[this.selectedIndex];
+      document.getElementById('gestor_id').value = opt.dataset.gestor || '';
+    });
+  </script>
 </div>
 {% endblock %}

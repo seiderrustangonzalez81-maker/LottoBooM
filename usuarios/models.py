@@ -75,6 +75,10 @@ class Perfil(models.Model):
         help_text='Se actualiza con throttle. No escribir en cada request.'
     )
 
+
+    # FIX_PRESTAMO_V1: badge 'Nuevo' en sidebar
+    prestamo_badge_visto = models.BooleanField(default=False)
+
     class Meta:
         verbose_name = 'Perfil'
         verbose_name_plural = 'Perfiles'

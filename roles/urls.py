@@ -144,4 +144,7 @@ urlpatterns = [
     # ============================================================
     path('asignar-recursos-limites/', views.asignar_recursos_limites, name='asignar_recursos_limites'),
     path('test/', views.test, name='test'),
+    path('mis-prestamos/', views.mis_prestamos_view, name='mis_prestamos'),
+    path('prestamos/crear/', views.crear_prestamo_view, name='crear_prestamo'),
+    path('prestamos/<int:prestamo_id>/responder/', views.responder_prestamo_view, name='responder_prestamo'),
 ]

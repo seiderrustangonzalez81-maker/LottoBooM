@@ -5455,3 +5455,191 @@ def api_pool_gestor(request):
 
     return JsonResponse({'success': True, 'pools': pools})
 
+
+# ═══════════════════════════════════════════════════════════════
+# FIX_PRESTAMO_V1: VISTAS DE PRÉSTAMOS ENTRE CLIENTES
+# ═══════════════════════════════════════════════════════════════
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+from django.utils import timezone
+from roles.utils import _es_cliente_frecuente, _gestores_comunes_frecuentes
+
+
+@login_required
+def mis_prestamos_view(request):
+    """Lista préstamos del cliente (dados y recibidos)."""
+    from roles.models import Prestamo
+    from jugadas.models import Boleta
+
+    user = request.user
+    es_cliente = user.roles.filter(tipo='cliente', activo=True).exists()
+
+    # Marcar badge como visto
+    try:
+        perfil = user.perfil
+        if not perfil.prestamo_badge_visto:
+            perfil.prestamo_badge_visto = True
+            perfil.save(update_fields=['prestamo_badge_visto'])
+    except Exception:
+        pass
+
+    dados = Prestamo.objects.filter(prestamista=user).select_related(
+        'solicitante', 'gestor', 'forma_pago'
+    ).order_by('-fecha_solicitud')
+    recibidos = Prestamo.objects.filter(solicitante=user).select_related(
+        'prestamista', 'gestor', 'forma_pago'
+    ).order_by('-fecha_solicitud')
+
+    context = {
+        'dados': dados,
+        'recibidos': recibidos,
+        'es_cliente': es_cliente,
+    }
+    return render(request, 'roles/mis_prestamos.html', context)
+
+
+@login_required
+def crear_prestamo_view(request):
+    """Cliente A solicita un préstamo a cliente B."""
+    from roles.models import Prestamo, Fondo
+    from jugadas.models import Boleta
+    from pagos.models import FormaPago
+
+    user = request.user
+
+    if not user.roles.filter(tipo='cliente', activo=True).exists():
+        messages.error(request, "Solo los clientes pueden solicitar préstamos.")
+        return redirect('publico:home')
+
+    # Validar que el usuario sea frecuente con al menos 1 gestor
+    corte = timezone.now() - __import__('datetime').timedelta(days=7)
+    gestores_user = list(
+        Boleta.objects.filter(usuario=user, estado='activa', creado_en__gte=corte)
+        .values_list('destinatario_id', flat=True).distinct()
+    )
+    gestores_frecuentes = []
+    for gid in gestores_user:
+        from django.contrib.auth.models import User as _U
+        g = _U.objects.filter(id=gid).first()
+        if g and _es_cliente_frecuente(user, g):
+            gestores_frecuentes.append(g)
+
+    if not gestores_frecuentes:
+        messages.warning(request, "Necesitas al menos 10 boletas activas en la última semana con un gestor para solicitar préstamos.")
+        return redirect('publico:home')
+
+    # Clientes potenciales: frecuentes con los mismos gestores
+    candidatos = []
+    for g in gestores_frecuentes:
+        corte = timezone.now() - __import__('datetime').timedelta(days=7)
+        from django.db.models import Count
+        clientes_ids = list(
+            Boleta.objects.filter(destinatario=g, estado='activa', creado_en__gte=corte)
+            .exclude(usuario=user)
+            .values('usuario_id')
+            .annotate(n=Count('id'))
+            .filter(n__gte=10)
+            .values_list('usuario_id', flat=True)
+        )
+        from django.contrib.auth.models import User as _U
+        for c in _U.objects.filter(id__in=clientes_ids, is_active=True):
+            candidatos.append({
+                'cliente': c,
+                'gestor': g,
+                'formas_pago': list(FormaPago.objects.filter(activo=True)),
+            })
+
+    if request.method == 'POST':
+        prestamista_id = request.POST.get('prestamista_id')
+        gestor_id = request.POST.get('gestor_id')
+        forma_pago_id = request.POST.get('forma_pago_id')
+        monto_str = request.POST.get('monto', '0')
+        motivo = request.POST.get('motivo', '')
+
+        from decimal import Decimal, InvalidOperation
+        try:
+            monto = Decimal(monto_str)
+            if monto <= 0:
+                raise ValueError("Monto debe ser > 0")
+        except (InvalidOperation, ValueError):
+            messages.error(request, "Monto inválido.")
+            return redirect('roles:crear_prestamo')
+
+        from django.contrib.auth.models import User as _U
+        from pagos.models import FormaPago
+        try:
+            prestamista = _U.objects.get(id=prestamista_id, is_active=True)
+            gestor = _U.objects.get(id=gestor_id, is_active=True)
+            forma_pago = FormaPago.objects.get(id=forma_pago_id, activo=True)
+        except Exception:
+            messages.error(request, "Datos inválidos.")
+            return redirect('roles:crear_prestamo')
+
+        # Re-validar frecuencia de ambos con ese gestor
+        if not _es_cliente_frecuente(user, gestor) or not _es_cliente_frecuente(prestamista, gestor):
+            messages.error(request, "Ambos clientes deben ser frecuentes con ese gestor (10 boletas activas en la última semana).")
+            return redirect('roles:crear_prestamo')
+
+        prestamo = Prestamo.objects.create(
+            solicitante=user,
+            prestamista=prestamista,
+            gestor=gestor,
+            forma_pago=forma_pago,
+            monto=monto,
+            saldo_pendiente=monto,
+            interes=0,
+            motivo=motivo,
+            estado='solicitado',
+        )
+
+        from roles.utils import _crear_notificacion
+        _crear_notificacion(
+            usuario=prestamista,
+            tipo='prestamo',
+            mensaje=f"📩 {user.username} te solicita un préstamo de ${monto} en {forma_pago.nombre}.",
+            datos={'prestamo_id': prestamo.id, 'solicitante': user.username, 'monto': float(monto), 'url_detalle': '/roles/mis-prestamos/'},
+            prioridad='alta', categoria='financiera',
+        )
+        messages.success(request, f"✅ Solicitud enviada a {prestamista.username}.")
+        return redirect('roles:mis_prestamos')
+
+    context = {
+        'candidatos': candidatos,
+    }
+    return render(request, 'roles/solicitar_prestamo.html', context)
+
+
+@login_required
+def responder_prestamo_view(request, prestamo_id):
+    """Prestamista B aprueba o rechaza."""
+    from roles.models import Prestamo
+
+    prestamo = get_object_or_404(Prestamo, id=prestamo_id, prestamista=request.user)
+
+    if request.method == 'POST':
+        accion = request.POST.get('accion')
+
+        if accion == 'rechazar':
+            prestamo.estado = 'rechazado'
+            prestamo.save(update_fields=['estado'])
+            from roles.utils import _crear_notificacion
+            _crear_notificacion(
+                usuario=prestamo.solicitante,
+                tipo='prestamo',
+                mensaje=f"❌ {request.user.username} rechazó tu solicitud de préstamo.",
+                datos={'prestamo_id': prestamo.id, 'url_detalle': '/roles/mis-prestamos/'},
+                prioridad='media', categoria='financiera',
+            )
+            messages.info(request, "Solicitud rechazada.")
+            return redirect('roles:mis_prestamos')
+
+        if accion == 'aprobar':
+            ok, msg = prestamo.aprobar(aprobado_por=request.user)
+            if ok:
+                messages.success(request, msg)
+            else:
+                messages.error(request, msg)
+            return redirect('roles:mis_prestamos')
+
+    return render(request, 'roles/responder_prestamo.html', {'prestamo': prestamo})

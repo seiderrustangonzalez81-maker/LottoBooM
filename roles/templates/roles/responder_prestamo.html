@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="content-container">
+  <h4>Responder solicitud de préstamo</h4>
+  <p><strong>{{ prestamo.solicitante.username }}</strong> te pide ${{ prestamo.monto }} en {{ prestamo.forma_pago.nombre }}.</p>
+  <p>Motivo: {{ prestamo.motivo|default:"—" }}</p>
+
+  <form method="post">
+    {% csrf_token %}
+    <button name="accion" value="aprobar" class="btn btn-success">✅ Aprobar</button>
+    <button name="accion" value="rechazar" class="btn btn-danger">❌ Rechazar</button>
+  </form>
+</div>
+{% endblock %}
+{% endblock %}
