@@ -63,7 +63,7 @@ MATRIZ = {
     'King Lottery 12:30 PM': ['Pick3', 'Pick4', 'PF', 'Fijo', 'Corridos', 'Centenas corridas', 'Tripleta','Parlet', 'Posicion','VS100'],
     'Georgia 12:30 PM': ['Pick3', 'Pick4', 'PF', 'Fijo', 'Corridos', 'Centenas corridas', 'Tripleta','Parlet', 'Posicion','VS100'],
     'Real 12:50 PM': ['Fijo', 'Corridos', 'Tripleta','Parlet', 'Posicion','VS100'],
-    'New York Real 12:50 PM': ['PF', 'Fijo', 'Corridos', 'Centenas corridas', 'Tripleta','Parlet', 'Posicion','VS100'],
+    'New Yol Real 12:50 PM': ['PF', 'Fijo', 'Corridos', 'Centenas corridas', 'Tripleta','Parlet', 'Posicion','VS100'],
     'New Jersey 12:50 PM': ['Pick3', 'PF', 'Fijo', 'Corridos', 'Centenas corridas', 'Tripleta','Parlet', 'Posicion','VS100'],
     'Anguila 1 PM': ['Fijo', 'Corridos', 'Tripleta','Parlet', 'Posicion','VS100'],
     'Tennessee 1:20 PM': ['Pick3', 'PF', 'Fijo', 'Corridos', 'Centenas corridas', 'Tripleta','Parlet', 'Posicion','VS100'],

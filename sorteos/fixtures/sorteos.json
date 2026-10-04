@@ -255,7 +255,7 @@
     "model": "sorteos.sorteo",
     "pk": 19,
     "fields": {
-      "nombre": "New York Real 12:50 PM",
+      "nombre": "New Yol Real 12:50 PM",
       "activo": true,
       "minutos_cierre": 10,
       "horarios": {"invierno": {"lunes": "12:50", "martes": "12:50", "miercoles": "12:50", "jueves": "12:50", "viernes": "12:50", "sabado": "12:50", "domingo": "12:50"}, "verano": {"lunes": "12:50", "martes": "12:50", "miercoles": "12:50", "jueves": "12:50", "viernes": "12:50", "sabado": "12:50", "domingo": "12:50"}},

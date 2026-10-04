@@ -410,7 +410,7 @@ def obtener_configuracion_sorteo(sorteo):
 
     es_dominicano = any(dominicano in nombre_sorteo.lower() for dominicano in [
         'anguila', 'haiti', 'lotedom', 'primera', 'real', 'king',
-        'new york', 'new jersey', 'nacional', 'leidsa'
+        'new york', 'new yol', 'new jersey', 'nacional', 'leidsa'
     ])
     if es_dominicano and not es_florida:
         for forma in ['pick2', 'pick3', 'pick4', 'pick5', 'vspick2', 'pick2vspf']:
@@ -912,11 +912,14 @@ def apostar(request):
                 sorteo_ids_set = set()
                 for j in b.jugadas.exclude(estado='cancelada'):
                     tipo = (j.forma_juego.nombre if j.forma_juego else '').lower()
+                    # POSICION_PRELOAD_V1
+                    _meta_orig = (j.metadata or {}).get('original', {}) or {}
                     lineas.append({
                         'tipo': tipo,
                         'numero': j.numero,
                         'monto': float(j.monto),
                         'sorteo_id': j.sorteo_id,
+                        'posicion': _meta_orig.get('posicion'),
                     })
                     sorteo_ids_set.add(j.sorteo_id)
 
