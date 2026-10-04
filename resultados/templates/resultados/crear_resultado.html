@@ -1,0 +1,2023 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block page_title %}✨ Crear Resultado – Aurora Nexus{% endblock %}
+{% block page_subtitle %}Ingresa los números ganadores – derivación en tiempo real{% endblock %}
+
+{% block extra_css %}
+<style>
+/* ══════════════════════════════════════════════════════════════
+   AURORA NEXUS — Modo Senior (accesibilidad + cercanía)
+   ══════════════════════════════════════════════════════════════ */
+.crear-root {
+  --cr-hue: 25;                              /* ✨ cálido: naranja terracota */
+  --cr-primary: hsl(var(--cr-hue), 80%, 55%);
+  --cr-primary-dark: hsl(var(--cr-hue), 75%, 40%);
+  --cr-accent: #f72585;
+  --cr-violet: #7209b7;
+  --cr-success: #047857;
+  --cr-warn: #b45309;
+  --cr-danger: #b91c1c;
+  --cr-bg: #FDFAF3;                          /* ✨ crema cálido */
+  --cr-text: #1e293b;
+  --cr-text-soft: #475569;
+  --cr-border: #e7e0d0;
+  position: relative;
+  z-index: 2;
+  max-width: 100%;                           /* ✨ ancho completo */
+  margin: 0 auto;
+  padding: 0 32px;
+  font-size: 18px;                           /* ✨ base grande: todos los rem escalan */
+  font-family: 'Inter', 'Segoe UI', 'Helvetica Neue', system-ui, -apple-system, sans-serif;
+  color: var(--cr-text);
+  background: var(--cr-bg);
+  min-height: 100vh;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   CAPAS DE FONDO — muy reducidas para no distraer
+   ══════════════════════════════════════════════════════════════ */
+.cr-bg-root {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+  background: var(--cr-bg);
+}
+.cr-aurora {
+  position: absolute;
+  inset: -30%;
+  background:
+    radial-gradient(ellipse 1000px 700px at var(--ax, 20%) var(--ay, 15%),
+      hsla(var(--cr-hue), 70%, 75%, 0.10), transparent 55%),
+    radial-gradient(ellipse 1100px 800px at var(--bx, 80%) var(--by, 25%),
+      hsla(calc(var(--cr-hue) + 30), 70%, 70%, 0.08), transparent 55%),
+    radial-gradient(ellipse 1200px 900px at 50% var(--cy, 85%),
+      hsla(calc(var(--cr-hue) + 15), 70%, 78%, 0.08), transparent 60%);
+  animation: cr-drift 32s ease-in-out infinite alternate;
+  will-change: transform;
+}
+@keyframes cr-drift {
+  0%   { transform: translate3d(0,0,0) scale(1); }
+  50%  { transform: translate3d(-3%,2%,0) scale(1.06); }
+  100% { transform: translate3d(3%,-2%,0) scale(1); }
+}
+.cr-grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(hsla(var(--cr-hue), 60%, 60%, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, hsla(var(--cr-hue), 60%, 60%, 0.04) 1px, transparent 1px);
+  background-size: 80px 80px;
+  mask-image: linear-gradient(to bottom, transparent 40%, #000 90%);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 40%, #000 90%);
+  opacity: 0.5;
+}
+.cr-orb { display: none; }                   /* ✨ quitado: distraía */
+.cr-spotlight { display: none; }             /* ✨ quitado */
+.cr-noise { display: none; }                 /* ✨ quitado */
+.cr-cursor { display: none; }                /* ✨ quitado */
+.cr-progress-bar {
+  position: fixed;
+  top: 0; left: 0;
+  height: 4px;                               /* ✨ más visible */
+  background: linear-gradient(90deg,
+    hsl(var(--cr-hue), 85%, 55%),
+    hsl(calc(var(--cr-hue) + 40), 85%, 55%));
+  z-index: 9999;
+  transition: width 0.3s ease, opacity 0.4s;
+  width: 0%;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   HEADER
+   ══════════════════════════════════════════════════════════════ */
+.cr-header {
+  position: relative;
+  padding: 28px 32px;                        /* ✨ más espacio */
+  border-radius: 24px;
+  background: #ffffff;
+  border: 2px solid var(--cr-border);
+  box-shadow: 0 2px 8px rgba(15,23,42,0.04);
+  margin: 24px 0 20px;
+}
+.cr-header::before { display: none; }        /* ✨ sin conic gradient */
+.cr-header::after { display: none; }         /* ✨ sin scanlines */
+.cr-header-beam { display: none; }           /* ✨ sin beam */
+
+.cr-header-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+.cr-header-left {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  min-width: 0;
+}
+.cr-header-icon {
+  width: 80px; height: 80px;                 /* ✨ 60 → 80 */
+  border-radius: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.4rem;                         /* ✨ más grande */
+  color: #fff;
+  background: linear-gradient(135deg,
+    hsl(var(--cr-hue), 75%, 55%),
+    hsl(calc(var(--cr-hue) + 20), 75%, 50%));
+  box-shadow: 0 4px 16px hsla(var(--cr-hue), 70%, 50%, 0.35);
+  flex-shrink: 0;
+  animation: none;                           /* ✨ sin breathe */
+}
+.cr-header-text { min-width: 0; }
+.cr-header-text h2 {
+  margin: 0;
+  font-family: 'Inter', 'Segoe UI', 'Helvetica Neue', system-ui, sans-serif;
+  font-size: 2rem;                           /* ✨ 1.55 → 2 */
+  font-weight: 900;
+  letter-spacing: -0.5px;
+  color: var(--cr-text);
+  background: none;
+  -webkit-text-fill-color: currentColor;
+  animation: none;
+}
+.cr-header-text p {
+  margin: 6px 0 0;
+  font-size: 1.05rem;                        /* ✨ 0.9 → 1.05 */
+  color: var(--cr-text-soft);
+  font-weight: 600;
+  line-height: 1.5;
+}
+.cr-header-right { display: none; }          /* ✨ fuera "0/0" y "En vivo" */
+
+/* ══════════════════════════════════════════════════════════════
+   TOPBAR: FECHA + SORTEOS
+   ══════════════════════════════════════════════════════════════ */
+.cr-topbar {
+  display: grid;
+  /* 🔧 ANTI-ZOOM: 1fr → minmax(0, 1fr) para que el track central
+     pueda encogerse por debajo del min-content de sus hijos */
+  grid-template-columns: 240px minmax(0, 1fr) auto;
+  gap: 18px;
+  padding: 22px 24px;
+  background: #ffffff;
+  border: 2px solid var(--cr-border);
+  border-radius: 24px;
+  box-shadow: 0 2px 8px rgba(15,23,42,0.04);
+  margin-bottom: 24px;
+  align-items: end;
+}
+.cr-topbar .cr-fgrp {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+.cr-topbar label {
+  font-size: 15px;                           /* ✨ 12 → 15 */
+  font-weight: 800;
+  color: var(--cr-text);
+  text-transform: none;
+  letter-spacing: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.cr-topbar input[type="date"],
+.cr-topbar select {
+  padding: 16px 18px;
+  border-radius: 12px;
+  border: 2px solid var(--cr-border);
+  background: #fff;
+  font-size: 20px;                           /* ✨ 15 → 20 */
+  font-weight: 800;
+  color: var(--cr-text);
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  min-height: 60px;                          /* ✨ 46 → 60 */
+  font-family: inherit;
+  /* 🔧 ANTI-ZOOM: los inputs date son notoriously anchos por el picker nativo */
+  min-width: 0;
+  width: 100%;
+}
+.cr-topbar input[type="date"]:focus,
+.cr-topbar select:focus {
+  border-color: hsl(var(--cr-hue), 70%, 50%);
+  box-shadow: 0 0 0 5px hsla(var(--cr-hue), 80%, 60%, 0.20);
+}
+.cr-clock {
+  padding: 16px 22px;
+  border-radius: 12px;
+  background: #fef9f0;
+  border: 2px solid var(--cr-border);
+  font-family: 'SF Mono', 'Courier New', monospace;
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--cr-text);
+  letter-spacing: 0.5px;
+  text-align: center;
+  white-space: nowrap;
+  min-height: 60px;
+  display: flex;
+  align-items: center;
+}
+.cr-sorteo-count {
+  font-size: 1rem;
+  font-weight: 800;
+  padding: 8px 18px;
+  border-radius: 999px;
+  background: hsl(var(--cr-hue), 70%, 94%);
+  color: hsl(var(--cr-hue), 60%, 30%);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   SELECTOR DE SORTEO
+   ══════════════════════════════════════════════════════════════ */
+.cr-sorteo-section { margin-bottom: 24px; }
+.cr-sorteo-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+}
+.cr-sorteo-bar h3 {
+  margin: 0;
+  font-size: 1.2rem;                         /* ✨ 0.95 → 1.2 */
+  font-weight: 900;
+  color: var(--cr-text);
+  text-transform: none;
+  letter-spacing: -0.2px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.cr-sorteo-bar h3::before {
+  content: '';
+  width: 6px; height: 24px;
+  border-radius: 3px;
+  background: hsl(var(--cr-hue), 75%, 55%);
+}
+.cr-sorteo-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));  /* ✨ 210 → 240 */
+  gap: 14px;
+}
+.cr-sorteo-chip {
+  position: relative;
+  padding: 20px 22px;                        /* ✨ más espacio */
+  border-radius: 18px;
+  border: 2px solid var(--cr-border);
+  background: #ffffff;
+  cursor: pointer;
+  transition: border-color 0.2s, box-shadow 0.2s, transform 0.15s;
+  text-align: left;
+  font-family: inherit;
+  box-shadow: 0 2px 6px rgba(15,23,42,0.04);
+  min-height: 104px;                         /* ✨ 76 → 104 */
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  /* 🔧 ANTI-ZOOM: el chip es grid item; sin min-width:0 el nombre
+     de un sorteo largo empuja el track */
+  min-width: 0;
+}
+.cr-sorteo-chip::before { display: none; }
+.cr-sorteo-chip:hover {
+  border-color: hsl(var(--cr-hue), 70%, 60%);
+  box-shadow: 0 8px 20px rgba(15,23,42,0.10);
+  transform: translateY(-2px);
+}
+.cr-sorteo-chip:active {
+  transform: translateY(0) scale(0.98);
+}
+.cr-sorteo-chip.active {
+  border-color: hsl(var(--cr-hue), 75%, 50%);
+  background: hsl(var(--cr-hue), 80%, 96%);
+  border-width: 3px;
+  box-shadow: 0 0 0 4px hsla(var(--cr-hue), 80%, 60%, 0.20);
+}
+.cr-sorteo-chip.active::after {
+  content: '✓';
+  position: absolute;
+  top: 12px; right: 14px;
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  background: hsl(var(--cr-hue), 75%, 50%);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  font-weight: 900;
+}
+.cr-sorteo-chip-name {
+  font-size: 1.2rem;                         /* ✨ 1 → 1.2 */
+  font-weight: 900;
+  color: var(--cr-text);
+  margin-bottom: 8px;
+  line-height: 1.25;
+  letter-spacing: -0.3px;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+}
+.cr-sorteo-chip-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  font-size: 1rem;                           /* ✨ 0.85 → 1 */
+  font-weight: 700;
+  color: var(--cr-text-soft);
+}
+.cr-chip-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  font-size: 0.9rem;                         /* ✨ 0.75 → 0.9 */
+  font-weight: 800;
+  text-transform: none;
+  letter-spacing: 0;
+}
+.cr-chip-status.ready {
+  background: #d1fae5;
+  color: #065f46;
+  border: 1px solid #6ee7b7;
+}
+.cr-chip-countdown {
+  font-family: 'SF Mono', 'Courier New', monospace;
+  font-weight: 800;
+  color: inherit;
+}
+.cr-sorteo-empty {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 60px 24px;
+  border: 2px dashed var(--cr-border);
+  border-radius: 20px;
+  color: var(--cr-text-soft);
+  font-size: 1.05rem;
+  background: #ffffff;
+}
+.cr-sorteo-empty .ico {
+  font-size: 3.5rem;
+  display: block;
+  margin-bottom: 14px;
+  opacity: 0.6;
+}
+.cr-spinner-inline {
+  display: inline-block;
+  width: 18px; height: 18px;
+  border: 3px solid hsl(var(--cr-hue), 60%, 85%);
+  border-top-color: hsl(var(--cr-hue), 75%, 50%);
+  border-radius: 50%;
+  animation: cr-spin 0.7s linear infinite;
+}
+@keyframes cr-spin { to { transform: rotate(360deg); } }
+
+/* ══════════════════════════════════════════════════════════════
+   SECCIONES
+   ══════════════════════════════════════════════════════════════ */
+.cr-section {
+  background: #ffffff;
+  border: 2px solid var(--cr-border);
+  border-radius: 22px;
+  margin-bottom: 22px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(15,23,42,0.04);
+}
+.cr-section-header {
+  padding: 20px 24px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  background: #fef9f0;
+  border-bottom: 2px solid var(--cr-border);
+  user-select: none;
+  transition: background 0.2s;
+}
+.cr-section-header:hover {
+  background: hsl(var(--cr-hue), 70%, 96%);
+}
+.cr-section-title {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-size: 1.2rem;                         /* ✨ 1 → 1.2 */
+  font-weight: 900;
+  color: var(--cr-text);
+  letter-spacing: -0.2px;
+  text-transform: none;
+}
+.cr-section-icon {
+  width: 52px; height: 52px;                 /* ✨ 38 → 52 */
+  border-radius: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg,
+    hsl(var(--cr-hue), 75%, 55%),
+    hsl(calc(var(--cr-hue) + 20), 75%, 50%));
+  color: #fff;
+  font-size: 1.5rem;                         /* ✨ 1.05 → 1.5 */
+  flex-shrink: 0;
+  box-shadow: 0 4px 10px hsla(var(--cr-hue), 70%, 50%, 0.3);
+}
+.cr-section-icon.green {
+  background: linear-gradient(135deg, #10b981, #047857);
+}
+.cr-section-icon.amber {
+  background: linear-gradient(135deg, #f59e0b, #b45309);
+}
+.cr-section-icon.pink {
+  background: linear-gradient(135deg, #ec4899, #be185d);
+}
+.cr-section-toggle {
+  font-size: 1.3rem;
+  color: var(--cr-text-soft);
+  transition: transform 0.3s;
+  font-weight: 800;
+}
+.cr-section-header[aria-expanded="false"] .cr-section-toggle {
+  transform: rotate(-90deg);
+}
+.cr-section-body {
+  padding: 22px 24px;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   FIELD CARDS
+   ══════════════════════════════════════════════════════════════ */
+.cr-fields-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));  /* ✨ 200 → 240 */
+  gap: 16px;
+}
+.cr-field {
+  position: relative;
+  padding: 18px 20px;                        /* ✨ más espacio */
+  border-radius: 16px;
+  background: #fefcf7;
+  border: 2px solid var(--cr-border);
+  transition: border-color 0.2s, box-shadow 0.2s;
+  overflow: visible;
+  /* 🔧 ANTI-ZOOM: los .cr-field son grid items → min-width:0 */
+  min-width: 0;
+}
+.cr-field::before { display: none; }         /* ✨ sin franja lateral */
+.cr-field:hover {
+  border-color: hsl(var(--cr-hue), 60%, 70%);
+}
+.cr-field.status-valid {
+  border-color: #059669;
+  border-width: 2.5px;
+  background: #f0fdf4;
+}
+.cr-field.status-error {
+  border-color: #dc2626;
+  border-width: 2.5px;
+  background: #fef2f2;
+}
+.cr-field-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+.cr-field-label {
+  font-size: 1rem;                           /* ✨ 0.9 → 1 */
+  font-weight: 900;
+  color: var(--cr-text);
+  letter-spacing: 0;
+  text-transform: none;
+}
+.cr-field.status-error .cr-field-label { color: #991b1b; }
+.cr-field-badge {
+  font-size: 0.78rem;                        /* ✨ 0.68 → 0.78 */
+  font-weight: 800;
+  padding: 4px 12px;
+  border-radius: 999px;
+  text-transform: none;
+  letter-spacing: 0;
+}
+.cr-field-badge.manual {
+  background: #fef3c7;
+  color: #92400e;
+  border: 1px solid #fcd34d;
+}
+.cr-field-badge.auto {
+  background: hsl(var(--cr-hue), 80%, 94%);
+  color: hsl(var(--cr-hue), 60%, 30%);
+  border: 1px solid hsl(var(--cr-hue), 60%, 80%);
+}
+.cr-field input {
+  width: 100%;
+  padding: 16px 18px;
+  border-radius: 12px;
+  border: 2px solid var(--cr-border);
+  background: #ffffff;
+  font-family: 'SF Mono', 'Courier New', monospace;
+  font-size: 1.35rem;                        /* ✨ 1.15 → 1.35 */
+  font-weight: 800;
+  color: var(--cr-text);
+  letter-spacing: 3px;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  text-align: center;
+  min-height: 64px;                          /* ✨ 48 → 64 */
+  /* 🔧 ANTI-ZOOM */
+  min-width: 0;
+  max-width: 100%;
+}
+.cr-field input:focus {
+  border-color: hsl(var(--cr-hue), 75%, 50%);
+  box-shadow: 0 0 0 5px hsla(var(--cr-hue), 80%, 60%, 0.20);
+}
+.cr-field input:disabled,
+.cr-field input[readonly] {
+  background: #f1f5f9;
+  color: var(--cr-text-soft);
+  cursor: default;
+  border-style: dashed;
+}
+.cr-field-hint {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 10px;
+  font-size: 0.85rem;                        /* ✨ 0.75 → 0.85 */
+  color: var(--cr-text-soft);
+  font-weight: 700;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.cr-field-hint .cr-digits {
+  padding: 3px 12px;
+  border-radius: 999px;
+  background: hsl(var(--cr-hue), 70%, 94%);
+  color: hsl(var(--cr-hue), 60%, 30%);
+  font-family: 'SF Mono', monospace;
+  font-weight: 800;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   RESUMEN
+   ══════════════════════════════════════════════════════════════ */
+.cr-resumen-body {
+  padding: 18px;
+  border-radius: 14px;
+  background: #fefcf7;
+  border: 2px solid var(--cr-border);
+  font-size: 1rem;
+  line-height: 1.6;
+  max-height: 500px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  /* 🔧 ANTI-ZOOM */
+  min-width: 0;
+}
+.cr-resumen-body::-webkit-scrollbar { width: 10px; }
+.cr-resumen-body::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 10px; }
+.cr-resumen-body::-webkit-scrollbar-thumb {
+  background: hsl(var(--cr-hue), 60%, 70%);
+  border-radius: 10px;
+}
+.cr-resumen-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+.cr-resumen-head h4 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 900;
+  color: var(--cr-text);
+  letter-spacing: -0.2px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.cr-resumen-actions { display: flex; gap: 12px; flex-wrap: wrap; }
+.cr-btn-mini {
+  padding: 12px 20px;
+  border-radius: 999px;
+  border: 2px solid hsl(var(--cr-hue), 60%, 80%);
+  background: #ffffff;
+  color: hsl(var(--cr-hue), 60%, 30%);
+  font-size: 0.95rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.15s;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-family: inherit;
+  min-height: 48px;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+.cr-btn-mini:hover {
+  border-color: hsl(var(--cr-hue), 70%, 50%);
+  background: hsl(var(--cr-hue), 80%, 96%);
+}
+.cr-btn-mini:active { transform: scale(0.97); }
+.cr-btn-mini.whatsapp {
+  border-color: #25d366;
+  background: #ecfdf5;
+  color: #065f46;
+}
+.cr-btn-mini.whatsapp:hover {
+  background: #d1fae5;
+}
+.cr-res-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: #ffffff;
+  border: 2px solid var(--cr-border);
+  margin-bottom: 14px;
+  min-width: 0;
+}
+.cr-res-meta-row {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 1rem;
+  padding: 6px 14px;
+  border-radius: 8px;
+  background: #fef9f0;
+  border: 1px solid var(--cr-border);
+  /* 🔧 ANTI-ZOOM: si el nombre del sorteo es largo, debe poder partirse */
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+.cr-res-meta-row .lbl {
+  color: var(--cr-text-soft);
+  font-weight: 800;
+  font-size: 0.9rem;
+  text-transform: none;
+  letter-spacing: 0;
+}
+.cr-res-meta-row .val {
+  color: var(--cr-text);
+  font-weight: 900;
+  font-size: 1.05rem;
+  overflow-wrap: anywhere;
+}
+.cr-res-sec-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.95rem;
+  font-weight: 900;
+  color: var(--cr-text);
+  text-transform: none;
+  letter-spacing: 0;
+  margin: 18px 0 10px;
+}
+.cr-res-sec-title::after {
+  content: '';
+  flex: 1;
+  height: 2px;
+  background: var(--cr-border);
+}
+.cr-res-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 8px;
+  /* 🔧 ANTI-ZOOM */
+  min-width: 0;
+}
+.cr-res-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: #ffffff;
+  border: 2px solid var(--cr-border);
+  font-size: 0.95rem;
+  min-width: 0;
+  min-height: 44px;
+}
+.cr-res-item .cr-res-lbl {
+  color: var(--cr-text-soft);
+  font-weight: 800;
+  font-size: 0.85rem;
+  text-transform: none;
+  letter-spacing: 0;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+.cr-res-item .cr-res-val {
+  color: var(--cr-text);
+  font-weight: 900;
+  font-family: 'SF Mono', 'Courier New', monospace;
+  font-size: 1rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: right;
+  min-width: 0;
+}
+.cr-res-item.wide {
+  grid-column: 1 / -1;
+  align-items: flex-start;
+}
+.cr-res-item.wide .cr-res-val {
+  white-space: normal;
+  word-break: break-word;
+  text-align: left;
+  flex: 1;
+}
+.cr-res-empty {
+  text-align: center;
+  padding: 30px 20px;
+  color: var(--cr-text-soft);
+  font-size: 1rem;
+  font-style: italic;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   BOTONES
+   ══════════════════════════════════════════════════════════════ */
+.cr-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 40px;
+  /* 🔧 ANTI-ZOOM */
+  min-width: 0;
+}
+.cr-btn {
+  padding: 18px 32px;
+  border-radius: 14px;
+  border: none;
+  font-size: 1.1rem;                         /* ✨ 1 → 1.1 */
+  font-weight: 900;
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  text-decoration: none;
+  letter-spacing: 0.3px;
+  font-family: inherit;
+  min-height: 64px;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  /* 🔧 ANTI-ZOOM */
+  min-width: 0;
+  max-width: 100%;
+}
+.cr-btn-secondary {
+  background: #ffffff;
+  color: hsl(var(--cr-hue), 60%, 30%);
+  border: 2px solid var(--cr-border);
+}
+.cr-btn-secondary:hover {
+  border-color: hsl(var(--cr-hue), 70%, 55%);
+  background: hsl(var(--cr-hue), 80%, 96%);
+}
+.cr-btn-secondary:active {
+  transform: translateY(2px);
+}
+
+/* ✨ BOTÓN PRINCIPAL — efecto físico 3D tipo máquina */
+.cr-btn-primary {
+  background: linear-gradient(180deg,
+    hsl(var(--cr-hue), 75%, 55%),
+    hsl(var(--cr-hue), 75%, 45%));
+  color: #ffffff;
+  border: none;
+  padding: 22px 44px;
+  font-size: 1.25rem;
+  font-weight: 900;
+  min-height: 76px;
+  box-shadow:
+    0 6px 0 hsl(var(--cr-hue), 70%, 30%),
+    0 8px 20px hsla(var(--cr-hue), 70%, 40%, 0.35);
+  text-shadow: 0 1px 2px rgba(0,0,0,0.15);
+}
+.cr-btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow:
+    0 7px 0 hsl(var(--cr-hue), 70%, 30%),
+    0 10px 24px hsla(var(--cr-hue), 70%, 40%, 0.45);
+}
+.cr-btn-primary:active {
+  transform: translateY(4px);
+  box-shadow:
+    0 2px 0 hsl(var(--cr-hue), 70%, 30%),
+    0 4px 12px hsla(var(--cr-hue), 70%, 40%, 0.30);
+}
+.cr-btn-primary:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow:
+    0 6px 0 hsl(var(--cr-hue), 40%, 60%),
+    0 8px 20px rgba(0,0,0,0.10);
+}
+@media (max-width: 640px) {
+  .cr-btn-primary { width: 100%; }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   TOAST
+   ══════════════════════════════════════════════════════════════ */
+.cr-toast-wrap {
+  position: fixed;
+  top: 90px; right: 24px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  /* 🔧 ANTI-ZOOM: 400px fijos desbordaban en móviles < 448px.
+     min() garantiza que nunca exceda el viewport */
+  max-width: min(400px, calc(100vw - 48px));
+  width: max-content;
+  pointer-events: none;
+}
+.cr-toast {
+  padding: 18px 22px;
+  border-radius: 14px;
+  background: #ffffff;
+  border-left: 6px solid hsl(var(--cr-hue), 75%, 50%);
+  box-shadow: 0 8px 24px rgba(15,23,42,0.15);
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--cr-text);
+  animation: cr-slide-in 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+  pointer-events: auto;
+  overflow-wrap: anywhere;
+}
+.cr-toast.success { border-left-color: #047857; color: #065f46; background: #f0fdf4; }
+.cr-toast.warn    { border-left-color: #b45309; color: #78350f; background: #fffbeb; }
+.cr-toast.error   { border-left-color: #b91c1c; color: #7f1d1d; background: #fef2f2; }
+@keyframes cr-slide-in {
+  from { opacity: 0; transform: translateX(24px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   CONFETTI
+   ══════════════════════════════════════════════════════════════ */
+.cr-confetti-piece {
+  position: fixed;
+  width: 10px; height: 10px;
+  pointer-events: none;
+  z-index: 9999;
+  border-radius: 2px;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   FOCUS VISIBLE — para navegación con teclado (accesibilidad)
+   ══════════════════════════════════════════════════════════════ */
+.cr-sorteo-chip:focus-visible,
+.cr-btn:focus-visible,
+.cr-btn-mini:focus-visible,
+.cr-field input:focus-visible,
+.cr-topbar input:focus-visible,
+.cr-topbar select:focus-visible,
+.cr-section-header:focus-visible {
+  outline: 4px solid #1e40af;
+  outline-offset: 3px;
+  box-shadow: 0 0 0 7px rgba(30, 64, 175, 0.20);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   RESPONSIVE — mantiene todo legible en pantallas chicas
+   ══════════════════════════════════════════════════════════════ */
+@media (max-width: 900px) {
+  .crear-root { padding: 0 20px; }
+  /* 🔧 ANTI-ZOOM: minmax(0,1fr) en ambas columnas */
+  .cr-topbar { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .cr-clock { grid-column: 1 / -1; }
+}
+@media (max-width: 640px) {
+  .crear-root { padding: 0 14px; font-size: 17px; }
+  .cr-header { padding: 22px 20px; }
+  .cr-header-icon { width: 64px; height: 64px; font-size: 1.9rem; }
+  .cr-header-text h2 { font-size: 1.6rem; }
+  .cr-header-text p { font-size: 0.95rem; }
+  /* 🔧 ANTI-ZOOM */
+  .cr-topbar { grid-template-columns: minmax(0, 1fr); padding: 18px 16px; gap: 14px; }
+  /* 🔧 FIX: el inline style="grid-column:2" en el 2º .cr-fgrp
+     crea una columna implícita 'auto' que puede ensanchar el grid.
+     Lo forzamos a auto en móvil. */
+  .cr-topbar .cr-fgrp[style] { grid-column: auto !important; }
+  .cr-topbar input[type="date"],
+  .cr-topbar select { font-size: 18px; min-height: 56px; }
+  /* 🔧 ANTI-ZOOM: minmax(0,1fr) en vez de 1fr 1fr */
+  .cr-sorteo-list { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  .cr-sorteo-chip { padding: 16px 18px; min-height: 92px; }
+  .cr-sorteo-chip-name { font-size: 1.05rem; }
+  .cr-sorteo-chip-meta { font-size: 0.9rem; }
+  .cr-section-header { padding: 16px 18px; }
+  .cr-section-body { padding: 16px 18px; }
+  .cr-section-title { font-size: 1.05rem; }
+  .cr-section-icon { width: 44px; height: 44px; font-size: 1.25rem; }
+  .cr-fields-grid { grid-template-columns: minmax(0, 1fr); gap: 14px; }
+  .cr-field { padding: 16px; }
+  .cr-field input { font-size: 1.25rem; min-height: 60px; }
+  .cr-resumen-body { font-size: 0.95rem; padding: 14px; }
+  .cr-res-grid { grid-template-columns: repeat(auto-fill, minmax(min(130px, 100%), 1fr)); }
+  .cr-btn { padding: 16px 24px; font-size: 1rem; min-height: 58px; }
+  .cr-btn-primary { font-size: 1.15rem; min-height: 68px; padding: 20px 28px; }
+  .cr-actions { gap: 12px; }
+  .cr-actions .cr-btn { flex: 1 1 auto; }
+}
+@media (max-width: 420px) {
+  .cr-sorteo-list { grid-template-columns: minmax(0, 1fr); }
+  .cr-res-grid { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   MOVIMIENTO REDUCIDO
+   ══════════════════════════════════════════════════════════════ */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  .cr-aurora, .cr-grid { animation: none !important; }
+}
+</style>
+{% endblock %}
+
+
+{% block content %}
+{# Capas de fondo #}
+<div class="cr-bg-root" aria-hidden="true">
+  <div class="cr-aurora"></div>
+  <div class="cr-grid"></div>
+  <div class="cr-orb o1"></div>
+  <div class="cr-orb o2"></div>
+  <div class="cr-orb o3"></div>
+  <div class="cr-spotlight" id="crSpotlight"></div>
+  <div class="cr-noise"></div>
+</div>
+
+{# Barra de progreso superior #}
+<div class="cr-progress-bar" id="crProgressBar"></div>
+
+{# Cursor glow #}
+<div class="cr-cursor" id="crCursor" aria-hidden="true"></div>
+
+{# Toasts #}
+<div class="cr-toast-wrap" id="crToasts"></div>
+
+<div class="crear-root">
+
+  {# ══════ HEADER ══════ #}
+  <div class="cr-header" id="crHeader">
+    <div class="cr-header-beam" aria-hidden="true"></div>
+    <div class="cr-header-inner">
+      <div class="cr-header-left">
+        <div class="cr-header-icon">🛰️</div>
+        <div class="cr-header-text">
+          <h2>Crear Resultado</h2>
+          <p>Ingresa los números ganadores — derivación en tiempo real</p>
+        </div>
+      </div>
+      <div class="cr-header-right">
+        <div class="cr-progress-pill">
+          <span class="cr-p-label" id="crProgressLabel">0/0</span>
+          <div class="cr-progress-track">
+            <div class="cr-progress-fill" id="crProgressFill" style="width:0%"></div>
+          </div>
+        </div>
+        <span class="cr-live">En vivo</span>
+      </div>
+    </div>
+  </div>
+
+  {# ══════ FORM ══════ #}
+  <form method="post" id="resultadoForm" novalidate>
+    {% csrf_token %}
+    <input type="hidden" name="fecha" id="id_fecha_hidden" value="{{ today|date:'Y-m-d' }}">
+    <input type="hidden" name="hora" id="id_hora_hidden" value="{{ now|date:'H:i' }}">
+    <input type="hidden" name="sorteo" id="id_sorteo" value="">
+
+    {# ══════ POOL OCULTO — todos los campos disponibles ══════ #}
+    <div id="camposPool" style="display:none;" aria-hidden="true">
+
+      <div class="cr-field" data-field="pick2">
+        <div class="cr-field-header">
+          <span class="cr-field-label">Pick 2</span>
+          <span class="cr-field-badge manual">Manual</span>
+        </div>
+        <input type="text" name="pick2" id="id_pick2" maxlength="2" placeholder="12" pattern="\d{2}" autocomplete="off">
+        <div class="cr-field-hint"><span>2 dígitos</span><span class="cr-digits">0/2</span></div>
+      </div>
+
+      <div class="cr-field" data-field="pick3">
+        <div class="cr-field-header">
+          <span class="cr-field-label">Pick 3</span>
+          <span class="cr-field-badge manual">Manual</span>
+        </div>
+        <input type="text" name="pick3" id="id_pick3" maxlength="3" placeholder="123" pattern="\d{3}" autocomplete="off">
+        <div class="cr-field-hint"><span>3 dígitos</span><span class="cr-digits">0/3</span></div>
+      </div>
+
+      <div class="cr-field" data-field="pick4">
+        <div class="cr-field-header">
+          <span class="cr-field-label">Pick 4</span>
+          <span class="cr-field-badge manual">Manual</span>
+        </div>
+        <input type="text" name="pick4" id="id_pick4" maxlength="4" placeholder="1234" pattern="\d{4}" autocomplete="off">
+        <div class="cr-field-hint"><span>4 dígitos</span><span class="cr-digits">0/4</span></div>
+      </div>
+
+      <div class="cr-field" data-field="pick5">
+        <div class="cr-field-header">
+          <span class="cr-field-label">Pick 5</span>
+          <span class="cr-field-badge manual">Manual</span>
+        </div>
+        <input type="text" name="pick5" id="id_pick5" maxlength="5" placeholder="12345" pattern="\d{5}" autocomplete="off">
+        <div class="cr-field-hint"><span>5 dígitos</span><span class="cr-digits">0/5</span></div>
+      </div>
+
+      <div class="cr-field" data-field="pf">
+        <div class="cr-field-header">
+          <span class="cr-field-label">PF</span>
+          <span class="cr-field-badge auto">Auto</span>
+        </div>
+        <input type="text" name="pf" id="id_pf" maxlength="2" readonly>
+        <div class="cr-field-hint"><span>Derivado</span><span class="cr-digits">0/2</span></div>
+      </div>
+
+      <div class="cr-field" data-field="fijo">
+        <div class="cr-field-header">
+          <span class="cr-field-label">Fijo</span>
+          <span class="cr-field-badge manual">Manual</span>
+        </div>
+        <input type="text" name="fijo" id="id_fijo" maxlength="2" placeholder="34" autocomplete="off">
+        <div class="cr-field-hint"><span>Editable</span><span class="cr-digits">0/2</span></div>
+      </div>
+
+      <div class="cr-field" data-field="corrido1">
+        <div class="cr-field-header">
+          <span class="cr-field-label">Corrido 1</span>
+          <span class="cr-field-badge manual">Manual</span>
+        </div>
+        <input type="text" name="corrido_1" id="id_corrido_1" maxlength="2" placeholder="56" autocomplete="off">
+        <div class="cr-field-hint"><span>Editable</span><span class="cr-digits">0/2</span></div>
+      </div>
+
+      <div class="cr-field" data-field="corrido2">
+        <div class="cr-field-header">
+          <span class="cr-field-label">Corrido 2</span>
+          <span class="cr-field-badge manual">Manual</span>
+        </div>
+        <input type="text" name="corrido_2" id="id_corrido_2" maxlength="2" placeholder="78" autocomplete="off">
+        <div class="cr-field-hint"><span>Editable</span><span class="cr-digits">0/2</span></div>
+      </div>
+
+      <div class="cr-field" data-field="centena1">
+        <div class="cr-field-header">
+          <span class="cr-field-label">Centena 1</span>
+          <span class="cr-field-badge auto">Auto</span>
+        </div>
+        <input type="text" name="centena_corrida_1" id="id_centena_corrida_1" maxlength="2" readonly>
+        <div class="cr-field-hint"><span>Derivado</span><span class="cr-digits">0/2</span></div>
+      </div>
+
+      <div class="cr-field" data-field="centena2">
+        <div class="cr-field-header">
+          <span class="cr-field-label">Centena 2</span>
+          <span class="cr-field-badge auto">Auto</span>
+        </div>
+        <input type="text" name="centena_corrida_2" id="id_centena_corrida_2" maxlength="2" readonly>
+        <div class="cr-field-hint"><span>Derivado</span><span class="cr-digits">0/2</span></div>
+      </div>
+
+      <div class="cr-field" data-field="parlet">
+        <div class="cr-field-header">
+          <span class="cr-field-label">Parlet</span>
+          <span class="cr-field-badge auto">Auto</span>
+        </div>
+        <input type="text" name="parlet" id="id_parlet" readonly>
+        <div class="cr-field-hint"><span>Combinaciones</span></div>
+      </div>
+
+      <div class="cr-field" data-field="posicion">
+        <div class="cr-field-header">
+          <span class="cr-field-label">Posición</span>
+          <span class="cr-field-badge auto">Auto</span>
+        </div>
+        <input type="text" name="posicion" id="id_posicion" readonly>
+        <div class="cr-field-hint"><span>Fijo + Corridos</span></div>
+      </div>
+
+      <div class="cr-field" data-field="tripleta">
+        <div class="cr-field-header">
+          <span class="cr-field-label">Tripleta</span>
+          <span class="cr-field-badge auto">Auto</span>
+        </div>
+        <input type="text" name="tripleta" id="id_tripleta" readonly>
+        <div class="cr-field-hint"><span>Mismo que Posición</span></div>
+      </div>
+
+      <div class="cr-field" data-field="vspf">
+        <div class="cr-field-header">
+          <span class="cr-field-label">VS PF</span>
+          <span class="cr-field-badge auto">Auto</span>
+        </div>
+        <input type="text" name="vspf" id="id_vspf" readonly>
+        <div class="cr-field-hint"><span>PF vs Fijo/Corridos</span></div>
+      </div>
+
+      <div class="cr-field" data-field="vspick2">
+        <div class="cr-field-header">
+          <span class="cr-field-label">VS Pick2</span>
+          <span class="cr-field-badge auto">Auto</span>
+        </div>
+        <input type="text" name="vspick2" id="id_vspick2" readonly>
+        <div class="cr-field-hint"><span>Pick2 vs Fijo/Corridos</span></div>
+      </div>
+
+      <div class="cr-field" data-field="pick2vspf">
+        <div class="cr-field-header">
+          <span class="cr-field-label">Pick2 vs PF</span>
+          <span class="cr-field-badge auto">Auto</span>
+        </div>
+        <input type="text" name="pick2vspf" id="id_pick2vspf" readonly>
+        <div class="cr-field-hint"><span>PF vs Pick2</span></div>
+      </div>
+
+
+    </div>
+
+    {# ══════ TOPBAR: fecha + reloj ══════ #}
+    <div class="cr-topbar">
+      <div class="cr-fgrp">
+        <label for="fechaSelector">
+          <i class="fas fa-calendar-alt"></i> Fecha del sorteo
+        </label>
+        <input type="date" id="fechaSelector" value="{{ today|date:'Y-m-d' }}" required>
+      </div>
+      <div class="cr-fgrp" style="grid-column:2;">
+        <label>
+          <i class="fas fa-satellite-dish"></i> Sorteos disponibles
+        </label>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span class="cr-sorteo-count" id="sorteosCount">
+            <span id="sorteosCountNum">0</span> disponibles
+          </span>
+          <span id="sorteosSpinner" style="display:none;">
+            <span class="cr-spinner-inline"></span>
+          </span>
+        </div>
+      </div>
+      <div class="cr-clock" id="crClock">
+        {{ now|date:"d/m/y H:i:s" }}
+      </div>
+    </div>
+
+    {# ══════ SELECTOR DE SORTEO (CHIPS) ══════ #}
+    <div class="cr-sorteo-section">
+      <div class="cr-sorteo-bar">
+        <h3>Selecciona un sorteo</h3>
+        <span class="cr-sorteo-count" id="sorteoSelectedLabel">
+          Ningún sorteo seleccionado
+        </span>
+      </div>
+      <div class="cr-sorteo-list" id="listaSorteos">
+        <div class="cr-sorteo-empty">
+          <span class="ico">⏳</span>
+          Cargando sorteos disponibles...
+        </div>
+      </div>
+    </div>
+
+    {# ══════ EMPTY STATE (sin sorteo) ══════ #}
+    <div id="camposEmpty" class="cr-sorteo-empty" style="margin-bottom:20px;">
+      <span class="ico">🎲</span>
+      Selecciona un sorteo para cargar los campos disponibles.
+    </div>
+
+    {# ══════ SECCIÓN 1: PRINCIPALES ══════ #}
+    <div class="cr-section" id="sectionPrincipales" style="display:none;">
+      <div class="cr-section-header" data-bs-toggle="collapse" data-bs-target="#bodyPrincipales" aria-expanded="true">
+        <span class="cr-section-title">
+          <span class="cr-section-icon">🎲</span>
+          Números principales
+        </span>
+        <span class="cr-section-toggle">▼</span>
+      </div>
+      <div class="collapse show" id="bodyPrincipales">
+        <div class="cr-section-body">
+          <div class="cr-fields-grid" id="gridPrincipales"></div>
+        </div>
+      </div>
+    </div>
+
+    {# ══════ SECCIÓN 2: DERIVADOS ══════ #}
+    <div class="cr-section" id="sectionDerivados" style="display:none;">
+      <div class="cr-section-header" data-bs-toggle="collapse" data-bs-target="#bodyDerivados" aria-expanded="true">
+        <span class="cr-section-title">
+          <span class="cr-section-icon green">➡️</span>
+          Derivados
+        </span>
+        <span class="cr-section-toggle">▼</span>
+      </div>
+      <div class="collapse show" id="bodyDerivados">
+        <div class="cr-section-body">
+          <div class="cr-fields-grid" id="gridDerivados"></div>
+        </div>
+      </div>
+    </div>
+
+    {# ══════ SECCIÓN 3: AVANZADOS ══════ #}
+    <div class="cr-section" id="sectionAvanzados" style="display:none;">
+      <div class="cr-section-header" data-bs-toggle="collapse" data-bs-target="#bodyAvanzados" aria-expanded="true">
+        <span class="cr-section-title">
+          <span class="cr-section-icon amber">🔗</span>
+          Avanzados
+        </span>
+        <span class="cr-section-toggle">▼</span>
+      </div>
+      <div class="collapse show" id="bodyAvanzados">
+        <div class="cr-section-body">
+          <div class="cr-fields-grid" id="gridAvanzados"></div>
+        </div>
+      </div>
+    </div>
+
+    {# ══════ RESUMEN ══════ #}
+    <div class="cr-section" style="margin-bottom:20px;">
+      <div class="cr-section-header" data-bs-toggle="collapse" data-bs-target="#bodyResumen" aria-expanded="true">
+        <span class="cr-section-title">
+          <span class="cr-section-icon pink">📋</span>
+          Resumen de campos
+        </span>
+        <span class="cr-section-toggle">▼</span>
+      </div>
+      <div class="collapse show" id="bodyResumen">
+        <div class="cr-section-body">
+          <div class="cr-resumen-head">
+            <h4>📄 Vista previa</h4>
+            <div class="cr-resumen-actions">
+              <button type="button" class="cr-btn-mini" id="btnCopiarResumen">
+                <i class="fas fa-copy"></i> Copiar
+              </button>
+              <button type="button" class="cr-btn-mini whatsapp" id="btnWhatsapp">
+                <i class="fab fa-whatsapp"></i> WhatsApp
+              </button>
+            </div>
+          </div>
+          <div class="cr-resumen-body" id="resumenContenido">
+            <div class="cr-res-empty">
+              Ingresa números principales para ver los valores derivados.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {# ══════ BOTONES ══════ #}
+    <div class="cr-actions">
+      <button type="button" class="cr-btn cr-btn-secondary" id="btnLimpiar">
+        <i class="fas fa-undo"></i> Limpiar
+      </button>
+      <a href="{% url 'resultados:resultados' %}" class="cr-btn cr-btn-secondary">
+        <i class="fas fa-arrow-left"></i> Cancelar
+      </a>
+      <button type="submit" class="cr-btn cr-btn-primary" id="btnGuardar" disabled>
+        <i class="fas fa-save"></i> Guardar Resultado
+      </button>
+    </div>
+  </form>
+</div>
+{% endblock %}
+
+
+{% block extra_js %}
+<script>
+(function() {
+  'use strict';
+
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const isTouch = window.matchMedia('(hover: none)').matches;
+
+  // ══════════════════════════════════════════════════════════════
+  // HUE PERSONAL + HORA
+  // ══════════════════════════════════════════════════════════════
+  const username = "{{ user.username|escapejs }}";
+  let hash = 0;
+  for (let i = 0; i < username.length; i++) hash = username.charCodeAt(i) + ((hash << 5) - hash);
+  const baseHue = Math.abs(hash) % 360;
+  const hour = new Date().getHours();
+  let hueShift = 0;
+  if (hour >= 5 && hour < 9)       hueShift = -20;
+  else if (hour >= 9 && hour < 17) hueShift = 0;
+  else if (hour >= 17 && hour < 21) hueShift = 10;
+  else                              hueShift = 20;
+  document.documentElement.style.setProperty('--cr-hue', (baseHue + hueShift + 360) % 360);
+
+  // ══════════════════════════════════════════════════════════════
+  // REFERENCIAS DOM
+  // ══════════════════════════════════════════════════════════════
+  const $ = (id) => document.getElementById(id);
+  const DOM = {
+    pick2: $('id_pick2'), pick3: $('id_pick3'), pick4: $('id_pick4'), pick5: $('id_pick5'),
+    pf: $('id_pf'), fijo: $('id_fijo'),
+    corrido1: $('id_corrido_1'), corrido2: $('id_corrido_2'),
+    centena1: $('id_centena_corrida_1'), centena2: $('id_centena_corrida_2'),
+    parlet: $('id_parlet'), posicion: $('id_posicion'), tripleta: $('id_tripleta'),
+    vspf: $('id_vspf'), vspick2: $('id_vspick2'), pick2vspf: $('id_pick2vspf'),
+    resumenContenido: $('resumenContenido'),
+    progressFill: $('crProgressFill'), progressLabel: $('crProgressLabel'),
+    fechaSelector: $('fechaSelector'), fechaHidden: $('id_fecha_hidden'),
+    horaHidden: $('id_hora_hidden'), sorteoHidden: $('id_sorteo'),
+    listaSorteos: $('listaSorteos'), sorteosCountNum: $('sorteosCountNum'),
+    sorteosSpinner: $('sorteosSpinner'), sorteoSelectedLabel: $('sorteoSelectedLabel'),
+    btnLimpiar: $('btnLimpiar'), btnCopiar: $('btnCopiarResumen'),
+    btnWhatsapp: $('btnWhatsapp'), btnGuardar: $('btnGuardar'),
+    clock: $('crClock'), toasts: $('crToasts'),
+    header: $('crHeader'), cursor: $('crCursor'),
+    spotlight: $('crSpotlight'), progressBarTop: $('crProgressBar'),
+    camposPool: $('camposPool'), camposEmpty: $('camposEmpty'),
+    gridPrincipales: $('gridPrincipales'),
+    gridDerivados: $('gridDerivados'),
+    gridAvanzados: $('gridAvanzados'),
+    sectionPrincipales: $('sectionPrincipales'),
+    sectionDerivados: $('sectionDerivados'),
+    sectionAvanzados: $('sectionAvanzados'),
+  };
+
+  // ✨ Nodo .cr-field por nombre de campo
+  const FIELD_NODES = {};
+  document.querySelectorAll('#camposPool .cr-field[data-field]').forEach(el => {
+    FIELD_NODES[el.dataset.field] = el;
+  });
+
+  // ✨ Etiquetas para el resumen
+  const FIELD_LABELS = {
+    pick2:'Pick 2', pick3:'Pick 3', pick4:'Pick 4', pick5:'Pick 5',
+    pf:'PF', fijo:'Fijo', corrido1:'Corrido 1', corrido2:'Corrido 2',
+    centena1:'Centena 1', centena2:'Centena 2',
+    parlet:'Parlet', posicion:'Posición', tripleta:'Tripleta',
+    vspf:'VS PF', vspick2:'VS Pick2', pick2vspf:'Pick2 vs PF',
+  };
+
+  // ✨ Estado de visibilidad
+  const visState = {
+    visibles: new Set(),
+    principales: new Set(),
+    sections: { principales: [], derivados: [], avanzados: [] },
+    config: null,
+  };
+
+  // ══════════════════════════════════════════════════════════════
+  // ESTADO
+  // ══════════════════════════════════════════════════════════════
+  let sorteoSeleccionado = null;
+  let sorteosDisponibles = [];
+
+  // ══════════════════════════════════════════════════════════════
+  // TOASTS
+  // ══════════════════════════════════════════════════════════════
+  function toast(msg, tipo) {
+    tipo = tipo || 'info';
+    const d = document.createElement('div');
+    d.className = 'cr-toast ' + tipo;
+    d.innerHTML = msg;
+    DOM.toasts.appendChild(d);
+    setTimeout(() => d.remove(), 5000);
+  }
+
+  // ══════════════════════════════════════════════════════════════
+  // PROGRESS BAR SUPERIOR
+  // ══════════════════════════════════════════════════════════════
+  if (DOM.progressBarTop) {
+    DOM.progressBarTop.style.width = '35%';
+    setTimeout(() => DOM.progressBarTop.style.width = '75%', 100);
+    window.addEventListener('load', () => {
+      DOM.progressBarTop.style.width = '100%';
+      setTimeout(() => DOM.progressBarTop.style.opacity = '0', 400);
+    });
+  }
+
+  // ══════════════════════════════════════════════════════════════
+  // PARALLAX + SPOTLIGHT + CURSOR
+  // ══════════════════════════════════════════════════════════════
+  const aurora = document.querySelector('.cr-aurora');
+  let rafMouse = null, lastX = 0, lastY = 0;
+  function onMouseMove(e) {
+    lastX = e.clientX; lastY = e.clientY;
+    if (rafMouse) return;
+    rafMouse = requestAnimationFrame(() => {
+      rafMouse = null;
+      const w = window.innerWidth, h = window.innerHeight;
+      const px = (lastX / w) * 100, py = (lastY / h) * 100;
+      if (DOM.spotlight) {
+        DOM.spotlight.style.setProperty('--mx', px + '%');
+        DOM.spotlight.style.setProperty('--my', py + '%');
+        DOM.spotlight.classList.add('active');
+      }
+      if (DOM.cursor) {
+        DOM.cursor.style.left = lastX + 'px';
+        DOM.cursor.style.top = lastY + 'px';
+        DOM.cursor.classList.add('active');
+      }
+      if (aurora) {
+        aurora.style.setProperty('--ax', (20 + (px - 50) * 0.08) + '%');
+        aurora.style.setProperty('--ay', (15 + (py - 50) * 0.08) + '%');
+        aurora.style.setProperty('--bx', (80 + (px - 50) * 0.05) + '%');
+        aurora.style.setProperty('--by', (25 + (py - 50) * 0.05) + '%');
+        aurora.style.setProperty('--dx', (60 + (px - 50) * 0.06) + '%');
+        aurora.style.setProperty('--dy', (50 + (py - 50) * 0.06) + '%');
+      }
+    });
+  }
+  if (!isTouch && !reduceMotion) {
+    document.addEventListener('mousemove', onMouseMove, { passive: true });
+    document.addEventListener('mouseleave', () => {
+      if (DOM.spotlight) DOM.spotlight.classList.remove('active');
+      if (DOM.cursor) DOM.cursor.classList.remove('active');
+    });
+    document.addEventListener('mousedown', () => DOM.cursor && DOM.cursor.classList.add('click'));
+    document.addEventListener('mouseup', () => DOM.cursor && DOM.cursor.classList.remove('click'));
+  }
+
+  // ══════════════════════════════════════════════════════════════
+  // HEADER TILT
+  // ══════════════════════════════════════════════════════════════
+  if (DOM.header && !isTouch && !reduceMotion) {
+    let rafH = null;
+    DOM.header.addEventListener('mousemove', (e) => {
+      if (rafH) return;
+      rafH = requestAnimationFrame(() => {
+        const r = DOM.header.getBoundingClientRect();
+        const x = (e.clientX - r.left) / r.width - 0.5;
+        const y = (e.clientY - r.top) / r.height - 0.5;
+        DOM.header.style.transform =
+          `perspective(1400px) rotateY(${x * 2}deg) rotateX(${-y * 2}deg)`;
+        rafH = null;
+      });
+    });
+    DOM.header.addEventListener('mouseleave', () => DOM.header.style.transform = '');
+  }
+
+  // ══════════════════════════════════════════════════════════════
+  // RELOJ EN VIVO
+  // ══════════════════════════════════════════════════════════════
+  function tickClock() {
+    const now = new Date();
+    const pad = (n) => String(n).padStart(2, '0');
+    const fmt = `${pad(now.getDate())}/${pad(now.getMonth() + 1)}/${String(now.getFullYear()).slice(2)} ` +
+                `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+    if (DOM.clock) DOM.clock.textContent = fmt;
+    if (DOM.horaHidden) DOM.horaHidden.value = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
+  }
+  tickClock();
+  setInterval(tickClock, 1000);
+
+  // ══════════════════════════════════════════════════════════════
+  // UTILS
+  // ══════════════════════════════════════════════════════════════
+  function obtenerOrdenCampos() {
+    const out = [];
+    ['pick2','pick3','pick4','pick5','fijo','corrido1','corrido2'].forEach(f => {
+      if (visState.principales.has(f)) {
+        const inp = FIELD_NODES[f]?.querySelector('input');
+        if (inp) out.push(inp);
+      }
+    });
+    return out;
+  }
+
+  function avanzarAlSiguiente(input) {
+    const orden = obtenerOrdenCampos();
+    const idx = orden.indexOf(input);
+    if (idx === -1) return;
+    const sig = orden[idx + 1];
+    if (sig) { sig.focus(); sig.select(); }
+    else if (DOM.btnGuardar) { DOM.btnGuardar.focus(); }
+  }
+
+  function actualizarContadores() {
+    document.querySelectorAll('#resultadoForm .cr-field input[type="text"]').forEach((inp) => {
+      const counter = inp.closest('.cr-field')?.querySelector('.cr-digits');
+      if (counter) {
+        const max = parseInt(inp.getAttribute('maxlength')) || 0;
+        counter.textContent = `${inp.value.length}/${max}`;
+      }
+    });
+  }
+
+  function validarCampo(input) {
+    const card = input.closest('.cr-field');
+    if (!card) return;
+    const max = parseInt(input.getAttribute('maxlength')) || 0;
+    const val = input.value.trim();
+    card.classList.remove('status-valid', 'status-error');
+    if (max > 0 && val.length === max && /^\d+$/.test(val)) card.classList.add('status-valid');
+    else if (val.length > 0) card.classList.add('status-error');
+  }
+
+  // ══════════════════════════════════════════════════════════════
+  // CLASIFICACIÓN Y VISIBILIDAD DE CAMPOS POR SORTEO
+  // ══════════════════════════════════════════════════════════════
+  function clasificarCampos(config) {
+    const picksEnabled = ['pick2','pick3','pick4','pick5'].filter(p => config[p]);
+    const hayPicks = picksEnabled.length > 0;
+    const s = { principales: [], derivados: [], avanzados: [] };
+
+    if (hayPicks) {
+      picksEnabled.forEach(p => s.principales.push(p));
+      if (config.fijo) s.derivados.push('fijo');
+      if (config.corridos) { s.derivados.push('corrido1'); s.derivados.push('corrido2'); }
+    } else {
+      if (config.fijo) s.principales.push('fijo');
+      if (config.corridos) { s.principales.push('corrido1'); s.principales.push('corrido2'); }
+    }
+
+    if (config.pf) s.derivados.push('pf');
+    if (config['centenas corridas']) { s.derivados.push('centena1'); s.derivados.push('centena2'); }
+
+    if (config.parlet) s.avanzados.push('parlet');
+    if (config.posicion) s.avanzados.push('posicion');
+    if (config.tripleta) s.avanzados.push('tripleta');
+    if (config.vspf) s.avanzados.push('vspf');
+    if (config.vspick2) s.avanzados.push('vspick2');
+    if (config.pick2vspf) s.avanzados.push('pick2vspf');
+    return s;
+  }
+
+  function aplicarVisibilidad(config) {
+    const sections = clasificarCampos(config);
+    visState.sections = sections;
+    visState.config = config;
+    visState.visibles = new Set([...sections.principales, ...sections.derivados, ...sections.avanzados]);
+    visState.principales = new Set(sections.principales);
+
+    [DOM.gridPrincipales, DOM.gridDerivados, DOM.gridAvanzados].forEach(g => {
+      if (g) g.innerHTML = '';
+    });
+    Object.keys(FIELD_NODES).forEach(f => {
+      const node = FIELD_NODES[f];
+      if (node && node.parentNode !== DOM.camposPool) {
+        DOM.camposPool.appendChild(node);
+      }
+    });
+
+    sections.principales.forEach(f => {
+      const node = FIELD_NODES[f];
+      if (node) DOM.gridPrincipales.appendChild(node);
+    });
+    sections.derivados.forEach(f => {
+      const node = FIELD_NODES[f];
+      if (node) DOM.gridDerivados.appendChild(node);
+    });
+    sections.avanzados.forEach(f => {
+      const node = FIELD_NODES[f];
+      if (node) DOM.gridAvanzados.appendChild(node);
+    });
+
+    DOM.sectionPrincipales.style.display = sections.principales.length ? '' : 'none';
+    DOM.sectionDerivados.style.display   = sections.derivados.length   ? '' : 'none';
+    DOM.sectionAvanzados.style.display   = sections.avanzados.length   ? '' : 'none';
+
+    DOM.camposEmpty.style.display = visState.visibles.size ? 'none' : '';
+
+    rebindInputEvents();
+  }
+
+  async function cargarYAplicarConfig(sorteoId) {
+    try {
+      const r = await fetch(`{% url 'jugadas:api_configuracion_sorteo' %}?sorteo_id=${sorteoId}`);
+      const data = await r.json();
+      if (!data.success) {
+        toast('Error al cargar configuración del sorteo', 'error');
+        return;
+      }
+      aplicarVisibilidad(data.config || {});
+    } catch (e) {
+      console.error('[crear_resultado] error config:', e);
+      toast('Error al cargar configuración del sorteo', 'error');
+    }
+  }
+
+  function limpiarTodosCampos() {
+    document.querySelectorAll('#resultadoForm input[type="text"]').forEach(inp => {
+      inp.value = '';
+      const card = inp.closest('.cr-field');
+      if (card) card.classList.remove('status-valid', 'status-error');
+    });
+  }
+
+  // ══════════════════════════════════════════════════════════════
+  // DERIVACIÓN
+  // ══════════════════════════════════════════════════════════════
+  function derivar() {
+    const p2 = DOM.pick2.value.trim();
+    const p3 = DOM.pick3.value.trim();
+    const p4 = DOM.pick4.value.trim();
+
+    // PF
+    if (p3.length >= 2) DOM.pf.value = p3.substring(0, 2);
+    else if (p2.length >= 2) DOM.pf.value = p2;
+    else DOM.pf.value = '';
+
+    // ─── ¿El sorteo activo deriva estos campos automáticamente? ───
+    // Si pick4/pick3/pick2 están visibles, el sorteo los usa como
+    // fuente autoritativa y los campos derivados SIEMPRE se recalculan.
+    const tienePick4 = visState.principales.has('pick4');
+    const tienePick3 = visState.principales.has('pick3');
+    const tienePick2 = visState.principales.has('pick2');
+
+    // ─── Fijo: si hay pick3 o pick2, ES AUTORIDAD (siempre se recalcula) ───
+    // Antes el guard `if (!value)` impedía actualizar fijo cuando pick3
+    // cambiaba después de tener valor. Ahora se sincroniza siempre.
+    if (tienePick3 || tienePick2) {
+      if (p3.length >= 2)      DOM.fijo.value = p3.substring(p3.length - 2);
+      else if (p2.length >= 2) DOM.fijo.value = p2;
+      else                     DOM.fijo.value = '';
+    } else if (!DOM.fijo.value.trim()) {
+      // Modo manual (sin picks): solo rellena si está vacío
+      if (p3.length >= 2)      DOM.fijo.value = p3.substring(p3.length - 2);
+      else if (p2.length >= 2) DOM.fijo.value = p2;
+    }
+
+    // ─── Corridos: si hay pick4, SON AUTORIDAD (siempre se recalculan) ───
+    // BUG anterior:
+    //   1) El guard `if (!DOM.corridoX.value.trim())` impedía actualizar
+    //      corrido2 una vez que había tomado valor.
+    //   2) El branch `p4.length === 3` metía "23" al escribir "123", y ese
+    //      valor quedaba pegado al llegar "1234".
+    // FIX: cuando pick4 está visible, se deriva SIEMPRE y sin branch de 3 dígitos.
+    if (tienePick4) {
+      DOM.corrido1.value = (p4.length >= 2) ? p4.substring(0, 2) : '';
+      DOM.corrido2.value = (p4.length >= 4) ? p4.substring(2, 4) : '';
+    } else {
+      // Modo manual: solo rellena si está vacío
+      if (!DOM.corrido1.value.trim() && p4.length >= 2) {
+        DOM.corrido1.value = p4.substring(0, 2);
+      }
+      if (!DOM.corrido2.value.trim() && p4.length >= 4) {
+        DOM.corrido2.value = p4.substring(2, 4);
+      }
+    }
+
+    const fVal = DOM.fijo.value.trim();
+    const c1Val = DOM.corrido1.value.trim();
+    const c2Val = DOM.corrido2.value.trim();
+
+    // Centenas
+    if (p3.length === 3 && c1Val.length === 2) DOM.centena1.value = p3[2] + c1Val;
+    else DOM.centena1.value = '';
+    if (p3.length === 3 && c2Val.length === 2) {
+      const d1 = parseInt(p3[0]);
+      const d3 = parseInt(p3[2]);
+      DOM.centena2.value = ((d1 + d3) % 10) + c2Val;
+    } else {
+      DOM.centena2.value = '';
+    }
+
+    // Parlet
+    const fijos = [fVal, c1Val, c2Val].filter(v => v.length === 2);
+    const parlets = new Set();
+    for (let i = 0; i < fijos.length; i++) {
+      for (let j = i + 1; j < fijos.length; j++) {
+        if (fijos[i] !== fijos[j]) {
+          parlets.add(fijos[i] + 'x' + fijos[j]);
+          parlets.add(fijos[j] + 'x' + fijos[i]);
+        }
+      }
+    }
+    DOM.parlet.value = Array.from(parlets).sort().join('  ');
+
+    // Posición / Tripleta
+    if (fVal && c1Val && c2Val) {
+      DOM.posicion.value = `${fVal} ${c1Val} ${c2Val}`;
+      DOM.tripleta.value = DOM.posicion.value;
+    } else {
+      DOM.posicion.value = '';
+      DOM.tripleta.value = '';
+    }
+
+    // VS PF
+    const pfVal = DOM.pf.value;
+    const vspfArr = [];
+    if (pfVal) fijos.forEach(n => { if (n !== pfVal) vspfArr.push(pfVal + 'x' + n); });
+    DOM.vspf.value = vspfArr.sort().join('  ');
+
+    // VS Pick2
+    const p2val = DOM.pick2.value.trim();
+    const vspick2Arr = [];
+    if (p2val.length === 2) fijos.forEach(n => { if (n !== p2val) vspick2Arr.push(p2val + 'x' + n); });
+    DOM.vspick2.value = vspick2Arr.sort().join('  ');
+
+    // Pick2 vs PF
+    if (p2val.length === 2 && pfVal && p2val !== pfVal) DOM.pick2vspf.value = pfVal + 'x' + p2val;
+    else DOM.pick2vspf.value = '';
+
+    actualizarContadores();
+    actualizarResumen();
+    actualizarProgreso();
+  }
+
+  // ══════════════════════════════════════════════════════════════
+  // RESUMEN — Grid compacto
+  // ══════════════════════════════════════════════════════════════
+  function actualizarResumen() {
+    const sorteoNombre = sorteoSeleccionado ? sorteoSeleccionado.nombre : '—';
+    const fechaVal = DOM.fechaSelector.value;
+    let fechaFmt = '—';
+    if (fechaVal) {
+      const [y, m, d] = fechaVal.split('-');
+      fechaFmt = `${d}/${m}/${y}`;
+    }
+
+    const titulos = {
+      principales: '🎯 Principales',
+      derivados: '➡️ Derivados',
+      avanzados: '🔗 Avanzados',
+    };
+
+    // Campos que ocupan fila completa (valores largos)
+    const CAMPOS_ANCHOS = new Set(['parlet', 'posicion', 'tripleta', 'vspf', 'vspick2']);
+
+    let html = `
+      <div class="cr-res-meta">
+        <span class="cr-res-meta-row">
+          <span class="lbl">Sorteo</span>
+          <span class="val">${sorteoNombre}</span>
+        </span>
+        <span class="cr-res-meta-row">
+          <span class="lbl">Fecha</span>
+          <span class="val">${fechaFmt}</span>
+        </span>
+      </div>`;
+
+    let hayCampos = false;
+
+    ['principales', 'derivados', 'avanzados'].forEach(sec => {
+      const items = (visState.sections[sec] || [])
+        .map(f => {
+          const inp = FIELD_NODES[f]?.querySelector('input');
+          const val = inp ? inp.value.trim() : '';
+          return val ? { key: f, l: FIELD_LABELS[f] || f, v: val } : null;
+        })
+        .filter(Boolean);
+
+      if (items.length) {
+        hayCampos = true;
+        html += `<div class="cr-res-sec-title">${titulos[sec]}</div>`;
+        html += `<div class="cr-res-grid">`;
+        items.forEach(item => {
+          const wide = CAMPOS_ANCHOS.has(item.key) || item.v.length > 30;
+          html += `<div class="cr-res-item ${wide ? 'wide' : ''}">
+            <span class="cr-res-lbl">${item.l}</span>
+            <span class="cr-res-val" title="${item.v.replace(/"/g, '&quot;')}">${item.v}</span>
+          </div>`;
+        });
+        html += `</div>`;
+      }
+    });
+
+    if (!hayCampos) {
+      html += '<div class="cr-res-empty">Ingresa números principales para ver los valores derivados.</div>';
+    }
+
+    DOM.resumenContenido.innerHTML = html;
+  }
+
+  // ══════════════════════════════════════════════════════════════
+  // PROGRESO
+  // ══════════════════════════════════════════════════════════════
+  function actualizarProgreso() {
+    const campos = obtenerOrdenCampos();
+    const llenos = campos.filter(c => c.value.trim().length > 0).length;
+    const total = campos.length;
+    const pct = total > 0 ? Math.round((llenos / total) * 100) : 0;
+    if (DOM.progressFill) DOM.progressFill.style.width = pct + '%';
+    if (DOM.progressLabel) DOM.progressLabel.textContent = `${llenos}/${total}`;
+
+    const listo = !!sorteoSeleccionado && llenos >= 1;
+    if (DOM.btnGuardar) DOM.btnGuardar.disabled = !listo;
+  }
+
+  // ══════════════════════════════════════════════════════════════
+  // REBIND DE EVENTOS EN INPUTS
+  // ══════════════════════════════════════════════════════════════
+  function rebindInputEvents() {
+    document.querySelectorAll('#resultadoForm .cr-field input[type="text"]').forEach(inp => {
+      if (inp.dataset.bound === '1') return;
+      inp.dataset.bound = '1';
+
+      inp.addEventListener('input', function() {
+        derivar();
+        validarCampo(this);
+        const max = parseInt(this.getAttribute('maxlength')) || 0;
+        if (max > 0 && this.value.trim().length === max && /^\d+$/.test(this.value.trim())) {
+          const orden = obtenerOrdenCampos();
+          if (orden.includes(this)) avanzarAlSiguiente(this);
+        }
+      });
+      inp.addEventListener('blur', function() { validarCampo(this); });
+    });
+  }
+
+  // ══════════════════════════════════════════════════════════════
+  // SORTEOS — carga + render chips
+  // ══════════════════════════════════════════════════════════════
+  function cargarSorteos() {
+    const fecha = DOM.fechaSelector.value;
+    if (!fecha) return;
+
+    DOM.sorteosSpinner.style.display = 'inline-block';
+    DOM.listaSorteos.innerHTML = `
+      <div class="cr-sorteo-empty">
+        <span class="ico">⏳</span>
+        Cargando sorteos disponibles...
+      </div>`;
+
+    fetch(`/resultados/api/sorteos-disponibles/?fecha=${fecha}`)
+      .then(r => r.json())
+      .then(data => {
+        DOM.sorteosSpinner.style.display = 'none';
+        sorteosDisponibles = Array.isArray(data) ? data : [];
+        DOM.sorteosCountNum.textContent = sorteosDisponibles.length;
+
+        if (!sorteosDisponibles.length) {
+          DOM.listaSorteos.innerHTML = `
+            <div class="cr-sorteo-empty">
+              <span class="ico">📭</span>
+              No hay sorteos disponibles para esta fecha.<br>
+              <span style="font-size:0.75rem;opacity:0.7;">Puede que ya todos tengan resultado.</span>
+            </div>`;
+          return;
+        }
+
+        DOM.listaSorteos.innerHTML = sorteosDisponibles.map(s => {
+          const horaSalida = s.hora_salida || s.hora_salida_str || '—';
+          return `
+            <button type="button"
+                    class="cr-sorteo-chip"
+                    data-id="${s.id}"
+                    data-nombre="${s.nombre}"
+                    data-hora="${horaSalida}">
+              <div class="cr-sorteo-chip-name">${s.nombre}</div>
+              <div class="cr-sorteo-chip-meta">
+                <span class="cr-chip-status ready">✅ Disponible</span>
+                <span>🕒 ${horaSalida}</span>
+              </div>
+            </button>`;
+        }).join('');
+
+        DOM.listaSorteos.querySelectorAll('.cr-sorteo-chip').forEach(chip => {
+          chip.addEventListener('click', async () => {
+            const yaActivo = chip.classList.contains('active');
+            DOM.listaSorteos.querySelectorAll('.cr-sorteo-chip').forEach(c => c.classList.remove('active'));
+
+            if (yaActivo) {
+              sorteoSeleccionado = null;
+              DOM.sorteoHidden.value = '';
+              DOM.sorteoSelectedLabel.textContent = 'Ningún sorteo seleccionado';
+              limpiarTodosCampos();
+              aplicarVisibilidad({});
+            } else {
+              chip.classList.add('active');
+              sorteoSeleccionado = {
+                id: chip.dataset.id,
+                nombre: chip.dataset.nombre,
+                hora: chip.dataset.hora,
+              };
+              DOM.sorteoHidden.value = chip.dataset.id;
+              DOM.sorteoSelectedLabel.textContent = `🎯 ${chip.dataset.nombre} (${chip.dataset.hora})`;
+
+              limpiarTodosCampos();
+              await cargarYAplicarConfig(sorteoSeleccionado.id);
+            }
+
+            derivar();
+            actualizarResumen();
+            actualizarProgreso();
+          });
+        });
+      })
+      .catch(err => {
+        console.error('[crear_resultado] error sorteos:', err);
+        DOM.sorteosSpinner.style.display = 'none';
+        DOM.listaSorteos.innerHTML = `
+          <div class="cr-sorteo-empty">
+            <span class="ico">⚠️</span>
+            Error al cargar sorteos.
+          </div>`;
+      });
+  }
+
+  // ══════════════════════════════════════════════════════════════
+  // EVENTOS GLOBALES
+  // ══════════════════════════════════════════════════════════════
+  DOM.fechaSelector.addEventListener('change', function() {
+    DOM.fechaHidden.value = this.value;
+    sorteoSeleccionado = null;
+    DOM.sorteoHidden.value = '';
+    DOM.sorteoSelectedLabel.textContent = 'Ningún sorteo seleccionado';
+    limpiarTodosCampos();
+    aplicarVisibilidad({});
+    cargarSorteos();
+    derivar();
+    actualizarResumen();
+    actualizarProgreso();
+  });
+
+  DOM.btnLimpiar.addEventListener('click', () => {
+    limpiarTodosCampos();
+    derivar();
+    const orden = obtenerOrdenCampos();
+    if (orden.length) orden[0].focus();
+  });
+
+  DOM.btnCopiar.addEventListener('click', () => {
+    const texto = DOM.resumenContenido.innerText;
+    navigator.clipboard.writeText(texto)
+      .then(() => toast('✅ Resumen copiado', 'success'))
+      .catch(() => toast('⚠️ No se pudo copiar', 'warn'));
+  });
+
+  DOM.btnWhatsapp.addEventListener('click', () => {
+    const texto = DOM.resumenContenido.innerText;
+    window.open('https://api.whatsapp.com/send?text=' + encodeURIComponent(texto), '_blank');
+  });
+
+  // ══════════════════════════════════════════════════════════════
+  // SUBMIT — validación cliente + confetti
+  // ══════════════════════════════════════════════════════════════
+  const form = document.getElementById('resultadoForm');
+  form.addEventListener('submit', (e) => {
+    if (!sorteoSeleccionado) {
+      e.preventDefault();
+      toast('⚠️ Selecciona un sorteo primero.', 'warn');
+      return;
+    }
+    if (!reduceMotion) {
+      const cx = window.innerWidth / 2;
+      const cy = window.innerHeight / 3;
+      const colors = ['#4361ee', '#7209b7', '#f72585', '#4cc9f0', '#10b981', '#f59e0b'];
+      for (let i = 0; i < 50; i++) {
+        const c = document.createElement('span');
+        c.className = 'cr-confetti-piece';
+        c.style.background = colors[Math.floor(Math.random() * colors.length)];
+        c.style.left = cx + 'px';
+        c.style.top = cy + 'px';
+        if (Math.random() > 0.5) c.style.borderRadius = '50%';
+        document.body.appendChild(c);
+        const angle = Math.random() * Math.PI * 2;
+        const velocity = 4 + Math.random() * 8;
+        const dx = Math.cos(angle) * velocity * 20;
+        const dy = Math.sin(angle) * velocity * 20;
+        let px = 0, py = 0, t = 0;
+        const rot = Math.random() * 360;
+        (function step() {
+          t++;
+          px += dx / 40; py += dy / 40 + t * 0.5;
+          c.style.transform = `translate(${px}px, ${py}px) rotate(${rot + t * 14}deg)`;
+          c.style.opacity = 1 - t / 65;
+          if (t < 65) requestAnimationFrame(step);
+          else c.remove();
+        })();
+      }
+    }
+  });
+
+  // ══════════════════════════════════════════════════════════════
+  // INICIALIZACIÓN
+  // ══════════════════════════════════════════════════════════════
+  aplicarVisibilidad({});
+  actualizarResumen();
+  actualizarProgreso();
+  cargarSorteos();
+
+})();
+</script>
+{% endblock extra_js %}

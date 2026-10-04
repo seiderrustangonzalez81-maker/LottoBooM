@@ -1,0 +1,11 @@
+[
+  { "model": "pagos.formapago", "pk": 1, "fields": { "nombre": "Efectivo", "activo": true, "creado_en": "2026-07-21T00:00:00Z", "actualizado_en": "2026-07-21T00:00:00Z" } },
+  { "model": "pagos.formapago", "pk": 2, "fields": { "nombre": "Bono", "activo": true, "creado_en": "2026-07-21T00:00:00Z", "actualizado_en": "2026-07-21T00:00:00Z" } },
+  { "model": "pagos.formapago", "pk": 3, "fields": { "nombre": "Tarjeta", "activo": true, "creado_en": "2026-07-21T00:00:00Z", "actualizado_en": "2026-07-21T00:00:00Z" } },
+  { "model": "pagos.formapago", "pk": 4, "fields": { "nombre": "Saldo móvil", "activo": true, "creado_en": "2026-07-21T00:00:00Z", "actualizado_en": "2026-07-21T00:00:00Z" } },
+  { "model": "pagos.formapago", "pk": 5, "fields": { "nombre": "MLC", "activo": true, "creado_en": "2026-07-21T00:00:00Z", "actualizado_en": "2026-07-21T00:00:00Z" } },
+  { "model": "pagos.formapago", "pk": 6, "fields": { "nombre": "Cash", "activo": true, "creado_en": "2026-07-21T00:00:00Z", "actualizado_en": "2026-07-21T00:00:00Z" } },
+  { "model": "pagos.formapago", "pk": 7, "fields": { "nombre": "Zelle", "activo": true, "creado_en": "2026-07-21T00:00:00Z", "actualizado_en": "2026-07-21T00:00:00Z" } },
+  { "model": "pagos.formapago", "pk": 8, "fields": { "nombre": "Clásica", "activo": true, "creado_en": "2026-07-21T00:00:00Z", "actualizado_en": "2026-07-21T00:00:00Z" } },
+  { "model": "pagos.formapago", "pk": 9, "fields": { "nombre": "Monedero", "activo": true, "creado_en": "2026-07-21T00:00:00Z", "actualizado_en": "2026-07-21T00:00:00Z" } }
+]

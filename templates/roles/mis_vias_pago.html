@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block page_title %}Mis Vías de Pago{% endblock %}
+
+{% block extra_css %}
+<style>
+  .via-card {
+    border-left: 4px solid #0d6efd;
+    transition: box-shadow 0.2s;
+  }
+  .via-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+  .via-dato {
+    font-family: 'SF Mono', 'Courier New', monospace;
+    font-size: 0.9rem;
+    background: #f8f9fa;
+    padding: 2px 8px;
+    border-radius: 4px;
+    display: inline-block;
+    color: #212529;
+    user-select: all;
+  }
+  .btn-copiar {
+    border: 1px solid #dee2e6;
+    background: #fff;
+    color: #495057;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    transition: all 0.2s;
+    cursor: pointer;
+  }
+  .btn-copiar:hover {
+    background: #0d6efd;
+    color: #fff;
+    border-color: #0d6efd;
+  }
+  .btn-copiar.copiado {
+    background: #198754;
+    color: #fff;
+    border-color: #198754;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2><i class="fas fa-credit-card"></i> Mis Vías de Pago</h2>
+        <div>
+            <span class="badge bg-primary">{{ total_vias }}</span> total
+            <span class="badge bg-success">{{ vias_activas }}</span> activas
+            <a href="{% url 'roles:agregar_via_pago' %}" class="btn btn-sm btn-success ms-2">
+                <i class="fas fa-plus"></i> Nueva vía
+            </a>
+        </div>
+    </div>
+    <hr>
+
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <form method="get" class="d-flex">
+                <input type="text" name="q" class="form-control me-2" placeholder="Buscar por nombre o número..." value="{{ request.GET.q }}">
+                <button type="submit" class="btn btn-outline-primary"><i class="fas fa-search"></i></button>
+                {% if request.GET.q %}
+                    <a href="{% url 'roles:mis_vias_pago' %}" class="btn btn-outline-danger ms-1"><i class="fas fa-times"></i></a>
+                {% endif %}
+            </form>
+        </div>
+    </div>
+
+    {% for group in vias_por_forma %}
+        <div class="card mb-3">
+            <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                <strong><i class="fas fa-tag"></i> {{ group.forma_pago.nombre }}</strong>
+                <span class="badge bg-secondary">{{ group.vias|length }}</span>
+            </div>
+            <div class="card-body p-0">
+                <ul class="list-group list-group-flush">
+                    {% for via in group.vias %}
+                        <li class="list-group-item via-card">
+                            <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+                                <div class="flex-grow-1">
+                                    <div class="d-flex align-items-center gap-2 mb-1">
+                                        <strong>{{ via.nombre }}</strong>
+                                        {% if via.activo %}
+                                            <span class="badge bg-success">Activo</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">Inactivo</span>
+                                        {% endif %}
+                                        {% if via.es_por_defecto %}
+                                            <span class="badge bg-warning text-dark">★ Por defecto</span>
+                                        {% endif %}
+                                    </div>
+
+                                    {% if via.numero_tarjeta %}
+                                        <div class="mb-1">
+                                            <i class="fas fa-credit-card text-muted"></i>
+                                            <span class="via-dato">{{ via.numero_tarjeta }}</span>
+                                            <button type="button" class="btn-copiar ms-1"
+                                                    data-copiar="{{ via.numero_tarjeta }}"
+                                                    onclick="copiarVia(this)">
+                                                <i class="fas fa-copy"></i> Copiar
+                                            </button>
+                                        </div>
+                                    {% endif %}
+
+                                    {% if via.telefono %}
+                                        <div class="mb-1">
+                                            <i class="fas fa-phone text-muted"></i>
+                                            <span class="via-dato">{{ via.telefono }}</span>
+                                            <button type="button" class="btn-copiar ms-1"
+                                                    data-copiar="{{ via.telefono }}"
+                                                    onclick="copiarVia(this)">
+                                                <i class="fas fa-copy"></i> Copiar
+                                            </button>
+                                        </div>
+                                    {% endif %}
+
+                                    {% if not via.numero_tarjeta and not via.telefono %}
+                                        <span class="text-muted small">Sin datos específicos</span>
+                                    {% endif %}
+                                </div>
+
+                                <div class="d-flex gap-1">
+                                    <a href="{% url 'roles:editar_via_pago' via.id %}" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <a href="{% url 'roles:eliminar_via_pago' via.id %}" class="btn btn-sm btn-outline-danger">
+                                        <i class="fas fa-trash"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </li>
+                    {% empty %}
+                        <li class="list-group-item text-muted">No hay vías de pago para esta forma.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    {% empty %}
+        <div class="alert alert-info">No tienes vías de pago configuradas. <a href="{% url 'roles:agregar_via_pago' %}">Agrega una</a>.</div>
+    {% endfor %}
+</div>
+
+<script>
+function copiarVia(btn) {
+  const texto = btn.dataset.copiar || '';
+  navigator.clipboard.writeText(texto).then(() => {
+    const original = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-check"></i> ¡Copiado!';
+    btn.classList.add('copiado');
+    setTimeout(() => {
+      btn.innerHTML = original;
+      btn.classList.remove('copiado');
+    }, 1500);
+  }).catch(() => {
+    // fallback
+    const tmp = document.createElement('textarea');
+    tmp.value = texto;
+    document.body.appendChild(tmp);
+    tmp.select();
+    document.execCommand('copy');
+    document.body.removeChild(tmp);
+    btn.innerHTML = '<i class="fas fa-check"></i> ¡Copiado!';
+    btn.classList.add('copiado');
+    setTimeout(() => {
+      btn.innerHTML = '<i class="fas fa-copy"></i> Copiar';
+      btn.classList.remove('copiado');
+    }, 1500);
+  });
+}
+</script>
+{% endblock %}

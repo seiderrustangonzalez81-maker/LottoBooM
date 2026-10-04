@@ -1,0 +1,353 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Detalle del Resultado{% endblock %}
+
+{% block content %}
+<style>
+/* FIX_FLUJO_TOTAL: todo fluye en un solo contenedor flex-wrap */
+
+.nums-compacto {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.nums-sec {
+  background: #f8fafc;
+  border-radius: 10px;
+  padding: 10px 12px;
+  border: 1px solid #e2e8f0;
+}
+
+.nums-sec-title {
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: #334155;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  margin-bottom: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1.5px dashed #cbd5e1;
+}
+
+/* ★ UN SOLO CONTENEDOR FLUJO — sin sub-columnas ni saltos */
+.nums-flujo {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  align-items: center;
+  width: 100%;
+}
+
+/* Sub-título inline (badge) */
+.nums-sub-inline {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 9px;
+  background: linear-gradient(135deg, #e0e7ff, #c7d2fe);
+  color: #3730a3;
+  font-size: 0.6rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-radius: 6px;
+  white-space: nowrap;
+  margin-right: 4px;
+  box-shadow: 0 1px 2px rgba(55, 48, 163, 0.15);
+}
+
+/* Pill: ajustado al contenido */
+.num-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 9px;
+  border-radius: 8px;
+  background: #ffffff;
+  border: 1.5px solid #cbd5e1;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #1e293b;
+  transition: all 0.15s;
+}
+.num-pill:hover {
+  border-color: #6366f1;
+  background: #eef2ff;
+  transform: translateY(-1px);
+}
+
+.num-pill .lbl {
+  font-size: 0.55rem;
+  font-weight: 900;
+  color: #64748b;
+  text-transform: uppercase;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: rgba(148, 163, 184, 0.18);
+  white-space: nowrap;
+}
+
+.num-pill .val {
+  font-family: 'SF Mono', 'Courier New', monospace;
+  font-weight: 800;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 480px;
+}
+
+.num-pill.pill-empty {
+  background: #f8fafc;
+  border-style: dashed;
+  color: #94a3b8;
+  font-style: italic;
+  font-weight: 500;
+}
+
+@media (max-width: 768px) {
+  .nums-sec { padding: 8px 10px; }
+  .num-pill { font-size: 0.72rem; padding: 3px 7px; }
+  .num-pill .lbl { font-size: 0.5rem; padding: 1px 4px; }
+  .num-pill .val { max-width: 200px; }
+  .nums-sub-inline { font-size: 0.55rem; padding: 3px 7px; }
+}
+</style>
+
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3">📊 Detalle: {{ resultado.sorteo.nombre }} - {{ resultado.fecha|date:"d/m/Y" }}</h1>
+        <div>
+            <button id="btn-compartir-detalle" class="btn btn-success me-2">
+                <i class="fab fa-whatsapp"></i> Compartir
+            </button>
+            {% if puede_editar %}
+            <a href="{% url 'resultados:editar_resultado' resultado.id %}" class="btn btn-warning me-2">
+                <i class="fas fa-edit"></i> Editar
+            </a>
+            {% endif %}
+            <a href="{% url 'resultados:resultados' %}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left"></i> Volver
+            </a>
+        </div>
+    </div>
+
+    <!-- Tarjeta del resultado -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-primary text-white">
+            <i class="fas fa-ticket-alt"></i> Números del Sorteo
+        </div>
+        <div class="card-body">
+            <div class="nums-compacto">
+
+                {# ── PRINCIPALES ── #}
+                <div class="nums-sec">
+                    <div class="nums-sec-title">🎯 Principales</div>
+                    <div class="nums-flujo">
+                        {% if resultado.pick2 or resultado.pick3 or resultado.pick4 or resultado.pick5 %}
+                            {% if resultado.pick2 %}<span class="num-pill"><span class="lbl">P2</span><span class="val">{{ resultado.pick2 }}</span></span>{% endif %}
+                            {% if resultado.pick3 %}<span class="num-pill"><span class="lbl">P3</span><span class="val">{{ resultado.pick3 }}</span></span>{% endif %}
+                            {% if resultado.pick4 %}<span class="num-pill"><span class="lbl">P4</span><span class="val">{{ resultado.pick4 }}</span></span>{% endif %}
+                            {% if resultado.pick5 %}<span class="num-pill"><span class="lbl">P5</span><span class="val">{{ resultado.pick5 }}</span></span>{% endif %}
+                        {% else %}
+                            {% if resultado.fijo %}<span class="num-pill"><span class="lbl">F</span><span class="val">{{ resultado.fijo }}</span></span>{% endif %}
+                            {% if resultado.corrido_1 %}<span class="num-pill"><span class="lbl">C1</span><span class="val">{{ resultado.corrido_1 }}</span></span>{% endif %}
+                            {% if resultado.corrido_2 %}<span class="num-pill"><span class="lbl">C2</span><span class="val">{{ resultado.corrido_2 }}</span></span>{% endif %}
+                            {% if not resultado.fijo and not resultado.corrido_1 and not resultado.corrido_2 %}
+                                <span class="num-pill pill-empty">Sin principales</span>
+                            {% endif %}
+                        {% endif %}
+                    </div>
+                </div>
+
+                {# ── DERIVADOS — todo en un solo flujo ── #}
+                <div class="nums-sec">
+                    <div class="nums-sec-title">➡️ Derivados</div>
+                    <div class="nums-flujo">
+                        {% if resultado.pf or resultado.fijo or resultado.corrido_1 or resultado.corrido_2 %}
+                            <span class="nums-sub-inline">Básicos</span>{% if resultado.pf %}<span class="num-pill"><span class="lbl">PF</span><span class="val">{{ resultado.pf }}</span></span>{% endif %}{% if resultado.fijo %}<span class="num-pill"><span class="lbl">F</span><span class="val">{{ resultado.fijo }}</span></span>{% endif %}{% if resultado.corrido_1 %}<span class="num-pill"><span class="lbl">C1</span><span class="val">{{ resultado.corrido_1 }}</span></span>{% endif %}{% if resultado.corrido_2 %}<span class="num-pill"><span class="lbl">C2</span><span class="val">{{ resultado.corrido_2 }}</span></span>{% endif %}
+                        {% endif %}
+                        {% if resultado.centena_corrida_1 or resultado.centena_corrida_2 %}
+                            <span class="nums-sub-inline">Centenas</span>{% if resultado.centena_corrida_1 %}<span class="num-pill"><span class="lbl">Cta1</span><span class="val">{{ resultado.centena_corrida_1 }}</span></span>{% endif %}{% if resultado.centena_corrida_2 %}<span class="num-pill"><span class="lbl">Cta2</span><span class="val">{{ resultado.centena_corrida_2 }}</span></span>{% endif %}
+                        {% endif %}
+                        {% if resultado.parlet or resultado.posicion or resultado.tripleta %}
+                            <span class="nums-sub-inline">Combinaciones</span>{% if resultado.parlet %}<span class="num-pill"><span class="lbl">Parlet</span><span class="val">{{ resultado.parlet }}</span></span>{% endif %}{% if resultado.posicion %}<span class="num-pill"><span class="lbl">Posición</span><span class="val">{{ resultado.posicion }}</span></span>{% endif %}{% if resultado.tripleta %}<span class="num-pill"><span class="lbl">Tripleta</span><span class="val">{{ resultado.tripleta }}</span></span>{% endif %}
+                        {% endif %}
+                        {% if resultado.vspf or resultado.vspick2 or resultado.pick2vspf %}
+                            <span class="nums-sub-inline">Versus</span>{% if resultado.vspf %}<span class="num-pill"><span class="lbl">VS PF</span><span class="val">{{ resultado.vspf }}</span></span>{% endif %}{% if resultado.vspick2 %}<span class="num-pill"><span class="lbl">VS Pick2</span><span class="val">{{ resultado.vspick2 }}</span></span>{% endif %}{% if resultado.pick2vspf %}<span class="num-pill"><span class="lbl">P2 vs PF</span><span class="val">{{ resultado.pick2vspf }}</span></span>{% endif %}
+                        {% endif %}
+                        {% if not resultado.pf and not resultado.fijo and not resultado.corrido_1 and not resultado.corrido_2 and not resultado.centena_corrida_1 and not resultado.centena_corrida_2 and not resultado.parlet and not resultado.posicion and not resultado.tripleta and not resultado.vspf and not resultado.vspick2 and not resultado.pick2vspf %}
+                            <span class="num-pill pill-empty">Sin derivados</span>
+                        {% endif %}
+                    </div>
+                </div>
+
+            </div>
+        <div class="card-footer text-muted d-flex justify-content-between">
+            <span>Creado por: {{ resultado.creado_por.username }} | Hora: {{ resultado.hora|time:"H:i" }}</span>
+            <span>ID: #{{ resultado.id }}</span>
+        </div>
+    </div>
+
+    <!-- Historial de cambios -->
+    {% if resultado.metadata.historial %}
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-info text-white d-flex justify-content-between align-items-center"
+             data-bs-toggle="collapse" data-bs-target="#historialCollapse" role="button" style="cursor:pointer;">
+            <span><i class="fas fa-history"></i> Historial de cambios</span>
+            <span class="badge bg-light text-dark">{{ resultado.metadata.historial|length }} ediciones</span>
+        </div>
+        <div class="collapse" id="historialCollapse">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-sm table-striped mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Usuario</th>
+                                <th>Cambios</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for cambio in resultado.metadata.historial|dictsortreversed:"fecha" %}
+                            <tr>
+                                <td>{{ cambio.fecha|date:"d/m/Y H:i" }}</td>
+                                <td>{{ cambio.usuario }}</td>
+                                <td>
+                                    <ul class="list-unstyled mb-0" style="font-size:0.85rem;">
+                                        {% if cambio.cambios.pick2 %}<li><strong>Pick2:</strong> {{ cambio.cambios.pick2 }}</li>{% endif %}
+                                        {% if cambio.cambios.pick3 %}<li><strong>Pick3:</strong> {{ cambio.cambios.pick3 }}</li>{% endif %}
+                                        {% if cambio.cambios.pick4 %}<li><strong>Pick4:</strong> {{ cambio.cambios.pick4 }}</li>{% endif %}
+                                        {% if cambio.cambios.pick5 %}<li><strong>Pick5:</strong> {{ cambio.cambios.pick5 }}</li>{% endif %}
+                                        {% if cambio.cambios.fijo %}<li><strong>Fijo:</strong> {{ cambio.cambios.fijo }}</li>{% endif %}
+                                        {% if cambio.cambios.corrido_1 %}<li><strong>Corrido1:</strong> {{ cambio.cambios.corrido_1 }}</li>{% endif %}
+                                        {% if cambio.cambios.corrido_2 %}<li><strong>Corrido2:</strong> {{ cambio.cambios.corrido_2 }}</li>{% endif %}
+                                    </ul>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Ganadores -->
+    <div class="card shadow-sm">
+        <div class="card-header bg-success text-white d-flex justify-content-between">
+            <span><i class="fas fa-trophy"></i> Ganadores de este sorteo</span>
+            <span class="badge bg-light text-dark">{{ total_ganadores }} ganadores</span>
+        </div>
+        <div class="card-body p-0">
+            {% if user.is_authenticated %}
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Usuario</th>
+                                <th>Número</th>
+                                <th>Forma Juego</th>
+                                <th>Monto Premio</th>
+                                <th>Multiplicador</th>
+                                <th>Estado</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for premio in premios %}
+                            <tr class="{% if premio.es_mio %}table-warning fw-bold{% endif %}">
+                                <td>{{ premio.jugada.usuario.username }}</td>
+                                <td><span class="badge bg-secondary">{{ premio.jugada.numero }}</span></td>
+                                <td>{{ premio.jugada.forma_juego.nombre }}</td>
+                                <td class="text-success">${{ premio.monto_premio|floatformat:0 }}</td>
+                                <td>{{ premio.multiplicador_aplicado }}x</td>
+                                <td>
+                                    {% if premio.cobrado %}
+                                        <span class="badge bg-success">Sumado al fondo</span>
+                                    {% else %}
+                                        <span class="badge bg-warning text-dark">Pendiente</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if premio.es_mio %}
+                                        <span class="badge bg-warning text-dark" style="font-size:0.85rem;">
+                                            <i class="fas fa-star"></i> ¡Ganaste!
+                                        </span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="7" class="text-center text-muted py-3">No hubo ganadores.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                        {% if total_ganadores > 0 %}
+                        <tfoot class="table-secondary">
+                            <tr>
+                                <th colspan="3" class="text-end">Monto Total Entregado:</th>
+                                <th class="text-success">${{ monto_total_premios|floatformat:0 }}</th>
+                                <th colspan="3"></th>
+                            </tr>
+                        </tfoot>
+                        {% endif %}
+                    </table>
+                </div>
+            {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-lock fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">🔒 Inicia sesión para ver los ganadores</h5>
+                    <p class="text-muted">Los premios y ganadores son visibles solo para usuarios registrados.</p>
+                    <a href="{% url 'usuarios:login' %}?next={{ request.path }}" class="btn btn-primary mt-2">
+                        <i class="fas fa-sign-in-alt"></i> Iniciar Sesión
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('btn-compartir-detalle').addEventListener('click', function() {
+        const resultadoId = {{ resultado.id }};
+        const btn = this;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Cargando...';
+        btn.disabled = true;
+        fetch(`/resultados/api/resumen/${resultadoId}/`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const mensaje = encodeURIComponent(data.resumen);
+                    window.open(`https://wa.me/?text=${mensaje}`, '_blank');
+                } else {
+                    alert('❌ Error al obtener el resumen.');
+                }
+            })
+            .catch(error => {
+                console.error(error);
+                alert('❌ Error de conexión.');
+            })
+            .finally(() => {
+                btn.innerHTML = '<i class="fab fa-whatsapp"></i> Compartir';
+                btn.disabled = false;
+            });
+    });
+});
+</script>
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+<style>
+    .table-warning {
+        background-color: #fff3cd !important;
+        border-left: 4px solid #ffc107;
+    }
+    .table-warning td {
+        font-weight: 600;
+    }
+</style>
+{% endblock %}

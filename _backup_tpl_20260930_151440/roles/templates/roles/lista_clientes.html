@@ -1,0 +1,592 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block page_title %}👥 Lista de Clientes{% endblock %}
+{% block page_subtitle %}Clientes con fondos activos y estado online{% endblock %}
+
+{% block extra_css %}
+<style>
+  .lc-wrapper{
+    --lc-primary:#4f46e5;
+    --lc-primary-dark:#1e40af;
+    --lc-surface:#ffffff;
+    --lc-border:#e5e7eb;
+    --lc-text:#0f172a;
+    --lc-muted:#64748b;
+    --lc-success:#059669;
+    --lc-success-soft:#ecfdf5;
+    --lc-danger:#dc2626;
+    max-width:1400px;
+    margin:0 auto;
+    padding:28px 20px 60px;
+    background:#f5f7fa;
+    min-height:100vh;
+    font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    color:var(--lc-text);
+  }
+
+  /* HEADER */
+  .lc-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    flex-wrap:wrap;
+    gap:16px;
+    margin-bottom:22px;
+    padding-bottom:20px;
+    border-bottom:1px solid var(--lc-border);
+  }
+  .lc-title{
+    font-size:26px;
+    font-weight:700;
+    letter-spacing:-.02em;
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  .lc-sub{
+    font-size:13px;
+    color:var(--lc-muted);
+    margin-top:6px;
+  }
+
+  /* KPIs */
+  .lc-kpis{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+    gap:14px;
+    margin-bottom:24px;
+  }
+  .lc-kpi{
+    background:#fff;
+    border:1px solid var(--lc-border);
+    border-radius:14px;
+    padding:18px 20px;
+    box-shadow:0 1px 3px rgba(15,23,42,.05);
+    transition:all .2s cubic-bezier(.2,.8,.2,1);
+    position:relative;
+    overflow:hidden;
+  }
+  .lc-kpi::before{
+    content:'';
+    position:absolute;
+    top:0; left:0; right:0;
+    height:3px;
+    background:linear-gradient(90deg, #4f46e5, #8b5cf6, #06b6d4);
+    background-size:200% 100%;
+    animation:lc-shift 4s ease-in-out infinite;
+  }
+  @keyframes lc-shift{
+    0%,100%{ background-position:0% 50%; }
+    50%    { background-position:100% 50%; }
+  }
+  .lc-kpi:hover{
+    transform:translateY(-3px);
+    box-shadow:0 12px 24px rgba(15,23,42,.1);
+  }
+  .lc-kpi .lbl{
+    font-size:11px;
+    color:var(--lc-muted);
+    font-weight:600;
+    letter-spacing:.04em;
+    text-transform:uppercase;
+  }
+  .lc-kpi .val{
+    font-size:28px;
+    font-weight:800;
+    color:var(--lc-text);
+    margin-top:8px;
+    font-variant-numeric:tabular-nums;
+    letter-spacing:-.02em;
+  }
+  .lc-kpi.online .val{ color:var(--lc-success); }
+  .lc-kpi.offline .val{ color:#94a3b8; }
+  .lc-kpi.money .val{ color:var(--lc-primary-dark); }
+
+  /* FILTROS */
+  .lc-filters{
+    background:#fff;
+    border:1px solid var(--lc-border);
+    border-radius:14px;
+    padding:16px 18px;
+    margin-bottom:22px;
+    display:flex;
+    gap:12px;
+    flex-wrap:wrap;
+    align-items:flex-end;
+    box-shadow:0 1px 3px rgba(15,23,42,.04);
+  }
+  .lc-fgroup{
+    display:flex;
+    flex-direction:column;
+    gap:5px;
+    min-width:160px;
+  }
+  .lc-fgroup.grow{ flex:1 1 240px; }
+  .lc-flbl{
+    font-size:11px;
+    font-weight:600;
+    color:var(--lc-muted);
+    text-transform:uppercase;
+    letter-spacing:.04em;
+  }
+  .lc-finput, .lc-fselect{
+    padding:9px 12px;
+    border-radius:10px;
+    border:1px solid #d1d5db;
+    font-size:13px;
+    background:#fff;
+    color:var(--lc-text);
+    transition:all .15s;
+    font-weight:500;
+  }
+  .lc-finput:focus, .lc-fselect:focus{
+    outline:none;
+    border-color:var(--lc-primary);
+    box-shadow:0 0 0 3px rgba(79,70,229,.12);
+  }
+  .lc-btn-apply{
+    padding:10px 22px;
+    border-radius:10px;
+    border:1px solid var(--lc-primary);
+    background:var(--lc-primary);
+    color:#fff;
+    font-weight:600;
+    cursor:pointer;
+    font-size:13px;
+    transition:all .15s;
+  }
+  .lc-btn-apply:hover{
+    back
+ground:#4338ca;
+    border-color:#4338ca;
+    transform:translateY(-1px);
+    box-shadow:0 4px 12px rgba(79,70,229,.3);
+  }
+  .lc-btn-clear{
+    padding:10px 18px;
+    border-radius:10px;
+    border:1px solid #d1d5db;
+    background:#fff;
+    color:var(--lc-muted);
+    font-weight:600;
+    cursor:pointer;
+    font-size:13px;
+    text-decoration:none;
+    display:inline-block;
+    transition:all .15s;
+  }
+  .lc-btn-clear:hover{
+    background:#f9fafb;
+    color:var(--lc-text);
+  }
+
+  /* TABLA */
+  .lc-table-wrap{
+    background:#fff;
+    border:1px solid var(--lc-border);
+    border-radius:14px;
+    overflow:hidden;
+    box-shadow:0 1px 3px rgba(15,23,42,.05);
+  }
+  .lc-table-scroll{ overflow-x:auto; }
+  .lc-table{
+    width:100%;
+    border-collapse:separate;
+    border-spacing:0;
+    font-size:13px;
+    min-width:900px;
+  }
+  .lc-table thead th{
+    background:#f9fafb;
+    color:var(--lc-muted);
+    font-weight:600;
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:.05em;
+    padding:12px 14px;
+    text-align:left;
+    white-space:nowrap;
+    border-bottom:1px solid var(--lc-border);
+    position:sticky;
+    top:0;
+    z-index:10;
+  }
+  .lc-table tbody td{
+    padding:14px;
+    border-bottom:1px solid #f1f5f9;
+    vertical-align:top;
+    color:var(--lc-text);
+  }
+  .lc-table tbody tr:last-child td{ border-bottom:none; }
+  .lc-table tbody tr:hover td{ background:#fafbfc; }
+
+  /* Badges */
+  .lc-badge{
+    display:inline-flex;
+    align-items:center;
+    gap:5px;
+    padding:3px 10px;
+    border-radius:999px;
+    font-size:11px;
+    font-weight:600;
+    white-space:nowrap;
+  }
+  .lc-badge.tipo-comercial{ background:#eef2ff; color:#4338ca; border:1px solid #c7d2fe; }
+  .lc-badge.tipo-cliente{ background:#ecfdf5; color:#059669; border:1px solid #a7f3d0; }
+  .lc-badge.tipo-banco{ background:#fef3c7; color:#92400e; border:1px solid #fcd34d; }
+  .lc-badge.tipo-superadmin{ background:#fae8ff; color:#86198f; border:1px solid #f0abfc; }
+
+  /* Online dot */
+  .lc-dot{
+    display:inline-block;
+    width:8px;
+    height:8px;
+    border-radius:50%;
+    margin-right:5px;
+    vertical-align:middle;
+  }
+  .lc-dot.online{
+    background:#10b981;
+    box-shadow:0 0 0 3px rgba(16,185,129,.2);
+    animation:lc-pulse 1.8s ease-in-out infinite;
+  }
+  .lc-dot.offline{ background:#cbd5e1; }
+  @keyframes lc-pulse{
+    0%,100%{ box-shadow:0 0 0 3px rgba(16,185,129,.2); }
+    50%    { box-shadow:0 0 0 6px rgba(16,185,129,.08); }
+  }
+
+  /* ═══ FONDOS ANIDADOS ═══ */
+  .lc-fondos{
+    display:flex;
+    flex-direction:column;
+    gap:4px;
+    min-width:200px;
+  }
+  .lc-fondo-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:16px;
+    padding:6px 12px;
+    background:linear-gradient(90deg, #f8fafc, #f1f5f9);
+    border-left:3px solid var(--lc-primary);
+    border-radius:6px;
+    font-size:12px;
+    transition:all .15s;
+  }
+  .lc-fondo-row:hover{
+    background:linear-gradient(90deg, #eef2ff, #e0e7ff);
+    border-left-color:#4338ca;
+    transform:translateX(2px);
+  }
+  .lc-fondo-fp{
+    color:#475569;
+    font-weight:600;
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:.03em;
+  }
+  .lc-fondo-monto{
+    font-weight:800;
+    color:var(--lc-success);
+    font-family:'JetBrains Mono','SF Mono','Courier New',monospace;
+    font-variant-numeric:tabular-nums;
+    font-size:13px;
+  }
+  .lc-fondo-total{
+    display:flex;
+    justify-content:space-between;
+    padding:6px 12px;
+    margin-top:4px;
+    border-top:2px dashed #cbd5e1;
+    font-size:11px;
+    font-weight:700;
+    color:var(--lc-primary-dark);
+    letter-spacing:.03em;
+  }
+  .lc-fondo-total .monto{
+    font-family:'JetBrains Mono','Courier New',monospace;
+    font-size:13px;
+  }
+  .lc-no-fondos, .lc-sin-permiso{
+    color:#cbd5e1;
+    font-style:italic;
+    font-size:11px;
+    padding:6px 0;
+  }
+
+  /* Botón recargar */
+  .lc-btn-recargar{
+    display:inline-flex;
+    align-items:center;
+    gap:5px;
+    padding:6px 12px;
+    border-radius:8px;
+    border:1px solid #c7d2fe;
+    background:#eef2ff;
+    color:#4338ca;
+    font-size:11px;
+    font-weight:700;
+    text-decoration:none;
+    transition:all .15s;
+    white-space:nowrap;
+  }
+  .lc-btn-recargar:hover{
+    background:#e0e7ff;
+    border-color:#a5b4fc;
+    transform:translateY(-1px);
+    box-shadow:0 4px 8px rgba(79,70,229,.2);
+  }
+
+  /* Paginación */
+  .lc-pag{
+    display:flex;
+    justify-content:center;
+    gap:6px;
+    margin-top:24px;
+  }
+  .lc-pag a, .lc-pag span{
+    padding:8px 14px;
+    border-radius:8px;
+    border:1px solid var(--lc-border);
+    background:#fff;
+    color:var(--lc-text);
+    text-decoration:none;
+    font-size:13px;
+    font-weight:600;
+    transition:all .15s;
+  }
+  .lc-pag a:hover{
+    background:#f9fafb;
+    border-color:#cbd5e1;
+  }
+  .lc-pag .current{
+    background:var(--lc-primary);
+    color:#fff;
+    border-color:var(--lc-primary);
+  }
+
+  .lc-empty{
+    text-align:center;
+    padding:60px 24px;
+    color:var(--lc-muted);
+    font-size:14px;
+  }
+  .lc-empty .ico{
+    font-size:52px;
+    display:block;
+    margin-bottom:12px;
+    opacity:.5;
+  }
+
+  @media (max-width:768px){
+    .lc-wrapper{ padding:16px 10px 40px; }
+    .lc-title{ font-size:20px; }
+    .lc-kpi .val{ font-size:22px; }
+    .lc-table{ font-size:11px; min-width:800px; }
+    .lc-table thead th, .lc-table tbody td{ padding:10px; }
+    .lc-filters{ padding:12px; }
+    .lc-fgroup{ min-width:0; flex:1 1 100%; }
+  }
+</style>
+
+<style>
+.status-dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:#D1D5DB;margin-right:5px;vertical-align:middle;transition:.3s;}
+.status-dot.online{background:#10B981;box-shadow:0 0 0 3px rgba(16,185,129,.25);}
+[data-cliente-id] .cliente-saldo,[data-cliente-id] .saldo-valor{transition:.3s;}
+.realtime-ts{font-size:.65rem;color:#6B7280;font-weight:600;margin-left:6px;}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="lc-wrapper">
+
+  <!-- HEADER -->
+  <div class="lc-header">
+    <div>
+      <div class="lc-title">👥 Lista de Clientes</div>
+      <div class="lc-sub">
+        {% if es_superadmin %}Vista global · {{ total_clientes }} usuarios
+        {% elif es_banco %}Clientes directos, de tus comerciales y tus comerciales
+        {% else %}Tus clientes asignados{% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- KPIs -->
+  <div class="lc-kpis">
+    <div class="lc-kpi">
+      <div class="lbl">Total</div>
+      <div class="val">{{ total_clientes }}</div>
+    </div>
+    <div class="lc-kpi online">
+      <div class="lbl">🟢 En línea</div>
+      <div class="val">{{ total_online }}</div>
+    </div>
+    <div class="lc-kpi offline">
+      <div class="lbl">⚫ Offline</div>
+      <div class="val">{{ total_offline }}</div>
+    </div>
+    <div class="lc-kpi money">
+      <div class="lbl">Fondos asignados</div>
+      <div class="val">${{ monto_total_asignado|floatformat:2 }}</div>
+    </div>
+  </div>
+
+  <!-- FILTROS -->
+  <form method="get" class="lc-filters">
+    <div class="lc-fgroup grow">
+      <label class="lc-flbl">Buscar</label>
+      <input type="text" name="q" class="lc-finput"
+             placeholder="Usuario, email o teléfono..."
+             value="{{ filtros.q }}">
+    </div>
+
+    <div class="lc-fgroup">
+      <label class="lc-flbl">Rol</label>
+      <select onchange="this.form.submit()" name="rol" class="lc-fselect">
+        <option value="">Todos</option>
+        <option value="cliente" {% if filtros.rol == 'cliente' %}selected{% endif %}>Cliente</option>
+        {% if es_banco or es_superadmin %}
+          <option value="comercial" {% if filtros.rol == 'comercial' %}selected{% endif %}>Comercial</option>
+          <option value="banco" {% if filtros.rol == 'banco' %}selected{% endif %}>Banco</option>
+        {% endif %}
+      </select>
+    </div>
+
+    <div class="lc-fgroup">
+      <label class="lc-flbl">Estado</label>
+      <select onchange="this.form.submit()" name="estado" class="lc-fselect">
+        <option value="">Todos</option>
+        <option value="online" {% if filtros.estado == 'online' %}selected{% endif %}>🟢 Online</option>
+        <option value="offline" {% if filtros.estado == 'offline' %}selected{% endif %}>⚫ Offline</option>
+      </select>
+    </div>
+
+    <a href="{% url 'roles:lista_clientes' %}" class="lc-btn-clear">Limpiar</a>
+  </form>
+
+  <!-- TABLA -->
+  {% if clientes_data %}
+  <div class="lc-table-wrap">
+    <div class="lc-table-scroll">
+      <table class="lc-table">
+        <thead>
+          <tr>
+            <th style="width:40px;">#</th>
+            <th>Usuario</th>
+            <th>Rol</th>
+            <th>📞 Teléfono</th>
+            <th>Estado</th>
+            <th>Fondos por forma de pago</th>
+            <th>Último acceso</th>
+            <th style="width:100px;"></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in clientes_data %}
+          <tr data-cliente-id="{{ item.cliente.id }}">
+            <td style="color:#94a3b8;">{{ forloop.counter }}</td>
+            <td>
+              <strong>{{ item.cliente.username }}</strong> <span class="status-dot" title="En línea"></span>
+              {% if item.cliente.get_full_name %}
+                <div style="font-size:11px;color:#64748b;">{{ item.cliente.get_full_name }}</div>
+              {% endif %}
+            </td>
+            <td>
+              <span class="lc-badge tipo-{{ item.tipo }}">{{ item.tipo|upper }}</span>
+            </td>
+            <td>{{ item.telefono|default:"—" }}</td>
+            <td>
+              {% if item.online %}
+                <span class="lc-dot online"></span>
+                <span class="online-text" style="color:#059669;font-weight:600;">Online</span>
+              {% else %}
+                <span class="lc-dot offline"></span>
+                <span class="online-text" style="color:#94a3b8;">Offline</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if item.mostrar_fondos %}
+                {% if item.fondos %}
+                  <div class="lc-fondos">
+                    {% for fp, monto in item.fondos.items %}
+                      <div class="lc-fondo-row">
+                        <span class="lc-fondo-fp">{{ fp }}</span>
+                        <span class="lc-fondo-monto">${{ monto|floatformat:2 }}</span>
+                      </div>
+                    {% endfor %}
+                    <div class="lc-fondo-total">
+                      <span>TOTAL</span>
+                      <span class="monto cliente-saldo" data-saldo="1">${{ item.total_fondos|floatformat:2 }}</span>
+                    </div>
+                  </div>
+                {% else %}
+                  <span class="lc-no-fondos">Sin fondos activos</span>
+                {% endif %}
+              {% else %}
+                <span class="lc-sin-permiso">— ver cuadre —</span>
+              {% endif %}
+            </td>
+            <td style="font-size:12px;color:#64748b;">
+              {% if item.cliente.last_login %}
+                {{ item.cliente.last_login|date:"d/m/Y H:i" }}
+              {% else %}
+                <em>Nunca</em>
+              {% endif %}
+            </td>
+            <td>
+              {% if item.tipo == 'cliente' %}
+                <a href="{% url 'roles:recarga_directa' %}?usuario_id={{ item.cliente.id }}"
+                   class="lc-btn-recargar">
+                  <i class="fas fa-plus"></i> Recargar
+                </a>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- PAGINACIÓN -->
+  {% if clientes.has_other_pages %}
+  <div class="lc-pag">
+    {% if clientes.has_previous %}
+      <a href="?page={{ clientes.previous_page_number }}&q={{ filtros.q }}&rol={{ filtros.rol }}&estado={{ filtros.estado }}">← Anterior</a>
+    {% endif %}
+    <span class="current">{{ clientes.number }} / {{ clientes.paginator.num_pages }}</span>
+    {% if clientes.has_next %}
+      <a href="?page={{ clientes.next_page_number }}&q={{ filtros.q }}&rol={{ filtros.rol }}&estado={{ filtros.estado }}">Siguiente →</a>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  {% else %}
+  <div class="lc-empty">
+    <span class="ico">👥</span>
+    No hay clientes que coincidan con los filtros.
+  </div>
+  {% endif %}
+
+</div>
+
+<script src="{% static 'js/realtime.js' %}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+  if (typeof Realtime === 'undefined') return;
+  var ids = [];
+  document.querySelectorAll('[data-cliente-id]').forEach(function(n){
+    var id = parseInt(n.dataset.clienteId, 10);
+    if (id) ids.push(id);
+  });
+  if (ids.length) {
+    Realtime.initClientes(ids, { interval: 4000 });
+  }
+});
+</script>
+
+{% endblock %}

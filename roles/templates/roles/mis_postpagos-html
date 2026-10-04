@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container">
+    <h2>Mi Postpago</h2>
+
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5>Saldo actual</h5>
+                    <h2 class="{% if saldo > 0 %}text-warning{% else %}text-success{% endif %}">
+                        ${{ saldo }}
+                    </h2>
+                    {% if saldo > 0 %}
+                        <p class="text-muted">Se descontará automáticamente de tus próximos premios o recargas.</p>
+                    {% else %}
+                        <p class="text-muted">No tienes postpago pendiente.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Historial de movimientos</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Fecha</th>
+                                    <th>Tipo</th>
+                                    <th>Monto</th>
+                                    <th>Concepto</th>
+                                    <th>Días</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in historial %}
+                                <tr>
+                                    <td>{{ item.fecha|date:"d/m/Y H:i" }}</td>
+                                    <td>
+                                        <span class="badge {% if item.tipo == 'adicion' %}bg-success{% else %}bg-danger{% endif %}">
+                                            {{ item.tipo|title }}
+                                        </span>
+                                    </td>
+                                    <td>${{ item.monto }}</td>
+                                    <td>{{ item.concepto|default:"-" }}</td>
+                                    <td>{{ item.dias }}</td>
+                                </tr>
+                                {% empty %}
+                                <tr><td colspan="5" class="text-center">No hay movimientos</td></tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

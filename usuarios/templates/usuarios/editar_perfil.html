@@ -1,0 +1,226 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block page_title %}✏️ Editar Perfil{% endblock %}
+{% block page_subtitle %}Actualiza tus datos personales{% endblock %}
+
+{% block content %}
+<div class="container mt-4" style="max-width: 750px;">
+    <div class="card border-0 shadow-lg rounded-4 overflow-hidden">
+        <div class="card-header bg-gradient-primary text-white text-center border-0 py-4" style="background: linear-gradient(135deg, #007bff 0%, #6610f2 100%);">
+            <h4 class="mb-0 fw-bold">✏️ Editar Perfil</h4>
+            <small class="text-white-50">Actualiza tu información personal</small>
+        </div>
+        <div class="card-body p-5">
+
+            <!-- Mensajes -->
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show rounded-3" role="alert">
+                        <i class="fas fa-{% if 'error' in message.tags %}exclamation-circle{% elif 'success' in message.tags %}check-circle{% else %}info-circle{% endif %}"></i>
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            <form method="post" enctype="multipart/form-data" novalidate id="editarPerfilForm">
+                {% csrf_token %}
+
+                <!-- ===== AVATAR ===== -->
+                <div class="text-center mb-4">
+                    <img src="{% if usuario.perfil.avatar %}{{ usuario.perfil.avatar.url }}{% else %}{% static 'img/default-avatar.png' %}{% endif %}"
+                         id="avatarPreview"
+                         class="rounded-circle shadow"
+                         width="120" height="120"
+                         alt="Avatar">
+                    <div class="mt-3">
+                        {{ form.avatar }}
+                        {% if form.avatar.errors %}
+                            <div class="text-danger small">{{ form.avatar.errors }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- ===== NOMBRE Y APELLIDOS ===== -->
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="{{ form.first_name.id_for_label }}" class="form-label fw-semibold">
+                            <i class="fas fa-user text-muted"></i> Nombre
+                        </label>
+                        {{ form.first_name }}
+                        {% if form.first_name.errors %}
+                            <div class="text-danger small">{{ form.first_name.errors }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="{{ form.last_name.id_for_label }}" class="form-label fw-semibold">
+                            <i class="fas fa-user text-muted"></i> Apellidos
+                        </label>
+                        {{ form.last_name }}
+                        {% if form.last_name.errors %}
+                            <div class="text-danger small">{{ form.last_name.errors }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- ===== EMAIL ===== -->
+                <div class="mb-3">
+                    <label for="{{ form.email.id_for_label }}" class="form-label fw-semibold">
+                        <i class="fas fa-envelope text-muted"></i> Correo electrónico
+                    </label>
+                    {{ form.email }}
+                    {% if form.email.errors %}
+                        <div class="text-danger small">{{ form.email.errors }}</div>
+                    {% endif %}
+                </div>
+
+                <!-- ===== TELÉFONO ===== -->
+                <div class="mb-3">
+                    <label for="{{ form.telefono.id_for_label }}" class="form-label fw-semibold">
+                        <i class="fas fa-phone text-muted"></i> Teléfono
+                    </label>
+                    {{ form.telefono }}
+                    {% if form.telefono.errors %}
+                        <div class="text-danger small">{{ form.telefono.errors }}</div>
+                    {% endif %}
+                    <div class="form-text">Formato: +53 5555 5555</div>
+                </div>
+
+                <!-- ===== DIRECCIÓN ===== -->
+                <div class="mb-3">
+                    <label for="{{ form.direccion.id_for_label }}" class="form-label fw-semibold">
+                        <i class="fas fa-home text-muted"></i> Dirección
+                    </label>
+                    {{ form.direccion }}
+                    {% if form.direccion.errors %}
+                        <div class="text-danger small">{{ form.direccion.errors }}</div>
+                    {% endif %}
+                </div>
+
+                <!-- ===== CAMBIO DE CONTRASEÑA ===== -->
+                <div class="card shadow-sm border-0 mb-4">
+                    <div class="card-header bg-dark text-white">
+                        <i class="fas fa-lock"></i> Cambiar contraseña
+                    </div>
+                    <div class="card-body">
+                        <!-- Nueva contraseña -->
+                        <div class="mb-3">
+                            <label for="{{ form.password.id_for_label }}" class="form-label fw-semibold">Nueva contraseña</label>
+                            <div class="input-group">
+                                {{ form.password }}
+                                <button type="button" class="btn btn-outline-secondary" onclick="togglePass('{{ form.password.id_for_label }}')">
+                                    <i class="fas fa-eye" id="eyeIcon1"></i>
+                                </button>
+                            </div>
+                            {% if form.password.errors %}
+                                <div class="text-danger small">{{ form.password.errors }}</div>
+                            {% endif %}
+                            <div class="form-text">Mínimo 8 caracteres. Deja en blanco para mantener la actual.</div>
+                        </div>
+
+                        <!-- Confirmar contraseña -->
+                        <div class="mb-3">
+                            <label for="{{ form.password_confirm.id_for_label }}" class="form-label fw-semibold">Confirmar nueva contraseña</label>
+                            <div class="input-group">
+                                {{ form.password_confirm }}
+                                <button type="button" class="btn btn-outline-secondary" onclick="togglePass('{{ form.password_confirm.id_for_label }}')">
+                                    <i class="fas fa-eye" id="eyeIcon2"></i>
+                                </button>
+                            </div>
+                            {% if form.password_confirm.errors %}
+                                <div class="text-danger small">{{ form.password_confirm.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ===== ERRORES GENERALES ===== -->
+                {% if form.non_field_errors %}
+                    <div class="alert alert-danger">
+                        {% for error in form.non_field_errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                <!-- ===== BOTONES ===== -->
+                <div class="d-flex gap-3">
+                    <button type="submit" class="btn btn-success flex-grow-1 rounded-pill py-3 fw-bold">
+                        <i class="fas fa-save"></i> Guardar cambios
+                    </button>
+                    <a href="{% url 'usuarios:perfil_cliente' %}" class="btn btn-outline-secondary rounded-pill py-3 px-4">
+                        <i class="fas fa-arrow-left"></i> Cancelar
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+// ============================================================
+// TOGGLE PASSWORD
+// ============================================================
+function togglePass(fieldId) {
+    const field = document.getElementById(fieldId);
+    const icon = document.getElementById('eyeIcon1') || document.getElementById('eyeIcon2');
+    if (!field) return;
+    if (field.type === 'password') {
+        field.type = 'text';
+        if (icon) {
+            icon.classList.remove('fa-eye');
+            icon.classList.add('fa-eye-slash');
+        }
+    } else {
+        field.type = 'password';
+        if (icon) {
+            icon.classList.remove('fa-eye-slash');
+            icon.classList.add('fa-eye');
+        }
+    }
+}
+
+// ============================================================
+// PREVIEW DEL AVATAR
+// ============================================================
+document.addEventListener('DOMContentLoaded', function() {
+    const avatarInput = document.getElementById('id_avatar');
+    if (avatarInput) {
+        avatarInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    document.getElementById('avatarPreview').src = event.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+    }
+
+    // ============================================================
+    // VALIDACIÓN FRONTEND (opcional)
+    // ============================================================
+    const form = document.getElementById('editarPerfilForm');
+    form.addEventListener('submit', function(e) {
+        const pwd = document.getElementById('{{ form.password.id_for_label }}');
+        const pwdConfirm = document.getElementById('{{ form.password_confirm.id_for_label }}');
+        if (pwd && pwdConfirm) {
+            if (pwd.value || pwdConfirm.value) {
+                if (pwd.value !== pwdConfirm.value) {
+                    e.preventDefault();
+                    alert('Las contraseñas no coinciden.');
+                    pwdConfirm.focus();
+                }
+                if (pwd.value.length > 0 && pwd.value.length < 8) {
+                    e.preventDefault();
+                    alert('La contraseña debe tener al menos 8 caracteres.');
+                    pwd.focus();
+                }
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

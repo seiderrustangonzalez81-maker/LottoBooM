@@ -1,0 +1,353 @@
+{% extends "base.html" %}
+{% block title %}Notificaciones — LottoBooM{% endblock %}
+{% block page_title %}🔔 Notificaciones{% endblock %}
+{% block page_subtitle %}Centro de mensajes y avisos{% endblock %}
+
+{% block extra_css %}
+<style>
+  .ntf-wrap{ max-width:1000px; margin:0 auto; }
+  .ntf-toolbar{
+    display:flex; flex-wrap:wrap; gap:8px; align-items:center;
+    justify-content:space-between; margin-bottom:14px;
+    padding:10px 14px; border-radius:12px;
+    background:linear-gradient(145deg,#f0fdf4,#dcfce7);
+    border:1.5px solid #bbf7d0;
+    box-shadow:3px 3px 0 #a7e8b8;
+  }
+  .ntf-tabs{ display:flex; gap:6px; flex-wrap:wrap; }
+  .ntf-tab{
+    padding:6px 12px; border-radius:20px; font-size:.78rem;
+    font-weight:800; text-decoration:none;
+    background:#fff; color:#166534; border:1.5px solid #bbf7d0;
+    box-shadow:2px 2px 0 #a7e8b8;
+  }
+  .ntf-tab:hover{ transform:translate(-1px,-1px); color:#166534; }
+  .ntf-tab.active{
+    background:linear-gradient(135deg,#15803d,#166534); color:#fff;
+    border-color:#052e16;
+  }
+  .ntf-tab .cnt{
+    background:rgba(0,0,0,.15); color:inherit;
+    padding:1px 7px; border-radius:20px; font-size:.68rem;
+    margin-left:5px; font-weight:900;
+  }
+  .ntf-tab.active .cnt{ background:#fde047; color:#052e16; }
+  .ntf-list{ display:flex; flex-direction:column; gap:8px; }
+  .ntf-item{
+    display:flex; gap:12px; padding:12px 14px;
+    background:linear-gradient(145deg,#ffffff,#f4fbf6);
+    border:1.5px solid #c8ead4; border-radius:12px;
+    box-shadow:3px 3px 0 rgba(167,232,184,.5);
+    transition:.15s; align-items:flex-start;
+  }
+  .ntf-item.no-leida{
+    border-left:5px solid #ef4444;
+    background:linear-gradient(145deg,#fff,#fff5f5);
+  }
+  .ntf-item.leida{ opacity:.72; }
+  .ntf-ico{
+    flex-shrink:0; width:38px; height:38px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    font-size:1.05rem; color:#fff;
+    box-shadow:2px 2px 0 rgba(0,0,0,.15);
+    background:linear-gradient(135deg,#64748b,#475569);
+  }
+  .ntf-ico.recarga{ background:linear-gradient(135deg,#f59e0b,#d97706); }
+  .ntf-ico.apuesta{ background:linear-gradient(135deg,#3b82f6,#1d4ed8); }
+  .ntf-ico.deuda{ background:linear-gradient(135deg,#dc2626,#991b1b); }
+  .ntf-ico.premio{ background:linear-gradient(135deg,#16a34a,#15803d); }
+  .ntf-ico.pago{ background:linear-gradient(135deg,#06b6d4,#0e7490); }
+  .ntf-ico.sobrelimite{ background:linear-gradient(135deg,#a855f7,#7c3aed); }
+  .ntf-ico.postpago{ background:linear-gradient(135deg,#ec4899,#be185d); }
+  .ntf-ico.info{ background:linear-gradient(135deg,#64748b,#334155); }
+  .ntf-ico.suscripcion{ background:linear-gradient(135deg,#facc15,#ca8a04); }
+  .ntf-ico.prestamo{ background:linear-gradient(135deg,#ea580c,#9a3412); }
+  .ntf-body{ flex:1; min-width:0; }
+  .ntf-msg{ font-weight:700; color:#052e16; font-size:.88rem; line-height:1.4; word-wrap:break-word; }
+  .ntf-meta{
+    display:flex; flex-wrap:wrap; gap:8px; margin-top:6px;
+    font-size:.7rem; color:#166534; align-items:center;
+  }
+  .ntf-prio{
+    padding:2px 8px; border-radius:20px; font-weight:800;
+    font-size:.62rem; text-transform:uppercase;
+  }
+  .ntf-prio.urgente{ background:#fee2e2; color:#7f1d1d; }
+  .ntf-prio.alta{ background:#ffedd5; color:#7c2d12; }
+  .ntf-prio.media{ background:#dbeafe; color:#1e3a8a; }
+  .ntf-prio.baja{ background:#f1f5f9; color:#334155; }
+  .ntf-cat{
+    padding:2px 8px; border-radius:20px; font-weight:700;
+    background:#f0fdf4; color:#166534; border:1px solid #bbf7d0;
+    font-size:.62rem; text-transform:uppercase;
+  }
+  .ntf-btn-leer{
+    background:linear-gradient(145deg,#dcfce7,#bbf7d0); border:1.5px solid #86efac;
+    color:#052e16; font-weight:800; font-size:.7rem;
+    padding:5px 10px; border-radius:8px; cursor:pointer;
+    box-shadow:2px 2px 0 #86efac;
+  }
+  .ntf-empty{
+    text-align:center; padding:40px 20px;
+    background:#fff; border:1.5px dashed #bbf7d0; border-radius:14px;
+    color:#166534;
+  }
+  .ntf-empty .ico{ font-size:3rem; display:block; margin-bottom:.5rem; opacity:.4; }
+  .ntf-pag{ display:flex; justify-content:center; gap:8px; margin-top:20px; flex-wrap:wrap; }
+  .ntf-pag a, .ntf-pag span{
+    padding:6px 12px; border-radius:8px; font-weight:800; font-size:.78rem;
+    text-decoration:none; background:#fff; color:#166534;
+    border:1.5px solid #bbf7d0;
+  }
+  .ntf-pag .current{ background:linear-gradient(135deg,#15803d,#166534); color:#fff; border-color:#052e16; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="ntf-wrap">
+
+  {% if messages %}
+    {% for m in messages %}
+      <div class="alert alert-{{ m.tags|default:'info' }} mb-3" style="border-radius:10px; font-weight:700;">{{ m }}</div>
+    {% endfor %}
+  {% endif %}
+
+  <div class="ntf-toolbar">
+    <div class="ntf-tabs">
+      <a href="?" class="ntf-tab {% if not filtros.estado %}active{% endif %}">
+        Todas <span class="cnt">{{ total }}</span>
+      </a>
+      <a href="?estado=no_leidas" class="ntf-tab {% if filtros.estado == 'no_leidas' %}active{% endif %}">
+        No leídas <span class="cnt">{{ no_leidas }}</span>
+      </a>
+      <a href="?estado=leidas" class="ntf-tab {% if filtros.estado == 'leidas' %}active{% endif %}">
+        Leídas
+      </a>
+    </div>
+    <div>
+      {% if no_leidas %}
+        <button type="button" id="marcarTodasBtn" class="btn btn-sm fw-bold"
+                style="background:#16a34a; color:#fff; border-radius:8px;">
+          <i class="fas fa-check-double"></i> Marcar todas como leídas
+        </button>
+      {% endif %}
+    </div>
+  </div>
+
+  {% if page_obj and page_obj.object_list %}
+    <form id="notificacionesForm" method="post" action="{% url 'roles:marcar_seleccionadas' %}">
+      {% csrf_token %}
+      <div class="ntf-list">
+        {% for n in page_obj %}
+          <div class="ntf-item {% if n.leido %}leida{% else %}no-leida{% endif %} notificacion-item" data-id="{{ n.id }}">
+            <div class="ntf-ico {{ n.tipo|default:'info' }}">
+              {% if n.tipo == 'recarga' %}<i class="fas fa-coins"></i>
+              {% elif n.tipo == 'apuesta' %}<i class="fas fa-dice"></i>
+              {% elif n.tipo == 'deuda' %}<i class="fas fa-exclamation-triangle"></i>
+              {% elif n.tipo == 'premio' %}<i class="fas fa-trophy"></i>
+              {% elif n.tipo == 'pago' %}<i class="fas fa-money-bill-wave"></i>
+              {% elif n.tipo == 'sobrelimite' %}<i class="fas fa-fire"></i>
+              {% elif n.tipo == 'postpago' %}<i class="fas fa-credit-card"></i>
+              {% elif n.tipo == 'suscripcion' %}<i class="fas fa-star"></i>
+              {% elif n.tipo == 'prestamo' %}<i class="fas fa-hand-holding-usd"></i>
+              {% else %}<i class="fas fa-bell"></i>{% endif %}
+            </div>
+            <div class="ntf-body">
+              <div class="ntf-msg">{{ n.mensaje }}</div>
+              <div class="ntf-meta">
+                <span class="ntf-prio {{ n.prioridad }}">{{ n.get_prioridad_display }}</span>
+                {% if n.categoria %}<span class="ntf-cat">{{ n.categoria }}</span>{% endif %}
+                <span><i class="fas fa-clock"></i> {{ n.creado_en|date:"d/m/Y H:i" }}</span>
+                {% if n.leido %}
+                  <span class="estado-no-leida" style="color:#059669; font-weight:800;">
+                    <i class="fas fa-check-circle"></i> Leída
+                  </span>
+                {% else %}
+                  <span style="color:#dc2626; font-weight:800;">● No leída</span>
+                {% endif %}
+              </div>
+            </div>
+            {% if not n.leido %}
+              <div>
+                <button type="button" class="ntf-btn-leer marcar-leida" data-id="{{ n.id }}">
+                  <i class="fas fa-check"></i> Marcar leída
+                </button>
+              </div>
+            {% endif %}
+          </div>
+        {% endfor %}
+      </div>
+    </form>
+
+    {% if page_obj.has_other_pages %}
+      <div class="ntf-pag">
+        {% if page_obj.has_previous %}
+          <a href="?page={{ page_obj.previous_page_number }}{% if filtros.estado %}&estado={{ filtros.estado }}{% endif %}">
+            <i class="fas fa-chevron-left"></i> Anterior
+          </a>
+        {% endif %}
+        <span class="current">Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span>
+        {% if page_obj.has_next %}
+          <a href="?page={{ page_obj.next_page_number }}{% if filtros.estado %}&estado={{ filtros.estado }}{% endif %}">
+            Siguiente <i class="fas fa-chevron-right"></i>
+          </a>
+        {% endif %}
+      </div>
+    {% endif %}
+  {% else %}
+    <div class="ntf-empty">
+      <span class="ico">🔔</span>
+      <h4 style="margin:0 0 8px; color:#052e16;">No hay notificaciones</h4>
+      <p style="margin:0; font-size:.85rem;">Cuando recibas avisos aparecerán aquí.</p>
+    </div>
+  {% endif %}
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    function getCookie(name) {
+        let value = null;
+        if (document.cookie) {
+            document.cookie.split(';').forEach(c => {
+                const cookie = c.trim();
+                if (cookie.startsWith(name + '=')) {
+                    value = decodeURIComponent(cookie.substring(name.length + 1));
+                }
+            });
+        }
+        return value;
+    }
+
+    const csrftoken = getCookie('csrftoken');
+
+    /* ✅ URLs generadas por Django — inmunes a cambios */
+    const URL_MARCAR_UNO   = "{% url 'roles:marcar_notificacion' 0 %}";
+    const URL_MARCAR_TODAS = "{% url 'roles:marcar_todas_leidas' %}";
+
+    function urlMarcarUno(id) {
+        return URL_MARCAR_UNO.replace('/0/', '/' + id + '/');
+    }
+
+    // ── Marcar una notificación como leída ──
+    document.querySelectorAll('.marcar-leida').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            const notifId = this.dataset.id;
+            const boton = this;
+
+            fetch(urlMarcarUno(notifId), {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrftoken,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({})
+            })
+            .then(response => {
+                if (!response.ok) throw new Error('HTTP ' + response.status);
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    const item = document.querySelector(`.notificacion-item[data-id="${notifId}"]`);
+                    if (item) {
+                        item.style.borderLeft = 'none';
+                        item.style.background = '#ffffff';
+                        const badge = item.querySelector('.badge.bg-primary');
+                        if (badge) badge.remove();
+                        const checkbox = item.querySelector('.notif-checkbox');
+                        if (checkbox) {
+                            checkbox.style.display = 'none';
+                            checkbox.checked = false;
+                        }
+                        boton.style.display = 'none';
+                        const estadoSpan = item.querySelector('.estado-no-leida');
+                        if (estadoSpan) {
+                            estadoSpan.innerHTML = '<i class="fas fa-check-circle" style="color:#059669;"></i> Leída';
+                            estadoSpan.style.color = '#059669';
+                        }
+                    }
+                    const noLeidasBadge = document.getElementById('noLeidasCount');
+                    if (noLeidasBadge) {
+                        let count = parseInt(noLeidasBadge.textContent);
+                        if (count > 0) {
+                            count--;
+                            noLeidasBadge.textContent = count;
+                        }
+                    }
+                } else {
+                    alert('Error al marcar como leída: ' + (data.message || 'respuesta inesperada'));
+                }
+            })
+            .catch(error => {
+                console.error('[marcar-leida] Error:', error);
+                alert('No se pudo marcar como leída. ' + error.message);
+            });
+        });
+    });
+
+    // ── Marcar todas ──
+    const btnTodas = document.getElementById('marcarTodasBtn');
+    if (btnTodas) {
+        btnTodas.addEventListener('click', function(e) {
+            e.preventDefault();
+            if (!confirm('¿Marcar todas las notificaciones como leídas?')) return;
+
+            fetch(URL_MARCAR_TODAS, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrftoken,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({})
+            })
+            .then(response => {
+                if (!response.ok) throw new Error('HTTP ' + response.status);
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert('Error: ' + (data.message || 'respuesta inesperada'));
+                }
+            })
+            .catch(error => {
+                console.error('[marcar-todas] Error:', error);
+                alert('No se pudieron marcar todas. ' + error.message);
+            });
+        });
+    }
+
+    // ── Mostrar/ocultar botón "Marcar seleccionadas" ──
+    const checkboxes = document.querySelectorAll('.notif-checkbox');
+    const marcarSeleccionadasBtn = document.getElementById('marcarSeleccionadasBtn');
+    checkboxes.forEach(cb => {
+        cb.addEventListener('change', function() {
+            const anyChecked = document.querySelector('.notif-checkbox:checked');
+            if (anyChecked) {
+                marcarSeleccionadasBtn.style.display = 'inline-block';
+            } else {
+                marcarSeleccionadasBtn.style.display = 'none';
+            }
+        });
+    });
+
+    marcarSeleccionadasBtn?.addEventListener('click', function(e) {
+        e.preventDefault();
+        const form = document.getElementById('notificacionesForm');
+        if (form) {
+            const actionInput = document.createElement('input');
+            actionInput.type = 'hidden';
+            actionInput.name = 'action';
+            actionInput.value = 'marcar_seleccionadas';
+            form.appendChild(actionInput);
+            form.submit();
+        }
+    });
+});
+</script>
+{% endblock %}

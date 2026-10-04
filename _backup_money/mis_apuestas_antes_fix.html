@@ -1,0 +1,931 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block page_title %}📊 Mis Apuestas{% endblock %}
+{% block page_subtitle %}Resumen de todas tus jugadas{% endblock %}
+
+{% block extra_css %}
+<style>
+:root{
+  --ma-bg:#f6f7fb; --ma-surface:#fff; --ma-surface-2:#fafbfe;
+  --ma-line:#e8eaf2; --ma-line-2:#d6dae7;
+  --ma-ink:#0d1424; --ma-ink-2:#4a5068; --ma-ink-3:#8b91a8;
+  --ma-primary:#4f46e5; --ma-primary-soft:#eef0ff;
+  --ma-cyan:#0891b2; --ma-cyan-soft:#e0f7fb;
+  --ma-violet:#7c3aed; --ma-violet-soft:#f1ebfe;
+  --ma-pink:#db2777; --ma-pink-soft:#fce7f3;
+  --ma-amber:#d97706; --ma-amber-soft:#fef3c7;
+  --ma-lime:#65a30d; --ma-lime-soft:#ecfccb;
+  --ma-rose:#e11d48; --ma-rose-soft:#ffe4e6;
+  --ma-emerald:#059669; --ma-emerald-soft:#d1fae5;
+  --ma-sh-sm:0 1px 2px rgba(13,20,36,.04), 0 2px 6px -2px rgba(13,20,36,.05);
+  --ma-sh:0 1px 2px rgba(13,20,36,.04), 0 8px 22px -8px rgba(13,20,36,.09);
+  --ma-sh-lg:0 2px 6px rgba(13,20,36,.05), 0 20px 44px -16px rgba(13,20,36,.16);
+  --ma-r-sm:8px; --ma-r:12px; --ma-r-lg:16px; --ma-r-xl:20px;
+  --f-sans: Arial, Helvetica, 'Liberation Sans', 'Segoe UI', Roboto, sans-serif;
+  --f-mono: Consolas, 'Courier New', 'Liberation Mono', monospace;
+}
+body.ma-dark{
+  --ma-bg:#0a0a12; --ma-surface:#13131c; --ma-surface-2:#191924;
+  --ma-line:#23232f; --ma-line-2:#2e2e3e;
+  --ma-ink:#f4f4f9; --ma-ink-2:#b5b5c2; --ma-ink-3:#77778a;
+  --ma-primary-soft:#1a1b3a; --ma-cyan-soft:#042a33; --ma-violet-soft:#221035;
+  --ma-pink-soft:#38101f; --ma-amber-soft:#382204; --ma-lime-soft:#1a2b09;
+  --ma-rose-soft:#38101a; --ma-emerald-soft:#0a2a1f;
+}
+html,body{background:var(--ma-bg);color:var(--ma-ink);font-family:var(--f-sans);}
+.ma-wrap{max-width:1500px;margin:0 auto;padding:18px 18px 60px;}
+.ma-wrap, .ma-wrap *:not(code):not(.val):not(.ref-text):not(.ma-grupo-monto):not(.ma-fj-total):not(.sorteo-total):not(.tot strong):not(.money){font-family:var(--f-sans);}
+.ma-wrap code, .ma-wrap .val, .ma-wrap .ref-text,
+.ma-wrap .ma-grupo-monto, .ma-wrap .ma-fj-total,
+.ma-wrap .sorteo-total, .ma-wrap .tot strong,
+.ma-wrap .money {font-family:var(--f-mono);}
+
+.ma-header{position:relative;background:var(--ma-surface);border:1px solid var(--ma-line);
+  border-radius:var(--ma-r-xl);padding:18px 24px;margin-bottom:16px;
+  box-shadow:var(--ma-sh-sm);overflow:hidden;}
+.ma-header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:3px;
+  background:linear-gradient(90deg,var(--ma-primary),var(--ma-violet),var(--ma-pink));
+  background-size:200% 100%;animation:ma-slide 9s linear infinite;}
+@keyframes ma-slide{to{background-position:200% 0;}}
+.ma-header-inner{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;}
+.ma-header-left{display:flex;align-items:center;gap:14px;min-width:0;}
+.ma-header-icon{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;
+  justify-content:center;font-size:1.35rem;color:#fff;
+  background:linear-gradient(135deg,var(--ma-primary),var(--ma-violet));
+  box-shadow:0 6px 18px -6px rgba(79,70,229,.55);flex-shrink:0;}
+.ma-header-text h2{margin:0;font-weight:800;font-size:1.32rem;letter-spacing:-.55px;color:var(--ma-ink);}
+.ma-header-text p{margin:3px 0 0;font-size:.78rem;color:var(--ma-ink-2);font-weight:500;}
+.ma-header-right{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.ma-role-chip{display:inline-flex;align-items:center;gap:7px;padding:6px 13px;border-radius:999px;
+  font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.9px;
+  background:var(--ma-primary-soft);color:var(--ma-primary);border:1px solid rgba(79,70,229,.22);}
+.ma-role-chip .dot{width:6px;height:6px;border-radius:50%;background:var(--ma-emerald);
+  animation:ma-pulse 1.8s ease-out infinite;}
+@keyframes ma-pulse{0%{box-shadow:0 0 0 0 rgba(5,150,105,.7);}70%{box-shadow:0 0 0 8px rgba(5,150,105,0);}100%{box-shadow:0 0 0 0 rgba(5,150,105,0);}}
+.ma-icon-btn{width:38px;height:38px;border-radius:10px;border:1px solid var(--ma-line-2);
+  background:var(--ma-surface);color:var(--ma-ink-2);cursor:pointer;
+  display:inline-flex;align-items:center;justify-content:center;font-size:.9rem;
+  transition:.2s;font-family:inherit;text-decoration:none;}
+.ma-icon-btn:hover{border-color:var(--ma-primary);color:var(--ma-primary);
+  transform:translateY(-2px);box-shadow:0 6px 16px -6px var(--ma-primary);}
+
+.ma-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px;}
+.ma-stat{position:relative;padding:16px 18px;border-radius:var(--ma-r);
+  background:var(--ma-surface);border:1px solid var(--ma-line);
+  box-shadow:var(--ma-sh-sm);display:flex;align-items:center;gap:12px;transition:.22s;overflow:hidden;}
+.ma-stat::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--ma-accent,var(--ma-primary));}
+.ma-stat:hover{transform:translateY(-2px);box-shadow:var(--ma-sh);}
+.ma-stat:nth-child(1){--ma-accent:var(--ma-violet);--ma-accent-soft:var(--ma-violet-soft);}
+.ma-stat:nth-child(2){--ma-accent:var(--ma-pink);--ma-accent-soft:var(--ma-pink-soft);}
+.ma-stat:nth-child(3){--ma-accent:var(--ma-lime);--ma-accent-soft:var(--ma-lime-soft);}
+.ma-stat:nth-child(4){--ma-accent:var(--ma-amber);--ma-accent-soft:var(--ma-amber-soft);}
+.ma-stat .ic{width:40px;height:40px;border-radius:11px;display:inline-flex;align-items:center;
+  justify-content:center;font-size:1.05rem;background:var(--ma-accent-soft);color:var(--ma-accent);flex-shrink:0;}
+.ma-stat .text{display:flex;flex-direction:column;gap:3px;min-width:0;flex:1;}
+.ma-stat .lbl{font-size:.62rem;color:var(--ma-ink-3);text-transform:uppercase;font-weight:700;letter-spacing:1.1px;}
+.ma-stat .val{font-size:1.28rem;font-weight:700;color:var(--ma-ink);
+  letter-spacing:-.5px;line-height:1.05;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ma-stat .val[data-money="1"]{color:var(--ma-accent);}
+
+.ma-filters{background:var(--ma-surface);border:1px solid var(--ma-line);
+  border-radius:var(--ma-r-lg);padding:18px 20px;margin-bottom:16px;
+  box-shadow:var(--ma-sh-sm);position:relative;overflow:hidden;}
+.ma-filters::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;
+  background:linear-gradient(90deg,var(--ma-cyan),var(--ma-primary),var(--ma-violet));}
+.ma-filters-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;}
+.ma-fgrp{display:flex;flex-direction:column;gap:5px;min-width:0;}
+.ma-fgrp label{font-size:.62rem;font-weight:700;color:var(--ma-ink-3);text-transform:uppercase;letter-spacing:1.1px;}
+.ma-fgrp select,.ma-fgrp input{padding:9px 12px;border-radius:var(--ma-r-sm);border:1px solid var(--ma-line-2);
+  background:var(--ma-surface);font-size:.83rem;color:var(--ma-ink);font-weight:600;outline:none;
+  transition:.2s;font-family:inherit;width:100%;}
+.ma-fgrp select:focus,.ma-fgrp input:focus{border-color:var(--ma-primary);box-shadow:0 0 0 3px rgba(79,70,229,.13);}
+.ma-filters-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px;flex-wrap:wrap;}
+.btn-apply{padding:10px 22px;border-radius:var(--ma-r-sm);border:none;
+  background:linear-gradient(135deg,var(--ma-primary),var(--ma-violet));
+  color:#fff;font-size:.83rem;font-weight:700;cursor:pointer;
+  box-shadow:0 4px 14px -6px var(--ma-violet);transition:.2s;
+  display:inline-flex;align-items:center;gap:7px;font-family:inherit;letter-spacing:.2px;}
+.btn-apply:hover{transform:translateY(-1px);box-shadow:0 8px 22px -6px var(--ma-violet);}
+.btn-clear{padding:10px 18px;border-radius:var(--ma-r-sm);border:1px solid var(--ma-line-2);
+  background:var(--ma-surface);color:var(--ma-ink-2);font-size:.83rem;font-weight:700;
+  text-decoration:none;display:inline-flex;align-items:center;gap:7px;transition:.2s;}
+.btn-clear:hover{border-color:var(--ma-pink);color:var(--ma-pink);transform:translateY(-1px);}
+
+.ma-tabs{display:flex;gap:6px;margin-bottom:16px;padding:5px;
+  background:var(--ma-surface);border:1px solid var(--ma-line);
+  border-radius:999px;width:fit-content;box-shadow:var(--ma-sh-sm);flex-wrap:wrap;}
+.ma-tab{position:relative;padding:10px 22px;border-radius:999px;border:none;background:transparent;
+  color:var(--ma-ink-2);font-weight:700;font-size:.83rem;cursor:pointer;
+  transition:.25s cubic-bezier(.4,0,.2,1);display:inline-flex;align-items:center;gap:8px;
+  white-space:nowrap;font-family:inherit;}
+.ma-tab:hover:not(.active){background:var(--ma-surface-2);color:var(--ma-ink);}
+.ma-tab.active{background:linear-gradient(135deg,var(--ma-primary),var(--ma-violet));
+  color:#fff;box-shadow:0 6px 20px -6px var(--ma-violet);}
+.ma-tab .badge-cnt{display:inline-block;padding:2px 9px;border-radius:999px;
+  font-size:.66rem;font-weight:700;background:#eef0f6;color:var(--ma-ink-2);
+  transition:.25s;font-family:var(--f-mono);}
+body.ma-dark .ma-tab .badge-cnt{background:#1e1e2a;}
+.ma-tab.active .badge-cnt{background:rgba(255,255,255,.24);color:#fff;}
+.ma-tab-pane{display:none;}
+.ma-tab-pane.active{display:block;animation:ma-pane .35s cubic-bezier(.2,.8,.2,1);}
+@keyframes ma-pane{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+
+.ma-boleta{position:relative;background:var(--ma-surface);border:1px solid var(--ma-line);
+  border-radius:var(--ma-r-lg);margin-bottom:14px;box-shadow:var(--ma-sh-sm);
+  transition:.25s;overflow:hidden;}
+.ma-boleta:hover{box-shadow:var(--ma-sh);border-color:var(--ma-line-2);}
+.ma-boleta::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;
+  background:linear-gradient(90deg,var(--ma-primary),var(--ma-violet));}
+.ma-boleta.is-super::before{background:linear-gradient(90deg,var(--ma-amber),var(--ma-pink));}
+.ma-boleta.is-cancelada::before{background:linear-gradient(90deg,var(--ma-rose),var(--ma-pink));}
+.ma-boleta.is-cancelada{opacity:.82;}
+.ma-boleta-head{padding:14px 18px 12px;border-bottom:1px solid var(--ma-line);background:var(--ma-surface);}
+.ma-boleta-row-1{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:10px;}
+.ma-boleta-ref{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-weight:800;font-size:.95rem;color:var(--ma-ink);}
+.ma-boleta-ref .ref-icon{width:32px;height:32px;border-radius:9px;
+  display:inline-flex;align-items:center;justify-content:center;color:#fff;font-size:.85rem;
+  background:linear-gradient(135deg,var(--ma-primary),var(--ma-violet));
+  box-shadow:0 3px 10px -4px var(--ma-primary);}
+.ma-boleta.is-super .ref-icon{background:linear-gradient(135deg,var(--ma-amber),var(--ma-pink));}
+.ma-boleta.is-cancelada .ref-icon{background:linear-gradient(135deg,var(--ma-ink-3),var(--ma-ink-2));}
+.ma-boleta-ref .ref-text{font-weight:700;letter-spacing:-.3px;}
+.ma-boleta-actions{display:flex;gap:6px;align-items:center;flex-wrap:wrap;}
+.ma-act-btn{display:inline-flex;align-items:center;gap:6px;padding:7px 13px;border-radius:8px;
+  border:1px solid var(--ma-line-2);background:var(--ma-surface);color:var(--ma-ink-2);
+  font-size:.72rem;font-weight:700;cursor:pointer;transition:.18s;
+  font-family:inherit;letter-spacing:.1px;white-space:nowrap;}
+.ma-act-btn i{font-size:.72rem;}
+.ma-act-btn:hover{transform:translateY(-1px);color:#fff;border-color:transparent;}
+.ma-act-btn:disabled{opacity:.45;cursor:not-allowed;transform:none!important;}
+.ma-act-btn.duplicate:hover{background:var(--ma-cyan);box-shadow:0 4px 12px -5px var(--ma-cyan);}
+.ma-act-btn.edit:hover{background:var(--ma-amber);box-shadow:0 4px 12px -5px var(--ma-amber);}
+.ma-act-btn.cancel:hover{background:var(--ma-rose);box-shadow:0 4px 12px -5px var(--ma-rose);}
+.ma-act-btn.share-wa:hover{background:#25d366;box-shadow:0 4px 12px -5px #25d366;}
+.ma-boleta-row-2{display:flex;flex-wrap:wrap;gap:14px;font-size:.76rem;color:var(--ma-ink-2);
+  font-weight:600;margin-bottom:10px;}
+.ma-boleta-row-2 .meta{display:inline-flex;align-items:center;gap:5px;}
+.ma-boleta-row-2 .meta i{color:var(--ma-ink-3);font-size:.72rem;}
+.ma-boleta-row-3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;
+  padding:10px 12px;background:var(--ma-surface-2);
+  border-radius:var(--ma-r-sm);border:1px solid var(--ma-line);}
+.ma-boleta-row-3 .tot{display:flex;flex-direction:column;gap:2px;}
+.ma-boleta-row-3 .tot span{font-size:.6rem;color:var(--ma-ink-3);text-transform:uppercase;font-weight:700;letter-spacing:.9px;}
+.ma-boleta-row-3 .tot strong{font-size:.98rem;font-weight:700;color:var(--ma-ink);letter-spacing:-.3px;}
+.ma-boleta-row-3 .tot strong.pos{color:var(--ma-emerald);}
+.ma-boleta-row-3 .tot strong.neg{color:var(--ma-rose);}
+.ma-estado{display:inline-block;padding:3px 11px;border-radius:999px;font-size:.6rem;
+  font-weight:700;text-transform:uppercase;letter-spacing:.6px;}
+.ma-estado.pendiente {background:var(--ma-amber-soft);color:#b45309;}
+.ma-estado.ganadora  {background:var(--ma-lime-soft);color:#4d7c0f;}
+.ma-estado.perdedora {background:var(--ma-rose-soft);color:#be123c;}
+.ma-estado.cancelada {background:#eef0f6;color:var(--ma-ink-3);}
+.ma-estado.confirmada{background:var(--ma-cyan-soft);color:#0e7490;}
+.ma-estado.finalizada{background:#eef0f6;color:var(--ma-ink-3);}
+body.ma-dark .ma-estado.pendiente {color:#fbbf24;}
+body.ma-dark .ma-estado.ganadora  {color:#a3e635;}
+body.ma-dark .ma-estado.perdedora {color:#fb7185;}
+body.ma-dark .ma-estado.confirmada{color:#67e8f9;}
+body.ma-dark .ma-estado.cancelada,
+body.ma-dark .ma-estado.finalizada{background:#1e1e2a;}
+.ma-boleta-body{padding:12px 18px 14px;background:var(--ma-surface);}
+.ma-sorteo-block{margin-bottom:10px;padding:10px 12px;
+  background:var(--ma-surface-2);border-radius:var(--ma-r-sm);border:1px solid var(--ma-line);}
+.ma-sorteo-block:last-child{margin-bottom:0;}
+.ma-sorteo-block-head{display:flex;align-items:center;justify-content:space-between;
+  gap:10px;flex-wrap:wrap;padding-bottom:8px;margin-bottom:8px;
+  border-bottom:1px dashed var(--ma-line);font-weight:800;font-size:.82rem;color:var(--ma-ink);}
+.ma-sorteo-block-head .sorteo-name{display:inline-flex;align-items:center;gap:7px;}
+.ma-sorteo-block-head .sorteo-name i{color:var(--ma-violet);font-size:.75rem;}
+.ma-sorteo-block-head .sorteo-total{font-weight:700;font-size:.82rem;
+  padding:3px 11px;border-radius:999px;background:var(--ma-primary-soft);color:var(--ma-primary);}
+.ma-fj{display:grid;grid-template-columns:130px 1fr auto;gap:12px;align-items:center;
+  padding:8px 4px;border-bottom:1px dashed var(--ma-line);}
+.ma-fj:last-child{border-bottom:none;padding-bottom:0;}
+.ma-fj-nombre{display:flex;align-items:center;gap:7px;flex-wrap:wrap;
+  font-weight:700;font-size:.78rem;color:var(--ma-ink);}
+.ma-fj-nombre i{color:var(--ma-violet);font-size:.7rem;}
+.ma-fj-nums{display:flex;flex-wrap:wrap;gap:6px;min-width:0;}
+.ma-fj-total{font-weight:800;font-size:.9rem;color:var(--ma-ink);
+  text-align:right;min-width:80px;letter-spacing:-.4px;}
+.ma-grupo{display:inline-flex;align-items:center;gap:8px;flex-wrap:wrap;
+  padding:4px 10px;border-radius:999px;background:var(--ma-surface);border:1px solid var(--ma-line);}
+.ma-grupo-monto{display:inline-flex;align-items:center;gap:3px;padding:1px 8px;border-radius:999px;
+  background:var(--ma-amber-soft);color:#b45309;font-weight:700;font-size:.7rem;letter-spacing:-.3px;}
+body.ma-dark .ma-grupo-monto{color:#fbbf24;}
+.ma-grupo-nums-inline{display:inline-flex;gap:4px;flex-wrap:wrap;}
+.ma-grupo-nums-inline code{font-weight:700;font-size:.72rem;background:var(--ma-cyan-soft);
+  color:var(--ma-ink);padding:2px 8px;border-radius:5px;letter-spacing:.2px;}
+body.ma-dark .ma-grupo-nums-inline code{color:#67e8f9;}
+.ma-grupo .premio{color:#15803d;font-weight:700;font-size:.66rem;
+  background:var(--ma-lime-soft);padding:1px 7px;border-radius:999px;}
+body.ma-dark .ma-grupo .premio{color:#a3e635;}
+.ma-boleta-agente{display:inline-flex;align-items:center;gap:5px;
+  padding:3px 10px;border-radius:999px;font-size:.62rem;font-weight:600;
+  background:var(--ma-surface);color:var(--ma-ink-2);border:1px solid var(--ma-line);}
+
+.ma-empty{text-align:center;padding:64px 20px;background:var(--ma-surface);
+  border:2px dashed var(--ma-line-2);border-radius:var(--ma-r-lg);
+  color:var(--ma-ink-3);font-size:.92rem;font-weight:600;}
+.ma-empty .ico{font-size:3.2rem;display:block;margin-bottom:14px;}
+.ma-empty h4{color:var(--ma-ink);font-weight:800;margin:0 0 6px;font-size:1.06rem;}
+
+.ma-toast{position:fixed;top:86px;right:20px;z-index:9999;
+  background:var(--ma-surface);color:var(--ma-ink);padding:14px 20px;border-radius:var(--ma-r);
+  border:1px solid var(--ma-line);font-size:.86rem;font-weight:600;
+  box-shadow:var(--ma-sh-lg);opacity:0;transform:translateX(120%);
+  transition:.35s cubic-bezier(.2,.8,.2,1);display:inline-flex;align-items:center;gap:12px;max-width:400px;}
+.ma-toast.visible{opacity:1;transform:translateX(0);}
+.ma-toast .ic{font-size:1.3rem;flex-shrink:0;}
+.ma-toast.pos {border-color:rgba(101,163,13,.4);background:var(--ma-lime-soft);}
+.ma-toast.warn{border-color:rgba(217,119,6,.4);background:var(--ma-amber-soft);}
+.ma-toast.info{border-color:rgba(79,70,229,.4);background:var(--ma-primary-soft);}
+
+@media (max-width:900px){
+  .ma-stats{grid-template-columns:repeat(2,1fr);}
+  .ma-fj{grid-template-columns:1fr;gap:8px;}
+  .ma-fj-total{text-align:left;}
+}
+@media (max-width:600px){
+  .ma-wrap{padding:12px 12px 40px;}
+  .ma-header{padding:14px 16px;}
+  .ma-header-text h2{font-size:1.08rem;}
+  .ma-stat{padding:12px 14px;}
+  .ma-stat .val{font-size:1.05rem;}
+  .ma-filters-grid{grid-template-columns:1fr 1fr;}
+  .ma-tabs{width:100%;justify-content:center;}
+  .ma-boleta-actions{width:100%;justify-content:flex-start;}
+  .ma-boleta-row-3{grid-template-columns:1fr;}
+  .ma-toast{left:12px;right:12px;top:72px;transform:translateY(-200%);max-width:none;}
+  .ma-toast.visible{transform:translateY(0);}
+}
+@media (max-width:420px){
+  .ma-filters-grid{grid-template-columns:1fr;}
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="ma-toast" id="maToast"><span class="ic">ℹ️</span><span class="msg">—</span></div>
+
+<div class="ma-wrap">
+
+  {# HEADER #}
+  <div class="ma-header">
+    <div class="ma-header-inner">
+      <div class="ma-header-left">
+        <div class="ma-header-icon">📊</div>
+        <div class="ma-header-text">
+          <h2>Mis Apuestas</h2>
+          <p id="maGreeting">Cargando...</p>
+        </div>
+      </div>
+      <div class="ma-header-right">
+        <span class="ma-role-chip">
+          <span class="dot"></span>
+          {% if es_superadmin %}Superadmin
+          {% elif es_banco %}Banco
+          {% elif es_comercial %}Comercial
+          {% else %}Cliente{% endif %}
+        </span>
+        <button class="ma-icon-btn" id="maThemeBtn" title="Cambiar tema" type="button">
+          <i class="fas fa-moon"></i>
+        </button>
+        <a href="{% url 'jugadas:apostar' %}" class="ma-icon-btn" title="Apostar">
+          <i class="fas fa-dice"></i>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  {# STATS #}
+  <div class="ma-stats">
+
+    <div class="ma-stat">
+      <span class="ic">🎲</span>
+      <div class="text">
+        <div class="lbl">Total boletas</div>
+        <div class="val" data-count="{{ estadisticas.total_boletas|default:estadisticas.total_jugadas|default:0|stringformat:'d' }}">
+          {{ estadisticas.total_boletas|default:estadisticas.total_jugadas|default:0 }}
+        </div>
+      </div>
+    </div>
+
+    <div class="ma-stat">
+      <span class="ic">💵</span>
+      <div class="text">
+        <div class="lbl">Total apostado</div>
+        <div class="val" data-count="{{ estadisticas.total_apostado|default:0|stringformat:'0.2f' }}" data-money="1">
+          ${{ estadisticas.total_apostado|default:0|stringformat:"0.2f" }}
+        </div>
+      </div>
+    </div>
+
+    <div class="ma-stat">
+      <span class="ic">🏆</span>
+      <div class="text">
+        <div class="lbl">Premios ganados</div>
+        <div class="val" data-count="{{ estadisticas.total_premios|default:0|stringformat:'0.2f' }}" data-money="1">
+          ${{ estadisticas.total_premios|default:0|stringformat:"0.2f" }}
+        </div>
+      </div>
+    </div>
+
+    <div class="ma-stat">
+      <span class="ic">🎯</span>
+      <div class="text">
+        <div class="lbl">Tasa de acierto</div>
+        <div class="val" data-count="{{ estadisticas.tasa_acierto|default:0|stringformat:'0.0f' }}" data-suffix="%">
+          {{ estadisticas.tasa_acierto|default:0|stringformat:"0.0f" }}%
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  {# FILTROS #}
+  <form method="get" class="ma-filters" id="filtroForm">
+    <div class="ma-filters-grid">
+      {% if es_superadmin %}
+        <div class="ma-fgrp"><label>🏦 Banco</label>
+          <select name="banco" onchange="this.form.submit()">
+            <option value="">Todos los bancos</option>
+            {% for b in bancos_opciones %}
+              <option value="{{ b.id }}" {% if filtro_banco == b.id|stringformat:"s" %}selected{% endif %}>{{ b.username }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      {% endif %}
+      {% if es_superadmin or es_banco %}
+        <div class="ma-fgrp"><label>💼 Comercial</label>
+          <select name="comercial" onchange="this.form.submit()">
+            <option value="">Todos los comerciales</option>
+            {% for c in comerciales_opciones %}
+              <option value="{{ c.id }}" {% if filtro_comercial == c.id|stringformat:"s" %}selected{% endif %}>{{ c.username }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      {% endif %}
+      {% if es_autorizador %}
+        <div class="ma-fgrp"><label>👤 Cliente</label>
+          <select name="cliente" onchange="this.form.submit()">
+            <option value="">Todos los clientes</option>
+            {% for c in clientes_opciones %}
+              <option value="{{ c.id }}" {% if filtro_cliente == c.id|stringformat:"s" %}selected{% endif %}>{{ c.username }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      {% endif %}
+      {% if es_cliente %}
+        <div class="ma-fgrp"><label>🏢 Gestor</label>
+          <select name="gestor" onchange="this.form.submit()">
+            <option value="">Todos los gestores</option>
+            {% for g in gestores_opciones %}
+              <option value="{{ g.id }}" {% if filtro_gestor == g.id|stringformat:"s" %}selected{% endif %}>{{ g.username }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      {% endif %}
+      <div class="ma-fgrp"><label>🎰 Sorteo</label>
+        <select name="sorteo" onchange="this.form.submit()">
+          <option value="">Todos los sorteos</option>
+          {% for s in sorteos_filtro %}
+            <option value="{{ s.id }}" {% if filtro_sorteo == s.id|stringformat:"s" %}selected{% endif %}>{{ s.nombre }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="ma-fgrp"><label>🎲 Forma de juego</label>
+        <select name="forma_juego" onchange="this.form.submit()">
+          <option value="">Todas las formas</option>
+          {% for fj in formas_juego_filtro %}
+            <option value="{{ fj.nombre }}" {% if filtro_forma == fj.nombre %}selected{% endif %}>{{ fj.nombre|capfirst }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="ma-fgrp"><label>📅 Desde</label>
+        <input type="date" name="fecha_desde" value="{{ filtro_fecha_desde|default:'' }}" onchange="this.form.submit()">
+      </div>
+      <div class="ma-fgrp"><label>📅 Hasta</label>
+        <input type="date" name="fecha_hasta" value="{{ filtro_fecha_hasta|default:'' }}" onchange="this.form.submit()">
+      </div>
+      <div class="ma-fgrp"><label>🚦 Estado</label>
+        <select name="estado" onchange="this.form.submit()">
+          <option value="">Todos los estados</option>
+          <option value="pendiente" {% if filtro_estado == 'pendiente' %}selected{% endif %}>Pendiente</option>
+          <option value="ganadora"  {% if filtro_estado == 'ganadora' %}selected{% endif %}>Ganadora</option>
+          <option value="perdedora" {% if filtro_estado == 'perdedora' %}selected{% endif %}>Perdedora</option>
+          <option value="cancelada" {% if filtro_estado == 'cancelada' %}selected{% endif %}>Cancelada</option>
+        </select>
+      </div>
+      <div class="ma-fgrp"><label>🔎 Buscar número</label>
+        <input type="text" name="buscar" id="maSearchInput"
+               value="{{ filtro_buscar|default:'' }}" placeholder="Ej: 1234 o PA">
+      </div>
+    </div>
+    <div class="ma-filters-actions">
+      <a href="{% url 'jugadas:mis_apuestas' %}" class="btn-clear">
+        <i class="fas fa-times"></i> Limpiar
+      </a>
+      </div>
+  </form>
+
+  {# TABS #}
+  <div class="ma-tabs" role="tablist">
+    <button class="ma-tab active" data-tab="normales" type="button">
+      🎯 Apuestas normales
+      <span class="badge-cnt">{{ estadisticas_normales.total_boletas|default:estadisticas_normales.total_jugadas|default:0 }}</span>
+    </button>
+    <button class="ma-tab" data-tab="superparlet" type="button">
+      ⭐ Superparlet
+      <span class="badge-cnt">{{ estadisticas_super.total_boletas|default:estadisticas_super.total_jugadas|default:0 }}</span>
+    </button>
+  </div>
+
+  {# PANE NORMALES #}
+  <div class="ma-tab-pane active" data-pane="normales" role="tabpanel">
+    {% if sorteos_agrupados_normales %}
+      {% for b in sorteos_agrupados_normales %}
+        <div class="ma-boleta {% if b.estado_general == 'cancelada' %}is-cancelada{% endif %}"
+             data-boleta-id="{{ b.boleta_id|default:'' }}"
+             data-boleta-ref="{{ b.referencia }}"
+             data-boleta-cliente="{{ b.cliente.username }}"
+             data-boleta-total="{{ b.total_apostado|stringformat:'0.2f' }}"
+             data-boleta-fecha="{{ b.fecha_sorteo|date:'d/m/Y' }}"
+             data-boleta-gestor="{{ b.destinatario.username|default:'' }}"
+             data-boleta-fp="{{ b.forma_pago.nombre|default:'' }}"
+             data-boleta-agentes="{{ b.agentes|default:'' }}"
+             data-boleta-nums="{{ b.cantidad_numeros }}">
+
+          <div class="ma-boleta-head">
+            <div class="ma-boleta-row-1">
+              <div class="ma-boleta-ref">
+                <span class="ref-icon">📋</span>
+                <span class="ref-text">{{ b.referencia }}</span>
+                <span class="ma-estado {{ b.estado_general }}">{{ b.estado_general|capfirst }}</span>
+              </div>
+              {% if b.boleta_id %}
+                <div class="ma-boleta-actions">
+                  {% if b.perms.puede_editar %}
+                  <button type="button" class="ma-act-btn edit btn-editar" title="Editar (suma igual)">
+                    <i class="fas fa-pen"></i> Editar
+                  </button>
+                  {% endif %}
+                  {% if b.perms.puede_reenviar %}
+                  <button type="button" class="ma-act-btn reenviar btn-reenviar" title="Reenviar a nuevos sorteos">
+                    <i class="fas fa-paper-plane"></i> Reenviar
+                  </button>
+                  {% endif %}
+                  <button type="button" class="ma-act-btn share-wa btn-wa" title="Compartir por WhatsApp">
+                    <i class="fab fa-whatsapp"></i> WhatsApp
+                  </button>
+                  {% if b.perms.puede_eliminar and b.estado_general != 'cancelada' %}
+                    <button type="button" class="ma-act-btn cancel btn-cancelar" title="Eliminar boleta">
+                      <i class="fas fa-trash"></i> Eliminar
+                    </button>
+                  {% endif %}
+                </div>
+              {% endif %}
+            </div>
+
+            <div class="ma-boleta-row-2">
+              <span class="meta"><i class="fas fa-user"></i> {{ b.cliente.username }}</span>
+              {% if b.destinatario and b.destinatario != b.cliente %}
+                <span class="meta"><i class="fas fa-user-tie"></i> {{ b.destinatario.username }}</span>
+              {% endif %}
+              <span class="meta"><i class="fas fa-calendar"></i> {{ b.fecha_sorteo|date:"d/m/Y" }}</span>
+              {% if b.forma_pago %}
+                <span class="meta"><i class="fas fa-credit-card"></i> {{ b.forma_pago.nombre }}</span>
+              {% endif %}
+              <span class="meta"><i class="fas fa-hashtag"></i> {{ b.cantidad_numeros }} númer{{ b.cantidad_numeros|pluralize:"o,os" }}</span>
+              {% if b.agentes and b.agentes != 'Autoapuesta' %}
+                <span class="ma-boleta-agente"><i class="fas fa-user-tie"></i> {{ b.agentes }}</span>
+              {% endif %}
+            </div>
+
+            <div class="ma-boleta-row-3">
+              <div class="tot">
+                <span>Apostado</span>
+                <strong>${{ b.total_apostado|stringformat:"0.2f" }}</strong>
+              </div>
+              <div class="tot">
+                <span>Premios</span>
+                <strong>${{ b.total_premios|stringformat:"0.2f" }}</strong>
+              </div>
+              <div class="tot">
+                <span>Neto</span>
+                <strong class="{% if b.ganancia_neta >= 0 %}pos{% else %}neg{% endif %}">
+                  {% if b.ganancia_neta >= 0 %}+{% endif %}${{ b.ganancia_neta|stringformat:"0.2f" }}
+                </strong>
+              </div>
+            </div>
+          </div>
+
+          <div class="ma-boleta-body">
+            {% for s in b.sorteos %}
+              <div class="ma-sorteo-block"
+                   data-sorteo-nombre="{% if b.sorteo_pair_label %}{{ b.sorteo_pair_label }}{% else %}{{ s.sorteo.nombre }}{% endif %}">
+                <div class="ma-sorteo-block-head">
+                  <span class="sorteo-name">
+                    <i class="fas fa-ticket"></i>
+                    {% if b.sorteo_pair_label %}{{ b.sorteo_pair_label }}{% else %}{{ s.sorteo.nombre }}{% endif %}
+                  </span>
+                  <span class="sorteo-total">${{ s.total|stringformat:"0.2f" }}</span>
+                </div>
+                {% for f in s.formas_juego %}
+                  <div class="ma-fj">
+                    <div class="ma-fj-nombre">
+                      <i class="fas fa-dice"></i> {{ f.forma_nombre|capfirst }}
+                      <span class="ma-estado {{ f.estado }}">{{ f.estado|capfirst }}</span>
+                    </div>
+                    <div class="ma-fj-nums">
+                      {% for g in f.grupos_monto %}
+                        <div class="ma-grupo" data-monto="{{ g.monto|stringformat:'0.2f' }}">
+                          <span class="ma-grupo-monto">${{ g.monto|stringformat:"0.2f" }}</span>
+                          {% if g.premios > 0 %}
+                            <span class="premio">🏆 ${{ g.premios|stringformat:"0.2f" }}</span>
+                          {% endif %}
+                          <span class="ma-grupo-nums-inline">
+                            {% for n in g.numeros %}<code>{{ n }}</code>{% endfor %}
+                          </span>
+                        </div>
+                      {% endfor %}
+                    </div>
+                    <div class="ma-fj-total">${{ f.total|stringformat:"0.2f" }}</div>
+                  </div>
+                {% endfor %}
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+      {% endfor %}
+    {% else %}
+      <div class="ma-empty">
+        <span class="ico">📭</span>
+        <h4>No hay apuestas normales</h4>
+        <p>No se encontraron boletas con los filtros seleccionados.</p>
+      </div>
+    {% endif %}
+  </div>
+
+  {# PANE SUPERPARLET #}
+  <div class="ma-tab-pane" data-pane="superparlet" role="tabpanel">
+    {% if sorteos_agrupados_superparlet %}
+      {% for b in sorteos_agrupados_superparlet %}
+        <div class="ma-boleta is-super {% if b.estado_general == 'cancelada' %}is-cancelada{% endif %}"
+             data-boleta-id="{{ b.boleta_id|default:'' }}"
+             data-boleta-ref="{{ b.referencia }}"
+             data-boleta-cliente="{{ b.cliente.username }}"
+             data-boleta-total="{{ b.total_apostado|stringformat:'0.2f' }}"
+             data-boleta-fecha="{{ b.fecha_sorteo|date:'d/m/Y' }}"
+             data-boleta-gestor="{{ b.destinatario.username|default:'' }}"
+             data-boleta-fp="{{ b.forma_pago.nombre|default:'' }}"
+             data-boleta-agentes="{{ b.agentes|default:'' }}"
+             data-boleta-nums="{{ b.cantidad_numeros }}">
+
+          <div class="ma-boleta-head">
+            <div class="ma-boleta-row-1">
+              <div class="ma-boleta-ref">
+                <span class="ref-icon"><i class="fas fa-star"></i></span>
+                <span class="ref-text">{{ b.referencia }}</span>
+                <span class="ma-estado {{ b.estado_general }}">{{ b.estado_general|capfirst }}</span>
+              </div>
+              {% if b.boleta_id %}
+                <div class="ma-boleta-actions">
+                  {% if b.perms.puede_editar %}<button type="button" class="ma-act-btn edit btn-editar"><i class="fas fa-pen"></i> Editar</button>{% endif %}
+                  {% if b.perms.puede_reenviar %}<button type="button" class="ma-act-btn reenviar btn-reenviar"><i class="fas fa-paper-plane"></i> Reenviar</button>{% endif %}
+                  <button type="button" class="ma-act-btn share-wa btn-wa"><i class="fab fa-whatsapp"></i> WhatsApp</button>
+                  {% if b.perms.puede_eliminar and b.estado_general != 'cancelada' %}
+                    <button type="button" class="ma-act-btn cancel btn-cancelar"><i class="fas fa-trash"></i> Eliminar</button>
+                  {% endif %}
+                </div>
+              {% endif %}
+            </div>
+            <div class="ma-boleta-row-2">
+              <span class="meta"><i class="fas fa-user"></i> {{ b.cliente.username }}</span>
+              {% if b.destinatario and b.destinatario != b.cliente %}
+                <span class="meta"><i class="fas fa-user-tie"></i> {{ b.destinatario.username }}</span>
+              {% endif %}
+              <span class="meta"><i class="fas fa-calendar"></i> {{ b.fecha_sorteo|date:"d/m/Y" }}</span>
+              {% if b.forma_pago %}
+                <span class="meta"><i class="fas fa-credit-card"></i> {{ b.forma_pago.nombre }}</span>
+              {% endif %}
+              <span class="meta"><i class="fas fa-hashtag"></i> {{ b.cantidad_numeros }} númer{{ b.cantidad_numeros|pluralize:"o,os" }}</span>
+            </div>
+            <div class="ma-boleta-row-3">
+              <div class="tot"><span>Apostado</span><strong>${{ b.total_apostado|stringformat:"0.2f" }}</strong></div>
+              <div class="tot"><span>Premios</span><strong>${{ b.total_premios|stringformat:"0.2f" }}</strong></div>
+              <div class="tot"><span>Neto</span>
+                <strong class="{% if b.ganancia_neta >= 0 %}pos{% else %}neg{% endif %}">
+                  {% if b.ganancia_neta >= 0 %}+{% endif %}${{ b.ganancia_neta|stringformat:"0.2f" }}
+                </strong>
+              </div>
+            </div>
+          </div>
+
+          <div class="ma-boleta-body">
+            {% for s in b.sorteos %}
+              <div class="ma-sorteo-block"
+                   data-sorteo-nombre="{% if b.sorteo_pair_label %}{{ b.sorteo_pair_label }}{% else %}{{ s.sorteo.nombre }}{% endif %}">
+                <div class="ma-sorteo-block-head">
+                  <span class="sorteo-name">
+                    <i class="fas fa-star"></i>
+                    {% if b.sorteo_pair_label %}{{ b.sorteo_pair_label }}{% else %}{{ s.sorteo.nombre }}{% endif %}
+                  </span>
+                  <span class="sorteo-total">${{ s.total|stringformat:"0.2f" }}</span>
+                </div>
+                {% for f in s.formas_juego %}
+                  <div class="ma-fj">
+                    <div class="ma-fj-nombre">
+                      <i class="fas fa-dice"></i> {{ f.forma_nombre|capfirst }}
+                      <span class="ma-estado {{ f.estado }}">{{ f.estado|capfirst }}</span>
+                    </div>
+                    <div class="ma-fj-nums">
+                      {% for g in f.grupos_monto %}
+                        <div class="ma-grupo" data-monto="{{ g.monto|stringformat:'0.2f' }}">
+                          <span class="ma-grupo-monto">${{ g.monto|stringformat:"0.2f" }}</span>
+                          {% if g.premios > 0 %}<span class="premio">🏆 ${{ g.premios|stringformat:"0.2f" }}</span>{% endif %}
+                          <span class="ma-grupo-nums-inline">
+                            {% for n in g.numeros %}<code>{{ n }}</code>{% endfor %}
+                          </span>
+                        </div>
+                      {% endfor %}
+                    </div>
+                    <div class="ma-fj-total">${{ f.total|stringformat:"0.2f" }}</div>
+                  </div>
+                {% endfor %}
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+      {% endfor %}
+    {% else %}
+      <div class="ma-empty">
+        <span class="ico">⭐</span>
+        <h4>No hay apuestas Superparlet</h4>
+        <p>No se encontraron boletas Superparlet con los filtros seleccionados.</p>
+      </div>
+    {% endif %}
+  </div>
+
+</div>
+
+{# Modal cancelar #}
+<div class="modal fade" id="confirmCancelModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content" style="border-radius:14px;border:1px solid var(--ma-line);overflow:hidden;">
+      <div class="modal-header" style="background:linear-gradient(135deg,var(--ma-rose),var(--ma-pink));color:#fff;border:none;padding:16px 20px;">
+        <h5 class="modal-title" style="font-family:var(--f-sans);font-weight:800;">
+          <i class="fas fa-triangle-exclamation me-2"></i>Confirmar cancelación
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <p style="font-weight:600;">¿Cancelar la boleta <strong id="cancelRef">—</strong> completa?</p>
+        <p style="color:var(--ma-ink-3);font-size:.85rem;margin:0;">
+          Se cancelarán todas sus líneas y el monto será reintegrado al cliente.
+        </p>
+      </div>
+      <div class="modal-footer" style="border-top:1px solid var(--ma-line);">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No, mantener</button>
+        <button type="button" class="btn btn-danger" id="confirmCancelBtn">Sí, cancelar</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function(){
+  'use strict';
+
+  // GREETING
+  const hour = new Date().getHours();
+  const greetEl = document.getElementById('maGreeting');
+  if (greetEl) {
+    let g = 'Bienvenido';
+    if      (hour >= 5  && hour < 12) g = '☀️ Buenos días — revisa tus boletas';
+    else if (hour >= 12 && hour < 19) g = '🌤️ Buenas tardes — ¿cómo va la racha?';
+    else if (hour >= 19 && hour < 23) g = '🌙 Buenas noches — revisa tus resultados';
+    else g = '✨ Buenas madrugadas — jugador nocturno';
+    greetEl.textContent = g;
+  }
+
+  // COUNT-UP
+  document.querySelectorAll('.ma-stat .val[data-count]').forEach(el => {
+    const target = parseFloat(el.dataset.count) || 0;
+    if (target <= 0) return;
+    const money = el.dataset.money === '1';
+    const suffix = el.dataset.suffix || '';
+    const dur = 900;
+    const t0 = performance.now();
+    function tick(now){
+      const t = Math.min((now - t0) / dur, 1);
+      const e = 1 - Math.pow(1 - t, 3);
+      const v = target * e;
+      if (money) {
+        el.textContent = '$' + v.toFixed(2);
+      } else {
+        el.textContent = Math.round(v).toLocaleString('en-US') + suffix;
+      }
+      if (t < 1) requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+  });
+
+  // TOAST
+  const toast = document.getElementById('maToast');
+  function showToast(msg, tipo='info'){
+    if (!toast) return;
+    toast.className = 'ma-toast ' + tipo;
+    toast.querySelector('.ic').textContent = {pos:'✅',warn:'⚠️',info:'ℹ️'}[tipo] || 'ℹ️';
+    toast.querySelector('.msg').textContent = msg;
+    toast.classList.add('visible');
+    clearTimeout(window.__mt);
+    window.__mt = setTimeout(() => toast.classList.remove('visible'), 3200);
+  }
+
+  // TABS
+  document.querySelectorAll('.ma-tab').forEach(tab => {
+    tab.addEventListener('click', function(){
+      const target = this.dataset.tab;
+      document.querySelectorAll('.ma-tab').forEach(t => t.classList.toggle('active', t === this));
+      document.querySelectorAll('.ma-tab-pane').forEach(p => p.classList.toggle('active', p.dataset.pane === target));
+    });
+  });
+
+  // Helper boleta
+  function getBoletaFromBtn(btn){
+    const card = btn.closest('.ma-boleta');
+    if (!card) return null;
+    return {
+      el: card,
+      id: card.dataset.boletaId,
+      ref: card.dataset.boletaRef || '',
+      cliente: card.dataset.boletaCliente || '',
+      total: card.dataset.boletaTotal || '0.00',
+    };
+  }
+
+  // EDITAR
+  document.querySelectorAll('.btn-editar').forEach(btn => {
+    btn.addEventListener('click', function(e){
+      e.stopPropagation();
+      const b = getBoletaFromBtn(this);
+      if (!b || !b.id) return showToast('Boleta no disponible.', 'warn');
+      window.location.href = "{% url 'jugadas:apostar' %}?edit_boleta=" + b.id + "&modo_editar=1";
+    });
+  });
+
+  document.querySelectorAll('.btn-reenviar').forEach(btn => {
+    btn.addEventListener('click', function(e){
+      e.stopPropagation();
+      const b = getBoletaFromBtn(this);
+      if (!b || !b.id) return showToast('Boleta no disponible.', 'warn');
+      window.location.href = "{% url 'jugadas:apostar' %}?edit_boleta=" + b.id + "&modo_reenviar=1";
+    });
+  });
+
+  // CANCELAR
+  const modalEl = document.getElementById('confirmCancelModal');
+  const cancelRefEl = document.getElementById('cancelRef');
+  let boletaToCancel = null;
+  document.querySelectorAll('.btn-cancelar').forEach(btn => {
+    btn.addEventListener('click', function(e){
+      e.stopPropagation();
+      const b = getBoletaFromBtn(this);
+      if (!b || !b.id) return showToast('Boleta no disponible.', 'warn');
+      boletaToCancel = b;
+      if (cancelRefEl) cancelRefEl.textContent = b.ref;
+      if (modalEl) new bootstrap.Modal(modalEl).show();
+    });
+  });
+
+  const confirmBtn = document.getElementById('confirmCancelBtn');
+  if (confirmBtn) confirmBtn.addEventListener('click', function(){
+    if (!boletaToCancel) return;
+    const btn = this;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+    const csrf = document.querySelector('[name="csrfmiddlewaretoken"]');
+    fetch(`/jugadas/api/cancelar-boleta/${boletaToCancel.id}/`, {
+      method:'POST',
+      headers:{'X-CSRFToken': csrf ? csrf.value : ''},
+      credentials:'same-origin',
+    })
+    .then(r => r.json())
+    .then(d => {
+      if (d.success) {
+        showToast(d.message || 'Boleta cancelada', 'pos');
+        setTimeout(() => location.reload(), 800);
+      } else {
+        showToast(d.error || 'Error', 'warn');
+        btn.disabled = false; btn.innerHTML = 'Sí, cancelar';
+      }
+    })
+    .catch(_ => {
+      showToast('Error de conexión', 'warn');
+      btn.disabled = false; btn.innerHTML = 'Sí, cancelar';
+    });
+  });
+
+  // WHATSAPP
+  function buildBoletaWhatsappText(boletaEl){
+    const ref      = boletaEl.dataset.boletaRef || '';
+    const cliente  = boletaEl.dataset.boletaCliente || '';
+    const gestor   = boletaEl.dataset.boletaGestor || '';
+    const fecha    = boletaEl.dataset.boletaFecha || '';
+    const fp       = boletaEl.dataset.boletaFp || '';
+    const total    = boletaEl.dataset.boletaTotal || '0.00';
+    const agentes  = boletaEl.dataset.boletaAgentes || '';
+    const numCount = boletaEl.dataset.boletaNums || '';
+
+    const lineas = [];
+    lineas.push('📋 *Apuesta — LottoBooM*');
+    lineas.push('');
+    lineas.push(`📌 Boleta: ${ref}`);
+    lineas.push(`👤 Cliente: ${cliente}`);
+    if (gestor && gestor !== cliente){
+      lineas.push(`🏢 Gestor: ${gestor}`);
+    }
+    if (agentes && agentes !== 'Autoapuesta' && agentes !== gestor){
+      lineas.push(`👔 Comercial: ${agentes}`);
+    }
+    if (fecha) lineas.push(`📅 Fecha: ${fecha}`);
+    if (fp)    lineas.push(`💳 Forma de pago: ${fp}`);
+    if (numCount) lineas.push(`🔢 Números: ${numCount}`);
+
+    // Recorrer sorteos
+    boletaEl.querySelectorAll('.ma-sorteo-block').forEach(sb => {
+      const sorteoNombre = sb.dataset.sorteoNombre || '';
+      const sorteoTotal = sb.querySelector('.sorteo-total')?.textContent?.trim() || '';
+      lineas.push('');
+      lineas.push('━━━━━━━━━━━━━━━━━━━━');
+      lineas.push(`🎰 *${sorteoNombre}*`);
+      lineas.push(`   💰 Subtotal: ${sorteoTotal}`);
+
+      sb.querySelectorAll('.ma-fj').forEach(fj => {
+        // Nombre de forma: limpiar el badge de estado
+        const nombreEl = fj.querySelector('.ma-fj-nombre');
+        let forma = '';
+        if (nombreEl){
+          const clone = nombreEl.cloneNode(true);
+          clone.querySelectorAll('.ma-estado').forEach(e => e.remove());
+          clone.querySelectorAll('i').forEach(e => e.remove());
+          forma = clone.textContent.trim();
+        }
+
+        // Agrupar por monto
+        fj.querySelectorAll('.ma-grupo').forEach(g => {
+          const monto = g.querySelector('.ma-grupo-monto')?.textContent?.trim() || '';
+          const nums = Array.from(g.querySelectorAll('code')).map(c => c.textContent).join(', ');
+          lineas.push(`   🎲 *${forma}*  ${monto}`);
+          lineas.push(`      ${nums}`);
+        });
+      });
+    });
+
+    lineas.push('');
+    lineas.push('━━━━━━━━━━━━━━━━━━━━');
+    lineas.push(`💵 *TOTAL: $${total}*`);
+    lineas.push('');
+    lineas.push('_Enviado desde LottoBooM_');
+
+    return lineas.join('
+');
+  }
+  document.querySelectorAll('.btn-wa').forEach(btn => {
+    btn.addEventListener('click', function(e){
+      e.stopPropagation();
+      const b = getBoletaFromBtn(this);
+      if (!b) return;
+      const texto = buildBoletaWhatsappText(b.el);
+      const url = `https://wa.me/?text=${encodeURIComponent(texto)}`;
+      window.open(url, '_blank', 'noopener,noreferrer');
+      showToast('Abriendo WhatsApp…', 'pos');
+    });
+  });
+
+  // THEME
+  const themeBtn = document.getElementById('maThemeBtn');
+  function applyTheme(dark){
+    document.body.classList.toggle('ma-dark', dark);
+    if (themeBtn) themeBtn.innerHTML = dark ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
+    try { localStorage.setItem('ma_dark', dark ? '1' : '0'); } catch(_){}
+  }
+  if (themeBtn) {
+    applyTheme(localStorage.getItem('ma_dark') === '1');
+    themeBtn.addEventListener('click', () => applyTheme(!document.body.classList.contains('ma-dark')));
+  }
+
+  document.addEventListener('keydown', e => {
+    const tag = (e.target.tagName || '').toLowerCase();
+    if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
+    if (e.key === '/') { e.preventDefault(); document.getElementById('maSearchInput')?.focus(); }
+    if (e.key === 'Escape') document.activeElement?.blur();
+    if (e.key.toLowerCase() === 't') applyTheme(!document.body.classList.contains('ma-dark'));
+  });
+
+})();
+</script>
+{% endblock extra_js %}

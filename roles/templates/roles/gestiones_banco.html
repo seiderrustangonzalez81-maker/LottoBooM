@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block page_title %}📋 Gestiones{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h4 class="mb-3"><i class="fas fa-tasks"></i> Gestiones</h4>
+    <p class="text-muted">Administra todas las solicitudes de tus clientes y comerciales</p>
+
+    <!-- Filtro por estado -->
+    <div class="mb-3">
+        <form method="get" class="row g-2">
+            <div class="col-auto">
+                <select name="estado" class="form-select" onchange="this.form.submit()">
+                    <option value="pendiente" {% if estado_filtro == 'pendiente' %}selected{% endif %}>Pendientes</option>
+                    <option value="todos" {% if estado_filtro == 'todos' %}selected{% endif %}>Todos</option>
+                    <option value="aceptada" {% if estado_filtro == 'aceptada' %}selected{% endif %}>Aceptadas</option>
+                    <option value="pagada" {% if estado_filtro == 'pagada' %}selected{% endif %}>Pagadas</option>
+                    <option value="rechazada" {% if estado_filtro == 'rechazada' %}selected{% endif %}>Rechazadas</option>
+                    <option value="aprobado" {% if estado_filtro == 'aprobado' %}selected{% endif %}>Aprobados</option>
+                </select>
+            </div>
+        </form>
+    </div>
+
+    <!-- Tabla -->
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Tipo</th>
+                            <th>Cliente</th>
+                            <th>Monto</th>
+                            <th>Fecha</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in items %}
+                        <tr>
+                            <td>
+                                <span class="badge bg-primary">{{ item.tipo|title }}</span>
+                            </td>
+                            <td>{{ item.cliente.username }}</td>
+                            <td>${{ item.monto }}</td>
+                            <td>{{ item.fecha|date:"d/m/Y H:i" }}</td>
+                            <td>
+                                {% if item.estado == 'pendiente' or item.estado == 'solicitado' %}
+                                    <span class="badge bg-warning">Pendiente</span>
+                                {% elif item.estado == 'aceptada' %}
+                                    <span class="badge bg-info">Aceptada</span>
+                                {% elif item.estado == 'pagada' or item.estado == 'pagado' %}
+                                    <span class="badge bg-success">Pagada</span>
+                                {% elif item.estado == 'rechazada' or item.estado == 'rechazado' %}
+                                    <span class="badge bg-danger">Rechazada</span>
+                                {% elif item.estado == 'aprobado' %}
+                                    <span class="badge bg-primary">Aprobado</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">{{ item.estado }}</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if item.estado == 'pendiente' or item.estado == 'solicitado' %}
+                                    <a href="{{ item.url_atender }}" class="btn btn-sm btn-success">Atender</a>
+                                    <a href="{{ item.url_rechazar }}" class="btn btn-sm btn-danger">Rechazar</a>
+                                {% elif item.estado == 'aceptada' and item.url_confirmar %}
+                                    <a href="{{ item.url_confirmar }}" class="btn btn-sm btn-primary">Confirmar</a>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="6" class="text-center">No hay gestiones pendientes</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

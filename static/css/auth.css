@@ -1,0 +1,85 @@
+/* ---------------------------------------------------------
+   FORMULARIOS DE AUTENTICACIÓN PREMIUM — LOTTOBOOM PRO
+--------------------------------------------------------- */
+
+/* Tarjeta principal */
+.auth-card {
+    max-width: 480px;
+    margin: 50px auto;
+    padding: 35px;
+    background: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 8px 28px rgba(0,0,0,0.18);
+    animation: fadeIn 0.45s ease-in-out;
+    border: 1px solid #e3e9f3;
+}
+
+/* Animación suave */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(18px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Título */
+.auth-title {
+    font-weight: 900;
+    font-size: 1.6rem;
+    color: #0d47a1;
+    text-align: center;
+    margin-bottom: 28px;
+    letter-spacing: 0.5px;
+}
+
+/* Inputs */
+.auth-input {
+    width: 100%;
+    border: 2px solid #d6d6d6;
+    border-radius: 10px;
+    padding: 12px 14px;
+    font-size: 1rem;
+    background: #fafafa;
+    transition: all 0.25s ease;
+}
+
+.auth-input:focus {
+    border-color: #0d47a1;
+    background: #ffffff;
+    box-shadow: 0 0 8px rgba(13,71,161,0.35);
+}
+
+/* Botón principal */
+.auth-btn {
+    width: 100%;
+    padding: 14px;
+    font-weight: 700;
+    font-size: 1.05rem;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #0d47a1, #08306b);
+    color: white;
+    border: none;
+    cursor: pointer;
+    transition: 0.25s ease;
+}
+
+.auth-btn:hover {
+    background: linear-gradient(135deg, #08306b, #05204a);
+    transform: translateY(-1px);
+}
+
+/* Enlaces */
+.auth-link {
+    text-align: center;
+    margin-top: 18px;
+}
+
+.auth-link a {
+    font-weight: 700;
+    color: #0d47a1;
+    text-decoration: none;
+    transition: 0.25s ease;
+}
+
+.auth-link a:hover {
+    color: #08306b;
+    text-decoration: underline;
+}

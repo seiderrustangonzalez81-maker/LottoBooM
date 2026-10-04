@@ -1,0 +1,1216 @@
+<!-- resultados/editar_resultado.html -->
+{% extends "base.html" %}
+{% load static %}
+
+{% block page_title %}✏️ Editar Resultado – Loto Pro{% endblock %}
+{% block page_subtitle %}Modifica los números ganadores – los premios se recalcularán automáticamente{% endblock %}
+
+{% block extra_css %}
+<style>
+/* ============================================================
+   REUTILIZAR LOS MISMOS ESTILOS DE crear_resultado.html
+   ============================================================ */
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Inter:wght@400;500;600;700&display=swap');
+
+:root {
+    --primary: #4361ee;
+    --primary-light: #6c8cff;
+    --primary-dark: #2b3fc7;
+    --secondary: #7209b7;
+    --accent: #f72585;
+    --glass-bg: rgba(255, 255, 255, 0.70);
+    --glass-border: rgba(67, 97, 238, 0.15);
+    --shadow-neon: 0 8px 32px rgba(67, 97, 238, 0.12);
+    --shadow-hover: 0 12px 48px rgba(67, 97, 238, 0.25);
+    --radius-card: 24px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+    background: linear-gradient(135deg, #f0f4ff 0%, #e6eeff 50%, #f5f0ff 100%);
+    font-family: 'Inter', sans-serif;
+    color: #1a1a2e;
+    min-height: 100vh;
+    position: relative;
+    overflow-x: hidden;
+    background-attachment: fixed;
+}
+
+body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background:
+        radial-gradient(circle at 20% 30%, rgba(67, 97, 238, 0.08) 0%, transparent 50%),
+        radial-gradient(circle at 80% 70%, rgba(114, 9, 183, 0.06) 0%, transparent 50%),
+        radial-gradient(circle at 40% 80%, rgba(247, 37, 133, 0.04) 0%, transparent 50%);
+    background-size: 200% 200%;
+    animation: fondoOndas 15s ease-in-out infinite alternate;
+    z-index: 0;
+    pointer-events: none;
+}
+@keyframes fondoOndas {
+    0% { background-position: 0% 0%; }
+    50% { background-position: 100% 100%; }
+    100% { background-position: 0% 0%; }
+}
+
+body::after {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image:
+        radial-gradient(2px 2px at 20px 30px, rgba(67,97,238,0.20), transparent),
+        radial-gradient(2px 2px at 40px 70px, rgba(114,9,183,0.12), transparent),
+        radial-gradient(2px 2px at 60px 140px, rgba(247,37,133,0.15), transparent),
+        radial-gradient(2px 2px at 90px 40px, rgba(16,185,129,0.12), transparent),
+        radial-gradient(2px 2px at 130px 80px, rgba(245,158,11,0.10), transparent),
+        radial-gradient(2px 2px at 170px 50px, rgba(76,201,240,0.15), transparent);
+    background-size: 200px 200px;
+    background-repeat: repeat;
+    opacity: 0.8;
+    z-index: 0;
+    pointer-events: none;
+    animation: parpadeo 8s ease-in-out infinite alternate;
+}
+@keyframes parpadeo {
+    0% { opacity: 0.3; }
+    100% { opacity: 0.9; }
+}
+
+.container-fluid {
+    position: relative;
+    z-index: 1;
+}
+
+/* Contenedor con borde LED */
+.crear-resultado-wrapper {
+    position: relative;
+    z-index: 1;
+    background: var(--glass-bg);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-radius: 40px;
+    padding: 5px;
+    box-shadow: 0 20px 60px rgba(67, 97, 238, 0.10), 0 0 80px rgba(67, 97, 238, 0.04);
+    border: none;
+    transition: all 0.4s ease;
+    margin: 1rem 0;
+}
+.crear-resultado-wrapper::before {
+    content: '';
+    position: absolute;
+    inset: -6px;
+    border-radius: 40px;
+    padding: 6px;
+    background: conic-gradient(from 0deg, #4361ee, #7209b7, #f72585, #4cc9f0, #f8961e, #4361ee);
+    background-size: 300% 300%;
+    animation: ledBorder 8s linear infinite;
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.6;
+    filter: blur(1px);
+    transition: opacity 0.5s;
+}
+.crear-resultado-wrapper:hover::before {
+    opacity: 1;
+    filter: blur(0px);
+}
+@keyframes ledBorder {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+.card {
+    background: transparent !important;
+    border: none !important;
+    border-radius: 40px !important;
+    overflow: hidden;
+    position: relative;
+    z-index: 1;
+}
+
+.header-animado {
+    background: linear-gradient(135deg, #4361ee, #7209b7, #f72585);
+    background-size: 300% 300%;
+    animation: gradientPulse 8s ease infinite;
+    border-bottom: none;
+    padding: 1.5rem 2rem;
+    color: #ffffff;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 4px 30px rgba(67, 97, 238, 0.25);
+}
+.header-animado::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.20), transparent 70%);
+    animation: shimmer 6s infinite alternate;
+    pointer-events: none;
+}
+@keyframes shimmer {
+    0% { transform: translate(-10%,-10%) scale(1); }
+    100% { transform: translate(10%,10%) scale(1.2); }
+}
+@keyframes gradientPulse {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+.header-animado h5 {
+    font-family: 'Orbitron', monospace;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-shadow: 0 0 30px rgba(255,255,255,0.2);
+    font-size: 1.5rem;
+    margin: 0;
+}
+.header-animado small {
+    font-weight: 300;
+    opacity: 0.9;
+    letter-spacing: 0.5px;
+    font-size: 0.85rem;
+    display: block;
+    margin-top: 0.2rem;
+}
+
+/* Tarjetas de campos */
+.field-card {
+    position: relative;
+    background: rgba(255, 255, 255, 0.60);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 2px solid var(--glass-border);
+    border-radius: 20px;
+    padding: 0.8rem 1rem;
+    transition: all 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    min-height: 80px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.04);
+    overflow: hidden;
+}
+.field-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-hover);
+    border-color: rgba(67, 97, 238, 0.25);
+}
+.field-card::before {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    border-radius: 20px;
+    padding: 2px;
+    background: conic-gradient(from 0deg, #4361ee, #7209b7, #f72585, #4cc9f0, #f8961e, #4361ee);
+    background-size: 300% 300%;
+    animation: ledBorder 6s linear infinite;
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.15;
+    transition: opacity 0.4s;
+}
+.field-card:hover::before { opacity: 0.6; }
+.field-card .content { position: relative; z-index: 1; }
+.field-card.status-valid::before {
+    background: conic-gradient(from 0deg, #10b981, #34d399, #6ee7b7, #10b981);
+    opacity: 0.7;
+}
+.field-card.status-error::before {
+    background: conic-gradient(from 0deg, #ef4444, #f87171, #fca5a5, #ef4444);
+    opacity: 0.7;
+}
+
+.label-wrapper {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.2rem;
+}
+.label-wrapper label {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #1a1a2e;
+    letter-spacing: 0.5px;
+}
+.label-with-tip {
+    cursor: help;
+    border-bottom: 1.5px dashed #94a3b8;
+}
+.label-with-tip:hover { color: #4361ee; }
+
+.badge-status {
+    font-size: 0.5rem;
+    font-weight: 700;
+    padding: 0.1rem 0.6rem;
+    border-radius: 30px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    background: rgba(67, 97, 238, 0.08);
+    color: #4361ee;
+    border: 1px solid rgba(67, 97, 238, 0.10);
+}
+.badge-status.manual { background: rgba(245,158,11,0.12); color: #f8961e; border-color: rgba(245,158,11,0.15); }
+.badge-status.auto { background: rgba(67, 97, 238, 0.08); color: #4361ee; border-color: rgba(67,97,238,0.10); }
+
+.form-control {
+    background: rgba(255, 255, 255, 0.80);
+    border: 1.5px solid rgba(67, 97, 238, 0.12);
+    border-radius: 12px;
+    color: #1a1a2e;
+    font-size: 1rem;
+    font-family: 'Inter', Arial, sans-serif;
+    font-weight: 600;
+    padding: 0.4rem 0.8rem;
+    transition: all 0.25s ease;
+    backdrop-filter: blur(4px);
+}
+.form-control:focus {
+    border-color: #4361ee;
+    box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.15), 0 0 30px rgba(67, 97, 238, 0.04);
+    background: #ffffff;
+    color: #1a1a2e;
+}
+.form-control:disabled { opacity: 0.5; cursor: not-allowed; background: rgba(67, 97, 238, 0.03); }
+.form-control[readonly] { background: rgba(67, 97, 238, 0.03); color: #475569; cursor: default; border-color: rgba(67, 97, 238, 0.06); }
+
+.small-hint {
+    font-size: 0.55rem;
+    color: #64748b;
+    margin-top: 0.15rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.digit-counter {
+    font-weight: 700;
+    font-size: 0.6rem;
+    color: #4361ee;
+    background: rgba(67, 97, 238, 0.06);
+    padding: 0.05rem 0.5rem;
+    border-radius: 14px;
+    border: 1px solid rgba(67, 97, 238, 0.08);
+}
+
+.fields-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+@media (max-width: 768px) { .fields-grid { grid-template-columns: 1fr; gap: 0.8rem; } }
+@media (min-width: 1200px) { .fields-grid { grid-template-columns: 1fr 1fr; } }
+
+.section-collapse .collapse-header {
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.6rem 0.2rem;
+    border-bottom: 2px solid rgba(67, 97, 238, 0.08);
+    transition: all 0.2s;
+    font-weight: 700;
+    color: #1a1a2e;
+    font-size: 0.95rem;
+}
+.section-collapse .collapse-header:hover { color: #4361ee; }
+.section-collapse .collapse-header .toggle-icon { transition: transform 0.3s; }
+.section-collapse .collapse-header[aria-expanded="true"] .toggle-icon { transform: rotate(180deg); }
+.section-collapse .collapse-body { padding-top: 0.8rem; }
+
+.resumen-sticky {
+    position: sticky;
+    top: 20px;
+    background: rgba(255, 255, 255, 0.80);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-radius: 24px;
+    padding: 1rem 1.5rem;
+    border: 1px solid rgba(67, 97, 238, 0.08);
+    box-shadow: 0 8px 40px rgba(67, 97, 238, 0.06);
+    margin-top: 1.5rem;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    max-height: 500px;
+    overflow-y: auto;
+}
+.resumen-sticky::before {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    border-radius: 24px;
+    padding: 2px;
+    background: conic-gradient(from 0deg, #f59e0b, #f72585, #4361ee, #f59e0b);
+    background-size: 300% 300%;
+    animation: ledBorder 10s linear infinite;
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+    opacity: 0.15;
+}
+.resumen-sticky:hover::before { opacity: 0.5; }
+
+.ticket {
+    background: rgba(255, 255, 255, 0.40);
+    border: 1px solid rgba(67, 97, 238, 0.06);
+    border-radius: 16px;
+    padding: 0.6rem 1rem;
+    font-family: 'Inter', Arial, sans-serif;
+    font-size: 0.85rem;
+    color: #1a1a2e;
+    margin-top: 0.5rem;
+    line-height: 1.8;
+    max-height: 300px;
+    overflow-y: auto;
+}
+.ticket .row-item {
+    display: block;
+    border-bottom: 1px solid rgba(67, 97, 238, 0.04);
+    padding: 0.1rem 0;
+}
+.ticket .row-item .label { font-weight: 600; color: #475569; }
+.ticket .row-item .value { font-weight: 700; color: #1a1a2e; }
+.ticket .section-title {
+    font-weight: 700;
+    color: #4361ee;
+    border-bottom: 1px solid rgba(67, 97, 238, 0.10);
+    padding: 0.3rem 0;
+    margin-top: 0.5rem;
+    text-transform: uppercase;
+    font-size: 0.7rem;
+    letter-spacing: 1px;
+}
+
+.progress-wrapper {
+    background: rgba(67, 97, 238, 0.08);
+    border-radius: 30px;
+    height: 6px;
+    margin: 0.3rem 0;
+    overflow: hidden;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.03);
+}
+.progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #4361ee, #7209b7, #f72585);
+    background-size: 200% 100%;
+    animation: progressGradient 3s ease infinite;
+    width: 0%;
+    transition: width 0.4s ease;
+    border-radius: 30px;
+}
+@keyframes progressGradient {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+.btn-gradiente {
+    background: linear-gradient(135deg, #4361ee, #7209b7);
+    background-size: 200% 200%;
+    animation: gradientPulse 4s ease infinite;
+    border: none;
+    color: white;
+    padding: 0.7rem 2.4rem;
+    border-radius: 60px;
+    font-weight: 700;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 24px rgba(67, 97, 238, 0.25);
+    letter-spacing: 0.5px;
+    font-size: 1rem;
+}
+.btn-gradiente:hover {
+    transform: translateY(-4px) scale(1.02);
+    box-shadow: 0 8px 48px rgba(67, 97, 238, 0.35);
+    color: white;
+}
+.btn-outline-secondary {
+    background: rgba(255,255,255,0.60);
+    border: 1px solid rgba(67, 97, 238, 0.12);
+    color: #1a1a2e;
+    transition: all 0.3s ease;
+    font-weight: 600;
+}
+.btn-outline-secondary:hover {
+    background: rgba(255,255,255,0.90);
+    border-color: #4361ee;
+    color: #4361ee;
+    box-shadow: 0 0 20px rgba(67, 97, 238, 0.06);
+}
+.btn-outline-primary {
+    background: rgba(67, 97, 238, 0.05);
+    border: 1px solid rgba(67, 97, 238, 0.15);
+    color: #4361ee;
+    font-weight: 600;
+}
+.btn-outline-primary:hover {
+    background: rgba(67, 97, 238, 0.10);
+    border-color: #4361ee;
+    color: #4361ee;
+    box-shadow: 0 0 20px rgba(67, 97, 238, 0.06);
+}
+.btn-whatsapp {
+    background: #25d366;
+    border: none;
+    color: white;
+    padding: 0.5rem 1.5rem;
+    border-radius: 60px;
+    font-weight: 700;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 16px rgba(37,211,102,0.15);
+}
+.btn-whatsapp:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 28px rgba(37,211,102,0.25);
+    color: white;
+}
+
+.fecha-hora-display {
+    background: rgba(255,255,255,0.60);
+    border-radius: 16px;
+    padding: 0.5rem 1rem;
+    border: 1px solid rgba(67, 97, 238, 0.08);
+    font-family: 'Inter', Arial, sans-serif;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #4361ee;
+    text-align: center;
+    letter-spacing: 0.5px;
+    box-shadow: 0 0 30px rgba(67, 97, 238, 0.03);
+}
+
+.alert-warning {
+    background: rgba(245, 158, 11, 0.12);
+    border: 1px solid rgba(245, 158, 11, 0.25);
+    color: #92400e;
+    border-radius: 16px;
+    padding: 0.8rem 1.2rem;
+}
+
+@media (max-width: 768px) {
+    .header-animado { padding: 1rem 1.2rem; }
+    .header-animado h5 { font-size: 1.2rem; }
+    .header-animado small { font-size: 0.7rem; }
+    .card-body { padding: 0.8rem !important; }
+    .field-card { min-height: 70px; padding: 0.5rem 0.7rem; }
+    .label-wrapper label { font-size: 0.7rem; }
+    .form-control { font-size: 0.9rem; padding: 0.3rem 0.6rem; }
+    .resumen-sticky { padding: 0.6rem; max-height: 300px; }
+    .ticket { font-size: 0.7rem; padding: 0.4rem 0.6rem; max-height: 200px; }
+    .btn-gradiente { padding: 0.4rem 1.2rem; font-size: 0.85rem; }
+    .btn-outline-secondary, .btn-outline-primary, .btn-whatsapp { font-size: 0.7rem; padding: 0.3rem 0.8rem; }
+    .fecha-hora-display { font-size: 0.8rem; padding: 0.3rem 0.6rem; }
+}
+@media (max-width: 480px) {
+    .fields-grid { grid-template-columns: 1fr; gap: 0.6rem; }
+    .crear-resultado-wrapper { border-radius: 32px; padding: 3px; }
+    .crear-resultado-wrapper::before { border-radius: 32px; padding: 3px; }
+    .card { border-radius: 32px !important; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-0">
+    <!-- Mensajes del sistema -->
+    {% if messages %}
+        <div class="container mt-2">
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <!-- Advertencia de recálculo -->
+    <div class="alert alert-warning d-flex align-items-center gap-2" role="alert">
+        <i class="fas fa-exclamation-triangle fa-lg"></i>
+        <div>
+            <strong>¡Atención!</strong> Al modificar este resultado, <strong>todos los premios existentes se eliminarán y se recalcularán</strong> según los nuevos números. Los usuarios afectados recibirán notificaciones. También puedes cambiar el sorteo, fecha y hora.
+        </div>
+    </div>
+
+    <div class="crear-resultado-wrapper">
+        <div class="card border-0">
+            <div class="card-header header-animado">
+                <div class="d-flex flex-wrap justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-edit me-2"></i> Editar Resultado</h5>
+                    <div class="d-flex align-items-center gap-3">
+                        <span class="badge bg-light text-dark" id="progressLabel">0/7 completados</span>
+                        <div class="progress-wrapper" style="width: 120px;">
+                            <div class="progress-bar" id="progressBar" style="width:0%"></div>
+                        </div>
+                    </div>
+                </div>
+                <small class="text-white-50">Modifica los números, sorteo o fecha – los premios se regenerarán automáticamente</small>
+            </div>
+
+            <div class="card-body p-4" style="position: relative; z-index: 2;">
+                <form method="post" id="resultadoForm" novalidate>
+                    {% csrf_token %}
+
+                    <!-- DATOS DEL SORTEO (EDITABLES) -->
+                    <div class="row g-3 mb-4 align-items-end">
+                        <div class="col-md-3 col-6">
+                            <label for="fechaSelector" class="form-label fw-bold" style="color: #1a1a2e; font-size:0.9rem;">
+                                <i class="fas fa-calendar-alt me-1"></i> Fecha del sorteo *
+                            </label>
+                            <input type="date" id="fechaSelector" name="fecha" class="form-control" value="{{ resultado.fecha|date:'Y-m-d' }}" required>
+                            <small class="text-muted">Cambia la fecha del sorteo</small>
+                        </div>
+                        <div class="col-md-3 col-6">
+                            <label for="horaSelector" class="form-label fw-bold" style="color: #1a1a2e; font-size:0.9rem;">
+                                <i class="fas fa-clock me-1"></i> Hora *
+                            </label>
+                            <input type="time" id="horaSelector" name="hora" class="form-control" value="{{ resultado.hora|time:'H:i' }}" required>
+                            <small class="text-muted">Cambia la hora del sorteo</small>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="id_sorteo" class="form-label fw-bold" style="color: #1a1a2e; font-size:0.9rem;">Sorteo *</label>
+                            <div class="d-flex align-items-center gap-2">
+                                <select name="sorteo" id="id_sorteo" class="form-select" required>
+                                    {% for s in todos_sorteos %}
+                                        <option value="{{ s.id }}" {% if s.id == resultado.sorteo.id %}selected{% endif %}>
+                                            {{ s.nombre }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <small class="text-muted">Puedes cambiar el sorteo; los premios se recalcularán para el nuevo sorteo</small>
+                        </div>
+                    </div>
+
+                    <!-- SECCIÓN 1: PRINCIPALES (con valores precargados) -->
+                    <div class="section-collapse mb-4">
+                        <div class="collapse-header" data-bs-toggle="collapse" data-bs-target="#collapsePrincipales" aria-expanded="true">
+                            <span><i class="fas fa-dice me-2 text-primary"></i> Números principales</span>
+                            <span class="toggle-icon"><i class="fas fa-chevron-down"></i></span>
+                        </div>
+                        <div class="collapse-body collapse show" id="collapsePrincipales">
+                            <div class="fields-grid">
+                                <!-- Pick2 -->
+                                <div class="field-card" data-field="pick2">
+                                    <div class="content">
+                                        <div class="label-wrapper">
+                                            <label for="id_pick2" class="label-with-tip" title="Número de 2 dígitos">Pick 2</label>
+                                            <span class="badge-status manual">Manual</span>
+                                        </div>
+                                        <input type="text" name="pick2" id="id_pick2" class="form-control" maxlength="2" placeholder="12" pattern="\d{2}" value="{{ resultado.pick2|default:'' }}" autofocus>
+                                        <div class="small-hint"><span>2 dígitos</span><span class="digit-counter">0/2</span></div>
+                                    </div>
+                                </div>
+                                <!-- Pick3 -->
+                                <div class="field-card" data-field="pick3">
+                                    <div class="content">
+                                        <div class="label-wrapper">
+                                            <label for="id_pick3" class="label-with-tip" title="Número de 3 dígitos">Pick 3</label>
+                                            <span class="badge-status manual">Manual</span>
+                                        </div>
+                                        <input type="text" name="pick3" id="id_pick3" class="form-control" maxlength="3" placeholder="123" pattern="\d{3}" value="{{ resultado.pick3|default:'' }}">
+                                        <div class="small-hint"><span>3 dígitos</span><span class="digit-counter">0/3</span></div>
+                                    </div>
+                                </div>
+                                <!-- Pick4 -->
+                                <div class="field-card" data-field="pick4">
+                                    <div class="content">
+                                        <div class="label-wrapper">
+                                            <label for="id_pick4" class="label-with-tip" title="Número de 4 dígitos">Pick 4</label>
+                                            <span class="badge-status manual">Manual</span>
+                                        </div>
+                                        <input type="text" name="pick4" id="id_pick4" class="form-control" maxlength="4" placeholder="1234" pattern="\d{4}" value="{{ resultado.pick4|default:'' }}">
+                                        <div class="small-hint"><span>4 dígitos</span><span class="digit-counter">0/4</span></div>
+                                    </div>
+                                </div>
+                                <!-- Pick5 -->
+                                <div class="field-card" data-field="pick5">
+                                    <div class="content">
+                                        <div class="label-wrapper">
+                                            <label for="id_pick5" class="label-with-tip" title="Número de 5 dígitos">Pick 5</label>
+                                            <span class="badge-status manual">Manual</span>
+                                        </div>
+                                        <input type="text" name="pick5" id="id_pick5" class="form-control" maxlength="5" placeholder="12345" pattern="\d{5}" value="{{ resultado.pick5|default:'' }}">
+                                        <div class="small-hint"><span>5 dígitos</span><span class="digit-counter">0/5</span></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SECCIÓN 2: DERIVADOS (con valores precargados) -->
+                    <div class="section-collapse mb-4">
+                        <div class="collapse-header" data-bs-toggle="collapse" data-bs-target="#collapseDerivados" aria-expanded="true">
+                            <span><i class="fas fa-arrow-right me-2 text-success"></i> Derivados</span>
+                            <span class="toggle-icon"><i class="fas fa-chevron-down"></i></span>
+                        </div>
+                        <div class="collapse-body collapse show" id="collapseDerivados">
+                            <div class="fields-grid">
+                                <!-- PF -->
+                                <div class="field-card" data-field="pf">
+                                    <div class="content">
+                                        <div class="label-wrapper">
+                                            <label for="id_pf" class="label-with-tip" title="Primeros dos dígitos del Pick3">PF</label>
+                                            <span class="badge-status auto">Auto</span>
+                                        </div>
+                                        <input type="text" name="pf" id="id_pf" class="form-control" maxlength="2" readonly value="{{ resultado.pf|default:'' }}">
+                                        <div class="small-hint"><span>Derivado</span><span class="digit-counter">0/2</span></div>
+                                    </div>
+                                </div>
+                                <!-- Fijo -->
+                                <div class="field-card" data-field="fijo">
+                                    <div class="content">
+                                        <div class="label-wrapper">
+                                            <label for="id_fijo" class="label-with-tip" title="Número fijo de 2 dígitos">Fijo</label>
+                                            <span class="badge-status manual">Manual</span>
+                                        </div>
+                                        <input type="text" name="fijo" id="id_fijo" class="form-control" maxlength="2" placeholder="34" value="{{ resultado.fijo|default:'' }}">
+                                        <div class="small-hint"><span>Editable</span><span class="digit-counter">0/2</span></div>
+                                    </div>
+                                </div>
+                                <!-- Corrido 1 -->
+                                <div class="field-card" data-field="corrido1">
+                                    <div class="content">
+                                        <div class="label-wrapper">
+                                            <label for="id_corrido_1" class="label-with-tip" title="Primer número corrido">Corrido 1</label>
+                                            <span class="badge-status manual">Manual</span>
+                                        </div>
+                                        <input type="text" name="corrido_1" id="id_corrido_1" class="form-control" maxlength="2" placeholder="56" value="{{ resultado.corrido_1|default:'' }}">
+                                        <div class="small-hint"><span>Editable</span><span class="digit-counter">0/2</span></div>
+                                    </div>
+                                </div>
+                                <!-- Corrido 2 -->
+                                <div class="field-card" data-field="corrido2">
+                                    <div class="content">
+                                        <div class="label-wrapper">
+                                            <label for="id_corrido_2" class="label-with-tip" title="Segundo número corrido">Corrido 2</label>
+                                            <span class="badge-status manual">Manual</span>
+                                        </div>
+                                        <input type="text" name="corrido_2" id="id_corrido_2" class="form-control" maxlength="2" placeholder="78" value="{{ resultado.corrido_2|default:'' }}">
+                                        <div class="small-hint"><span>Editable</span><span class="digit-counter">0/2</span></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SECCIÓN 3: AVANZADOS (automáticos) -->
+                    <div class="section-collapse mb-4">
+                        <div class="collapse-header" data-bs-toggle="collapse" data-bs-target="#collapseAvanzados" aria-expanded="true">
+                            <span><i class="fas fa-link me-2 text-warning"></i> Avanzados</span>
+                            <span class="toggle-icon"><i class="fas fa-chevron-down"></i></span>
+                        </div>
+                        <div class="collapse-body collapse show" id="collapseAvanzados">
+                            <div class="fields-grid">
+                                <!-- Centena 1 -->
+                                <div class="field-card" data-field="centena1">
+                                    <div class="content">
+                                        <div class="label-wrapper">
+                                            <label for="id_centena_corrida_1" class="label-with-tip">Centena 1</label>
+                                            <span class="badge-status auto">Auto</span>
+                                        </div>
+                                        <input type="text" name="centena_corrida_1" id="id_centena_corrida_1" class="form-control" maxlength="2" readonly value="{{ resultado.centena_corrida_1|default:'' }}">
+                                        <div class="small-hint"><span>Derivado</span><span class="digit-counter">0/2</span></div>
+                                    </div>
+                                </div>
+                                <!-- Centena 2 -->
+                                <div class="field-card" data-field="centena2">
+                                    <div class="content">
+                                        <div class="label-wrapper">
+                                            <label for="id_centena_corrida_2" class="label-with-tip">Centena 2</label>
+                                            <span class="badge-status auto">Auto</span>
+                                        </div>
+                                        <input type="text" name="centena_corrida_2" id="id_centena_corrida_2" class="form-control" maxlength="2" readonly value="{{ resultado.centena_corrida_2|default:'' }}">
+                                        <div class="small-hint"><span>Derivado</span><span class="digit-counter">0/2</span></div>
+                                    </div>
+                                </div>
+                                <!-- Parlet -->
+                                <div class="field-card" data-field="parlet">
+                                    <div class="content">
+                                        <div class="label-wrapper">
+                                            <label for="id_parlet" class="label-with-tip">Parlet</label>
+                                            <span class="badge-status auto">Auto</span>
+                                        </div>
+                                        <input type="text" name="parlet" id="id_parlet" class="form-control" readonly value="{{ resultado.parlet|default:'' }}">
+                                        <div class="small-hint"><span>Combinaciones</span></div>
+                                    </div>
+                                </div>
+                                <!-- Posición -->
+                                <div class="field-card" data-field="posicion">
+                                    <div class="content">
+                                        <div class="label-wrapper">
+                                            <label for="id_posicion" class="label-with-tip">Posición</label>
+                                            <span class="badge-status auto">Auto</span>
+                                        </div>
+                                        <input type="text" name="posicion" id="id_posicion" class="form-control" readonly value="{{ resultado.posicion|default:'' }}">
+                                        <div class="small-hint"><span>Fijo + Corridos</span></div>
+                                    </div>
+                                </div>
+                                <!-- Tripleta -->
+                                <div class="field-card" data-field="tripleta">
+                                    <div class="content">
+                                        <div class="label-wrapper">
+                                            <label for="id_tripleta" class="label-with-tip">Tripleta</label>
+                                            <span class="badge-status auto">Auto</span>
+                                        </div>
+                                        <input type="text" name="tripleta" id="id_tripleta" class="form-control" readonly value="{{ resultado.tripleta|default:'' }}">
+                                        <div class="small-hint"><span>Mismo que Posición</span></div>
+                                    </div>
+                                </div>
+                                <!-- VSPF -->
+                                <div class="field-card" data-field="vspf">
+                                    <div class="content">
+                                        <div class="label-wrapper">
+                                            <label for="id_vspf" class="label-with-tip">VSPF</label>
+                                            <span class="badge-status auto">Auto</span>
+                                        </div>
+                                        <input type="text" name="vspf" id="id_vspf" class="form-control" readonly value="{{ resultado.vspf|default:'' }}">
+                                        <div class="small-hint"><span>PF vs Fijo/Corridos</span></div>
+                                    </div>
+                                </div>
+                                <!-- VSPick2 -->
+                                <div class="field-card" data-field="vspick2">
+                                    <div class="content">
+                                        <div class="label-wrapper">
+                                            <label for="id_vspick2" class="label-with-tip">VSPick2</label>
+                                            <span class="badge-status auto">Auto</span>
+                                        </div>
+                                        <input type="text" name="vspick2" id="id_vspick2" class="form-control" readonly value="{{ resultado.vspick2|default:'' }}">
+                                        <div class="small-hint"><span>Pick2 vs Fijo/Corridos</span></div>
+                                    </div>
+                                </div>
+                                <!-- Pick2vsPF -->
+                                <div class="field-card" data-field="pick2vspf">
+                                    <div class="content">
+                                        <div class="label-wrapper">
+                                            <label for="id_pick2vspf" class="label-with-tip">Pick2 vs PF</label>
+                                            <span class="badge-status auto">Auto</span>
+                                        </div>
+                                        <input type="text" name="pick2vspf" id="id_pick2vspf" class="form-control" readonly value="{{ resultado.pick2vspf|default:'' }}">
+                                        <div class="small-hint"><span>PF vs Pick2</span></div>
+                                    </div>
+                                </div>
+                                <!-- Superparlet -->
+                                <div class="field-card" data-field="superparlet">
+                                    <div class="content">
+                                        <div class="label-wrapper">
+                                            <label for="id_superparlet" class="label-with-tip">Super Parlet</label>
+                                            <span class="badge-status auto">Auto</span>
+                                        </div>
+                                        <input type="text" name="superparlet" id="id_superparlet" class="form-control" readonly value="{{ resultado.superparlet|default:'' }}">
+                                        <div class="small-hint"><span>Generado</span></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- RESUMEN STICKY -->
+                    <div class="resumen-sticky" id="resumenSticky">
+                        <div class="content">
+                            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+                                <h6 class="fw-bold mb-0" style="color: #1a1a2e;">
+                                    <i class="fas fa-table me-2 text-primary"></i> Resumen de campos
+                                </h6>
+                                <div class="d-flex gap-2">
+                                    <button type="button" class="btn btn-sm btn-outline-primary" id="btnCopiarResumen">
+                                        <i class="fas fa-copy me-1"></i> Copiar
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-whatsapp" id="btnWhatsapp">
+                                        <i class="fab fa-whatsapp me-1"></i> WhatsApp
+                                    </button>
+                                </div>
+                            </div>
+                            <div id="resumenContenido" class="ticket">
+                                <span class="text-muted">Ingresa números principales para ver los valores.</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- BOTONES -->
+                    <div class="d-flex flex-wrap justify-content-end gap-2 mt-3">
+                        <button type="button" class="btn btn-outline-secondary px-4" id="btnLimpiar">
+                            <i class="fas fa-undo me-1"></i> Limpiar
+                        </button>
+                        <a href="{% url 'resultados:detalle_resultado' resultado.id %}" class="btn btn-outline-secondary px-4">
+                            <i class="fas fa-arrow-left me-1"></i> Cancelar
+                        </a>
+                        <button type="submit" class="btn btn-gradiente" id="btnGuardar">
+                            <i class="fas fa-save me-1"></i> Actualizar y Recalcular
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================================
+   SCRIPT DE DERIVACIONES, RESUMEN, VALIDACIÓN Y AVANCE
+   ============================================================ -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+
+    // ---------- REFERENCIAS ----------
+    const pick2 = document.getElementById('id_pick2');
+    const pick3 = document.getElementById('id_pick3');
+    const pick4 = document.getElementById('id_pick4');
+    const pick5 = document.getElementById('id_pick5');
+    const pf = document.getElementById('id_pf');
+    const fijo = document.getElementById('id_fijo');
+    const corrido1 = document.getElementById('id_corrido_1');
+    const corrido2 = document.getElementById('id_corrido_2');
+    const centena1 = document.getElementById('id_centena_corrida_1');
+    const centena2 = document.getElementById('id_centena_corrida_2');
+    const parlet = document.getElementById('id_parlet');
+    const posicion = document.getElementById('id_posicion');
+    const tripleta = document.getElementById('id_tripleta');
+    const vspf = document.getElementById('id_vspf');
+    const vspick2 = document.getElementById('id_vspick2');
+    const pick2vspf = document.getElementById('id_pick2vspf');
+    const superparlet = document.getElementById('id_superparlet');
+    const resumenContenido = document.getElementById('resumenContenido');
+    const progressBar = document.getElementById('progressBar');
+    const progressLabel = document.getElementById('progressLabel');
+    const btnLimpiar = document.getElementById('btnLimpiar');
+    const btnCopiarResumen = document.getElementById('btnCopiarResumen');
+    const btnWhatsapp = document.getElementById('btnWhatsapp');
+    const sorteoSelect = document.getElementById('id_sorteo');
+    const fechaSelector = document.getElementById('fechaSelector');
+    const botonGuardar = document.getElementById('btnGuardar');
+
+    // ---------- ORDEN DE CAMPOS PARA AVANCE AUTOMÁTICO ----------
+    const ordenCampos = [pick2, pick3, pick4, pick5, fijo, corrido1, corrido2];
+
+    function avanzarAlSiguiente(input) {
+        const idx = ordenCampos.indexOf(input);
+        if (idx === -1) return;
+        const siguiente = ordenCampos[idx + 1];
+        if (siguiente) {
+            siguiente.focus();
+            siguiente.select();
+        } else {
+            botonGuardar.focus();
+        }
+    }
+
+    // ---------- FUNCIÓN PRINCIPAL DE DERIVACIÓN ----------
+    function derivar() {
+        const p2 = pick2.value.trim();
+        const p3 = pick3.value.trim();
+        const p4 = pick4.value.trim();
+        const p5 = pick5.value.trim();
+        const f = fijo.value.trim();
+        const c1 = corrido1.value.trim();
+        const c2 = corrido2.value.trim();
+
+        // --- PF ---
+        if (p3.length >= 2) {
+            pf.value = p3.substring(0, 2);
+        } else if (p2.length >= 2) {
+            pf.value = p2;
+        } else {
+            pf.value = '';
+        }
+
+        // --- Fijo ---
+        if (f === '') {
+            if (p3.length >= 2) {
+                fijo.value = p3.substring(p3.length - 2);
+            } else if (p2.length >= 2) {
+                fijo.value = p2;
+            } else {
+                fijo.value = '';
+            }
+        }
+
+        // --- Corrido 1 ---
+        if (c1 === '') {
+            if (p4.length >= 2) {
+                corrido1.value = p4.substring(0, 2);
+            } else {
+                corrido1.value = '';
+            }
+        }
+
+        // --- Corrido 2 ---
+        if (c2 === '') {
+            if (p4.length >= 4) {
+                corrido2.value = p4.substring(p4.length - 2);
+            } else if (p4.length === 3) {
+                corrido2.value = p4.substring(1);
+            } else {
+                corrido2.value = '';
+            }
+        }
+
+        const fVal = fijo.value.trim();
+        const c1Val = corrido1.value.trim();
+        const c2Val = corrido2.value.trim();
+
+        // --- Centenas ---
+        if (p3.length === 3 && c1Val.length === 2) {
+            centena1.value = p3[2] + c1Val;
+        } else {
+            centena1.value = '';
+        }
+        if (p3.length === 3 && c2Val.length === 2) {
+            const d1 = parseInt(p3[0]);
+            const d3 = parseInt(p3[2]);
+            const suma = (d1 + d3) % 10;
+            centena2.value = suma + c2Val;
+        } else {
+            centena2.value = '';
+        }
+
+        // --- Parlet ---
+        const fijos = [fVal, c1Val, c2Val].filter(v => v.length === 2);
+        const parlets = new Set();
+        for (let i = 0; i < fijos.length; i++) {
+            for (let j = i+1; j < fijos.length; j++) {
+                if (fijos[i] !== fijos[j]) {
+                    parlets.add(fijos[i] + 'x' + fijos[j]);
+                    parlets.add(fijos[j] + 'x' + fijos[i]);
+                }
+            }
+        }
+        parlet.value = Array.from(parlets).sort().join(', ');
+
+        // --- Posición y Tripleta ---
+        if (fVal && c1Val && c2Val) {
+            const combinacion = fVal + ' ' + c1Val + ' ' + c2Val;
+            posicion.value = combinacion;
+            tripleta.value = combinacion;
+        } else {
+            posicion.value = '';
+            tripleta.value = '';
+        }
+
+        // --- VSPF ---
+        const pfVal = pf.value;
+        const vspfArr = [];
+        if (pfVal) {
+            fijos.forEach(num => {
+                if (num !== pfVal) vspfArr.push(pfVal + 'x' + num);
+            });
+        }
+        vspf.value = vspfArr.sort().join(', ');
+
+        // --- VSPick2 ---
+        const p2val = pick2.value.trim();
+        const vspick2Arr = [];
+        if (p2val && p2val.length === 2) {
+            fijos.forEach(num => {
+                if (num !== p2val) vspick2Arr.push(p2val + 'x' + num);
+            });
+        }
+        vspick2.value = vspick2Arr.sort().join(', ');
+
+        // --- Pick2vsPF ---
+        if (p2val.length === 2 && pfVal && p2val !== pfVal) {
+            pick2vspf.value = pfVal + 'x' + p2val;
+        } else {
+            pick2vspf.value = '';
+        }
+
+        // --- Superparlet ---
+        const superparletArr = [];
+        if (pfVal) {
+            fijos.forEach(num => {
+                if (num !== pfVal) {
+                    superparletArr.push(pfVal + 'x' + num);
+                }
+            });
+        }
+        superparlet.value = superparletArr.sort().join(', ');
+
+        actualizarContadores();
+        actualizarResumen();
+        actualizarProgreso();
+    }
+
+    // ---------- CONTADORES ----------
+    function actualizarContadores() {
+        document.querySelectorAll('.field-card input[type="text"]').forEach(input => {
+            const counter = input.closest('.field-card').querySelector('.digit-counter');
+            if (counter) {
+                const max = parseInt(input.getAttribute('maxlength')) || 0;
+                const len = input.value.length;
+                counter.textContent = len + '/' + max;
+            }
+        });
+    }
+
+    // ---------- VALIDACIÓN VISUAL ----------
+    function validarCampo(input) {
+        const card = input.closest('.field-card');
+        if (!card) return;
+        const max = parseInt(input.getAttribute('maxlength')) || 0;
+        const val = input.value.trim();
+        if (max > 0 && val.length === max && /^\d+$/.test(val)) {
+            card.classList.remove('status-error');
+            card.classList.add('status-valid');
+        } else if (val.length > 0) {
+            card.classList.remove('status-valid');
+            card.classList.add('status-error');
+        } else {
+            card.classList.remove('status-valid', 'status-error');
+        }
+    }
+
+    // ---------- RESUMEN CON SORTEO Y FECHA ----------
+    function actualizarResumen() {
+        const sorteoNombre = sorteoSelect.options[sorteoSelect.selectedIndex]?.text || 'Sin sorteo';
+        const fechaVal = fechaSelector.value;
+        let fechaFormateada = '';
+        if (fechaVal) {
+            const partes = fechaVal.split('-');
+            fechaFormateada = `${partes[2]}/${partes[1]}/${partes[0]}`;
+        }
+
+        let html = `<div class="row-item"><span class="label">Sorteo:</span> <span class="value">${sorteoNombre}</span></div>`;
+        html += `<div class="row-item"><span class="label">Fecha:</span> <span class="value">${fechaFormateada || 'No seleccionada'}</span></div>`;
+        html += `<hr style="margin:0.3rem 0; border-color:rgba(67,97,238,0.1);">`;
+
+        const campos = [
+            { label: 'Pick 2', value: pick2.value.trim(), section: 'principales' },
+            { label: 'Pick 3', value: pick3.value.trim(), section: 'principales' },
+            { label: 'Pick 4', value: pick4.value.trim(), section: 'principales' },
+            { label: 'Pick 5', value: pick5.value.trim(), section: 'principales' },
+            { label: 'PF', value: pf.value.trim(), section: 'derivados' },
+            { label: 'Fijo', value: fijo.value.trim(), section: 'derivados' },
+            { label: 'Corrido 1', value: corrido1.value.trim(), section: 'derivados' },
+            { label: 'Corrido 2', value: corrido2.value.trim(), section: 'derivados' },
+            { label: 'Centena 1', value: centena1.value.trim(), section: 'avanzados' },
+            { label: 'Centena 2', value: centena2.value.trim(), section: 'avanzados' },
+            { label: 'Parlet', value: parlet.value.trim(), section: 'avanzados' },
+            { label: 'Posición', value: posicion.value.trim(), section: 'avanzados' },
+            { label: 'Tripleta', value: tripleta.value.trim(), section: 'avanzados' },
+            { label: 'VSPF', value: vspf.value.trim(), section: 'avanzados' },
+            { label: 'VSPick2', value: vspick2.value.trim(), section: 'avanzados' },
+            { label: 'Pick2 vs PF', value: pick2vspf.value.trim(), section: 'avanzados' },
+            { label: 'Superparlet', value: superparlet.value.trim(), section: 'avanzados' },
+        ];
+
+        const secciones = ['principales', 'derivados', 'avanzados'];
+        const titulos = {
+            'principales': '🔹 Principales',
+            'derivados': '🔸 Derivados',
+            'avanzados': '🔹 Avanzados'
+        };
+
+        let hayCampos = false;
+        secciones.forEach(sec => {
+            const items = campos.filter(c => c.section === sec && c.value);
+            if (items.length) {
+                hayCampos = true;
+                html += `<div class="section-title">${titulos[sec]}</div>`;
+                items.forEach(item => {
+                    html += `<div class="row-item"><span class="label">${item.label}:</span> <span class="value">${item.value}</span></div>`;
+                });
+            }
+        });
+
+        if (!hayCampos) {
+            html += '<span class="text-muted">Ingresa números principales para ver los valores derivados.</span>';
+        }
+
+        resumenContenido.innerHTML = html;
+    }
+
+    // ---------- PROGRESO ----------
+    function actualizarProgreso() {
+        const campos = [pick2, pick3, pick4, pick5, fijo, corrido1, corrido2];
+        const llenos = campos.filter(c => c.value.trim().length > 0).length;
+        const total = campos.length;
+        const pct = Math.round((llenos / total) * 100);
+        progressBar.style.width = pct + '%';
+        progressLabel.textContent = llenos + '/' + total + ' completados';
+    }
+
+    // ---------- LIMPIAR TODOS LOS CAMPOS ----------
+    function limpiarCampos() {
+        document.querySelectorAll('#resultadoForm input[type="text"]').forEach(inp => {
+            inp.value = '';
+            const card = inp.closest('.field-card');
+            if (card) card.classList.remove('status-valid', 'status-error');
+        });
+        derivar();
+        pick2.focus();
+    }
+
+    // ---------- COPIAR Y WHATSAPP ----------
+    function copiarResumen() {
+        const texto = resumenContenido.innerText;
+        navigator.clipboard.writeText(texto).then(() => {
+            alert('✅ Resumen copiado al portapapeles');
+        }).catch(() => {
+            const range = document.createRange();
+            range.selectNode(resumenContenido);
+            window.getSelection().removeAllRanges();
+            window.getSelection().addRange(range);
+            document.execCommand('copy');
+            alert('✅ Resumen copiado al portapapeles');
+        });
+    }
+
+    function compartirWhatsapp() {
+        const texto = resumenContenido.innerText;
+        const url = 'https://api.whatsapp.com/send?text=' + encodeURIComponent(texto);
+        window.open(url, '_blank');
+    }
+
+    // ---------- EVENTOS ----------
+    [pick2, pick3, pick4, pick5, fijo, corrido1, corrido2].forEach(inp => {
+        inp.addEventListener('input', function() {
+            derivar();
+            validarCampo(this);
+            const max = parseInt(this.getAttribute('maxlength')) || 0;
+            const val = this.value.trim();
+            if (max > 0 && val.length === max && /^\d+$/.test(val)) {
+                avanzarAlSiguiente(this);
+            }
+        });
+        inp.addEventListener('blur', function() { validarCampo(this); });
+    });
+
+    document.querySelectorAll('#resultadoForm input[type="text"]').forEach(inp => {
+        inp.addEventListener('input', function() { validarCampo(this); });
+        inp.addEventListener('blur', function() { validarCampo(this); });
+    });
+
+    btnLimpiar.addEventListener('click', limpiarCampos);
+    btnCopiarResumen.addEventListener('click', copiarResumen);
+    btnWhatsapp.addEventListener('click', compartirWhatsapp);
+
+    // Cambio de sorteo o fecha actualiza resumen
+    sorteoSelect.addEventListener('change', function() {
+        actualizarResumen();
+    });
+    fechaSelector.addEventListener('change', function() {
+        actualizarResumen();
+    });
+
+    // ---------- INICIALIZACIÓN ----------
+    derivar();
+    pick2.focus();
+});
+</script>
+{% endblock %}

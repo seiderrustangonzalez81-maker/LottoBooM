@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block page_title %}📥 Gestionar Recargas{% endblock %}
+{% block page_subtitle %}Administra las solicitudes de recarga de tus clientes{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap">
+        <h4 class="mb-0"><i class="fas fa-tasks me-2"></i>Gestionar Recargas</h4>
+        <span class="badge bg-primary">{{ solicitudes|length }} solicitudes</span>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <!-- ============================================================ -->
+            <!-- FILTRO POR ESTADO                                             -->
+            <!-- ============================================================ -->
+            <div class="mb-3">
+                <form method="get" class="row g-2 align-items-end">
+                    <div class="col-md-3">
+                        <label for="estado" class="form-label fw-bold small">Filtrar por estado</label>
+                        <select name="estado" id="estado" class="form-select form-select-sm" onchange="this.form.submit()">
+                            <option value="">Todos</option>
+                            <option value="pendiente" {% if estado_seleccionado == 'pendiente' %}selected{% endif %}>Pendientes</option>
+                            <option value="aceptada" {% if estado_seleccionado == 'aceptada' %}selected{% endif %}>Aceptadas</option>
+                            <option value="pagada" {% if estado_seleccionado == 'pagada' %}selected{% endif %}>Pagadas</option>
+                            <option value="rechazada" {% if estado_seleccionado == 'rechazada' %}selected{% endif %}>Rechazadas</option>
+                            <option value="cancelada" {% if estado_seleccionado == 'cancelada' %}selected{% endif %}>Canceladas</option>
+                        </select>
+                    </div>
+                    <div class="col-md-9 text-md-end">
+                        <span class="badge bg-secondary">Mostrando {{ solicitudes|length }} solicitudes</span>
+                    </div>
+                </form>
+            </div>
+
+            <!-- ============================================================ -->
+            <!-- TABLA DE SOLICITUDES                                         -->
+            <!-- ============================================================ -->
+            {% if solicitudes %}
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Cliente</th>
+                                <th>Forma de pago</th>
+                                <th>Vía de pago</th>
+                                <th>Monto</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for sol in solicitudes %}
+                            <tr>
+                                <td>
+                                    <span title="{{ sol.fecha_solicitud|date:'d/m/Y H:i:s' }}">
+                                        {{ sol.fecha_solicitud|date:"d/m/Y H:i" }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <i class="fas fa-user-circle me-1"></i>
+                                    {{ sol.cliente.username }}
+                                </td>
+                                <td>{{ sol.forma_pago.nombre }}</td>
+                                <td>
+                                    {% if sol.via_pago %}
+                                        <span class="badge bg-light text-dark border">
+                                            {{ sol.via_pago.nombre }}
+                                        </span>
+                                    {% else %}
+                                        <span class="text-muted small">Sin asignar</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <strong>${{ sol.monto|floatformat:2 }}</strong>
+                                </td>
+                                <td>
+                                    {% if sol.estado == 'pendiente' %}
+                                        <span class="badge bg-warning text-dark">
+                                            <i class="fas fa-clock me-1"></i> Pendiente
+                                        </span>
+                                    {% elif sol.estado == 'aceptada' %}
+                                        <span class="badge bg-info">
+                                            <i class="fas fa-check-circle me-1"></i> Aceptada
+                                        </span>
+                                    {% elif sol.estado == 'pagada' %}
+                                        <span class="badge bg-success">
+                                            <i class="fas fa-check-double me-1"></i> Pagada
+                                        </span>
+                                    {% elif sol.estado == 'rechazada' %}
+                                        <span class="badge bg-danger">
+                                            <i class="fas fa-times-circle me-1"></i> Rechazada
+                                        </span>
+                                    {% elif sol.estado == 'cancelada' %}
+                                        <span class="badge bg-secondary">
+                                            <i class="fas fa-ban me-1"></i> Cancelada
+                                        </span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if sol.estado == 'pendiente' %}
+                                        <a href="{% url 'roles:responder_solicitud' sol.id 'aceptar' %}"
+                                           class="btn btn-sm btn-success">
+                                            <i class="fas fa-check"></i> Atender
+                                        </a>
+                                    {% elif sol.estado == 'aceptada' %}
+                                        <a href="{% url 'roles:responder_solicitud' sol.id %}"
+                                           class="btn btn-sm btn-primary">
+                                            <i class="fas fa-dollar-sign"></i> Confirmar pago
+                                        </a>
+                                    {% else %}
+                                        <span class="text-muted small">--</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="alert alert-info text-center py-4">
+                    <i class="fas fa-inbox fa-2x mb-2 d-block"></i>
+                    <h6 class="mb-0">No hay solicitudes de recarga para gestionar.</h6>
+                    <p class="small text-muted">Cuando un cliente solicite una recarga, aparecerá aquí.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

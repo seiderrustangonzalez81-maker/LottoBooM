@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block page_title %}Panel de Bancos{% endblock %}
+{% block page_subtitle %}Gestión de bancos y suscripciones{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="card border-0 shadow-sm rounded-4">
+        <div class="card-header bg-gradient-primary text-white border-0 py-3" style="background: linear-gradient(135deg, #6C3CE1 0%, #8B5CF6 100%);">
+            <h5 class="mb-0 fw-bold"><i class="fas fa-university me-2"></i> Gestión de Bancos</h5>
+        </div>
+        <div class="card-body p-4">
+
+            <div class="row g-3 mb-4">
+                <div class="col-md-3"><div class="alert alert-info">Total: {{ total_bancos }}</div></div>
+                <div class="col-md-3"><div class="alert alert-success">Activos: {{ activos }}</div></div>
+                <div class="col-md-3"><div class="alert alert-warning">Vencidos: {{ vencidos }}</div></div>
+                <div class="col-md-3"><div class="alert alert-secondary">Inactivos: {{ inactivos }}</div></div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Banco</th>
+                            <th>Tipo Pago</th>
+                            <th>Cuota Fija</th>
+                            <th>% Ganancia</th>
+                            <th>Vencimiento</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for s in suscripciones %}
+                            <tr>
+                                <td>{{ s.banco.username }}</td>
+                                <td>{{ s.get_tipo_pago_display }}</td>
+                                <td>${{ s.cuota_fija|floatformat:2 }}</td>
+                                <td>{{ s.porcentaje_ganancia|floatformat:1 }}%</td>
+                                <td>{{ s.fecha_vencimiento|date:"d/m/Y" }}</td>
+                                <td>
+                                    {% if s.activo and s.fecha_vencimiento > now %}
+                                        <span class="badge bg-success">Activo</span>
+                                    {% elif s.activo and s.fecha_vencimiento <= now %}
+                                        <span class="badge bg-warning">Vencido</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">Inactivo</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <a href="{% url 'roles:editar_suscripcion' s.id %}" class="btn btn-sm btn-outline-primary"><i class="fas fa-edit"></i></a>
+                                    <a href="{% url 'roles:registrar_pago_banco' s.id %}" class="btn btn-sm btn-outline-success"><i class="fas fa-dollar-sign"></i></a>
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr><td colspan="7" class="text-center py-4 text-muted">No hay bancos registrados.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

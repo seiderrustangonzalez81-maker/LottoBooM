@@ -1,0 +1,5 @@
+<span class="online-badge {% if online %}is-online{% else %}is-offline{% endif %}"
+      data-online-for="{{ user_id }}"
+      title="{% if online %}En línea{% else %}Offline{% endif %}">
+  {% if online %}🟢{% else %}⚫{% endif %}
+</span>

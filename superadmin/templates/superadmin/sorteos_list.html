@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block page_title %}Gestión de Sorteos{% endblock %}
+{% block page_subtitle %}Administra los sorteos del sistema{% endblock %}
+
+{% block content %}
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+        <h5 class="fw-bold mb-0">🎯 Sorteos</h5>
+        <a href="{% url 'superadmin:sorteo_crear' %}" class="btn btn-primary btn-sm">➕ Nuevo sorteo</a>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover table-sm">
+                <thead>
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for s in sorteos %}
+                    <tr>
+                        <td><strong>{{ s.nombre }}</strong></td>
+                        <td>
+                            {% if s.activo %}
+                            <span class="badge bg-success">Activo</span>
+                            {% else %}
+                            <span class="badge bg-secondary">Inactivo</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{% url 'superadmin:sorteo_editar' s.id %}" class="btn btn-sm btn-outline-primary">Editar</a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="3" class="text-center text-muted">No hay sorteos.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% if sorteos.has_other_pages %}
+        <nav>
+            <ul class="pagination justify-content-center">
+                {% if sorteos.has_previous %}
+                <li class="page-item"><a class="page-link" href="?page={{ sorteos.previous_page_number }}">&laquo;</a></li>
+                {% else %}
+                <li class="page-item disabled"><span class="page-link">&laquo;</span></li>
+                {% endif %}
+                {% for i in sorteos.paginator.page_range %}
+                {% if sorteos.number == i %}
+                <li class="page-item active"><span class="page-link">{{ i }}</span></li>
+                {% else %}
+                <li class="page-item"><a class="page-link" href="?page={{ i }}">{{ i }}</a></li>
+                {% endif %}
+                {% endfor %}
+                {% if sorteos.has_next %}
+                <li class="page-item"><a class="page-link" href="?page={{ sorteos.next_page_number }}">&raquo;</a></li>
+                {% else %}
+                <li class="page-item disabled"><span class="page-link">&raquo;</span></li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

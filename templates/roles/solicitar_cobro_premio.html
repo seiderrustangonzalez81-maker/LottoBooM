@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block page_title %}💰 Solicitar Cobro de Premio{% endblock %}
+{% block page_subtitle %}Selecciona el gestor y la forma de pago para cobrar tus premios{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="fas fa-hand-holding-usd me-2"></i>Solicitar Cobro de Premio</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" action="{% url 'roles:responder_solicitud' %}" novalidate>
+                        {% csrf_token %}
+
+                        {% if gestores_data %}
+                            {% for gestor_data in gestores_data %}
+                                <div class="card mb-3">
+                                    <div class="card-header">
+                                        <strong>{{ gestor_data.gestor.username }}</strong>
+                                        <span class="badge bg-secondary float-end">Total: ${{ gestor_data.total_gestor }}</span>
+                                    </div>
+                                    <div class="card-body">
+                                        {% if gestor_data.formas_pago %}
+                                            <div class="table-responsive">
+                                                <table class="table table-sm">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>Forma de pago</th>
+                                                            <th>Monto disponible</th>
+                                                            <th>Acción</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {% for fp in gestor_data.formas_pago %}
+                                                            <tr>
+                                                                <td>{{ fp.forma_pago.nombre }}</td>
+                                                                <td>${{ fp.monto }}</td>
+                                                                <td>
+                                                                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="seleccionarFondo(
+                                                                        '{{ fp.fondo_id }}',
+                                                                        '{{ fp.forma_pago.id }}',
+                                                                        '{{ gestor_data.gestor.id }}',
+                                                                        '{{ fp.monto }}',
+                                                                        '{{ fp.forma_pago.nombre }}',
+                                                                        '{{ gestor_data.gestor.username }}'
+                                                                    )">Seleccionar</button>
+                                                                </td>
+                                                            </tr>
+                                                        {% endfor %}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+
+                                            {% if gestor_data.vias_pago %}
+                                                <div class="mt-2">
+                                                    <small class="text-muted">Vías de pago disponibles para este gestor:</small>
+                                                    <ul class="list-unstyled small">
+                                                        {% for via in gestor_data.vias_pago %}
+                                                            {% if via.direccion == 'enviar' or via.direccion == 'ambos' %}
+                                                                <li class="text-muted">
+                                                                    <span class="badge {% if via.direccion == 'enviar' %}bg-primary{% else %}bg-secondary{% endif %}">
+                                                                        {{ via.get_direccion_display }}
+                                                                    </span>
+                                                                    {{ via.nombre }} - {{ via.forma_pago.nombre }}
+                                                                </li>
+                                                            {% endif %}
+                                                        {% empty %}
+                                                            <li class="text-warning">Este gestor no tiene vías configuradas para enviar pagos.</li>
+                                                        {% endfor %}
+                                                    </ul>
+                                                </div>
+                                            {% else %}
+                                                <div class="alert alert-warning mt-2">
+                                                    <i class="fas fa-exclamation-triangle"></i> Este gestor no tiene vías de pago configuradas.
+                                                </div>
+                                            {% endif %}
+                                        {% else %}
+                                            <div class="alert alert-info mb-0">No hay fondos disponibles con este gestor.</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            {% endfor %}
+                            <div class="mt-3 text-end">
+                                <strong>Total general: ${{ total_general }}</strong>
+                            </div>
+
+                            <!-- Campos ocultos para el formulario -->
+                            <input type="hidden" name="fondo_id" id="fondo_id">
+                            <input type="hidden" name="forma_pago_id" id="forma_pago_id">
+                            <input type="hidden" name="gestor_id" id="gestor_id">
+                            <input type="hidden" name="monto" id="monto">
+
+                            <div class="mt-3" id="detalleCobro" style="display: none;">
+                                <div class="alert alert-info">
+                                    <p><strong>Forma de pago:</strong> <span id="detalle_forma_pago"></span></p>
+                                    <p><strong>Gestor:</strong> <span id="detalle_gestor"></span></p>
+                                    <p><strong>Monto a cobrar:</strong> $<span id="detalle_monto"></span></p>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="numero_tarjeta" class="form-label">Número de tarjeta / cuenta (opcional)</label>
+                                    <input type="text" name="numero_tarjeta" id="numero_tarjeta" class="form-control" placeholder="Ej: 1234-5678-9012-3456">
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="telefono" class="form-label">Teléfono de contacto (opcional)</label>
+                                    <input type="text" name="telefono" id="telefono" class="form-control" placeholder="Ej: +1234567890">
+                                </div>
+
+                                <div class="d-grid">
+                                    <button type="submit" class="btn btn-success">
+                                        <i class="fas fa-check-circle"></i> Enviar Solicitud
+                                    </button>
+                                </div>
+                            </div>
+                        {% else %}
+                            <div class="alert alert-warning">
+                                <i class="fas fa-exclamation-triangle"></i> No tienes gestores con fondos disponibles para cobrar.
+                            </div>
+                        {% endif %}
+                    </form>
+                    <div class="mt-3">
+                        <a href="{% url 'publico:home' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left"></i> Volver
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function seleccionarFondo(fondo_id, forma_pago_id, gestor_id, monto, forma_pago_nombre, gestor_nombre) {
+    document.getElementById('fondo_id').value = fondo_id;
+    document.getElementById('forma_pago_id').value = forma_pago_id;
+    document.getElementById('gestor_id').value = gestor_id;
+    document.getElementById('monto').value = monto;
+
+    document.getElementById('detalle_forma_pago').textContent = forma_pago_nombre;
+    document.getElementById('detalle_gestor').textContent = gestor_nombre;
+    document.getElementById('detalle_monto').textContent = monto;
+
+    document.getElementById('detalleCobro').style.display = 'block';
+    document.getElementById('detalleCobro').scrollIntoView({ behavior: 'smooth' });
+}
+</script>
+{% endblock %}

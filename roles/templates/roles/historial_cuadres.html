@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block page_title %}Historial de Cuadres{% endblock %}
+{% block page_subtitle %}Registro de cuadres diarios{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="card border-0 shadow-sm rounded-4">
+        <div class="card-header bg-gradient-primary text-white border-0 py-3" style="background: linear-gradient(135deg, #6C3CE1 0%, #8B5CF6 100%);">
+            <h5 class="mb-0 fw-bold"><i class="fas fa-clipboard-list me-2"></i> Historial de Cuadres</h5>
+        </div>
+        <div class="card-body p-4">
+            <!-- Filtros -->
+            <form method="get" class="row g-3 mb-4">
+                <div class="col-md-3">
+                    <label class="form-label">Desde</label>
+                    <input onchange="this.form.submit()" type="date" name="fecha_inicio" class="form-control" value="{{ fecha_inicio|default:'' }}">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Hasta</label>
+                    <input onchange="this.form.submit()" type="date" name="fecha_fin" class="form-control" value="{{ fecha_fin|default:'' }}">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Tipo</label>
+                    <select onchange="this.form.submit()" name="tipo" class="form-select">
+                        <option value="">Todos</option>
+                        <option value="comercial" {% if tipo == 'comercial' %}selected{% endif %}>Comercial</option>
+                        <option value="banco" {% if tipo == 'banco' %}selected{% endif %}>Banco</option>
+                    </select>
+                </div>
+                <div class="col-md-3 d-flex align-items-end">
+                    </div>
+            </form>
+
+            <!-- Estadísticas -->
+            <div class="row g-3 mb-4">
+                <div class="col-md-3">
+                    <div class="alert alert-info">💰 Ventas: ${{ stats.total_ventas|floatformat:2 }}</div>
+                </div>
+                <div class="col-md-3">
+                    <div class="alert alert-warning">⚠️ Sobrelímite: ${{ stats.total_sobrelimite|floatformat:2 }}</div>
+                </div>
+                <div class="col-md-3">
+                    <div class="alert alert-success">🏆 Comisiones: ${{ stats.total_comisiones|floatformat:2 }}</div>
+                </div>
+                <div class="col-md-3">
+                    <div class="alert alert-secondary">🎯 Jugadas: {{ stats.total_jugadas }}</div>
+                </div>
+            </div>
+
+            <!-- Tabla -->
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Usuario</th>
+                            <th>Tipo</th>
+                            <th>Ventas</th>
+                            <th>Premios</th>
+                            <th>Comisiones</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if cuadres %}
+                            {% for cuadre in cuadres %}
+                                <tr>
+                                    <td>{{ cuadre.fecha|date:"d/m/Y" }}</td>
+                                    <td>{{ cuadre.usuario.username }}</td>
+                                    <td><span class="badge bg-info">{{ cuadre.tipo }}</span></td>
+                                    <td>${{ cuadre.total_ventas|floatformat:2 }}</td>
+                                    <td>${{ cuadre.total_premios_pagados|floatformat:2 }}</td>
+                                    <td>${{ cuadre.total_comisiones|floatformat:2 }}</td>
+                                    <td>
+                                        <a href="{% url 'roles:detalle_cuadre' cuadre.id %}" class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr><td colspan="7" class="text-center py-4 text-muted">No hay cuadres registrados.</td></tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

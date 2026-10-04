@@ -1,0 +1,1282 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block page_title %}Ganadores{% endblock %}
+{% block page_subtitle %}
+  {% if es_superadmin %}Análisis global de premios
+  {% elif es_banco %}Análisis de premios de tu red
+  {% elif es_comercial %}Análisis de premios de tus clientes
+  {% else %}Análisis de premios de tu grupo{% endif %}
+{% endblock %}
+
+{% block extra_css %}
+<style>
+/* ══════════════════════════════════════════════════════════════
+   GANADORES — Análisis · Orbit Aurora
+   Foco: cuánto, por forma de juego, por forma de pago, por cliente
+   ══════════════════════════════════════════════════════════════ */
+.gw {
+  --bg:        #f8f8fb;
+  --surface:   #ffffff;
+  --surface-2: #f3f4f9;
+  --line:      #e6e6ef;
+  --line-2:    #d1d3e0;
+
+  --ink:       #131826;
+  --ink-soft:  #4a5266;
+  --ink-mute:  #8a90a3;
+
+  --mint:      #2dd4bf;
+  --mint-2:    #14b8a6;
+  --violet:    #a78bfa;
+  --violet-2:  #8b5cf6;
+  --coral:     #fb7185;
+  --coral-2:   #f43f5e;
+  --honey:     #fbbf24;
+  --honey-2:   #f59e0b;
+  --sky:       #38bdf8;
+  --sky-2:     #0ea5e9;
+
+  --holo: linear-gradient(90deg,
+    #2dd4bf 0%, #a78bfa 25%, #fb7185 50%, #fbbf24 75%, #2dd4bf 100%);
+
+  position: relative;
+  z-index: 2;
+  color: var(--ink);
+  font-family: 'Inter', system-ui, sans-serif;
+  padding-bottom: 40px;
+}
+.gw::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 700px 500px at 12% -5%,  rgba(45,212,191,0.10),  transparent 60%),
+    radial-gradient(ellipse 700px 500px at 88% 8%,   rgba(167,139,250,0.09), transparent 60%),
+    radial-gradient(ellipse 900px 600px at 50% 110%, rgba(251,113,133,0.07), transparent 60%),
+    var(--bg);
+}
+
+/* ─────────────────────────────────────────────────
+   HEADER
+   ───────────────────────────────────────────────── */
+.gw-head {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 22px 26px;
+  background:
+    radial-gradient(ellipse 60% 80% at 0% 0%,   rgba(45,212,191,0.12),  transparent 60%),
+    radial-gradient(ellipse 60% 80% at 100% 100%, rgba(167,139,250,0.10), transparent 60%),
+    #ffffff;
+  border: 1px solid rgba(45,212,191,0.22);
+  border-radius: 22px;
+  box-shadow: 0 18px 36px -20px rgba(45,212,191,0.16);
+  margin-bottom: 18px;
+  min-width: 0;
+  flex-wrap: wrap;
+  overflow: hidden;
+}
+.gw-head::before {
+  content: '';
+  position: absolute;
+  top: -1px; left: 0; right: 0;
+  height: 2px;
+  background: var(--holo);
+  background-size: 400% 100%;
+  animation: gw-holo 10s linear infinite;
+}
+@keyframes gw-holo { to { background-position: -400% 0; } }
+
+.gw-head__left { min-width: 0; flex: 1; }
+.gw-head__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 12px;
+  background: rgba(45,212,191,0.10);
+  border: 1px solid rgba(45,212,191,0.24);
+  border-radius: 999px;
+  font-family: 'SF Mono', ui-monospace, 'Courier New', monospace;
+  font-size: 0.66rem;
+  font-weight: 800;
+  letter-spacing: 1.6px;
+  text-transform: uppercase;
+  color: var(--mint-2);
+  margin-bottom: 10px;
+}
+.gw-head__title {
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 900;
+  font-size: clamp(1.4rem, 2.8vw, 1.9rem);
+  letter-spacing: -0.6px;
+  margin: 0 0 4px;
+  overflow-wrap: anywhere;
+}
+.gw-head__sub {
+  color: var(--ink-soft);
+  font-size: 0.88rem;
+  font-weight: 500;
+  margin: 0;
+}
+.gw-head__right {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+/* ─────────────────────────────────────────────────
+   AVISO SEGÚN ROL
+   ───────────────────────────────────────────────── */
+.gw-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 18px;
+  border-radius: 14px;
+  margin-bottom: 18px;
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+  line-height: 1.55;
+  min-width: 0;
+}
+.gw-notice i { font-size: 1.1rem; flex-shrink: 0; margin-top: 1px; }
+.gw-notice strong { color: var(--ink); font-weight: 800; }
+.gw-notice a { color: var(--violet-2); font-weight: 800; text-decoration: underline; }
+.gw-notice--sky   { background: rgba(56,189,248,0.08);  border: 1px solid rgba(56,189,248,0.24); }
+.gw-notice--sky i { color: var(--sky-2); }
+.gw-notice--mint  { background: rgba(45,212,191,0.08);  border: 1px solid rgba(45,212,191,0.24); }
+.gw-notice--mint i { color: var(--mint-2); }
+.gw-notice--coral { background: rgba(251,113,133,0.08); border: 1px solid rgba(251,113,133,0.24); }
+.gw-notice--coral i { color: var(--coral-2); }
+
+/* ─────────────────────────────────────────────────
+   FILTROS
+   ───────────────────────────────────────────────── */
+.gw-filters {
+  background: linear-gradient(180deg, #ffffff 0%, #faf8ff 100%);
+  border: 1px solid rgba(167,139,250,0.20);
+  border-radius: 18px;
+  padding: 18px 20px;
+  margin-bottom: 18px;
+  box-shadow: 0 14px 30px -20px rgba(167,139,250,0.18);
+  min-width: 0;
+}
+.gw-filters__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+  align-items: end;
+  min-width: 0;
+}
+.gw-fgrp {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+.gw-fgrp label {
+  font-family: 'SF Mono', ui-monospace, 'Courier New', monospace;
+  font-size: 0.66rem;
+  font-weight: 800;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+}
+.gw-input,
+.gw-select {
+  width: 100%;
+  min-width: 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--line-2);
+  background: #ffffff;
+  font-family: inherit;
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: var(--ink);
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  min-height: 42px;
+}
+.gw-input:focus,
+.gw-select:focus {
+  border-color: var(--mint-2);
+  box-shadow: 0 0 0 3px rgba(45,212,191,0.14);
+}
+.gw-actions-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  min-width: 0;
+}
+
+/* ─────────────────────────────────────────────────
+   BOTONES
+   ───────────────────────────────────────────────── */
+.gw-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border-radius: 10px;
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 800;
+  font-size: 0.76rem;
+  letter-spacing: 0.4px;
+  text-decoration: none;
+  border: 1px solid;
+  cursor: pointer;
+  min-height: 42px;
+  min-width: 0;
+  max-width: 100%;
+  transition: transform 0.15s, box-shadow 0.15s, background 0.15s, color 0.15s;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+.gw-btn--primary {
+  background: linear-gradient(135deg, #2dd4bf 0%, #a78bfa 100%);
+  color: #ffffff;
+  border-color: transparent;
+  box-shadow: 0 8px 20px -8px rgba(167,139,250,0.5);
+}
+.gw-btn--primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 26px -10px rgba(167,139,250,0.55);
+}
+.gw-btn--ghost {
+  background: #ffffff;
+  color: var(--ink);
+  border-color: var(--line-2);
+}
+.gw-btn--ghost:hover { border-color: var(--mint-2); color: var(--mint-2); }
+.gw-btn--mint {
+  background: #ffffff;
+  color: var(--mint-2);
+  border-color: rgba(45,212,191,0.40);
+}
+.gw-btn--mint:hover { background: rgba(45,212,191,0.08); }
+.gw-btn:active { transform: translateY(1px) scale(0.98); }
+.gw-btn:focus-visible { outline: 3px solid var(--violet-2); outline-offset: 2px; }
+
+/* ─────────────────────────────────────────────────
+   KPIs
+   ───────────────────────────────────────────────── */
+.gw-kpis {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 22px;
+}
+.gw-kpi {
+  position: relative;
+  padding: 20px 22px;
+  border-radius: 18px;
+  min-width: 0;
+  overflow: hidden;
+}
+.gw-kpi::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  border-radius: 18px 18px 0 0;
+}
+.gw-kpi:nth-child(1) {
+  background: linear-gradient(160deg, #f0fdfa 0%, #ffffff 80%);
+  border: 1px solid rgba(45,212,191,0.24);
+  box-shadow: 0 12px 28px -16px rgba(45,212,191,0.30);
+}
+.gw-kpi:nth-child(1)::before { background: linear-gradient(90deg, #2dd4bf, #14b8a6); }
+.gw-kpi:nth-child(1) .gw-kpi__label i { color: var(--mint-2); }
+.gw-kpi:nth-child(2) {
+  background: linear-gradient(160deg, #f0f9ff 0%, #ffffff 80%);
+  border: 1px solid rgba(56,189,248,0.24);
+  box-shadow: 0 12px 28px -16px rgba(56,189,248,0.30);
+}
+.gw-kpi:nth-child(2)::before { background: linear-gradient(90deg, #38bdf8, #0ea5e9); }
+.gw-kpi:nth-child(2) .gw-kpi__label i { color: var(--sky-2); }
+.gw-kpi:nth-child(3) {
+  background: linear-gradient(160deg, #fffbeb 0%, #ffffff 80%);
+  border: 1px solid rgba(251,191,36,0.26);
+  box-shadow: 0 12px 28px -16px rgba(251,191,36,0.32);
+}
+.gw-kpi:nth-child(3)::before { background: linear-gradient(90deg, #fbbf24, #f59e0b); }
+.gw-kpi:nth-child(3) .gw-kpi__label i { color: var(--honey-2); }
+.gw-kpi:nth-child(4) {
+  background: linear-gradient(160deg, #fff1f2 0%, #ffffff 80%);
+  border: 1px solid rgba(251,113,133,0.26);
+  box-shadow: 0 12px 28px -16px rgba(251,113,133,0.32);
+}
+.gw-kpi:nth-child(4)::before { background: linear-gradient(90deg, #fb7185, #f43f5e); }
+.gw-kpi:nth-child(4) .gw-kpi__label i { color: var(--coral-2); }
+
+.gw-kpi__label {
+  font-family: 'SF Mono', ui-monospace, 'Courier New', monospace;
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 1.8px;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.gw-kpi__value {
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 900;
+  font-size: clamp(1.3rem, 2.4vw, 1.8rem);
+  line-height: 1;
+  letter-spacing: -1px;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+/* ─────────────────────────────────────────────────
+   TABS
+   ───────────────────────────────────────────────── */
+.gw-tabs {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 8px;
+  background: #ffffff;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  margin-bottom: 18px;
+  min-width: 0;
+}
+.gw-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 16px;
+  border-radius: 10px;
+  background: transparent;
+  border: none;
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 700;
+  font-size: 0.78rem;
+  letter-spacing: 0.4px;
+  color: var(--ink-soft);
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  min-height: 40px;
+  flex-shrink: 0;
+}
+.gw-tab:hover { background: var(--surface-2); color: var(--ink); }
+.gw-tab.is-active {
+  background: linear-gradient(135deg, #2dd4bf 0%, #a78bfa 100%);
+  color: #ffffff;
+  box-shadow: 0 6px 16px -6px rgba(167,139,250,0.5);
+}
+
+/* ─────────────────────────────────────────────────
+   SECCIONES
+   ───────────────────────────────────────────────── */
+.gw-section { margin-bottom: 22px; min-width: 0; }
+.gw-section__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 4px 12px;
+  flex-wrap: wrap;
+}
+.gw-section__title {
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 900;
+  font-size: 0.98rem;
+  letter-spacing: -0.2px;
+  color: var(--ink);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.gw-section__title::before {
+  content: '';
+  width: 5px;
+  height: 22px;
+  border-radius: 3px;
+  background: var(--holo);
+  background-size: 400% 100%;
+  animation: gw-holo 10s linear infinite;
+  flex-shrink: 0;
+}
+.gw-section__hint {
+  font-size: 0.78rem;
+  color: var(--ink-mute);
+  font-weight: 600;
+  margin: 0;
+}
+
+/* Grid de agregados */
+.gw-agrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(240px, 100%), 1fr));
+  gap: 14px;
+  min-width: 0;
+}
+.gw-agg {
+  position: relative;
+  padding: 18px 20px;
+  border-radius: 18px;
+  background: #ffffff;
+  border: 1px solid var(--line);
+  box-shadow: 0 14px 30px -22px rgba(19,24,38,0.15);
+  min-width: 0;
+  overflow: hidden;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.gw-agg:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 18px 36px -22px rgba(19,24,38,0.22);
+}
+.gw-agg:nth-child(5n+1) { --accent: var(--mint-2);   --accent-soft: rgba(45,212,191,0.10); }
+.gw-agg:nth-child(5n+2) { --accent: var(--violet-2); --accent-soft: rgba(167,139,250,0.10); }
+.gw-agg:nth-child(5n+3) { --accent: var(--coral-2);  --accent-soft: rgba(251,113,133,0.10); }
+.gw-agg:nth-child(5n+4) { --accent: var(--honey-2);  --accent-soft: rgba(251,191,36,0.12); }
+.gw-agg:nth-child(5n+5) { --accent: var(--sky-2);    --accent-soft: rgba(56,189,248,0.10); }
+.gw-agg::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: var(--accent, var(--mint-2));
+  border-radius: 18px 18px 0 0;
+}
+.gw-agg__head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+  min-width: 0;
+}
+.gw-agg__icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  font-size: 1.05rem;
+  background: var(--accent-soft, rgba(45,212,191,0.10));
+  flex-shrink: 0;
+}
+.gw-agg__name {
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 800;
+  font-size: 0.86rem;
+  color: var(--ink);
+  letter-spacing: -0.2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+.gw-agg__total {
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 900;
+  font-size: 1.55rem;
+  line-height: 1;
+  letter-spacing: -1px;
+  color: var(--accent, var(--mint-2));
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+  margin-bottom: 10px;
+}
+.gw-agg__bar {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--accent-soft, rgba(45,212,191,0.10));
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+.gw-agg__bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: var(--accent, var(--mint-2));
+  transition: width 0.5s ease;
+}
+.gw-agg__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-family: 'SF Mono', monospace;
+  font-size: 0.72rem;
+  color: var(--ink-mute);
+  font-weight: 700;
+}
+.gw-agg__count {
+  background: var(--accent-soft, rgba(45,212,191,0.10));
+  color: var(--accent, var(--mint-2));
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-weight: 800;
+}
+
+/* ─────────────────────────────────────────────────
+   TABLAS
+   ───────────────────────────────────────────────── */
+.gw-table-wrap {
+  background: #ffffff;
+  border: 1px solid rgba(167,139,250,0.18);
+  border-radius: 20px;
+  box-shadow: 0 18px 36px -22px rgba(167,139,250,0.16);
+  overflow: hidden;
+  min-width: 0;
+}
+.gw-table-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+.gw-table {
+  width: 100%;
+  min-width: 0;
+  border-collapse: collapse;
+  font-size: 0.86rem;
+}
+.gw-table thead th {
+  text-align: left;
+  padding: 12px 16px;
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--line);
+  font-family: 'SF Mono', ui-monospace, 'Courier New', monospace;
+  font-size: 0.66rem;
+  font-weight: 800;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+  white-space: nowrap;
+}
+.gw-table tbody td {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--line);
+  color: var(--ink);
+  vertical-align: middle;
+  overflow-wrap: anywhere;
+}
+.gw-table tbody tr:last-child td { border-bottom: none; }
+.gw-table tbody tr:hover td { background: rgba(45,212,191,0.04); }
+
+.gw-rank {
+  display: inline-grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 900;
+  font-size: 0.72rem;
+  color: var(--ink-soft);
+  flex-shrink: 0;
+}
+.gw-table tbody tr:nth-child(1) .gw-rank { background: linear-gradient(135deg, #fbbf24, #f59e0b); color: #fff; border-color: transparent; }
+.gw-table tbody tr:nth-child(2) .gw-rank { background: linear-gradient(135deg, #a78bfa, #8b5cf6); color: #fff; border-color: transparent; }
+.gw-table tbody tr:nth-child(3) .gw-rank { background: linear-gradient(135deg, #fb7185, #f43f5e); color: #fff; border-color: transparent; }
+
+.gw-user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.gw-user__avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #2dd4bf 0%, #a78bfa 100%);
+  color: #ffffff;
+  display: grid;
+  place-items: center;
+  font-weight: 900;
+  font-size: 0.75rem;
+  flex-shrink: 0;
+}
+.gw-user__name {
+  font-weight: 800;
+  font-size: 0.85rem;
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+.gw-money {
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 900;
+  color: var(--mint-2);
+  letter-spacing: -0.3px;
+  white-space: nowrap;
+}
+.gw-mono {
+  font-family: 'SF Mono', ui-monospace, 'Courier New', monospace;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+}
+.gw-bar-mini {
+  position: relative;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  overflow: hidden;
+  min-width: 60px;
+}
+.gw-bar-mini__fill {
+  height: 100%;
+  background: linear-gradient(90deg, #2dd4bf, #a78bfa);
+  border-radius: 999px;
+}
+
+.gw-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-family: 'SF Mono', monospace;
+  font-size: 0.66rem;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.gw-badge--pending { background: rgba(251,191,36,0.14); color: var(--honey-2); border: 1px solid rgba(251,191,36,0.30); }
+.gw-badge--paid    { background: rgba(45,212,191,0.14); color: var(--mint-2); border: 1px solid rgba(45,212,191,0.30); }
+
+/* ─────────────────────────────────────────────────
+   DETALLE COLAPSABLE
+   ───────────────────────────────────────────────── */
+.gw-details {
+  background: #ffffff;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  margin-bottom: 22px;
+  overflow: hidden;
+}
+.gw-details__summary {
+  list-style: none;
+  cursor: pointer;
+  padding: 16px 22px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--line);
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 800;
+  font-size: 0.84rem;
+  letter-spacing: 0.4px;
+  color: var(--ink);
+  transition: background 0.15s;
+  flex-wrap: wrap;
+}
+.gw-details__summary:hover { background: rgba(167,139,250,0.06); }
+.gw-details__summary::-webkit-details-marker { display: none; }
+.gw-details__summary i.gw-caret {
+  font-size: 0.8rem;
+  color: var(--ink-mute);
+  transition: transform 0.2s;
+}
+.gw-details[open] .gw-details__summary i.gw-caret { transform: rotate(90deg); }
+.gw-details__count {
+  font-family: 'SF Mono', monospace;
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: rgba(167,139,250,0.10);
+  color: var(--violet-2);
+  margin-left: auto;
+}
+
+/* ─────────────────────────────────────────────────
+   PAGINACIÓN
+   ───────────────────────────────────────────────── */
+.gw-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 22px;
+  border-top: 1px solid var(--line);
+  flex-wrap: wrap;
+  min-width: 0;
+}
+.gw-pagination__info {
+  font-family: 'SF Mono', monospace;
+  font-size: 0.72rem;
+  color: var(--ink-mute);
+  font-weight: 700;
+}
+.gw-pagination__list {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  flex-wrap: wrap;
+}
+.gw-pagination__link {
+  display: grid;
+  place-items: center;
+  min-width: 34px;
+  height: 34px;
+  padding: 0 10px;
+  border-radius: 8px;
+  background: #ffffff;
+  border: 1px solid var(--line);
+  color: var(--ink-soft);
+  font-family: 'SF Mono', monospace;
+  font-weight: 800;
+  font-size: 0.78rem;
+  text-decoration: none;
+  transition: all 0.15s;
+}
+.gw-pagination__link:hover { border-color: var(--mint-2); color: var(--mint-2); }
+.gw-pagination__link.is-current {
+  background: linear-gradient(135deg, #2dd4bf 0%, #a78bfa 100%);
+  color: #ffffff;
+  border-color: transparent;
+}
+.gw-pagination__link.is-disabled { opacity: 0.4; pointer-events: none; }
+
+/* ─────────────────────────────────────────────────
+   EMPTY
+   ───────────────────────────────────────────────── */
+.gw-empty { padding: 60px 24px; text-align: center; }
+.gw-empty__icon { font-size: 3rem; margin-bottom: 12px; opacity: 0.4; }
+.gw-empty__title {
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 800;
+  font-size: 0.95rem;
+  color: var(--ink);
+  margin: 0 0 6px;
+}
+.gw-empty__sub { color: var(--ink-mute); font-size: 0.82rem; margin: 0; }
+
+/* ─────────────────────────────────────────────────
+   RESPONSIVE
+   ───────────────────────────────────────────────── */
+@media (max-width: 1024px) {
+  .gw-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 720px) {
+  .gw-head { padding: 18px 20px; }
+  .gw-filters { padding: 16px 16px; }
+  .gw-filters__grid { grid-template-columns: minmax(0, 1fr); }
+  .gw-actions-row { justify-content: stretch; }
+  .gw-actions-row .gw-btn { flex: 1; }
+  .gw-pagination { flex-direction: column; align-items: stretch; gap: 10px; }
+  .gw-pagination__list { justify-content: center; }
+  .gw-details__summary { padding: 14px 16px; }
+}
+@media (max-width: 480px) {
+  .gw-kpis { grid-template-columns: minmax(0, 1fr); gap: 10px; }
+  .gw-kpi { padding: 16px 18px; }
+  .gw-tabs { padding: 6px; gap: 6px; }
+  .gw-tab { padding: 8px 12px; font-size: 0.72rem; }
+  .gw-agg { padding: 16px 16px; }
+  .gw-agg__total { font-size: 1.35rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .gw-head::before,
+  .gw-section__title::before { animation: none !important; }
+  .gw-btn, .gw-tab, .gw-agg { transition: none; }
+  .gw-agg__bar-fill { transition: none; }
+}
+</style>
+{% endblock %}
+
+
+{% block content %}
+<div class="gw">
+
+  {# ═══════ HEADER ═══════ #}
+  <header class="gw-head">
+    <div class="gw-head__left">
+      <span class="gw-head__eyebrow">
+        <i class="fas fa-chart-pie" aria-hidden="true"></i>
+        {% if es_superadmin %}Vista global
+        {% elif es_banco %}Vista banco
+        {% elif es_comercial %}Vista comercial
+        {% else %}Vista cliente{% endif %}
+      </span>
+      <h1 class="gw-head__title">Análisis de premios</h1>
+      <p class="gw-head__sub">
+        Cuánto se pagó y por qué. Desglosado por forma de juego, forma de pago y cliente.
+      </p>
+    </div>
+    <div class="gw-head__right">
+      <a href="{% url 'resultados:resultados' %}" class="gw-btn gw-btn--ghost">
+        <i class="fas fa-chart-line" aria-hidden="true"></i>
+        Resultados
+      </a>
+      <button type="button" class="gw-btn gw-btn--mint" id="btn-compartir-todos">
+        <i class="fab fa-whatsapp" aria-hidden="true"></i>
+        Compartir
+      </button>
+    </div>
+  </header>
+
+  {# ═══════ AVISO SEGÚN ROL ═══════ #}
+  {% if es_cliente %}
+  <div class="gw-notice gw-notice--mint">
+    <i class="fas fa-circle-info" aria-hidden="true"></i>
+    <div>
+      Análisis de <strong>tu grupo</strong>: tú y los clientes que comparten tu mismo gestor.
+      {% if tab_actual == 'propios' %}
+        Filtro actual: <strong>solo tus premios</strong>. <a href="?tab=grupo">Ver mi grupo →</a>
+      {% else %}
+        <a href="?tab=propios">Ver solo mis premios →</a>
+      {% endif %}
+    </div>
+  </div>
+  {% elif es_banco %}
+  <div class="gw-notice gw-notice--sky">
+    <i class="fas fa-circle-info" aria-hidden="true"></i>
+    <div>
+      Análisis de <strong>tus clientes directos</strong> y de los comerciales que gestionas.
+    </div>
+  </div>
+  {% elif es_comercial %}
+  <div class="gw-notice gw-notice--coral">
+    <i class="fas fa-circle-info" aria-hidden="true"></i>
+    <div>
+      Análisis de <strong>tus clientes</strong>{% if tab_actual == 'propios' %} y <strong>tus propios premios</strong>{% endif %}.
+    </div>
+  </div>
+  {% endif %}
+
+  {# ═══════ TABS ═══════ #}
+  {% if tabs_available %}
+  <nav class="gw-tabs" aria-label="Filtrar por rol">
+    {% for t in tabs_available %}
+      <a class="gw-tab {% if tab_actual == t.id %}is-active{% endif %}"
+         href="?tab={{ t.id }}{% if t.params %}{% for k, v in t.params.items %}&{{ k }}={{ v }}{% endfor %}{% endif %}">
+        {{ t.label }}
+      </a>
+    {% endfor %}
+  </nav>
+  {% endif %}
+
+  {# ═══════ FILTROS ═══════ #}
+  <form class="gw-filters" method="get">
+    <input type="hidden" name="tab" value="{{ tab_actual }}">
+    {% if asignado_por %}<input type="hidden" name="asignado_por" value="{{ asignado_por }}">{% endif %}
+
+    <div class="gw-filters__grid">
+      <div class="gw-fgrp">
+        <label for="sorteo">Sorteo</label>
+        <select onchange="this.form.submit()" name="sorteo" id="sorteo" class="gw-select">
+          <option value="">Todos</option>
+          {% for s in sorteos %}
+            <option value="{{ s.id }}" {% if s.id|stringformat:"s" == sorteo_seleccionado %}selected{% endif %}>
+              {{ s.nombre }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="gw-fgrp">
+        <label for="forma_juego">Forma de juego</label>
+        <select onchange="this.form.submit()" name="forma_juego" id="forma_juego" class="gw-select">
+          <option value="">Todas</option>
+          {% for f in formas_juego %}
+            <option value="{{ f.id }}" {% if f.id|stringformat:"s" == forma_juego_seleccionada %}selected{% endif %}>
+              {{ f.nombre }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="gw-fgrp">
+        <label for="forma_pago">Forma de pago</label>
+        <select onchange="this.form.submit()" name="forma_pago" id="forma_pago" class="gw-select">
+          <option value="">Todas</option>
+          {% for f in formas_pago %}
+            <option value="{{ f.id }}" {% if f.id|stringformat:"s" == forma_pago_seleccionada %}selected{% endif %}>
+              {{ f.nombre }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="gw-fgrp">
+        <label for="usuario">Cliente</label>
+        <input type="text" name="usuario" id="usuario" class="gw-input"
+               placeholder="Buscar usuario…" value="{{ usuario_busqueda }}" autocomplete="off">
+      </div>
+
+      <div class="gw-fgrp">
+        <label for="fecha_desde">Desde</label>
+        <input onchange="this.form.submit()" type="date" name="fecha_desde" id="fecha_desde" class="gw-input" value="{{ fecha_desde }}">
+      </div>
+
+      <div class="gw-fgrp">
+        <label for="fecha_hasta">Hasta</label>
+        <input onchange="this.form.submit()" type="date" name="fecha_hasta" id="fecha_hasta" class="gw-input" value="{{ fecha_hasta }}">
+      </div>
+
+      <div class="gw-fgrp">
+        <label for="estado">Estado</label>
+        <select onchange="this.form.submit()" name="estado" id="estado" class="gw-select">
+          <option value="">Todos</option>
+          <option value="pendiente" {% if estado_seleccionado == 'pendiente' %}selected{% endif %}>Pendientes</option>
+          <option value="cobrado"   {% if estado_seleccionado == 'cobrado'   %}selected{% endif %}>Sumados al fondo</option>
+        </select>
+      </div>
+
+      <div class="gw-fgrp">
+        <label>&nbsp;</label>
+        <div class="gw-actions-row">
+          <a href="{% url 'resultados:todos_los_ganadores' %}{% if tab_actual %}?tab={{ tab_actual }}{% endif %}"
+             class="gw-btn gw-btn--ghost">
+            <i class="fas fa-rotate-left" aria-hidden="true"></i>
+            Limpiar
+          </a>
+          </div>
+      </div>
+    </div>
+  </form>
+
+  {# ═══════ KPIs ═══════ #}
+  <section class="gw-kpis">
+    <div class="gw-kpi">
+      <div class="gw-kpi__label"><i class="fas fa-sack-dollar" aria-hidden="true"></i> Monto total</div>
+      <div class="gw-kpi__value">${{ total_premios_monto|floatformat:2 }}</div>
+    </div>
+    <div class="gw-kpi">
+      <div class="gw-kpi__label"><i class="fas fa-medal" aria-hidden="true"></i> Premios</div>
+      <div class="gw-kpi__value">{{ total_premios_count }}</div>
+    </div>
+    <div class="gw-kpi">
+      <div class="gw-kpi__label"><i class="fas fa-hourglass-half" aria-hidden="true"></i> Pendientes</div>
+      <div class="gw-kpi__value">{{ pendientes_count }}</div>
+    </div>
+    <div class="gw-kpi">
+      <div class="gw-kpi__label"><i class="fas fa-circle-check" aria-hidden="true"></i> Sumados al fondo</div>
+      <div class="gw-kpi__value">{{ cobrados_count }}</div>
+    </div>
+  </section>
+
+  {# ═══════ POR FORMA DE JUEGO ═══════ #}
+  {% if por_forma_juego %}
+  <section class="gw-section">
+    <div class="gw-section__head">
+      <h2 class="gw-section__title">Por forma de juego</h2>
+      <p class="gw-section__hint">Cuánto se pagó en cada tipo de apuesta</p>
+    </div>
+    <div class="gw-agrid">
+      {% for f in por_forma_juego %}
+      <article class="gw-agg">
+        <div class="gw-agg__head">
+          <span class="gw-agg__icon" aria-hidden="true">🎲</span>
+          <span class="gw-agg__name">{{ f.jugada__forma_juego__nombre|default:"—" }}</span>
+        </div>
+        <div class="gw-agg__total">${{ f.total|floatformat:2 }}</div>
+        <div class="gw-agg__bar" aria-hidden="true">
+          <div class="gw-agg__bar-fill"
+               style="width: {% widthratio f.total max_forma_juego 100 %}%;"></div>
+        </div>
+        <div class="gw-agg__foot">
+          <span class="gw-agg__count">{{ f.cantidad }} premio{{ f.cantidad|pluralize:"s" }}</span>
+          <span>Prom. ${{ f.total|floatformat:0 }}</span>
+        </div>
+      </article>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
+  {# ═══════ POR FORMA DE PAGO ═══════ #}
+  {% if por_forma_pago %}
+  <section class="gw-section">
+    <div class="gw-section__head">
+      <h2 class="gw-section__title">Por forma de pago</h2>
+      <p class="gw-section__hint">Cómo se distribuyen los premios según el método de pago</p>
+    </div>
+    <div class="gw-agrid">
+      {% for f in por_forma_pago %}
+      <article class="gw-agg">
+        <div class="gw-agg__head">
+          <span class="gw-agg__icon" aria-hidden="true">💳</span>
+          <span class="gw-agg__name">{{ f.jugada__forma_pago__nombre|default:"Sin forma de pago" }}</span>
+        </div>
+        <div class="gw-agg__total">${{ f.total|floatformat:2 }}</div>
+        <div class="gw-agg__bar" aria-hidden="true">
+          <div class="gw-agg__bar-fill"
+               style="width: {% widthratio f.total max_forma_pago 100 %}%;"></div>
+        </div>
+        <div class="gw-agg__foot">
+          <span class="gw-agg__count">{{ f.cantidad }} premio{{ f.cantidad|pluralize:"s" }}</span>
+          <span>Prom. ${{ f.total|floatformat:0 }}</span>
+        </div>
+      </article>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
+  {# ═══════ POR CLIENTE ═══════ #}
+  {% if por_cliente %}
+  <section class="gw-section">
+    <div class="gw-section__head">
+      <h2 class="gw-section__title">Por cliente</h2>
+      <p class="gw-section__hint">Total de premios ganados por cada usuario</p>
+    </div>
+
+    <div class="gw-table-wrap">
+      <div class="gw-table-scroll">
+        <table class="gw-table">
+          <thead>
+            <tr>
+              <th style="width: 48px;">#</th>
+              <th>Cliente</th>
+              <th>Premios</th>
+              <th>Pendientes</th>
+              <th>Sumados al fondo</th>
+              <th>Total</th>
+              <th style="min-width: 120px;">Distribución</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for c in por_cliente %}
+            <tr>
+              <td><span class="gw-rank">{{ forloop.counter }}</span></td>
+              <td>
+                <div class="gw-user">
+                  <div class="gw-user__avatar">{{ c.jugada__usuario__username|first|upper }}</div>
+                  <span class="gw-user__name">{{ c.jugada__usuario__username }}</span>
+                </div>
+              </td>
+              <td class="gw-mono">{{ c.cantidad }}</td>
+              <td>
+                {% if c.pendientes %}
+                  <span class="gw-badge gw-badge--pending">{{ c.pendientes }}</span>
+                {% else %}
+                  <span class="gw-mono" style="color: var(--ink-mute);">0</span>
+                {% endif %}
+              </td>
+              <td>
+                {% if c.cobrados %}
+                  <span class="gw-badge gw-badge--paid">{{ c.cobrados }}</span>
+                {% else %}
+                  <span class="gw-mono" style="color: var(--ink-mute);">0</span>
+                {% endif %}
+              </td>
+              <td><span class="gw-money">${{ c.total|floatformat:2 }}</span></td>
+              <td>
+                <div class="gw-bar-mini" aria-hidden="true">
+                  <div class="gw-bar-mini__fill"
+                       style="width: {% widthratio c.total max_cliente 100 %}%;"></div>
+                </div>
+              </td>
+              <td>
+                <a href="?tab={{ tab_actual }}&usuario={{ c.jugada__usuario__username }}"
+                   class="gw-btn gw-btn--ghost"
+                   style="padding: 5px 12px; min-height: 32px; font-size: 0.7rem;">
+                  Ver detalle
+                </a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+  {% endif %}
+
+  {# ═══════ DETALLE INDIVIDUAL (colapsable) ═══════ #}
+  <section class="gw-section">
+    <div class="gw-section__head">
+      <h2 class="gw-section__title">Detalle individual</h2>
+      <p class="gw-section__hint">Cada premio otorgado (para auditoría)</p>
+    </div>
+
+    <details class="gw-details">
+      <summary class="gw-details__summary">
+        <i class="fas fa-chevron-right gw-caret" aria-hidden="true"></i>
+        <span>Ver {{ total_premios_count }} registro{{ total_premios_count|pluralize:"s" }} de premios</span>
+        <span class="gw-details__count">{{ total_premios_count }}</span>
+      </summary>
+
+      <div class="gw-table-scroll">
+        <table class="gw-table">
+          <thead>
+            <tr>
+              <th>Usuario</th>
+              <th>Sorteo</th>
+              <th>Número</th>
+              <th>Forma de juego</th>
+              <th>Forma de pago</th>
+              <th>Mult.</th>
+              <th>Monto</th>
+              <th>Estado</th>
+              <th>Fecha</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for premio in premios %}
+            <tr>
+              <td>
+                <div class="gw-user">
+                  <div class="gw-user__avatar">{{ premio.jugada.usuario.username|first|upper }}</div>
+                  <span class="gw-user__name">{{ premio.jugada.usuario.username }}</span>
+                </div>
+              </td>
+              <td>{{ premio.jugada.sorteo.nombre }}</td>
+              <td><span class="gw-mono">{{ premio.jugada.numero }}</span></td>
+              <td>{{ premio.jugada.forma_juego.nombre }}</td>
+              <td>{{ premio.jugada.forma_pago.nombre|default:"—" }}</td>
+              <td class="gw-mono">{{ premio.multiplicador_aplicado }}x</td>
+              <td><span class="gw-money">${{ premio.monto_premio|floatformat:2 }}</span></td>
+              <td>
+                {% if premio.cobrado %}
+                  <span class="gw-badge gw-badge--paid"><i class="fas fa-check" aria-hidden="true"></i> Sumado al fondo</span>
+                {% else %}
+                  <span class="gw-badge gw-badge--pending"><i class="fas fa-clock" aria-hidden="true"></i> Pendiente</span>
+                {% endif %}
+              </td>
+              <td class="gw-mono" style="color: var(--ink-mute);">{{ premio.creado_en|date:"d/m/Y H:i" }}</td>
+              <td>
+                {% if not premio.cobrado and premio.jugada.usuario == request.user %}
+                  <a href="{% url 'resultados:solicitar_cobro' premio.id %}"
+                     class="gw-btn gw-btn--primary"
+                     style="padding: 5px 12px; min-height: 32px; font-size: 0.7rem;">
+                    Cobrar
+                  </a>
+                {% endif %}
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="10">
+                <div class="gw-empty">
+                  <div class="gw-empty__icon" aria-hidden="true">📊</div>
+                  <h3 class="gw-empty__title">Sin datos para los filtros aplicados</h3>
+                  <p class="gw-empty__sub">
+                    Prueba quitando algunos filtros o ajustando el rango de fechas.
+                  </p>
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      {# Paginación #}
+      {% if premios.has_other_pages %}
+      <div class="gw-pagination">
+        <span class="gw-pagination__info">
+          Página {{ premios.number }} de {{ premios.paginator.num_pages }}
+        </span>
+        <ul class="gw-pagination__list">
+          {% if premios.has_previous %}
+            <li>
+              <a class="gw-pagination__link"
+                 href="?page=1{% if request.GET.urlencode %}&{{ request.GET.urlencode }}{% endif %}">««</a>
+            </li>
+            <li>
+              <a class="gw-pagination__link"
+                 href="?page={{ premios.previous_page_number }}{% if request.GET.urlencode %}&{{ request.GET.urlencode }}{% endif %}">«</a>
+            </li>
+          {% else %}
+            <li><span class="gw-pagination__link is-disabled">««</span></li>
+            <li><span class="gw-pagination__link is-disabled">«</span></li>
+          {% endif %}
+
+          {% for num in premios.paginator.page_range %}
+            {% if num == premios.number %}
+              <li><span class="gw-pagination__link is-current">{{ num }}</span></li>
+            {% elif num > premios.number|add:'-3' and num < premios.number|add:'3' %}
+              <li>
+                <a class="gw-pagination__link"
+                   href="?page={{ num }}{% if request.GET.urlencode %}&{{ request.GET.urlencode }}{% endif %}">{{ num }}</a>
+              </li>
+            {% endif %}
+          {% endfor %}
+
+          {% if premios.has_next %}
+            <li>
+              <a class="gw-pagination__link"
+                 href="?page={{ premios.next_page_number }}{% if request.GET.urlencode %}&{{ request.GET.urlencode }}{% endif %}">»</a>
+            </li>
+            <li>
+              <a class="gw-pagination__link"
+                 href="?page={{ premios.paginator.num_pages }}{% if request.GET.urlencode %}&{{ request.GET.urlencode }}{% endif %}">»»</a>
+            </li>
+          {% else %}
+            <li><span class="gw-pagination__link is-disabled">»</span></li>
+            <li><span class="gw-pagination__link is-disabled">»»</span></li>
+          {% endif %}
+        </ul>
+      </div>
+      {% endif %}
+    </details>
+  </section>
+
+</div>
+{% endblock %}
+
+
+{% block extra_js %}
+<script>
+(function () {
+  'use strict';
+
+  const btn = document.getElementById('btn-compartir-todos');
+  if (!btn) return;
+
+  btn.addEventListener('click', () => {
+    const original = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin" aria-hidden="true"></i> Cargando…';
+    btn.disabled = true;
+
+    const params = new URLSearchParams(window.location.search);
+    const url = `/resultados/api/resumen-filtrado/?${params.toString()}`;
+
+    fetch(url)
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.success) {
+          window.open('https://wa.me/?text=' + encodeURIComponent(data.resumen), '_blank');
+        } else {
+          alert('❌ No se pudo obtener el resumen.');
+        }
+      })
+      .catch((e) => {
+        console.error(e);
+        alert('❌ Error de conexión.');
+      })
+      .finally(() => {
+        btn.innerHTML = original;
+        btn.disabled = false;
+      });
+  });
+})();
+</script>
+{% endblock extra_js %}

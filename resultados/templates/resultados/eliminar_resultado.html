@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block page_title %}Eliminar Resultado{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card shadow-sm">
+        <div class="card-header bg-danger text-white">
+            <h4 class="mb-0">Confirmar eliminación</h4>
+        </div>
+        <div class="card-body">
+            <p>¿Estás seguro de eliminar el resultado de <strong>{{ resultado.sorteo.nombre }}</strong> del día <strong>{{ resultado.fecha|date:"d/m/Y" }}</strong>?</p>
+            <p class="text-danger"><strong>⚠️ Esto eliminará todos los premios asociados.</strong></p>
+            <form method="post">
+                {% csrf_token %}
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-danger">Sí, eliminar</button>
+                    <a href="{% url 'resultados:resultados' %}" class="btn btn-secondary">Cancelar</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,340 @@
+{% extends "base.html" %}
+{% load static %}
+{% load roles_extras %}
+{% block page_title %}Ascender / Descender Usuario{% endblock %}
+{% block page_subtitle %}Gestiona los roles de los usuarios según la jerarquía{% endblock %}
+
+{% block extra_css %}
+<style>
+    .role-badge {
+        font-size: 0.7rem;
+        padding: 0.2rem 0.8rem;
+        border-radius: 30px;
+        font-weight: 600;
+    }
+    .role-badge.superadmin { background: #8b5cf6; color: #fff; }
+    .role-badge.banco { background: #3b82f6; color: #fff; }
+    .role-badge.comercial { background: #f59e0b; color: #fff; }
+    .role-badge.cliente { background: #6b7280; color: #fff; }
+    .role-badge.sin-rol { background: #e9ecef; color: #6c757d; }
+    .card-seleccionado { border-left: 4px solid #6C3CE1; }
+    .accion-btn { min-width: 120px; }
+    .table-user-avatar {
+        width: 36px;
+        height: 36px;
+        font-size: 14px;
+        flex-shrink: 0;
+    }
+    .debug-rol {
+        font-size: 0.6rem;
+        color: #999;
+        margin-top: 2px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+    <!-- ============================================================ -->
+    <!-- MENSAJES (éxito/error)                                        -->
+    <!-- ============================================================ -->
+    {% if messages %}
+        <div class="mb-4">
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <!-- ============================================================ -->
+    <!-- BUSCADOR Y LISTA DE USUARIOS                                  -->
+    <!-- ============================================================ -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white py-3">
+            <h5 class="fw-bold mb-0"><i class="fas fa-users me-2 text-primary"></i>Usuarios disponibles</h5>
+        </div>
+        <div class="card-body">
+            <form method="get" class="mb-3">
+                <div class="input-group">
+                    <input type="text" name="q" class="form-control" placeholder="Buscar por nombre, usuario o email..." value="{{ q|default:'' }}">
+                    <button class="btn btn-primary" type="submit"><i class="fas fa-search"></i> Buscar</button>
+                    {% if q %}
+                        <a href="{% url 'roles:ascender_usuario' %}" class="btn btn-outline-secondary"><i class="fas fa-times"></i> Limpiar</a>
+                    {% endif %}
+                </div>
+            </form>
+
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Usuario</th>
+                            <th>Rol actual</th>
+                            <th>Banco asignado</th>
+                            <th>Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for usuario in usuarios %}
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2 table-user-avatar">
+                                        {{ usuario.username|first|upper }}
+                                    </div>
+                                    <div>
+                                        <strong>{{ usuario.username }}</strong><br>
+                                        <small class="text-muted">{{ usuario.email }}</small>
+                                        <!-- 🔍 DEPURACIÓN: muestra el ID del rol si existe -->
+                                        {% with rol_debug=usuario|get_active_role %}
+                                            {% if rol_debug %}
+                                                <div class="debug-rol">ID rol: {{ rol_debug.id }}</div>
+                                            {% endif %}
+                                        {% endwith %}
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                {% with rol=usuario|get_active_role %}
+                                    <span class="role-badge {{ rol.tipo|default:'sin-rol' }}">
+                                        {% if rol %}
+                                            {{ rol.get_tipo_display }}
+                                        {% else %}
+                                            <span class="text-muted">Sin rol activo</span>
+                                        {% endif %}
+                                    </span>
+                                {% endwith %}
+                            </td>
+                            <td>
+                                {% with rol=usuario|get_active_role %}
+                                    {% if rol and rol.banco_asignado %}
+                                        <span class="badge bg-info">{{ rol.banco_asignado.username }}</span>
+                                    {% else %}
+                                        <span class="text-muted">—</span>
+                                    {% endif %}
+                                {% endwith %}
+                            </td>
+                            <td>
+                                <a href="?usuario_id={{ usuario.id }}{% if q %}&q={{ q }}{% endif %}" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-edit"></i> Gestionar
+                                </a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="4" class="text-center text-muted py-4">No hay usuarios disponibles para gestionar.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- PANEL DE GESTIÓN DEL USUARIO SELECCIONADO                    -->
+    <!-- ============================================================ -->
+    {% if usuario_seleccionado %}
+    <div class="card border-0 shadow-sm card-seleccionado">
+        <div class="card-header bg-white py-3">
+            <h5 class="fw-bold mb-0">
+                <i class="fas fa-user-cog me-2 text-primary"></i>
+                Gestionando a: <strong>{{ usuario_seleccionado.username }}</strong>
+                <span class="role-badge {{ rol_actual|default:'sin-rol' }} ms-2">
+                    {{ rol_actual|default:"Sin rol"|capfirst }}
+                </span>
+            </h5>
+        </div>
+        <div class="card-body">
+
+            <!-- Información del usuario -->
+            <div class="row g-3 mb-4">
+                <div class="col-md-3">
+                    <div class="text-muted small">Email</div>
+                    <div>{{ usuario_seleccionado.email|default:"No especificado" }}</div>
+                </div>
+                <div class="col-md-3">
+                    <div class="text-muted small">Fecha registro</div>
+                    <div>{{ usuario_seleccionado.date_joined|date:"d/m/Y H:i" }}</div>
+                </div>
+                <div class="col-md-3">
+                    <div class="text-muted small">Último acceso</div>
+                    <div>{{ usuario_seleccionado.last_login|date:"d/m/Y H:i"|default:"Nunca" }}</div>
+                </div>
+                <div class="col-md-3">
+                    <div class="text-muted small">Activo</div>
+                    <div>{% if usuario_seleccionado.is_active %}<span class="badge bg-success">Sí</span>{% else %}<span class="badge bg-danger">No</span>{% endif %}</div>
+                </div>
+            </div>
+
+            <!-- Recursos asignados (si es banco) -->
+            {% if recursos_asignados_banco %}
+            <div class="mb-3">
+                <strong class="text-muted"><i class="fas fa-cubes me-1"></i> Recursos asignados:</strong>
+                <span class="badge bg-primary">{{ recursos_asignados_banco|length }} recursos</span>
+                <ul class="list-inline mt-1">
+                    {% for recurso in recursos_asignados_banco|slice:":5" %}
+                        <li class="list-inline-item badge bg-light text-dark">{{ recurso.get_tipo_display }}: {{ recurso.sorteo|default:recurso.forma_juego|default:recurso.forma_pago }}</li>
+                    {% endfor %}
+                    {% if recursos_asignados_banco|length > 5 %}
+                        <li class="list-inline-item text-muted">+{{ recursos_asignados_banco|length|add:"-5" }} más</li>
+                    {% endif %}
+                </ul>
+            </div>
+            {% endif %}
+
+            <!-- Bancos asignados (si es comercial) -->
+            {% if bancos_asignados %}
+            <div class="mb-3">
+                <strong class="text-muted"><i class="fas fa-building me-1"></i> Bancos asignados:</strong>
+                {% for banco in bancos_asignados %}
+                    <span class="badge bg-info">{{ banco.username }}</span>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <!-- Formulario de acciones -->
+            <form method="post" id="formAscenso">
+                {% csrf_token %}
+                <input type="hidden" name="usuario_id" value="{{ usuario_seleccionado.id }}">
+
+                <div class="row g-3 align-items-end">
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold">Nuevo rol</label>
+                        <select name="nuevo_rol" class="form-select" required>
+                            <option value="">Selecciona una acción</option>
+                            {% for accion in acciones_disponibles %}
+                                <option value="{{ accion.valor }}">{{ accion.label }}</option>
+                            {% empty %}
+                                <option value="" disabled>No hay acciones disponibles</option>
+                            {% endfor %}
+                        </select>
+                        {% if not acciones_disponibles %}
+                            <small class="text-muted">El usuario ya está en el rol adecuado según tus permisos.</small>
+                        {% endif %}
+                    </div>
+
+                    <!-- Selector de banco (solo para superadmin y si aplica) -->
+                    {% if es_superadmin and rol_actual != 'banco' %}
+                    <div class="col-md-3">
+                        <label class="form-label fw-semibold">Asignar a banco</label>
+                        <select name="banco_asignado" class="form-select">
+                            <option value="">Sin banco</option>
+                            {% for banco in bancos %}
+                                <option value="{{ banco.id }}">{{ banco.username }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    {% endif %}
+
+                    <!-- Campos para ascenso a banco (solo superadmin) -->
+                    {% if es_superadmin and 'banco' in acciones_disponibles|map:"valor" %}
+                    <div class="col-md-3">
+                        <label class="form-label fw-semibold">Comerciales permitidos</label>
+                        <input type="number" name="comerciales_permitidos" class="form-control" value="5" min="0">
+                    </div>
+                    {% endif %}
+
+                    <div class="col-md-2">
+                        <button type="submit" class="btn btn-primary w-100 accion-btn" id="btnAplicar">
+                            <i class="fas fa-save"></i> Aplicar
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Recursos para ascenso a banco (solo superadmin) -->
+                {% if es_superadmin and 'banco' in acciones_disponibles|map:"valor" %}
+                <div class="row g-3 mt-3">
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold">Sorteos</label>
+                        <select name="sorteos" class="form-select" multiple size="3">
+                            {% for sorteo in sorteos %}
+                                <option value="{{ sorteo.id }}">{{ sorteo.nombre }}</option>
+                            {% endfor %}
+                        </select>
+                        <small class="text-muted">Ctrl+clic para seleccionar múltiples</small>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold">Formas de juego</label>
+                        <select name="formas_juego" class="form-select" multiple size="3">
+                            {% for fj in formas_juego %}
+                                <option value="{{ fj.id }}">{{ fj.nombre }}</option>
+                            {% endfor %}
+                        </select>
+                        <small class="text-muted">Ctrl+clic para seleccionar múltiples</small>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold">Formas de pago</label>
+                        <select name="formas_pago" class="form-select" multiple size="3">
+                            {% for fp in formas_pago %}
+                                <option value="{{ fp.id }}">{{ fp.nombre }}</option>
+                            {% endfor %}
+                        </select>
+                        <small class="text-muted">Ctrl+clic para seleccionar múltiples</small>
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if not acciones_disponibles %}
+                <div class="alert alert-warning mt-3 mb-0">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    No hay acciones disponibles para este usuario con tu rol actual.
+                </div>
+                {% endif %}
+            </form>
+
+        </div>
+        <div class="card-footer bg-light">
+            <small class="text-muted">
+                <i class="fas fa-info-circle me-1"></i>
+                {% if es_superadmin %}
+                    Como Superadmin puedes ascender/descender a cualquier rol.
+                {% elif es_banco %}
+                    Como Banco puedes ascender a comerciales (clientes sin gestor) y descender a clientes (tus comerciales subordinados).
+                {% endif %}
+            </small>
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const nuevoRol = document.querySelector('select[name="nuevo_rol"]');
+    const bancoSelect = document.querySelector('select[name="banco_asignado"]');
+    if (nuevoRol && bancoSelect) {
+        function toggleBancoSelect() {
+            if (nuevoRol.value === 'comercial') {
+                bancoSelect.closest('.col-md-3').style.display = 'block';
+            } else {
+                bancoSelect.closest('.col-md-3').style.display = 'none';
+            }
+        }
+        nuevoRol.addEventListener('change', toggleBancoSelect);
+        toggleBancoSelect();
+    }
+
+    const form = document.getElementById('formAscenso');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            const rol = document.querySelector('select[name="nuevo_rol"]');
+            if (rol && rol.value) {
+                const confirmMsg = `¿Estás seguro de cambiar el rol a "${rol.options[rol.selectedIndex].text}"?`;
+                if (!confirm(confirmMsg)) {
+                    e.preventDefault();
+                } else {
+                    const btn = document.getElementById('btnAplicar');
+                    btn.disabled = true;
+                    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando...';
+                }
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

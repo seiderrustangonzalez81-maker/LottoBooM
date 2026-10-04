@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block page_title %}Crear Número Restringido{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-group { margin-bottom: 1.5rem; }
+    .input-valores { font-family: monospace; }
+    .help-text { font-size: 0.85rem; color: #6c757d; }
+    .card { border-radius: 20px; border: none; box-shadow: 0 8px 32px rgba(0,0,0,0.04); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white" style="border-radius: 20px 20px 0 0;">
+            <h4 class="mb-0"><i class="fas fa-ban"></i> Crear Número Restringido</h4>
+        </div>
+        <div class="card-body">
+            <form method="post" id="formRestriccion">
+                {% csrf_token %}
+
+                <div class="row">
+                    <!-- Sorteo -->
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="id_sorteo" class="form-label fw-bold">Sorteo <span class="text-danger">*</span></label>
+                            <select name="sorteo" id="id_sorteo" class="form-select" required>
+                                <option value="">— Selecciona un sorteo —</option>
+                                {% for s in sorteos %}
+                                    <option value="{{ s.id }}">{{ s.nombre }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <!-- Forma de Juego -->
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="id_forma_juego" class="form-label fw-bold">Forma de Juego <span class="text-danger">*</span></label>
+                            <select name="forma_juego" id="id_forma_juego" class="form-select" required>
+                                <option value="">— Primero selecciona un sorteo —</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Valores -->
+                <div class="form-group">
+                    <label for="id_valores" class="form-label fw-bold">Valores restringidos <span class="text-danger">*</span></label>
+                    <input type="text" name="valores" id="id_valores" class="form-control input-valores"
+                           placeholder="Ej: 55, 1234, Pa, T4, D8"
+                           aria-describedby="valoresHelp">
+                    <div id="valoresHelp" class="help-text">
+                        <i class="fas fa-info-circle"></i> Separa los valores con comas, espacios o saltos de línea.
+                        Se crearán restricciones individuales para cada uno.
+                    </div>
+                </div>
+
+                <!-- Fecha de Vencimiento -->
+                <div class="form-group">
+                    <label for="id_fecha_vencimiento" class="form-label fw-bold">Fecha de vencimiento <span class="text-danger">*</span></label>
+                    <input type="date" name="fecha_vencimiento" id="id_fecha_vencimiento" class="form-control" required>
+                    <div class="help-text">La restricción se eliminará automáticamente al llegar esta fecha.</div>
+                </div>
+
+                <div class="d-flex justify-content-between mt-4">
+                    <a href="{% url 'roles:gestion_numeros_restringidos' %}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Volver
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Guardar Restricciones
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    (function() {
+        'use strict';
+
+        const selectSorteo = document.getElementById('id_sorteo');
+        const selectFormaJuego = document.getElementById('id_forma_juego');
+        const inputValores = document.getElementById('id_valores');
+
+        // 1. Cargar formas de juego según el sorteo seleccionado
+        function cargarFormasJuego(sorteoId) {
+            if (!sorteoId) {
+                selectFormaJuego.innerHTML = '<option value="">— Primero selecciona un sorteo —</option>';
+                return;
+            }
+
+            fetch(`/sorteos/api/sorteo/${sorteoId}/`)
+                .then(response => {
+                    if (!response.ok) throw new Error('Error al obtener las formas de juego');
+                    return response.json();
+                })
+                .then(data => {
+                    let options = '<option value="">— Selecciona una forma de juego —</option>';
+                    if (data.formas_disponibles) {
+                        data.formas_disponibles.forEach(fj => {
+                            options += `<option value="${fj.id}">${fj.forma_juego}</option>`;
+                        });
+                    }
+                    selectFormaJuego.innerHTML = options;
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    selectFormaJuego.innerHTML = '<option value="">— Error al cargar formas —</option>';
+                });
+        }
+
+        selectSorteo.addEventListener('change', function() {
+            cargarFormasJuego(this.value);
+        });
+
+        // 2. Normalizar entrada de valores (convertir espacios en comas)
+        function normalizarValores(event) {
+            let valor = event.target.value;
+            valor = valor.replace(/\n/g, ',');
+            valor = valor.replace(/[ ,]+/g, ',');
+            valor = valor.replace(/,+/g, ',');
+            valor = valor.replace(/\s*,\s*/g, ', ');
+            event.target.value = valor;
+        }
+
+        inputValores.addEventListener('input', normalizarValores);
+
+        // 3. Validación al enviar
+        document.getElementById('formRestriccion').addEventListener('submit', function(e) {
+            const valores = inputValores.value.trim();
+            if (!valores) {
+                e.preventDefault();
+                alert('Debes ingresar al menos un valor restringido.');
+                return;
+            }
+            const fecha = document.getElementById('id_fecha_vencimiento').value;
+            if (!fecha) {
+                e.preventDefault();
+                alert('Debes seleccionar una fecha de vencimiento.');
+                return;
+            }
+        });
+    })();
+</script>
+{% endblock %}

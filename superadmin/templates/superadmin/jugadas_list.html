@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block page_title %}Gestión de Jugadas{% endblock %}
+{% block page_subtitle %}Lista completa de jugadas del sistema{% endblock %}
+
+{% block content %}
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-white">
+        <h5 class="fw-bold mb-0">🎲 Jugadas</h5>
+    </div>
+    <div class="card-body">
+        <!-- Filtros -->
+        <form method="GET" class="row g-3 mb-4">
+            <div class="col-md-2">
+                <select name="estado" class="form-select form-select-sm">
+                    <option value="">Todos los estados</option>
+                    {% for key, value in estados %}
+                    <option value="{{ key }}" {% if estado_seleccionado == key %}selected{% endif %}>{{ value }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <select name="sorteo" class="form-select form-select-sm">
+                    <option value="">Todos los sorteos</option>
+                    {% for s in sorteos %}
+                    <option value="{{ s.id }}" {% if sorteo_seleccionado == s.id|stringformat:"s" %}selected{% endif %}>{{ s.nombre }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <select name="usuario" class="form-select form-select-sm">
+                    <option value="">Todos los usuarios</option>
+                    {% for u in usuarios %}
+                    <option value="{{ u.id }}" {% if usuario_seleccionado == u.id|stringformat:"s" %}selected{% endif %}>{{ u.username }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <input type="date" name="fecha_desde" class="form-control form-control-sm" value="{{ fecha_desde }}" placeholder="Desde">
+            </div>
+            <div class="col-md-2">
+                <input type="date" name="fecha_hasta" class="form-control form-control-sm" value="{{ fecha_hasta }}" placeholder="Hasta">
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary btn-sm w-100">Filtrar</button>
+            </div>
+        </form>
+
+        <!-- Tabla -->
+        <div class="table-responsive">
+            <table class="table table-hover table-sm">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Usuario</th>
+                        <th>Destinatario</th>
+                        <th>Sorteo</th>
+                        <th>Forma</th>
+                        <th>Número</th>
+                        <th>Monto</th>
+                        <th>Estado</th>
+                        <th>Fecha</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for j in jugadas %}
+                    <tr>
+                        <td>#{{ j.id }}</td>
+                        <td>{{ j.usuario.username }}</td>
+                        <td>{{ j.destinatario.username|default:"-" }}</td>
+                        <td>{{ j.sorteo.nombre }}</td>
+                        <td>{{ j.forma_juego.nombre }}</td>
+                        <td><strong>{{ j.numero }}</strong></td>
+                        <td>${{ j.monto|floatformat:2 }}</td>
+                        <td><span class="badge bg-{% if j.estado == 'confirmada' %}success{% elif j.estado == 'pendiente' %}warning{% elif j.estado == 'ganadora' %}info{% elif j.estado == 'perdedora' %}danger{% else %}secondary{% endif %}">{{ j.get_estado_display }}</span></td>
+                        <td>{{ j.fecha|date:"d/m/Y H:i" }}</td>
+                        <td>
+                            <span class="text-muted">—</span>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="10" class="text-center text-muted">No hay jugadas.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {% if jugadas.has_other_pages %}
+        <nav>
+            <ul class="pagination justify-content-center">
+                {% if jugadas.has_previous %}
+                <li class="page-item"><a class="page-link" href="?page={{ jugadas.previous_page_number }}&estado={{ estado_seleccionado }}&sorteo={{ sorteo_seleccionado }}&usuario={{ usuario_seleccionado }}&fecha_desde={{ fecha_desde }}&fecha_hasta={{ fecha_hasta }}">&laquo;</a></li>
+                {% else %}
+                <li class="page-item disabled"><span class="page-link">&laquo;</span></li>
+                {% endif %}
+                {% for i in jugadas.paginator.page_range %}
+                {% if jugadas.number == i %}
+                <li class="page-item active"><span class="page-link">{{ i }}</span></li>
+                {% else %}
+                <li class="page-item"><a class="page-link" href="?page={{ i }}&estado={{ estado_seleccionado }}&sorteo={{ sorteo_seleccionado }}&usuario={{ usuario_seleccionado }}&fecha_desde={{ fecha_desde }}&fecha_hasta={{ fecha_hasta }}">{{ i }}</a></li>
+                {% endif %}
+                {% endfor %}
+                {% if jugadas.has_next %}
+                <li class="page-item"><a class="page-link" href="?page={{ jugadas.next_page_number }}&estado={{ estado_seleccionado }}&sorteo={{ sorteo_seleccionado }}&usuario={{ usuario_seleccionado }}&fecha_desde={{ fecha_desde }}&fecha_hasta={{ fecha_hasta }}">&raquo;</a></li>
+                {% else %}
+                <li class="page-item disabled"><span class="page-link">&raquo;</span></li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

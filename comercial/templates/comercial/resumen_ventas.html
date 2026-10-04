@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block page_title %}Resumen de Ventas{% endblock %}
+
+{% block content %}
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+        <h5 class="fw-bold mb-0">📊 Mis Ventas</h5>
+        <div>
+            <button class="btn btn-sm btn-success me-1" onclick="compartir('whatsapp')"><i class="fab fa-whatsapp"></i></button>
+            <button class="btn btn-sm btn-primary me-1" onclick="compartir('telegram')"><i class="fab fa-telegram"></i></button>
+            <button class="btn btn-sm btn-info" onclick="compartir('facebook')"><i class="fab fa-facebook"></i></button>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="row mb-4">
+            <div class="col-md-4"><div class="card bg-light"><div class="card-body text-center"><h6 class="text-muted">Total Ventas</h6><h3 class="text-success">${{ total_ventas|floatformat:2 }}</h3></div></div></div>
+            <div class="col-md-4"><div class="card bg-light"><div class="card-body text-center"><h6 class="text-muted">Total Premios</h6><h3 class="text-danger">${{ total_premios|floatformat:2 }}</h3></div></div></div>
+            <div class="col-md-4"><div class="card bg-light"><div class="card-body text-center"><h6 class="text-muted">Ganancia Neta</h6><h3 class="{% if ganancia_neta >= 0 %}text-success{% else %}text-danger{% endif %}">${{ ganancia_neta|floatformat:2 }}</h3></div></div></div>
+        </div>
+        <h6 class="fw-bold">🎯 Ventas por Sorteo</h6>
+        <div class="table-responsive">
+            <table class="table table-sm table-hover">
+                <thead><tr><th>Sorteo</th><th>Cantidad</th><th>Ventas</th><th>Premios</th></tr></thead>
+                <tbody>
+                    {% for item in ventas_por_sorteo %}
+                    <tr>
+                        <td>{{ item.sorteo__nombre }}</td>
+                        <td>{{ item.cantidad }}</td>
+                        <td>${{ item.total_ventas|floatformat:2 }}</td>
+                        <td>${{ item.total_premios|default:0|floatformat:2 }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="4" class="text-muted text-center">No hay datos.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+function compartir(plataforma) {
+    const url = window.location.href;
+    const titulo = "📊 Mis Ventas - LottoBooM";
+    const descripcion = "Total ventas: ${{ total_ventas|floatformat:2 }}";
+    let shareUrl = '';
+    if (plataforma === 'whatsapp') {
+        shareUrl = `https://wa.me/?text=${encodeURIComponent(titulo + '\n' + descripcion + '\n' + url)}`;
+    } else if (plataforma === 'telegram') {
+        shareUrl = `https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(titulo + '\n' + descripcion)}`;
+    } else if (plataforma === 'facebook') {
+        shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`;
+    }
+    if (shareUrl) window.open(shareUrl, '_blank');
+}
+</script>
+{% endblock %}

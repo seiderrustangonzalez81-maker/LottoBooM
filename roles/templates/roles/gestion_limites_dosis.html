@@ -1,0 +1,435 @@
+{% extends "base.html" %}
+{% load static %}
+{% load roles_extras %}
+
+{% block page_title %}Gestión de Límites y Dosis{% endblock %}
+{% block page_subtitle %}Configuración por sorteo y forma de juego{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Quitar flechitas de inputs number (por si acaso) */
+    input[type=number]::-webkit-inner-spin-button,
+    input[type=number]::-webkit-outer-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+    input[type=number] {
+        -moz-appearance: textfield;
+    }
+
+    .table-excel {
+        border-collapse: collapse;
+        width: 100%;
+        font-size: 0.7rem;
+        table-layout: auto; /* Ajusta el ancho al contenido */
+    }
+    .table-excel th, .table-excel td {
+        border: 1px solid #dee2e6;
+        padding: 2px 4px;
+        vertical-align: middle;
+        text-align: center;
+    }
+    .table-excel th {
+        background: #f8f9fa;
+        font-weight: 600;
+        font-size: 0.7rem;
+        white-space: nowrap; /* Evita que el título se parta en varias líneas */
+    }
+    .table-excel td {
+        background: #fff;
+    }
+    .table-excel input[type="text"],
+    .table-excel input[type="number"] {
+        border: none !important;
+        background: transparent !important;
+        width: auto !important;   /* Ajusta al contenido */
+        min-width: 30px;
+        max-width: 70px;          /* Suficiente para números de hasta 5 dígitos */
+        text-align: center;
+        padding: 0px 2px;
+        font-size: 0.65rem;
+        outline: none;
+        box-shadow: none !important;
+        margin: 0 auto;
+    }
+    .table-excel input[type="text"]:focus,
+    .table-excel input[type="number"]:focus {
+        background: #e9ecef !important;
+        outline: 1px solid #6C3CE1;
+        outline-offset: -1px;
+    }
+    .sorteo-nombre {
+        font-weight: 700;
+        text-align: left;
+        padding-left: 6px !important;
+        font-size: 0.7rem;
+        background: #f8f9fa !important;
+        white-space: nowrap;
+    }
+    .forma-nombre {
+        font-weight: 600;
+        font-size: 0.65rem;
+        text-align: left;
+        padding-left: 10px !important;
+        background: #f8f9fa !important;
+        white-space: nowrap;
+    }
+    .btn-copiar, .btn-guardar {
+        border-radius: 20px;
+        padding: 0.3rem 1rem;
+        font-size: 0.75rem;
+    }
+    .checkbox-activo {
+        transform: scale(0.9);
+    }
+    /* Opcional: si un número es muy largo, usar tamaño más pequeño */
+    .table-excel input[type="text"] {
+        font-size: 0.6rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+
+    <!-- Selección -->
+<div class="card border-0 shadow-sm mb-3">
+    <div class="card-body py-2">
+        <form method="get" class="row g-2 align-items-end">
+            {% if es_superadmin %}
+            <div class="col-auto">
+                <label class="form-label fw-semibold small">Banco</label>
+                <select name="banco" class="form-select form-select-sm" onchange="this.form.submit()">
+                    <option value="">— Seleccionar —</option>
+                    {% for b in bancos %}
+                        <option value="{{ b.id }}" {% if banco_seleccionado.id == b.id %}selected{% endif %}>{{ b.username }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            {% endif %}
+            <div class="col-auto">
+                <label class="form-label fw-semibold small">Comercial</label>
+                <select name="comercial" class="form-select form-select-sm" onchange="this.form.submit()">
+                    <option value="">— Seleccionar —</option>
+                    {% for c in comerciales %}
+                        <option value="{{ c.id }}" {% if comercial_seleccionado.id == c.id %}selected{% endif %}>{{ c.username }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-auto">
+                <label class="form-label fw-semibold small">Forma de juego</label>
+                <select name="forma_juego" class="form-select form-select-sm" onchange="this.form.submit()">
+                    <option value="">— Todas —</option>
+                    {% for fj in formas_juego_disponibles %}
+                        <option value="{{ fj.id }}" {% if forma_juego_seleccionada|add:"0" == fj.id %}selected{% endif %}>{{ fj.nombre }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-auto">
+                <a href="{% url 'roles:gestion_limites_dosis' %}" class="btn btn-outline-secondary btn-sm">Limpiar</a>
+            </div>
+            <!-- Botón "Asignar límites por defecto" (solo superadmin, con banco y sin comercial) -->
+            {% if es_superadmin and banco_seleccionado and not comercial_seleccionado %}
+                <div class="col-auto">
+                    </div>
+            {% endif %}
+        </form>
+    </div>
+</div>
+
+    {% if banco_seleccionado %}
+    <div class="card border-0 shadow-sm mb-3">
+        <div class="card-body py-3">
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="accion" value="generar">
+                <input type="hidden" name="banco" value="{{ banco_seleccionado.id }}">
+                {% if comercial_seleccionado %}
+                    <input type="hidden" name="comercial_id" value="{{ comercial_seleccionado.id }}">
+                    <input type="hidden" name="comercial" value="{{ comercial_seleccionado.id }}">
+                {% endif %}
+                <h6 class="fw-bold small mb-2">
+                    1. Selecciona sorteos, formas de juego y formas de pago
+                    {% if comercial_seleccionado %}
+                        <span class="badge bg-info ms-1">para {{ comercial_seleccionado.username }}</span>
+                    {% else %}
+                        <span class="badge bg-primary ms-1">para {{ banco_seleccionado.username }}</span>
+                    {% endif %}
+                </h6>
+                <style>
+                    .cb-panel{border:1px solid #e2e8f0;border-radius:10px;overflow:hidden;background:#fff;}
+                    .cb-panel-head{background:#f1f5f9;padding:6px 10px;border-bottom:1px solid #e2e8f0;display:flex;justify-content:space-between;align-items:center;font-size:12px;font-weight:700;color:#1e293b;}
+                    .cb-panel-head .contador{background:#4f46e5;color:#fff;padding:1px 8px;border-radius:10px;font-size:10px;margin-left:6px;}
+                    .cb-panel-head .mini-btn{background:#fff;border:1px solid #cbd5e1;color:#475569;font-size:10px;padding:2px 8px;border-radius:6px;cursor:pointer;font-weight:600;margin-left:4px;}
+                    .cb-panel-body{max-height:200px;overflow-y:auto;padding:6px;}
+                    .cb-item{display:flex;align-items:center;gap:8px;padding:4px 6px;border-radius:6px;cursor:pointer;font-size:12px;color:#334155;}
+                    .cb-item:hover{background:#f8fafc;}
+                    .cb-item input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:#4f46e5;}
+                    .cb-item.checked{background:#eef2ff;color:#312e81;font-weight:600;}
+                </style>
+                <div class="row g-2">
+                    <div class="col-md-4">
+                        <div class="cb-panel">
+                            <div class="cb-panel-head">
+                                <span>Sorteos <span class="contador" id="cnt-sorteos">0</span></span>
+                                <span>
+                                    <button type="button" class="mini-btn" onclick="toggleAll('sorteos',true)">Todos</button>
+                                    <button type="button" class="mini-btn" onclick="toggleAll('sorteos',false)">Ninguno</button>
+                                </span>
+                            </div>
+                            <div class="cb-panel-body">
+                                {% for s in todos_sorteos %}
+                                    <label class="cb-item {% if s.id in recursos_actuales.sorteos %}checked{% endif %}">
+                                        <input type="checkbox" name="sorteos" value="{{ s.id }}" class="cb-input" data-grupo="sorteos"
+                                            {% if s.id in recursos_actuales.sorteos %}checked{% endif %}>
+                                        {{ s.nombre }}
+                                    </label>
+                                {% empty %}
+                                    <div class="text-muted small p-2">No hay sorteos activos.</div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="cb-panel">
+                            <div class="cb-panel-head">
+                                <span>Formas de juego <span class="contador" id="cnt-fj">0</span></span>
+                                <span>
+                                    <button type="button" class="mini-btn" onclick="toggleAll('fj',true)">Todos</button>
+                                    <button type="button" class="mini-btn" onclick="toggleAll('fj',false)">Ninguno</button>
+                                </span>
+                            </div>
+                            <div class="cb-panel-body">
+                                {% for fj in todas_fj %}
+                                    <label class="cb-item {% if fj.id in recursos_actuales.fj %}checked{% endif %}">
+                                        <input type="checkbox" name="formas_juego" value="{{ fj.id }}" class="cb-input" data-grupo="fj"
+                                            {% if fj.id in recursos_actuales.fj %}checked{% endif %}>
+                                        {{ fj.nombre }}
+                                    </label>
+                                {% empty %}
+                                    <div class="text-muted small p-2">No hay formas de juego activas.</div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="cb-panel">
+                            <div class="cb-panel-head">
+                                <span>Formas de pago <span class="contador" id="cnt-fp">0</span></span>
+                                <span>
+                                    <button type="button" class="mini-btn" onclick="toggleAll('fp',true)">Todos</button>
+                                    <button type="button" class="mini-btn" onclick="toggleAll('fp',false)">Ninguno</button>
+                                </span>
+                            </div>
+                            <div class="cb-panel-body">
+                                {% for fp in todas_fp %}
+                                    <label class="cb-item {% if fp.id in recursos_actuales.fp %}checked{% endif %}">
+                                        <input type="checkbox" name="formas_pago" value="{{ fp.id }}" class="cb-input" data-grupo="fp"
+                                            {% if fp.id in recursos_actuales.fp %}checked{% endif %}>
+                                        {{ fp.nombre }}
+                                    </label>
+                                {% empty %}
+                                    <div class="text-muted small p-2">No hay formas de pago activas.</div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <script>
+                    function toggleAll(grupo, valor) {
+                        document.querySelectorAll('.cb-input[data-grupo="'+grupo+'"]').forEach(function(cb){
+                            cb.checked = valor;
+                            cb.dispatchEvent(new Event('change'));
+                        });
+                    }
+                    function actualizarContadores() {
+                        var map = {'sorteos':'sorteos','fj':'fj','fp':'fp'};
+                        var cont = {'sorteos':'cnt-sorteos','fj':'cnt-fj','fp':'cnt-fp'};
+                        for (var g in map) {
+                            var n = document.querySelectorAll('.cb-input[data-grupo="'+g+'"]:checked').length;
+                            var el = document.getElementById(cont[g]);
+                            if (el) el.textContent = n;
+                        }
+                    }
+                    document.addEventListener('change', function(e){
+                        if (e.target.classList.contains('cb-input')) {
+                            var lbl = e.target.closest('.cb-item');
+                            if (lbl) lbl.classList.toggle('checked', e.target.checked);
+                            actualizarContadores();
+                        }
+                    });
+                    document.addEventListener('DOMContentLoaded', actualizarContadores);
+                </script>
+                <button type="submit" class="btn btn-primary btn-sm mt-2">
+                    <i class="fas fa-cogs"></i> Generar matriz
+                </button>
+            </form>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if banco_seleccionado %}
+    <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-1">
+        <h6 class="fw-bold mb-0 small">
+            <i class="fas fa-user me-1"></i> {{ comercial_seleccionado.username }}
+            {% if banco_seleccionado %}
+                <span class="badge bg-secondary ms-1">{{ banco_seleccionado.username }}</span>
+            {% endif %}
+        </h6>
+        <form method="post" class="d-inline">
+            {% csrf_token %}
+            <input type="hidden" name="accion" value="copiar_limites_banco">
+            {% if comercial_seleccionado %}
+                <input type="hidden" name="comercial_id" value="{{ comercial_seleccionado.id }}">
+            {% endif %}
+            <button type="submit" class="btn btn-outline-primary btn-copiar btn-sm">
+                <i class="fas fa-copy"></i> Copiar límites
+            </button>
+        </form>
+    </div>
+
+    <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="accion" value="guardar">
+        <input type="hidden" name="banco" value="{{ banco_seleccionado.id }}">
+        {% if comercial_seleccionado %}
+            <input type="hidden" name="comercial_id" value="{{ comercial_seleccionado.id }}">
+            <input type="hidden" name="comercial" value="{{ comercial_seleccionado.id }}">
+        {% endif %}
+        <div class="table-responsive">
+            <table class="table-excel">
+                <thead>
+                    <tr>
+                        <th rowspan="2" style="min-width:80px;">Sorteo</th>
+                        <th rowspan="2" style="min-width:90px;">Forma de juego</th>
+                        {% for fp in matriz.formas_pago %}
+                            <th colspan="3" style="text-align:center; white-space:nowrap;">{{ fp.nombre }}</th>
+                        {% endfor %}
+                        <th rowspan="2" style="min-width:40px;">Activo</th>
+                    </tr>
+                    <tr>
+                        {% for fp in matriz.formas_pago %}
+                            <th style="text-align:center;">Límite</th>
+                            <th style="text-align:center;">Sobrelímite</th>
+                            <th style="text-align:center;">Dosis</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for grupo in matriz.grupos %}
+                        <!-- Fila de encabezado del grupo -->
+                        <tr>
+                            <td colspan="100" style="background: #e9ecef; font-weight: bold; text-align: left; padding: 4px 8px; font-size: 0.75rem;">
+                                {{ grupo.prefijo }}
+                            </td>
+                        </tr>
+                        {% for fila in grupo.filas %}
+                            {% with total_formas=fila.combos|length %}
+                                {% for combo in fila.combos %}
+                                    <tr>
+                                        {% if forloop.first %}
+                                            <td class="sorteo-nombre" rowspan="{{ total_formas }}">{{ fila.sorteo.nombre }}</td>
+                                        {% endif %}
+                                        <td class="forma-nombre">{{ combo.forma_juego.nombre }}</td>
+                                        {% for fp in matriz.formas_pago %}
+                                            <td>
+                                                <input type="text"
+                                                       name="limite_{{ fp.id }}_{{ fila.sorteo.id }}_{{ combo.forma_juego.id }}"
+                                                       value="{{ combo.limites|dict_key:fp.id|floatformat:0|default:'' }}"
+                                                       placeholder="—">
+                                            </td>
+                                            <td>
+                                                <input type="text"
+                                                       name="sobrelimite_{{ fp.id }}_{{ fila.sorteo.id }}_{{ combo.forma_juego.id }}"
+                                                       value="{{ combo.sobrelimites|dict_key:fp.id|floatformat:0|default:'' }}"
+                                                       placeholder="—">
+                                            </td>
+                                            <td>
+                                                <input type="text"
+                                                       name="dosis_{{ fp.id }}_{{ fila.sorteo.id }}_{{ combo.forma_juego.id }}"
+                                                       value="{{ combo.dosis|dict_key:fp.id|floatformat:0|default:'' }}"
+                                                       placeholder="—">
+                                            </td>
+                                        {% endfor %}
+                                        <td>
+                                            <input type="checkbox" name="fp_activa_{{ fp.id }}"
+                                                   {% if fp.id in formas_pago_activas %}checked{% endif %}
+                                                   class="checkbox-activo">
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            {% endwith %}
+                        {% endfor %}
+                    {% empty %}
+                        <tr><td colspan="100" class="text-center text-muted py-3">No hay datos.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <!-- ============================================================ -->
+            <!-- PAGINACIÓN -->
+            <!-- ============================================================ -->
+            {% if page_obj.has_other_pages %}
+            <div class="mt-3 d-flex justify-content-center">
+                <nav aria-label="Paginación de sorteos">
+                    <ul class="pagination pagination-sm">
+                        {% if page_obj.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if forma_juego_seleccionada %}&forma_juego={{ forma_juego_seleccionada }}{% endif %}{% if comercial_seleccionado %}&comercial={{ comercial_seleccionado.id }}{% endif %}{% if banco_seleccionado %}&banco={{ banco_seleccionado.id }}{% endif %}">
+                                    &laquo; Anterior
+                                </a>
+                            </li>
+                        {% else %}
+                            <li class="page-item disabled"><span class="page-link">&laquo; Anterior</span></li>
+                        {% endif %}
+
+                        {% for num in page_obj.paginator.page_range %}
+                            {% if page_obj.number == num %}
+                                <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ num }}{% if forma_juego_seleccionada %}&forma_juego={{ forma_juego_seleccionada }}{% endif %}{% if comercial_seleccionado %}&comercial={{ comercial_seleccionado.id }}{% endif %}{% if banco_seleccionado %}&banco={{ banco_seleccionado.id }}{% endif %}">
+                                        {{ num }}
+                                    </a>
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+
+                        {% if page_obj.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if forma_juego_seleccionada %}&forma_juego={{ forma_juego_seleccionada }}{% endif %}{% if comercial_seleccionado %}&comercial={{ comercial_seleccionado.id }}{% endif %}{% if banco_seleccionado %}&banco={{ banco_seleccionado.id }}{% endif %}">
+                                    Siguiente &raquo;
+                                </a>
+                            </li>
+                        {% else %}
+                            <li class="page-item disabled"><span class="page-link">Siguiente &raquo;</span></li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            </div>
+            <div class="text-center small text-muted">
+                Mostrando {{ page_obj.start_index }} - {{ page_obj.end_index }} de {{ page_obj.paginator.count }} sorteos
+            </div>
+            {% endif %}
+
+        </div> <!-- /table-responsive -->
+
+        <div class="mt-3 d-flex gap-2">
+            <button type="submit" class="btn btn-success btn-guardar btn-sm">
+                <i class="fas fa-save"></i> Guardar
+            </button>
+            <a href="{% url 'roles:gestion_limites_dosis' %}" class="btn btn-outline-secondary btn-guardar btn-sm">
+                Cancelar
+            </a>
+        </div>
+    </form>
+
+    {% else %}
+        <div class="alert alert-info mt-3">
+            <i class="fas fa-info-circle me-1"></i>
+            Selecciona un comercial para gestionar sus límites.
+        </div>
+    {% endif %}
+
+</div>
+{% endblock %}

@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block page_title %}🏦 Panel de Banco{% endblock %}
+{% block page_subtitle %}Resumen y gestión de tu banco{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-university me-2"></i>Dashboard del Banco</h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Bienvenido al panel de tu banco, <strong>{{ user.username }}</strong>.
+                    </div>
+
+                    <div class="row g-4 mt-2">
+                        <div class="col-md-4">
+                            <div class="card text-center">
+                                <div class="card-body">
+                                    <h6 class="text-muted">Comerciales Activos</h6>
+                                    <h3 class="text-primary">{{ comerciales_activos|default:0 }}</h3>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card text-center">
+                                <div class="card-body">
+                                    <h6 class="text-muted">Recursos Asignados</h6>
+                                    <h3 class="text-success">{{ recursos_asignados|default:0 }}</h3>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card text-center">
+                                <div class="card-body">
+                                    <h6 class="text-muted">Costo Mensual</h6>
+                                    <h3 class="text-warning">${{ costo_mensual|default:"0.00" }}</h3>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    <div class="d-flex gap-2 flex-wrap mt-3">
+                        <a href="{% url 'roles:panel_suscripcion_banco' %}" class="btn btn-primary">
+                            <i class="fas fa-calendar-check me-1"></i> Panel de Suscripción
+                        </a>
+                        <a href="{% url 'roles:gestionar_solicitudes' 'recarga' %}" class="btn btn-success">
+                            <i class="fas fa-inbox me-1"></i> Gestionar Recargas
+                        </a>
+                        <a href="{% url 'roles:gestionar_solicitudes' 'cobro' %}" class="btn btn-warning">
+                            <i class="fas fa-hand-holding-usd me-1"></i> Gestionar Cobros
+                        </a>
+                        <a href="{% url 'roles:estructura_global' %}" class="btn btn-info">
+                            <i class="fas fa-sitemap me-1"></i> Estructura Global
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

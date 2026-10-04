@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block page_title %}Mis Estadísticas{% endblock %}
+{% block page_subtitle %}Análisis detallado de tus apuestas{% endblock %}
+
+{% block content %}
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-white">
+        <h5 class="fw-bold mb-0">📊 Estadísticas</h5>
+    </div>
+    <div class="card-body">
+        <!-- Filtros -->
+        <form method="GET" class="row g-3 mb-4">
+            <div class="col-md-3">
+                <select name="periodo" class="form-select form-select-sm">
+                    <option value="mes" {% if periodo == 'mes' %}selected{% endif %}>Mes actual</option>
+                    <option value="trimestre" {% if periodo == 'trimestre' %}selected{% endif %}>Trimestre</option>
+                    <option value="semestre" {% if periodo == 'semestre' %}selected{% endif %}>Semestre</option>
+                    <option value="año" {% if periodo == 'año' %}selected{% endif %}>Año</option>
+                    <option value="semana" {% if periodo == 'semana' %}selected{% endif %}>Semana</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <select name="sorteo" class="form-select form-select-sm">
+                    <option value="">Todos los sorteos</option>
+                    {% for s in sorteos %}
+                    <option value="{{ s.id }}" {% if sorteo_seleccionado == s.id|stringformat:"s" %}selected{% endif %}>{{ s.nombre }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary btn-sm w-100">Filtrar</button>
+            </div>
+            <div class="col-md-2">
+                <a href="{% url 'usuarios:estadisticas_cliente' %}" class="btn btn-secondary btn-sm w-100">Limpiar</a>
+            </div>
+        </form>
+
+        <!-- Resumen -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card bg-light"><div class="card-body text-center"><h6 class="text-muted">Periodo</h6><h5>{{ periodo_label }}</h5></div></div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-light"><div class="card-body text-center"><h6 class="text-muted">Total Apostado</h6><h3 class="text-danger">${{ total_apostado|floatformat:2 }}</h3></div></div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-light"><div class="card-body text-center"><h6 class="text-muted">Total Ganado</h6><h3 class="text-success">${{ total_ganado|floatformat:2 }}</h3></div></div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-light"><div class="card-body text-center"><h6 class="text-muted">Balance</h6><h3 class="{% if total_ganado >= total_apostado %}text-success{% else %}text-danger{% endif %}">${{ total_ganado|add:total_apostado|floatformat:2 }}</h3></div></div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6">
+                <h6 class="fw-bold">🎯 Por Sorteo</h6>
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover">
+                        <thead><tr><th>Sorteo</th><th>Cantidad</th><th>Apostado</th><th>Ganado</th></tr></thead>
+                        <tbody>
+                            {% for item in por_sorteo %}
+                            <tr>
+                                <td>{{ item.sorteo__nombre }}</td>
+                                <td>{{ item.cantidad }}</td>
+                                <td>${{ item.total_apostado|floatformat:2 }}</td>
+                                <td>${{ item.total_ganado|default:0|floatformat:2 }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="4" class="text-muted">No hay datos.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <h6 class="fw-bold">🎲 Por Forma de Juego</h6>
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover">
+                        <thead><tr><th>Forma de Juego</th><th>Cantidad</th><th>Apostado</th><th>Ganado</th></tr></thead>
+                        <tbody>
+                            {% for item in por_forma %}
+                            <tr>
+                                <td>{{ item.forma_juego__nombre }}</td>
+                                <td>{{ item.cantidad }}</td>
+                                <td>${{ item.total_apostado|floatformat:2 }}</td>
+                                <td>${{ item.total_ganado|default:0|floatformat:2 }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="4" class="text-muted">No hay datos.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Números más jugados -->
+        <h6 class="fw-bold mt-3">🔢 Números más jugados</h6>
+        <div class="d-flex flex-wrap gap-2">
+            {% for item in numeros_top %}
+            <span class="badge bg-primary p-2 fs-6">
+                {{ item.numero }} <span class="badge bg-light text-dark">{{ item.total }}x</span>
+            </span>
+            {% empty %}
+            <span class="text-muted">No hay datos.</span>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

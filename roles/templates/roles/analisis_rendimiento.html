@@ -1,0 +1,293 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block page_title %}Ascender Usuario{% endblock %}
+{% block page_subtitle %}Gestiona los roles y recursos de los usuarios{% endblock %}
+
+{% block extra_css %}
+<style>
+    .card {
+        border-radius: 16px;
+        border: none;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.04);
+    }
+    .card-header {
+        border-radius: 16px 16px 0 0 !important;
+        background: linear-gradient(135deg, #6C3CE1, #8B5CF6);
+        color: #fff;
+        padding: 1rem 1.5rem;
+        font-weight: 700;
+    }
+    .form-label {
+        font-weight: 600;
+        font-size: 0.85rem;
+        color: #1a1a2e;
+    }
+    .form-control, .form-select {
+        border-radius: 10px;
+        border: 1px solid #e5e7eb;
+        padding: 0.4rem 0.8rem;
+        font-size: 0.85rem;
+    }
+    .form-control:focus, .form-select:focus {
+        border-color: #8B5CF6;
+        box-shadow: 0 0 0 3px rgba(139,92,246,0.08);
+    }
+    .badge-rol {
+        padding: 0.3rem 1rem;
+        border-radius: 30px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+    .badge-cliente { background: #e0e7ff; color: #4338ca; }
+    .badge-comercial { background: #d1fae5; color: #065f46; }
+    .badge-banco { background: #fef3c7; color: #92400e; }
+    .badge-superadmin { background: #fce4ec; color: #b71c1c; }
+    .recurso-checkbox {
+        display: inline-block;
+        background: #f8fafc;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        padding: 0.3rem 0.6rem;
+        margin: 0.2rem;
+        font-size: 0.75rem;
+        transition: all 0.2s;
+        cursor: pointer;
+    }
+    .recurso-checkbox:hover {
+        border-color: #8B5CF6;
+        background: #f5f3ff;
+    }
+    .recurso-checkbox input[type="checkbox"] {
+        margin-right: 4px;
+        accent-color: #6C3CE1;
+    }
+    .recurso-checkbox.checked {
+        border-color: #6C3CE1;
+        background: #ede9fe;
+    }
+    .btn-moderno {
+        border-radius: 40px;
+        padding: 0.3rem 1.5rem;
+        font-weight: 600;
+        font-size: 0.85rem;
+        transition: all 0.2s;
+    }
+    .btn-moderno:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-0">
+    <!-- Encabezado -->
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap" style="gap: 0.5rem;">
+        <div>
+            <h4 class="fw-bold mb-0"><i class="fas fa-arrow-up text-primary"></i> Ascender Usuario</h4>
+            <p class="text-muted small mb-0">Selecciona un usuario y cambia su rol</p>
+        </div>
+        <a href="{% url 'roles:lista_clientes' %}" class="btn btn-outline-secondary btn-sm">
+            <i class="fas fa-arrow-left"></i> Volver a lista
+        </a>
+    </div>
+
+    <!-- Buscador de usuario -->
+    <div class="card shadow-sm mb-3">
+        <div class="card-body">
+            <form method="get" class="row g-3 align-items-end">
+                <div class="col-md-6">
+                    <label class="form-label">🔍 Buscar usuario por ID o nombre</label>
+                    <div class="input-group">
+                        <input type="text" name="usuario_id" class="form-control" placeholder="Ej: 123 o nombre" value="{{ request.GET.usuario_id }}">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    {% if usuario_seleccionado %}
+                        <div class="d-flex align-items-center gap-3 flex-wrap">
+                            <span class="fw-bold">{{ usuario_seleccionado.username }}</span>
+                            <span class="badge-rol
+                                {% if rol_actual == 'cliente' %}badge-cliente
+                                {% elif rol_actual == 'comercial' %}badge-comercial
+                                {% elif rol_actual == 'banco' %}badge-banco
+                                {% elif rol_actual == 'superadmin' %}badge-superadmin{% endif %}">
+                                {{ rol_actual|default:"Sin rol"|title }}
+                            </span>
+                            <span class="text-muted small">ID: {{ usuario_seleccionado.id }}</span>
+                        </div>
+                    {% else %}
+                        <span class="text-muted">Selecciona un usuario para gestionar</span>
+                    {% endif %}
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Formulario de ascenso (solo si hay usuario seleccionado) -->
+    {% if usuario_seleccionado %}
+    <div class="card shadow-sm">
+        <div class="card-header">
+            <i class="fas fa-edit me-2"></i> Gestionar usuario: {{ usuario_seleccionado.username }}
+        </div>
+        <div class="card-body">
+            <form method="post" id="ascenderForm">
+                {% csrf_token %}
+                <input type="hidden" name="usuario_id" value="{{ usuario_seleccionado.id }}">
+
+                <!-- Acciones disponibles -->
+                <div class="mb-3">
+                    <label class="form-label">🎯 Acción a realizar</label>
+                    <div class="d-flex flex-wrap gap-2">
+                        {% for accion in acciones_disponibles %}
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="nuevo_rol" id="rol_{{ accion.valor }}" value="{{ accion.valor }}" required>
+                                <label class="form-check-label" for="rol_{{ accion.valor }}">
+                                    {{ accion.label }}
+                                </label>
+                            </div>
+                        {% empty %}
+                            <span class="text-muted">No hay acciones disponibles para este usuario</span>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Panel de Banco (solo si se selecciona Banco) -->
+                <div id="panelBanco" style="display:none;" class="border-top pt-3 mt-3">
+                    <h6 class="fw-bold"><i class="fas fa-building text-primary"></i> Asignar recursos al Banco</h6>
+                    <p class="text-muted small">Selecciona los sorteos, formas de juego y formas de pago que este banco podrá gestionar.</p>
+
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label">📅 Sorteos</label>
+                            <div class="border rounded p-2" style="max-height:200px; overflow-y:auto;">
+                                {% for s in sorteos %}
+                                    <div class="recurso-checkbox">
+                                        <input type="checkbox" name="sorteos" value="{{ s.id }}" id="sorteo_{{ s.id }}">
+                                        <label for="sorteo_{{ s.id }}">{{ s.nombre }}</label>
+                                    </div>
+                                {% empty %}
+                                    <span class="text-muted">No hay sorteos activos</span>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">🎮 Formas de Juego</label>
+                            <div class="border rounded p-2" style="max-height:200px; overflow-y:auto;">
+                                {% for fj in formas_juego %}
+                                    <div class="recurso-checkbox">
+                                        <input type="checkbox" name="formas_juego" value="{{ fj.id }}" id="fj_{{ fj.id }}">
+                                        <label for="fj_{{ fj.id }}">{{ fj.nombre }}</label>
+                                    </div>
+                                {% empty %}
+                                    <span class="text-muted">No hay formas de juego activas</span>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">💳 Formas de Pago</label>
+                            <div class="border rounded p-2" style="max-height:200px; overflow-y:auto;">
+                                {% for fp in formas_pago %}
+                                    <div class="recurso-checkbox">
+                                        <input type="checkbox" name="formas_pago" value="{{ fp.id }}" id="fp_{{ fp.id }}">
+                                        <label for="fp_{{ fp.id }}">{{ fp.nombre }}</label>
+                                    </div>
+                                {% empty %}
+                                    <span class="text-muted">No hay formas de pago activas</span>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Panel de Comercial (solo si se selecciona Comercial) -->
+                <div id="panelComercial" style="display:none;" class="border-top pt-3 mt-3">
+                    <h6 class="fw-bold"><i class="fas fa-user-tie text-success"></i> Asignar banco al Comercial</h6>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <label class="form-label">🏦 Banco asignado</label>
+                            <select name="banco_asignado" class="form-select">
+                                <option value="">— Sin banco (Superadmin) —</option>
+                                {% for banco in bancos %}
+                                    <option value="{{ banco.id }}">{{ banco.username }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Botón de acción principal -->
+                <div class="mt-4 d-flex gap-2">
+                    <button type="submit" class="btn btn-primary btn-moderno" id="btnAccion">
+                        <i class="fas fa-save"></i> Ejecutar acción
+                    </button>
+                    <a href="{% url 'roles:ascender_usuario' %}" class="btn btn-secondary btn-moderno">
+                        <i class="fas fa-times"></i> Cancelar
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Recursos asignados al banco (si el usuario seleccionado es banco) -->
+    {% if usuario_seleccionado and rol_actual == 'banco' and recursos_asignados_banco %}
+    <div class="card shadow-sm mt-3">
+        <div class="card-header">
+            <i class="fas fa-list me-2"></i> Recursos asignados a {{ usuario_seleccionado.username }}
+        </div>
+        <div class="card-body">
+            <div class="d-flex flex-wrap gap-2">
+                {% for recurso in recursos_asignados_banco %}
+                    <span class="badge bg-light text-dark border">
+                        {% if recurso.sorteo %}{{ recurso.sorteo.nombre }}
+                        {% elif recurso.forma_juego %}{{ recurso.forma_juego.nombre }}
+                        {% elif recurso.forma_pago %}{{ recurso.forma_pago.nombre }}{% endif %}
+                        <small class="text-muted">({{ recurso.get_tipo_display }})</small>
+                    </span>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- JavaScript para mostrar/ocultar paneles según rol seleccionado -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const radios = document.querySelectorAll('input[name="nuevo_rol"]');
+    const panelBanco = document.getElementById('panelBanco');
+    const panelComercial = document.getElementById('panelComercial');
+    const btnAccion = document.getElementById('btnAccion');
+
+    function actualizarPaneles() {
+        const seleccionado = document.querySelector('input[name="nuevo_rol"]:checked');
+        if (!seleccionado) {
+            panelBanco.style.display = 'none';
+            panelComercial.style.display = 'none';
+            return;
+        }
+        const valor = seleccionado.value;
+        panelBanco.style.display = (valor === 'banco') ? 'block' : 'none';
+        panelComercial.style.display = (valor === 'comercial') ? 'block' : 'none';
+    }
+
+    radios.forEach(radio => {
+        radio.addEventListener('change', actualizarPaneles);
+    });
+
+    // Inicializar estado
+    actualizarPaneles();
+
+    // Estilo de checkboxes (feedback visual)
+    document.querySelectorAll('.recurso-checkbox input[type="checkbox"]').forEach(cb => {
+        cb.addEventListener('change', function() {
+            this.closest('.recurso-checkbox').classList.toggle('checked', this.checked);
+        });
+    });
+});
+</script>
+{% endblock %}

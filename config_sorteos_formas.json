@@ -1,0 +1,517 @@
+{
+  "Florida 1:35 PM": [
+    "Pick2",
+    "pick3",
+    "pick4",
+    "pick5",
+    "PF",
+    "fijo",
+    "corrido1",
+    "corrido2",
+    "centena corrida1",
+    "centena corrida2",
+    "VsPick2",
+    "vspf",
+    "pick2vspf",
+    "tripleta",
+    "posicion"
+  ],
+  "Florida 9:50 PM": [
+    "Pick2",
+    "pick3",
+    "pick4",
+    "pick5",
+    "PF",
+    "fijo",
+    "corrido1",
+    "corrido2",
+    "centena corrida1",
+    "centena corrida2",
+    "VsPick2",
+    "vspf",
+    "pick2vspf",
+    "tripleta",
+    "posicion"
+  ],
+  "Anguila 8 AM": [
+    "fijo",
+    "corrido1",
+    "corrido2",
+    "tripleta",
+    "posicion"
+  ],
+  "Anguila 9 AM": [
+    "fijo",
+    "corrido1",
+    "corrido2",
+    "tripleta",
+    "posicion"
+  ],
+  "Anguila 10 AM": [
+    "fijo",
+    "corrido1",
+    "corrido2",
+    "tripleta",
+    "posicion"
+  ],
+  "Anguila 11 AM": [
+    "fijo",
+    "corrido1",
+    "corrido2",
+    "tripleta",
+    "posicion"
+  ],
+  "Anguila 12 PM": [
+    "fijo",
+    "corrido1",
+    "corrido2",
+    "tripleta",
+    "posicion"
+  ],
+  "Anguila 1 PM": [
+    "fijo",
+    "corrido1",
+    "corrido2",
+    "tripleta",
+    "posicion"
+  ],
+  "Anguila 2 PM": [
+    "fijo",
+    "corrido1",
+    "corrido2",
+    "tripleta",
+    "posicion"
+  ],
+  "Anguila 3 PM": [
+    "fijo",
+    "corrido1",
+    "corrido2",
+    "tripleta",
+    "posicion"
+  ],
+  "Anguila 4 PM": [
+    "fijo",
+    "corrido1",
+    "corrido2",
+    "tripleta",
+    "posicion"
+  ],
+  "Anguila 5 PM": [
+    "fijo",
+    "corrido1",
+    "corrido2",
+    "tripleta",
+    "posicion"
+  ],
+  "Anguila 6 PM": [
+    "fijo",
+    "corrido1",
+    "corrido2",
+    "tripleta",
+    "posicion"
+  ],
+  "Anguila 7 PM": [
+    "fijo",
+    "corrido1",
+    "corrido2",
+    "tripleta",
+    "posicion"
+  ],
+  "Anguila 8 PM": [
+    "fijo",
+    "corrido1",
+    "corrido2",
+    "tripleta",
+    "posicion"
+  ],
+  "Anguila 9 PM": [
+    "fijo",
+    "corrido1",
+    "corrido2",
+    "tripleta",
+    "posicion"
+  ],
+  "Anguila 10 PM": [
+    "fijo",
+    "corrido1",
+    "corrido2",
+    "tripleta",
+    "posicion"
+  ],
+  "Haití 1": [
+    "PF",
+    "fijo",
+    "corrido1",
+    "corrido2",
+    "tripleta",
+    "posicion"
+  ],
+  "Haití 2": [
+    "PF",
+    "fijo",
+    "corrido1",
+    "corrido2",
+    "tripleta",
+    "posicion"
+  ],
+  "Haití 3": [
+    "PF",
+    "fijo",
+    "corrido1",
+    "corrido2",
+    "tripleta",
+    "posicion"
+  ],
+  "Haití 4": [
+    "PF",
+    "fijo",
+    "corrido1",
+    "corrido2",
+    "tripleta",
+    "posicion"
+  ],
+  "Haití 5": [
+    "PF",
+    "fijo",
+    "corrido1",
+    "corrido2",
+    "tripleta",
+    "posicion"
+  ],
+  "Haití 6": [
+    "fijo",
+    "corrido1",
+    "corrido2",
+    "tripleta",
+    "posicion"
+  ],
+  "New York Real 12:50 PM": [
+    "fijo",
+    "corrido1",
+    "corrido2",
+    "centena corrida1",
+    "centena corrida2",
+    "VsPick2",
+    "vspf",
+    "pick2vspf",
+    "tripleta",
+    "posicion"
+  ],
+  "New Jersey 12:50 PM": [
+    "pick3",
+    "PF",
+    "fijo",
+    "corrido1",
+    "corrido2",
+    "centena corrida1",
+    "centena corrida2",
+    "vspf",
+    "tripleta",
+    "posicion"
+  ],
+  "New York 2:30 PM": [
+    "pick3",
+    "PF",
+    "fijo",
+    "corrido1",
+    "corrido2",
+    "centena corrida1",
+    "centena corrida2",
+    "VsPick2",
+    "vspf",
+    "pick2vspf",
+    "tripleta",
+    "posicion"
+  ],
+  "New York 10:30 PM": [
+    "pick3",
+    "PF",
+    "fijo",
+    "corrido1",
+    "corrido2",
+    "centena corrida1",
+    "centena corrida2",
+    "VsPick2",
+    "vspf",
+    "pick2vspf",
+    "tripleta",
+    "posicion"
+  ],
+  "New Jersey 10:50 PM": [
+    "pick3",
+    "PF",
+    "fijo",
+    "corrido1",
+    "corrido2",
+    "centena corrida1",
+    "centena corrida2",
+    "vspf",
+    "tripleta",
+    "posicion"
+  ],
+  "Tennessee 10:20 AM": [
+    "pick3",
+    "PF",
+    "fijo",
+    "corrido1",
+    "corrido2",
+    "centena corrida1",
+    "centena corrida2",
+    "vspf",
+    "tripleta",
+    "posicion"
+  ],
+  "Tennessee 1:20 PM": [
+    "pick3",
+    "PF",
+    "fijo",
+    "corrido1",
+    "corrido2",
+    "centena corrida1",
+    "centena corrida2",
+    "vspf",
+    "tripleta",
+    "posicion"
+  ],
+  "Tennessee 7:20 PM": [
+    "pick3",
+    "PF",
+    "fijo",
+    "corrido1",
+    "corrido2",
+    "centena corrida1",
+    "centena corrida2",
+    "vspf",
+    "tripleta",
+    "posicion"
+  ],
+  "Texas 11 AM": [
+    "pick3",
+    "PF",
+    "fijo",
+    "corrido1",
+    "corrido2",
+    "centena corrida1",
+    "centena corrida2",
+    "vspf",
+    "tripleta",
+    "posicion"
+  ],
+  "Texas 1:20 PM": [
+    "pick3",
+    "PF",
+    "fijo",
+    "corrido1",
+    "corrido2",
+    "centena corrida1",
+    "centena corrida2",
+    "vspf",
+    "tripleta",
+    "posicion"
+  ],
+  "Texas 7 PM": [
+    "pick3",
+    "PF",
+    "fijo",
+    "corrido1",
+    "corrido2",
+    "centena corrida1",
+    "centena corrida2",
+    "vspf",
+    "tripleta",
+    "posicion"
+  ],
+  "Texas 11 PM": [
+    "pick3",
+    "PF",
+    "fijo",
+    "corrido1",
+    "corrido2",
+    "centena corrida1",
+    "centena corrida2",
+    "vspf",
+    "tripleta",
+    "posicion"
+  ],
+  "King Lottery 12:30 PM": [
+    "pick3",
+    "PF",
+    "fijo",
+    "corrido1",
+    "corrido2",
+    "centena corrida1",
+    "centena corrida2",
+    "vspf",
+    "tripleta",
+    "posicion"
+  ],
+  "King Lottery 7:30 PM": [
+    "pick3",
+    "PF",
+    "fijo",
+    "corrido1",
+    "corrido2",
+    "centena corrida1",
+    "centena corrida2",
+    "VsPick2",
+    "vspf",
+    "pick2vspf",
+    "tripleta",
+    "posicion"
+  ],
+  "Georgia 12:30 PM": [
+    "pick3",
+    "PF",
+    "fijo",
+    "corrido1",
+    "corrido2",
+    "centena corrida1",
+    "centena corrida2",
+    "vspf",
+    "tripleta",
+    "posicion"
+  ],
+  "Georgia 7 PM": [
+    "pick3",
+    "pick4",
+    "pick5",
+    "PF",
+    "fijo",
+    "corrido1",
+    "corrido2",
+    "centena corrida1",
+    "centena corrida2",
+    "vspf",
+    "tripleta",
+    "posicion"
+  ],
+  "Georgia 11:40 PM": [
+    "pick3",
+    "PF",
+    "fijo",
+    "corrido1",
+    "corrido2",
+    "centena corrida1",
+    "centena corrida2",
+    "vspf",
+    "tripleta",
+    "posicion"
+  ],
+  "Lotedom": [
+    "fijo",
+    "corrido1",
+    "corrido2",
+    "centena corrida1",
+    "centena corrida2",
+    "VsPick2",
+    "vspf",
+    "pick2vspf",
+    "tripleta",
+    "posicion"
+  ],
+  "Quemaito": [
+    "fijo"
+  ],
+  "Primera": [
+    "fijo",
+    "corrido1",
+    "corrido2",
+    "tripleta",
+    "posicion"
+  ],
+  "Quinielón": [
+    "fijo"
+  ],
+  "Suerte 12:30 PM": [
+    "fijo",
+    "corrido1",
+    "corrido2",
+    "tripleta",
+    "posicion"
+  ],
+  "Real 12:50 PM": [
+    "fijo",
+    "corrido1",
+    "corrido2",
+    "centena corrida1",
+    "centena corrida2",
+    "VsPick2",
+    "vspf",
+    "pick2vspf",
+    "tripleta",
+    "posicion"
+  ],
+  "Gana Más 2:30 PM": [
+    "fijo",
+    "corrido1",
+    "corrido2",
+    "centena corrida1",
+    "centena corrida2",
+    "VsPick2",
+    "vspf",
+    "tripleta",
+    "posicion"
+  ],
+  "Suerte 6 PM": [
+    "fijo",
+    "corrido1",
+    "corrido2",
+    "tripleta",
+    "posicion"
+  ],
+  "Primera 7 PM": [
+    "fijo",
+    "corrido1",
+    "corrido2",
+    "tripleta",
+    "posicion"
+  ],
+  "Loteka 7:50 PM": [
+    "fijo",
+    "corrido1",
+    "corrido2",
+    "tripleta",
+    "posicion"
+  ],
+  "Leidsa 8:55 PM": [
+    "fijo",
+    "corrido1",
+    "corrido2",
+    "tripleta",
+    "posicion"
+  ],
+  "Tok 3": [
+    "pick3",
+    "PF",
+    "fijo",
+    "corrido1",
+    "corrido2",
+    "centena corrida1",
+    "centena corrida2",
+    "VsPick2",
+    "vspf",
+    "pick2vspf",
+    "tripleta",
+    "posicion"
+  ],
+  "Nacional": [
+    "pick3",
+    "PF",
+    "fijo",
+    "corrido1",
+    "corrido2",
+    "centena corrida1",
+    "centena corrida2",
+    "VsPick2",
+    "vspf",
+    "pick2vspf",
+    "tripleta",
+    "posicion"
+  ],
+  "Pega 3+": [
+    "pick3",
+    "PF",
+    "fijo",
+    "vspf"
+  ]
+}

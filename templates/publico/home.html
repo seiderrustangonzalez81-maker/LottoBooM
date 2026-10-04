@@ -1,0 +1,1689 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block page_title %}Inicio{% endblock %}
+{% block page_subtitle %}Orbit · LottoBooM{% endblock %}
+
+{% block extra_css %}
+<style>
+/* ══════════════════════════════════════════════════════════════
+   LottoBooM ORBIT — Edición Aurora
+   Cada card con fondo propio · paleta menta/lavanda/coral/miel
+   ══════════════════════════════════════════════════════════════ */
+.orb {
+  /* Superficies */
+  --bg:        #f8f8fb;
+  --surface:   #ffffff;
+  --surface-2: #f3f4f9;
+  --line:      #e6e6ef;
+  --line-2:    #d1d3e0;
+
+  /* Tinta */
+  --ink:       #131826;
+  --ink-soft:  #4a5266;
+  --ink-mute:  #8a90a3;
+
+  /* Paleta Aurora */
+  --mint:      #2dd4bf;
+  --mint-2:    #14b8a6;
+  --violet:    #a78bfa;
+  --violet-2:  #8b5cf6;
+  --coral:     #fb7185;
+  --coral-2:   #f43f5e;
+  --honey:     #fbbf24;
+  --honey-2:   #f59e0b;
+  --sky:       #38bdf8;
+  --sky-2:     #0ea5e9;
+  --lime:      #a3e635;
+
+  /* Glows */
+  --glow-mint:   0 0 0 1px rgba(45,212,191,0.25), 0 8px 24px rgba(45,212,191,0.14);
+  --glow-violet: 0 0 0 1px rgba(167,139,250,0.25), 0 8px 24px rgba(167,139,250,0.14);
+
+  /* Holo: menta → lavanda → coral → miel → menta */
+  --holo: linear-gradient(90deg,
+    #2dd4bf 0%, #a78bfa 25%, #fb7185 50%, #fbbf24 75%, #2dd4bf 100%);
+
+  position: relative;
+  z-index: 2;
+  color: var(--ink);
+  font-family: 'Inter', system-ui, sans-serif;
+  padding: 14px 0 40px;
+}
+
+/* ─────────────────────────────────────────────────
+   AMBIENTE
+   ───────────────────────────────────────────────── */
+.orb-ambient {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: var(--bg);
+}
+.orb-ambient::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(45,212,191,0.055) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(45,212,191,0.055) 1px, transparent 1px);
+  background-size: 44px 44px;
+  -webkit-mask-image: radial-gradient(ellipse 90% 70% at 50% 30%, #000 20%, transparent 78%);
+          mask-image: radial-gradient(ellipse 90% 70% at 50% 30%, #000 20%, transparent 78%);
+}
+.orb-ambient::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 700px 500px at 12% -5%,  rgba(45,212,191,0.14),  transparent 60%),
+    radial-gradient(ellipse 700px 500px at 88% 8%,   rgba(167,139,250,0.12), transparent 60%),
+    radial-gradient(ellipse 900px 600px at 50% 110%, rgba(251,113,133,0.09), transparent 60%);
+}
+
+/* ─────────────────────────────────────────────────
+   NAV CAPSULE
+   ───────────────────────────────────────────────── */
+.orb-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 10px 16px;
+  background: rgba(255,255,255,0.88);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  box-shadow: 0 4px 20px rgba(19,24,38,0.04),
+              inset 0 1px 0 rgba(255,255,255,0.9);
+  margin-bottom: 22px;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+.orb-nav__brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.orb-nav__mark {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  background: var(--holo);
+  background-size: 400% 100%;
+  animation: orb-holo 12s linear infinite;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  font-size: 0.9rem;
+  font-weight: 900;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(167,139,250,0.28);
+}
+@keyframes orb-holo {
+  to { background-position: -400% 0; }
+}
+.orb-nav__name {
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 900;
+  font-size: 0.95rem;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.orb-nav__meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+.orb-nav__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  font-family: 'SF Mono', ui-monospace, 'Courier New', monospace;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--ink-soft);
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.orb-nav__chip--live {
+  background: linear-gradient(90deg, rgba(45,212,191,0.12), rgba(167,139,250,0.12));
+  border-color: rgba(45,212,191,0.35);
+  color: var(--ink);
+}
+
+/* Dot pulsante */
+.orb-dot {
+  position: relative;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--mint-2);
+  flex-shrink: 0;
+  box-shadow: 0 0 8px rgba(45,212,191,0.7);
+}
+.orb-dot::after {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border-radius: 50%;
+  border: 1.5px solid var(--mint-2);
+  animation: orb-dot-halo 2.2s ease-out infinite;
+}
+@keyframes orb-dot-halo {
+  0%   { transform: scale(0.7); opacity: 0.9; }
+  100% { transform: scale(2.2); opacity: 0; }
+}
+
+/* ─────────────────────────────────────────────────
+   HERO
+   ───────────────────────────────────────────────── */
+.orb-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+  gap: 22px;
+  margin-bottom: 22px;
+  align-items: stretch;
+}
+
+.orb-hero__left {
+  position: relative;
+  padding: 38px 34px;
+  background:
+    radial-gradient(ellipse 65% 60% at 100% 0%, rgba(45,212,191,0.12), transparent 60%),
+    radial-gradient(ellipse 65% 60% at 0% 100%, rgba(167,139,250,0.10), transparent 60%),
+    #ffffff;
+  border: 1px solid rgba(45,212,191,0.22);
+  border-radius: 24px;
+  box-shadow: 0 1px 0 rgba(19,24,38,0.02),
+              0 20px 40px -20px rgba(45,212,191,0.14);
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  overflow: hidden;
+}
+.orb-hero__left::before {
+  content: '';
+  position: absolute;
+  top: -1px; left: 0; right: 0;
+  height: 2px;
+  background: var(--holo);
+  background-size: 400% 100%;
+  animation: orb-holo 10s linear infinite;
+}
+
+.orb-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  align-self: flex-start;
+  padding: 5px 12px 5px 10px;
+  background: rgba(45,212,191,0.09);
+  border: 1px solid rgba(45,212,191,0.22);
+  border-radius: 999px;
+  font-family: 'SF Mono', ui-monospace, 'Courier New', monospace;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 1.6px;
+  text-transform: uppercase;
+  color: var(--mint-2);
+  margin-bottom: 20px;
+}
+.orb-kicker i { color: var(--mint-2); }
+
+.orb-hero__title {
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 900;
+  font-size: clamp(1.9rem, 4.2vw, 3rem);
+  line-height: 1.02;
+  letter-spacing: -1.2px;
+  margin: 0 0 16px;
+  overflow-wrap: anywhere;
+}
+.orb-hero__title .holo {
+  background: var(--holo);
+  background-size: 400% 100%;
+  animation: orb-holo 8s linear infinite;
+  -webkit-background-clip: text;
+          background-clip: text;
+  -webkit-text-fill-color: transparent;
+          color: transparent;
+}
+
+.orb-hero__sub {
+  color: var(--ink-soft);
+  font-size: 1rem;
+  line-height: 1.55;
+  margin: 0 0 26px;
+  max-width: 54ch;
+}
+.orb-hero__sub strong { color: var(--ink); font-weight: 700; }
+
+.orb-hero__ctas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  min-width: 0;
+}
+
+.orb-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 26px;
+  border-radius: 999px;
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 800;
+  font-size: 0.82rem;
+  letter-spacing: 0.6px;
+  text-decoration: none;
+  border: none;
+  cursor: pointer;
+  min-height: 48px;
+  min-width: 0;
+  max-width: 100%;
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  overflow: hidden;
+}
+.orb-btn--primary {
+  background: linear-gradient(135deg, #2dd4bf 0%, #a78bfa 100%);
+  color: #ffffff;
+  box-shadow: 0 8px 24px rgba(167,139,250,0.32);
+}
+.orb-btn--primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 34px rgba(167,139,250,0.42);
+}
+.orb-btn--ghost {
+  background: #ffffff;
+  color: var(--ink);
+  border: 1px solid var(--line-2);
+}
+.orb-btn--ghost:hover {
+  border-color: var(--mint-2);
+  color: var(--mint-2);
+  transform: translateY(-2px);
+  box-shadow: var(--glow-mint);
+}
+.orb-btn:active { transform: translateY(0) scale(0.98); }
+.orb-btn:focus-visible {
+  outline: 3px solid var(--violet-2);
+  outline-offset: 3px;
+}
+.orb-btn__key {
+  font-family: 'SF Mono', monospace;
+  font-size: 0.68rem;
+  padding: 2px 7px;
+  border-radius: 6px;
+  background: rgba(255,255,255,0.22);
+  border: 1px solid rgba(255,255,255,0.32);
+  letter-spacing: 0.5px;
+}
+.orb-btn--ghost .orb-btn__key {
+  background: var(--surface-2);
+  border-color: var(--line);
+  color: var(--ink-mute);
+}
+
+/* ─────────────────────────────────────────────────
+   ORBE CUENTA ATRÁS
+   ───────────────────────────────────────────────── */
+.orb-count {
+  position: relative;
+  padding: 30px 26px;
+  background:
+    radial-gradient(ellipse 75% 55% at 50% 0%,   rgba(167,139,250,0.14), transparent 60%),
+    radial-gradient(ellipse 75% 55% at 50% 100%, rgba(45,212,191,0.10),  transparent 60%),
+    #ffffff;
+  border: 1px solid rgba(167,139,250,0.24);
+  border-radius: 24px;
+  box-shadow: 0 20px 40px -20px rgba(167,139,250,0.16);
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.orb-count__label {
+  position: relative;
+  font-family: 'SF Mono', ui-monospace, 'Courier New', monospace;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--violet-2);
+  margin-bottom: 20px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.orb-count__orb {
+  position: relative;
+  width: 210px;
+  height: 210px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+}
+.orb-count__core {
+  position: relative;
+  width: 168px;
+  height: 168px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 50% 35%, #ffffff 0%, #f5f3ff 60%, #ede9fe 100%);
+  border: 1.5px solid rgba(167,139,250,0.35);
+  box-shadow:
+    inset 0 -10px 30px rgba(167,139,250,0.08),
+    0 12px 30px -12px rgba(167,139,250,0.35);
+  display: grid;
+  place-items: center;
+  z-index: 2;
+}
+.orb-count__time { text-align: center; }
+.orb-count__hh,
+.orb-count__mm,
+.orb-count__ss {
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 900;
+  font-size: 1.9rem;
+  line-height: 1;
+  letter-spacing: -1px;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+.orb-count__sep {
+  display: inline-block;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 1.9rem;
+  font-weight: 900;
+  color: var(--violet);
+  transform: translateY(-3px);
+  opacity: 0.55;
+  margin: 0 2px;
+}
+.orb-count__unit {
+  display: block;
+  font-size: 0.58rem;
+  font-weight: 800;
+  letter-spacing: 2.2px;
+  color: var(--ink-mute);
+  margin-top: 8px;
+  text-transform: uppercase;
+}
+
+.orb-count__ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 1.5px dashed rgba(45,212,191,0.35);
+  animation: orb-spin 24s linear infinite;
+}
+.orb-count__ring::before {
+  content: '';
+  position: absolute;
+  top: -5px;
+  left: 50%;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--mint-2);
+  transform: translateX(-50%);
+  box-shadow: 0 0 14px rgba(45,212,191,0.9),
+              0 0 4px rgba(45,212,191,1);
+}
+@keyframes orb-spin {
+  to { transform: rotate(360deg); }
+}
+.orb-count__ring--inner {
+  inset: 18px;
+  border-color: rgba(167,139,250,0.32);
+  animation-duration: 16s;
+  animation-direction: reverse;
+}
+.orb-count__ring--inner::before {
+  background: var(--violet-2);
+  box-shadow: 0 0 12px rgba(167,139,250,0.9),
+              0 0 4px rgba(167,139,250,1);
+  width: 8px;
+  height: 8px;
+  top: -4px;
+}
+
+.orb-count__foot {
+  position: relative;
+  margin-top: 22px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 14px;
+  background: rgba(45,212,191,0.08);
+  border: 1px solid rgba(45,212,191,0.20);
+  border-radius: 14px;
+  min-width: 0;
+}
+.orb-count__foot-label {
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 1.6px;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+.orb-count__lucky {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: 'SF Mono', monospace;
+  font-weight: 900;
+  font-size: 1rem;
+  letter-spacing: 1px;
+  color: var(--mint-2);
+  padding: 4px 8px;
+  border-radius: 8px;
+  transition: background 0.15s, transform 0.15s;
+  min-height: 32px;
+}
+.orb-count__lucky:hover {
+  background: rgba(45,212,191,0.12);
+}
+.orb-count__lucky.flash {
+  animation: orb-lucky 0.5s ease;
+}
+@keyframes orb-lucky {
+  0%, 100% { transform: scale(1); color: var(--mint-2); }
+  50%      { transform: scale(1.22); color: var(--coral); }
+}
+
+/* ─────────────────────────────────────────────────
+   STAT STRIP — 4 cards con tintes distintos
+   ───────────────────────────────────────────────── */
+.orb-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 22px;
+}
+.orb-stat {
+  position: relative;
+  padding: 22px 22px;
+  border-radius: 18px;
+  min-width: 0;
+  overflow: hidden;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.orb-stat::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  border-radius: 18px 18px 0 0;
+}
+
+.orb-stat:nth-child(1) {
+  background: linear-gradient(160deg, #f0fdfa 0%, #ffffff 80%);
+  border: 1px solid rgba(45,212,191,0.24);
+  box-shadow: 0 12px 28px -16px rgba(45,212,191,0.30);
+}
+.orb-stat:nth-child(1)::before {
+  background: linear-gradient(90deg, #2dd4bf, #14b8a6);
+}
+.orb-stat:nth-child(1) .orb-stat__label i { color: var(--mint-2); }
+
+.orb-stat:nth-child(2) {
+  background: linear-gradient(160deg, #f0f9ff 0%, #ffffff 80%);
+  border: 1px solid rgba(56,189,248,0.24);
+  box-shadow: 0 12px 28px -16px rgba(56,189,248,0.30);
+}
+.orb-stat:nth-child(2)::before {
+  background: linear-gradient(90deg, #38bdf8, #0ea5e9);
+}
+.orb-stat:nth-child(2) .orb-stat__label i { color: var(--sky-2); }
+
+.orb-stat:nth-child(3) {
+  background: linear-gradient(160deg, #fffbeb 0%, #ffffff 80%);
+  border: 1px solid rgba(251,191,36,0.26);
+  box-shadow: 0 12px 28px -16px rgba(251,191,36,0.32);
+}
+.orb-stat:nth-child(3)::before {
+  background: linear-gradient(90deg, #fbbf24, #f59e0b);
+}
+.orb-stat:nth-child(3) .orb-stat__label i { color: var(--honey-2); }
+
+.orb-stat:nth-child(4) {
+  background: linear-gradient(160deg, #fff1f2 0%, #ffffff 80%);
+  border: 1px solid rgba(251,113,133,0.26);
+  box-shadow: 0 12px 28px -16px rgba(251,113,133,0.32);
+}
+.orb-stat:nth-child(4)::before {
+  background: linear-gradient(90deg, #fb7185, #f43f5e);
+}
+.orb-stat:nth-child(4) .orb-stat__label i { color: var(--coral-2); }
+
+.orb-stat__label {
+  font-family: 'SF Mono', ui-monospace, 'Courier New', monospace;
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 1.8px;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.orb-stat__label i { font-size: 0.75rem; }
+.orb-stat__value {
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 900;
+  font-size: clamp(1.5rem, 2.8vw, 2.15rem);
+  line-height: 1;
+  letter-spacing: -1.2px;
+  background: linear-gradient(180deg, #131826 0%, #4a5266 55%, #8a90a3 100%);
+  -webkit-background-clip: text;
+          background-clip: text;
+  -webkit-text-fill-color: transparent;
+          color: transparent;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+/* ─────────────────────────────────────────────────
+   STREAM
+   ───────────────────────────────────────────────── */
+.orb-stream {
+  background:
+    linear-gradient(180deg, #ffffff 0%, #faf8ff 100%);
+  border: 1px solid rgba(167,139,250,0.20);
+  border-radius: 24px;
+  box-shadow: 0 20px 40px -22px rgba(167,139,250,0.16);
+  margin-bottom: 22px;
+  overflow: hidden;
+  min-width: 0;
+}
+.orb-stream__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 18px 24px;
+  border-bottom: 1px solid rgba(167,139,250,0.14);
+  flex-wrap: wrap;
+  min-width: 0;
+  background: rgba(167,139,250,0.04);
+}
+.orb-stream__title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 800;
+  font-size: 0.82rem;
+  letter-spacing: 1.8px;
+  text-transform: uppercase;
+  color: var(--ink);
+  min-width: 0;
+}
+.orb-stream__title i { color: var(--coral-2); }
+.orb-stream__link {
+  font-family: 'SF Mono', monospace;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+  color: var(--mint-2);
+  text-decoration: none;
+  transition: transform 0.15s;
+  flex-shrink: 0;
+}
+.orb-stream__link:hover { transform: translateX(3px); }
+
+.orb-stream__body {
+  position: relative;
+  padding: 10px 0;
+}
+.orb-stream__body::before {
+  content: '';
+  position: absolute;
+  top: 24px;
+  bottom: 24px;
+  left: 40px;
+  width: 1px;
+  background: linear-gradient(180deg,
+    transparent 0%,
+    rgba(167,139,250,0.35) 15%,
+    rgba(45,212,191,0.35) 85%,
+    transparent 100%);
+}
+.orb-signal {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 24px;
+  min-width: 0;
+  transition: background 0.15s;
+}
+.orb-signal:hover { background: rgba(167,139,250,0.05); }
+
+.orb-signal__node {
+  position: relative;
+  z-index: 1;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 2px solid rgba(167,139,250,0.30);
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+}
+.orb-signal__node::after {
+  content: '';
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--mint-2);
+  box-shadow: 0 0 6px rgba(45,212,191,0.9);
+}
+.orb-signal:nth-child(2n) .orb-signal__node {
+  border-color: rgba(167,139,250,0.35);
+}
+.orb-signal:nth-child(2n) .orb-signal__node::after {
+  background: var(--violet-2);
+  box-shadow: 0 0 6px rgba(167,139,250,0.9);
+}
+.orb-signal:nth-child(3n) .orb-signal__node {
+  border-color: rgba(251,113,133,0.35);
+}
+.orb-signal:nth-child(3n) .orb-signal__node::after {
+  background: var(--coral-2);
+  box-shadow: 0 0 6px rgba(251,113,133,0.9);
+}
+
+.orb-signal__idx {
+  font-family: 'SF Mono', ui-monospace, 'Courier New', monospace;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 1.2px;
+  color: var(--ink-mute);
+  flex-shrink: 0;
+  min-width: 34px;
+}
+.orb-signal__name {
+  font-weight: 800;
+  font-size: 0.9rem;
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+  flex: 1;
+}
+.orb-signal__date {
+  font-family: 'SF Mono', ui-monospace, 'Courier New', monospace;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--ink-soft);
+  letter-spacing: 0.8px;
+  background: rgba(255,255,255,0.9);
+  border: 1px solid rgba(167,139,250,0.22);
+  padding: 3px 9px;
+  border-radius: 999px;
+  flex-shrink: 0;
+}
+.orb-stream__empty {
+  padding: 40px 24px;
+  text-align: center;
+  color: var(--ink-mute);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+/* ─────────────────────────────────────────────────
+   ACTIONS
+   ───────────────────────────────────────────────── */
+.orb-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+  margin-bottom: 22px;
+}
+.orb-action {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 24px 26px;
+  border-radius: 20px;
+  text-decoration: none;
+  color: var(--ink);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  min-width: 0;
+  min-height: 110px;
+  overflow: hidden;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+.orb-action::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at var(--mx, 50%) var(--my, 50%),
+    rgba(45,212,191,0.08), transparent 50%);
+  opacity: 0;
+  transition: opacity 0.2s;
+  pointer-events: none;
+}
+.orb-action:hover { transform: translateY(-3px); }
+.orb-action:hover::before { opacity: 1; }
+.orb-action:focus-visible {
+  outline: 3px solid var(--violet-2);
+  outline-offset: 3px;
+}
+
+.orb-action--mint {
+  background:
+    radial-gradient(ellipse 80% 100% at 0% 0%, rgba(45,212,191,0.14), transparent 60%),
+    radial-gradient(ellipse 80% 100% at 100% 100%, rgba(56,189,248,0.10), transparent 60%),
+    #ffffff;
+  border: 1px solid rgba(45,212,191,0.28);
+  box-shadow: 0 20px 40px -22px rgba(45,212,191,0.20);
+}
+.orb-action--mint:hover {
+  border-color: rgba(45,212,191,0.55);
+  box-shadow: 0 20px 40px -20px rgba(45,212,191,0.35),
+              var(--glow-mint);
+}
+.orb-action--mint .orb-action__icon {
+  background: linear-gradient(135deg, #ccfbf1 0%, #ffffff 100%);
+  border-color: rgba(45,212,191,0.40);
+  box-shadow:
+    inset 0 -6px 12px rgba(45,212,191,0.10),
+    0 8px 22px -8px rgba(45,212,191,0.45);
+}
+.orb-action--mint:hover .orb-action__arrow { color: var(--mint-2); }
+
+.orb-action--coral {
+  background:
+    radial-gradient(ellipse 80% 100% at 0% 0%, rgba(251,113,133,0.14), transparent 60%),
+    radial-gradient(ellipse 80% 100% at 100% 100%, rgba(167,139,250,0.12), transparent 60%),
+    #ffffff;
+  border: 1px solid rgba(251,113,133,0.28);
+  box-shadow: 0 20px 40px -22px rgba(251,113,133,0.20);
+}
+.orb-action--coral:hover {
+  border-color: rgba(251,113,133,0.55);
+  box-shadow: 0 20px 40px -20px rgba(251,113,133,0.35),
+              0 0 0 1px rgba(251,113,133,0.25),
+              0 8px 24px rgba(251,113,133,0.14);
+}
+.orb-action--coral .orb-action__icon {
+  background: linear-gradient(135deg, #ffe4e6 0%, #ffffff 100%);
+  border-color: rgba(251,113,133,0.40);
+  box-shadow:
+    inset 0 -6px 12px rgba(251,113,133,0.10),
+    0 8px 22px -8px rgba(251,113,133,0.45);
+}
+.orb-action--coral:hover .orb-action__arrow { color: var(--coral-2); }
+
+.orb-action__icon {
+  position: relative;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 1.6rem;
+  flex-shrink: 0;
+  border: 1.5px solid;
+  transition: transform 0.25s ease;
+}
+.orb-action:hover .orb-action__icon {
+  transform: scale(1.06) rotate(-4deg);
+}
+.orb-action__body { min-width: 0; flex: 1; }
+.orb-action__title {
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 900;
+  font-size: 1.1rem;
+  letter-spacing: -0.3px;
+  margin: 0 0 4px;
+  overflow-wrap: anywhere;
+}
+.orb-action__sub {
+  font-size: 0.82rem;
+  color: var(--ink-mute);
+  font-weight: 600;
+  margin: 0;
+}
+.orb-action__arrow {
+  font-family: 'SF Mono', monospace;
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: var(--ink-mute);
+  flex-shrink: 0;
+  transition: transform 0.2s, color 0.2s;
+}
+.orb-action:hover .orb-action__arrow { transform: translateX(4px); }
+
+/* ─────────────────────────────────────────────────
+   FINAL CTA
+   ───────────────────────────────────────────────── */
+.orb-final {
+  position: relative;
+  padding: 48px 34px;
+  border-radius: 24px;
+  background:
+    radial-gradient(ellipse 70% 90% at 0% 0%,   rgba(251,113,133,0.14), transparent 60%),
+    radial-gradient(ellipse 70% 90% at 100% 100%, rgba(45,212,191,0.12), transparent 60%),
+    linear-gradient(160deg, #fff7f9 0%, #faf8ff 50%, #f0fdfa 100%);
+  border: 1px solid rgba(251,113,133,0.22);
+  box-shadow: 0 20px 40px -22px rgba(251,113,133,0.18);
+  text-align: center;
+  overflow: hidden;
+}
+.orb-final::after {
+  content: '';
+  position: absolute;
+  top: -1px; left: 0; right: 0;
+  height: 2px;
+  background: var(--holo);
+  background-size: 400% 100%;
+  animation: orb-holo 10s linear infinite;
+}
+.orb-final__kicker {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: rgba(251,113,133,0.10);
+  border: 1px solid rgba(251,113,133,0.28);
+  font-family: 'SF Mono', monospace;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 1.8px;
+  text-transform: uppercase;
+  color: var(--coral-2);
+  margin-bottom: 16px;
+}
+.orb-final__title {
+  position: relative;
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 900;
+  font-size: clamp(1.6rem, 3.6vw, 2.4rem);
+  line-height: 1.05;
+  letter-spacing: -1px;
+  margin: 0 0 12px;
+  overflow-wrap: anywhere;
+}
+.orb-final__title .holo {
+  background: var(--holo);
+  background-size: 400% 100%;
+  animation: orb-holo 8s linear infinite;
+  -webkit-background-clip: text;
+          background-clip: text;
+  -webkit-text-fill-color: transparent;
+          color: transparent;
+}
+.orb-final__sub {
+  position: relative;
+  color: var(--ink-soft);
+  font-size: 0.95rem;
+  font-weight: 500;
+  margin: 0 auto 24px;
+  max-width: 460px;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   👇 NUEVO — PANEL DE ESTADÍSTICAS
+   ══════════════════════════════════════════════════════════════ */
+.orb-stat--clickable {
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.orb-stat--clickable:hover { transform: translateY(-2px); }
+.orb-stat--clickable:focus-visible {
+  outline: 3px solid var(--violet-2);
+  outline-offset: 3px;
+}
+.orb-stat__chevron {
+  font-size: 0.65rem;
+  margin-left: auto;
+  opacity: 0.7;
+  transition: transform 0.25s ease;
+}
+.orb-stat--clickable.is-open .orb-stat__chevron {
+  transform: rotate(180deg);
+}
+
+.orb-stats-panel {
+  margin-top: -8px;
+  margin-bottom: 22px;
+  background: linear-gradient(145deg, #ffffff, #f5f3ff);
+  border: 1px solid rgba(167,139,250,0.28);
+  border-radius: 20px;
+  box-shadow: 0 12px 28px -16px rgba(167,139,250,0.30);
+  overflow: hidden;
+  animation: orbPanelIn 0.25s ease;
+}
+@keyframes orbPanelIn {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.orb-stats-panel__head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 20px;
+  background: linear-gradient(135deg,
+      rgba(167,139,250,0.10),
+      rgba(45,212,191,0.08));
+  border-bottom: 1px solid rgba(167,139,250,0.20);
+}
+.orb-stats-panel__title {
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 800;
+  font-size: 0.82rem;
+  letter-spacing: 1.6px;
+  text-transform: uppercase;
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.orb-stats-panel__title i { color: var(--violet-2); }
+.orb-stats-panel__pulse {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #2dd4bf;
+  margin-left: 4px;
+  box-shadow: 0 0 0 0 rgba(45,212,191,0.7);
+  animation: orbPanelPulse 2s ease-in-out infinite;
+}
+@keyframes orbPanelPulse {
+  0%,100% { box-shadow: 0 0 0 0 rgba(45,212,191,0.6); }
+  50%     { box-shadow: 0 0 0 8px rgba(45,212,191,0); }
+}
+.orb-stats-panel__close {
+  margin-left: auto;
+  background: rgba(0,0,0,0.04);
+  border: none;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  cursor: pointer;
+  color: #4a5266;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s, color 0.15s;
+}
+.orb-stats-panel__close:hover {
+  background: rgba(239,68,68,0.12);
+  color: #dc2626;
+}
+
+.orb-stats-panel__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  padding: 18px 20px;
+}
+
+.orb-stat-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px 16px;
+  background: #ffffff;
+  border: 1px solid rgba(167,139,250,0.18);
+  border-radius: 14px;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.orb-stat-tile:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px -10px rgba(167,139,250,0.35);
+}
+.orb-stat-tile__label {
+  font-family: 'SF Mono', ui-monospace, monospace;
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+}
+.orb-stat-tile__value {
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 900;
+  font-size: 1.5rem;
+  line-height: 1;
+  letter-spacing: -0.5px;
+  background: linear-gradient(180deg, #131826 0%, #4a5266 55%, #8a90a3 100%);
+  -webkit-background-clip: text;
+          background-clip: text;
+  -webkit-text-fill-color: transparent;
+          color: transparent;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+.orb-stat-tile__value--small {
+  font-size: 0.85rem;
+  font-family: 'SF Mono', ui-monospace, monospace;
+  letter-spacing: 0.5px;
+}
+
+@media (max-width: 640px) {
+  .orb-stats-panel__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    padding: 14px;
+    gap: 8px;
+  }
+  .orb-stat-tile { padding: 10px 12px; }
+  .orb-stat-tile__value { font-size: 1.15rem; }
+}
+
+/* ─────────────────────────────────────────────────
+   RESPONSIVE
+   ───────────────────────────────────────────────── */
+@media (max-width: 1024px) {
+  .orb-hero { grid-template-columns: minmax(0, 1fr); }
+  .orb-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .orb-actions { grid-template-columns: minmax(0, 1fr); }
+}
+
+@media (max-width: 640px) {
+  .orb-hero__left { padding: 28px 22px; }
+  .orb-count { padding: 24px 18px; }
+  .orb-count__orb { width: 180px; height: 180px; }
+  .orb-count__core { width: 140px; height: 140px; }
+  .orb-count__hh, .orb-count__mm, .orb-count__ss { font-size: 1.5rem; }
+  .orb-count__sep { font-size: 1.5rem; }
+
+  .orb-stat { padding: 18px 16px; }
+
+  .orb-stream__head { padding: 14px 16px; }
+  .orb-stream__body::before { left: 30px; }
+  .orb-signal { padding: 12px 16px; gap: 12px; }
+  .orb-signal__idx { min-width: 28px; font-size: 0.62rem; }
+  .orb-signal__name { font-size: 0.82rem; }
+  .orb-signal__date { font-size: 0.66rem; }
+
+  .orb-action { padding: 20px; gap: 16px; }
+  .orb-action__icon { width: 52px; height: 52px; font-size: 1.4rem; }
+  .orb-action__title { font-size: 1rem; }
+
+  .orb-final { padding: 32px 22px; }
+
+  .orb-hero__ctas { flex-direction: column; }
+  .orb-btn { width: 100%; justify-content: center; }
+}
+
+@media (max-width: 380px) {
+  .orb-stats { grid-template-columns: minmax(0, 1fr); }
+  .orb-nav { padding: 8px 12px; }
+  .orb-nav__chip { font-size: 0.66rem; padding: 4px 9px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .orb-nav__mark,
+  .orb-hero__left::before,
+  .orb-hero__title .holo,
+  .orb-stat::before,
+  .orb-final::after,
+  .orb-final__title .holo,
+  .orb-count__ring,
+  .orb-dot::after,
+  .orb-stats-panel__pulse {
+    animation: none !important;
+  }
+  .orb-btn, .orb-action, .orb-action__icon { transition: none; }
+}
+</style>
+{% endblock %}
+
+
+{% block content %}
+<div class="orb">
+
+  {# ═══════ AMBIENTE ═══════ #}
+  <div class="orb-ambient" aria-hidden="true"></div>
+
+  {# ═══════ NAV CAPSULE ═══════ #}
+  <nav class="orb-nav" aria-label="Barra de estado">
+    <div class="orb-nav__brand">
+      <span class="orb-nav__mark" aria-hidden="true">◆</span>
+      <span class="orb-nav__name">LottoBooM</span>
+    </div>
+    <div class="orb-nav__meta">
+      <span class="orb-nav__chip">
+        <i class="fas fa-calendar-day" aria-hidden="true"></i>
+        <span id="orbDate">--/--/----</span>
+      </span>
+      <span class="orb-nav__chip orb-nav__chip--live">
+        <span class="orb-dot" aria-hidden="true"></span>
+        En vivo
+      </span>
+      <span class="orb-nav__chip">
+        <i class="fas fa-clock" aria-hidden="true"></i>
+        <span id="orbClock">--:--:--</span>
+      </span>
+    </div>
+  </nav>
+
+  {# ═══════ HERO ═══════ #}
+  <section class="orb-hero">
+    <div class="orb-hero__left">
+      <span class="orb-kicker">
+        <i class="fas fa-bolt" aria-hidden="true"></i>
+        <span id="orbSaludo">Edición diaria</span>
+      </span>
+      <h1 class="orb-hero__title">
+        {% if user.is_authenticated %}
+          Tu suerte está<br><span class="holo">en órbita</span>.
+        {% else %}
+          La nueva era de<br>la <span class="holo">lotería</span>.
+        {% endif %}
+      </h1>
+      <p class="orb-hero__sub">
+        {% if user.is_authenticated %}
+          Bienvenido, <strong>{{ user.username }}</strong>. Rol <strong>{{ rol_usuario|default:"Cliente" }}</strong>. Sorteos en tiempo real, premios al instante, experiencia diseñada para ti.
+        {% else %}
+          Apuesta en sorteos diarios, sigue los resultados en vivo y descubre una nueva forma de jugar.
+        {% endif %}
+      </p>
+      <div class="orb-hero__ctas">
+        {% if user.is_authenticated %}
+          <a href="{% url 'jugadas:apostar' %}" class="orb-btn orb-btn--primary">
+            <i class="fas fa-dice" aria-hidden="true"></i>
+            Apostar ahora
+            <span class="orb-btn__key">J</span>
+          </a>
+          <a href="{% url 'resultados:resultados' %}" class="orb-btn orb-btn--ghost">
+            <i class="fas fa-chart-line" aria-hidden="true"></i>
+            Resultados
+            <span class="orb-btn__key">R</span>
+          </a>
+        {% else %}
+          <a href="{% url 'usuarios:registro' %}" class="orb-btn orb-btn--primary">
+            <i class="fas fa-rocket" aria-hidden="true"></i>
+            Crear cuenta
+          </a>
+          <a href="{% url 'publico:faq' %}" class="orb-btn orb-btn--ghost">
+            <i class="fas fa-circle-question" aria-hidden="true"></i>
+            Cómo funciona
+          </a>
+        {% endif %}
+      </div>
+    </div>
+
+    {# ═══════ ORBE CUENTA ATRÁS ═══════ #}
+    <div class="orb-count">
+      <span class="orb-count__label">
+        <i class="fas fa-satellite-dish" aria-hidden="true"></i>
+        Próximo sorteo
+      </span>
+
+      <div class="orb-count__orb">
+        <span class="orb-count__ring" aria-hidden="true"></span>
+        <span class="orb-count__ring orb-count__ring--inner" aria-hidden="true"></span>
+        <div class="orb-count__core">
+          <div class="orb-count__time">
+            <span class="orb-count__hh" id="orbHH">00</span><span class="orb-count__sep">:</span><span class="orb-count__mm" id="orbMM">00</span><span class="orb-count__sep">:</span><span class="orb-count__ss" id="orbSS">00</span>
+            <span class="orb-count__unit">Hrs · Min · Seg</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="orb-count__foot">
+        <span class="orb-count__foot-label">Nº de la suerte</span>
+        <button type="button" class="orb-count__lucky" id="orbLucky" aria-label="Generar número de la suerte">
+          <i class="fas fa-wand-magic-sparkles" aria-hidden="true"></i>
+          <span id="orbLuckyNum">--</span>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  {# ═══════ STAT STRIP — 👇 ACTUALIZADO con botón expandible ═══════ #}
+  <section class="orb-stats">
+    <div class="orb-stat">
+      <div class="orb-stat__label">
+        <i class="fas fa-users" aria-hidden="true"></i> Jugadores
+      </div>
+      <div class="orb-stat__value" data-stat="total_usuarios">
+        {{ total_usuarios|default:0 }}
+      </div>
+    </div>
+    <div class="orb-stat">
+      <div class="orb-stat__label">
+        <i class="fas fa-bullseye" aria-hidden="true"></i> Sorteos
+      </div>
+      <div class="orb-stat__value" data-stat="total_sorteos">
+        {{ total_sorteos|default:0 }}
+      </div>
+    </div>
+    <div class="orb-stat">
+      <div class="orb-stat__label">
+        <i class="fas fa-coins" aria-hidden="true"></i> Ventas hoy
+      </div>
+      <div class="orb-stat__value" data-stat="ventas_hoy">
+        {{ ventas_hoy|default:0|floatformat:0 }}
+      </div>
+    </div>
+    {# 👇 NUEVO — Card de Visitas clicable #}
+    <div class="orb-stat orb-stat--clickable" id="btnStatsToggle"
+         role="button" tabindex="0" aria-label="Ver más estadísticas">
+      <div class="orb-stat__label">
+        <i class="fas fa-chart-line" aria-hidden="true"></i> Visitas
+        <i class="fas fa-chevron-down orb-stat__chevron" aria-hidden="true"></i>
+      </div>
+      <div class="orb-stat__value" data-stat="total_visitas">
+        {{ total_visitas|default:0 }}
+      </div>
+    </div>
+  </section>
+
+  {# ═══════ 👇 NUEVO — PANEL EXPANDIBLE DE ESTADÍSTICAS ═══════ #}
+  <section class="orb-stats-panel" id="statsPanel" hidden>
+    <div class="orb-stats-panel__head">
+      <span class="orb-stats-panel__title">
+        <i class="fas fa-satellite-dish" aria-hidden="true"></i>
+        Estadísticas en vivo
+      </span>
+      <span class="orb-stats-panel__pulse" title="Actualización automática cada 30s"></span>
+      <button type="button" class="orb-stats-panel__close" id="btnStatsClose"
+              aria-label="Cerrar panel">
+        <i class="fas fa-times" aria-hidden="true"></i>
+      </button>
+    </div>
+    <div class="orb-stats-panel__grid">
+      <div class="orb-stat-tile">
+        <span class="orb-stat-tile__label">Usuarios registrados</span>
+        <span class="orb-stat-tile__value" data-stat="total_usuarios">
+          {{ total_usuarios|default:0 }}
+        </span>
+      </div>
+      <div class="orb-stat-tile">
+        <span class="orb-stat-tile__label">Visitas totales</span>
+        <span class="orb-stat-tile__value" data-stat="total_visitas">
+          {{ total_visitas|default:0 }}
+        </span>
+      </div>
+      <div class="orb-stat-tile">
+        <span class="orb-stat-tile__label">Visitas hoy</span>
+        <span class="orb-stat-tile__value" data-stat="visitas_hoy">
+          {{ visitas_hoy|default:0 }}
+        </span>
+      </div>
+      <div class="orb-stat-tile">
+        <span class="orb-stat-tile__label">Apostadores hoy</span>
+        <span class="orb-stat-tile__value" data-stat="apostadores_hoy">
+          {{ apostadores_hoy|default:0 }}
+        </span>
+      </div>
+      <div class="orb-stat-tile">
+        <span class="orb-stat-tile__label">Sorteos pendientes</span>
+        <span class="orb-stat-tile__value" data-stat="sorteos_pendientes">
+          {{ sorteos_pendientes|default:0 }}
+        </span>
+      </div>
+      <div class="orb-stat-tile">
+        <span class="orb-stat-tile__label">Ventas hoy</span>
+        <span class="orb-stat-tile__value" data-stat="ventas_hoy">
+          ${{ ventas_hoy|default:0|floatformat:2 }}
+        </span>
+      </div>
+      <div class="orb-stat-tile">
+        <span class="orb-stat-tile__label">Última actualización</span>
+        <span class="orb-stat-tile__value orb-stat-tile__value--small" id="statsUpdated">
+          —
+        </span>
+      </div>
+    </div>
+  </section>
+
+  {# ═══════ STREAM ═══════ #}
+  <section class="orb-stream">
+    <div class="orb-stream__head">
+      <span class="orb-stream__title">
+        <i class="fas fa-tower-broadcast" aria-hidden="true"></i>
+        Señal · Resultados recientes
+      </span>
+      <a href="{% url 'resultados:resultados' %}" class="orb-stream__link">
+        Ver todos →
+      </a>
+    </div>
+    <div class="orb-stream__body">
+      {% for r in ultimos_resultados %}
+      <div class="orb-signal">
+        <span class="orb-signal__node" aria-hidden="true"></span>
+        <span class="orb-signal__idx">#{{ forloop.counter|stringformat:"03d" }}</span>
+        <span class="orb-signal__name">{{ r.sorteo.nombre }}</span>
+        <span class="orb-signal__date">{{ r.fecha|date:"d/m/Y" }}</span>
+      </div>
+      {% empty %}
+      <div class="orb-stream__empty">
+        Aún no hay señal. Vuelve en un rato.
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+
+  {# ═══════ ACTIONS ═══════ #}
+  <section class="orb-actions">
+    <a href="{% url 'sorteos:lista_sorteos' %}" class="orb-action orb-action--mint">
+      <span class="orb-action__icon" aria-hidden="true">🎯</span>
+      <span class="orb-action__body">
+        <h3 class="orb-action__title">Explorar sorteos</h3>
+        <p class="orb-action__sub">Todos los activos en un vistazo</p>
+      </span>
+      <span class="orb-action__arrow" aria-hidden="true">→</span>
+    </a>
+    <a href="{% url 'resultados:mis_premios' %}" class="orb-action orb-action--coral">
+      <span class="orb-action__icon" aria-hidden="true">🏆</span>
+      <span class="orb-action__body">
+        <h3 class="orb-action__title">Mis premios</h3>
+        <p class="orb-action__sub">Cobra tus ganancias al instante</p>
+      </span>
+      <span class="orb-action__arrow" aria-hidden="true">→</span>
+    </a>
+  </section>
+
+  {# ═══════ FINAL CTA ═══════ #}
+  <section class="orb-final">
+    <span class="orb-final__kicker">
+      <i class="fas fa-star" aria-hidden="true"></i>
+      Un clic y estás dentro
+    </span>
+    <h2 class="orb-final__title">
+      ¿Y si hoy es tu día<br>en el <span class="holo">futuro</span>?
+    </h2>
+    <p class="orb-final__sub">
+      Los sorteos están activos. Tu suerte también debería estarlo.
+    </p>
+    {% if user.is_authenticated %}
+      <a href="{% url 'jugadas:apostar' %}" class="orb-btn orb-btn--primary">
+        <i class="fas fa-dice" aria-hidden="true"></i>
+        Apostar ahora
+      </a>
+    {% else %}
+      <a href="{% url 'usuarios:registro' %}" class="orb-btn orb-btn--primary">
+        <i class="fas fa-rocket" aria-hidden="true"></i>
+        Empezar gratis
+      </a>
+    {% endif %}
+  </section>
+
+</div>
+{% endblock %}
+
+
+{% block extra_js %}
+<script>
+(function () {
+  'use strict';
+
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // ══════════════════════════════════════════════════════════════
+  // 1. FECHA + RELOJ
+  // ══════════════════════════════════════════════════════════════
+  const dateEl  = document.getElementById('orbDate');
+  const clockEl = document.getElementById('orbClock');
+  const pad = (n) => String(n).padStart(2, '0');
+
+  function tickClock() {
+    const d = new Date();
+    if (dateEl)  dateEl.textContent  = `${pad(d.getDate())}/${pad(d.getMonth()+1)}/${d.getFullYear()}`;
+    if (clockEl) clockEl.textContent = `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+  }
+  tickClock();
+  setInterval(tickClock, 1000);
+
+  // ══════════════════════════════════════════════════════════════
+  // 2. SALUDO
+  // ══════════════════════════════════════════════════════════════
+  const saludoEl = document.getElementById('orbSaludo');
+  if (saludoEl) {
+    const h = new Date().getHours();
+    let s = 'Edición diaria';
+    if (h >= 5  && h < 12) s = 'Buenos días';
+    else if (h >= 12 && h < 19) s = 'Buenas tardes';
+    else if (h >= 19 && h < 24) s = 'Buenas noches';
+    else s = 'Buenas madrugadas';
+    saludoEl.textContent = s;
+  }
+
+  // ══════════════════════════════════════════════════════════════
+  // 3. CUENTA ATRÁS
+  // ══════════════════════════════════════════════════════════════
+  const HH = document.getElementById('orbHH');
+  const MM = document.getElementById('orbMM');
+  const SS = document.getElementById('orbSS');
+
+  function nextTopOfHour() {
+    const now = new Date();
+    const next = new Date(now);
+    next.setMinutes(0, 0, 0);
+    next.setHours(now.getHours() + 1);
+    return next;
+  }
+  let targetTime = nextTopOfHour();
+
+  function tickCountdown() {
+    let diff = Math.max(0, Math.floor((targetTime.getTime() - Date.now()) / 1000));
+    if (diff <= 0) {
+      targetTime = nextTopOfHour();
+      diff = Math.max(0, Math.floor((targetTime.getTime() - Date.now()) / 1000));
+    }
+    const h = Math.floor(diff / 3600);
+    const m = Math.floor((diff % 3600) / 60);
+    const s = diff % 60;
+    if (HH) HH.textContent = pad(h);
+    if (MM) MM.textContent = pad(m);
+    if (SS) SS.textContent = pad(s);
+  }
+  tickCountdown();
+  setInterval(tickCountdown, 1000);
+
+  // ══════════════════════════════════════════════════════════════
+  // 4. NÚMERO DE LA SUERTE
+  // ══════════════════════════════════════════════════════════════
+  const luckyBtn = document.getElementById('orbLucky');
+  const luckyNum = document.getElementById('orbLuckyNum');
+  if (luckyBtn && luckyNum) {
+    luckyBtn.addEventListener('click', () => {
+      luckyNum.textContent = pad(Math.floor(Math.random() * 100));
+      luckyBtn.classList.remove('flash');
+      void luckyBtn.offsetWidth;
+      luckyBtn.classList.add('flash');
+      if (!reduceMotion && navigator.vibrate) {
+        try { navigator.vibrate(18); } catch (e) {}
+      }
+    });
+  }
+
+  // ══════════════════════════════════════════════════════════════
+  // 5. CONTADORES
+  // ══════════════════════════════════════════════════════════════
+  const counters = document.querySelectorAll('[data-stat]');
+  function animateCounter(el) {
+    const target = parseInt(el.getAttribute('data-stat'), 10) || 0;
+    if (target === 0) { el.textContent = '0'; return; }
+    if (reduceMotion) { el.textContent = target.toLocaleString(); return; }
+    const duration = 1200;
+    const start = performance.now();
+    const step = (now) => {
+      const t = Math.min((now - start) / duration, 1);
+      const eased = 1 - Math.pow(1 - t, 3);
+      el.textContent = Math.round(eased * target).toLocaleString();
+      if (t < 1) requestAnimationFrame(step);
+      else el.textContent = target.toLocaleString();
+    };
+    requestAnimationFrame(step);
+  }
+  if ('IntersectionObserver' in window) {
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (!entry.isIntersecting) return;
+        animateCounter(entry.target);
+        io.unobserve(entry.target);
+      });
+    }, { threshold: 0.3 });
+    counters.forEach((c) => io.observe(c));
+  } else {
+    counters.forEach(animateCounter);
+  }
+
+  // ══════════════════════════════════════════════════════════════
+  // 6. GLOW que sigue al cursor
+  // ══════════════════════════════════════════════════════════════
+  const isTouch = window.matchMedia('(hover: none)').matches;
+  if (!isTouch && !reduceMotion) {
+    document.querySelectorAll('.orb-action').forEach((card) => {
+      card.addEventListener('mousemove', (e) => {
+        const r = card.getBoundingClientRect();
+        const x = ((e.clientX - r.left) / r.width) * 100;
+        const y = ((e.clientY - r.top) / r.height) * 100;
+        card.style.setProperty('--mx', x + '%');
+        card.style.setProperty('--my', y + '%');
+      });
+    });
+  }
+
+  // ══════════════════════════════════════════════════════════════
+  // 7. ATAJOS
+  // ══════════════════════════════════════════════════════════════
+  document.addEventListener('keydown', (e) => {
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    const tag = (document.activeElement && document.activeElement.tagName) || '';
+    if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+
+    const k = e.key.toLowerCase();
+    if (k === 'j') {
+      const a = document.querySelector('a[href*="apostar"]');
+      if (a) { e.preventDefault(); a.click(); }
+    } else if (k === 'r') {
+      const a = document.querySelector('a[href*="resultados"]');
+      if (a) { e.preventDefault(); a.click(); }
+    }
+  });
+
+  // ══════════════════════════════════════════════════════════════
+  // 8. 👇 NUEVO — PANEL DE ESTADÍSTICAS (Toggle + Polling 30s)
+  // ══════════════════════════════════════════════════════════════
+  (function initStatsPanel(){
+    const btnToggle = document.getElementById('btnStatsToggle');
+    const btnClose  = document.getElementById('btnStatsClose');
+    const panel     = document.getElementById('statsPanel');
+    const lblUpdate = document.getElementById('statsUpdated');
+
+    if (!btnToggle || !panel) return;
+
+    function abrirPanel() {
+      panel.hidden = false;
+      btnToggle.classList.add('is-open');
+      refrescarStats();
+    }
+    function cerrarPanel() {
+      panel.hidden = true;
+      btnToggle.classList.remove('is-open');
+    }
+    function togglePanel() {
+      if (panel.hidden) abrirPanel();
+      else cerrarPanel();
+    }
+
+    btnToggle.addEventListener('click', togglePanel);
+    btnToggle.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        togglePanel();
+      }
+    });
+    if (btnClose) btnClose.addEventListener('click', cerrarPanel);
+
+    const fmtInt = n => Number(n || 0).toLocaleString('es-CO');
+    const fmtMon = n => '$' + Number(n || 0).toLocaleString('es-CO', {
+      minimumFractionDigits: 2, maximumFractionDigits: 2
+    });
+
+    function pintarStats(data) {
+      const mapa = {
+        total_usuarios:     v => fmtInt(v),
+        total_visitas:      v => fmtInt(v),
+        visitas_hoy:        v => fmtInt(v),
+        apostadores_hoy:    v => fmtInt(v),
+        sorteos_pendientes: v => fmtInt(v),
+        total_sorteos:      v => fmtInt(v),
+        ventas_hoy:         v => fmtMon(v),
+      };
+
+      Object.keys(mapa).forEach(k => {
+        if (data[k] === undefined) return;
+        document.querySelectorAll(`[data-stat="${k}"]`).forEach(el => {
+          el.textContent = mapa[k](data[k]);
+        });
+      });
+
+      if (lblUpdate) {
+        const d = new Date(data.actualizado || Date.now());
+        lblUpdate.textContent = d.toLocaleTimeString('es-CO', {
+          hour: '2-digit', minute: '2-digit', second: '2-digit'
+        });
+      }
+    }
+
+    let fetchEnCurso = false;
+    function refrescarStats() {
+      if (fetchEnCurso) return;
+      fetchEnCurso = true;
+      fetch('/api/estadisticas/', {
+        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+        credentials: 'same-origin'
+      })
+        .then(r => r.ok ? r.json() : Promise.reject(r.status))
+        .then(pintarStats)
+        .catch(err => console.warn('[stats] Error:', err))
+        .finally(() => { fetchEnCurso = false; });
+    }
+
+    setInterval(() => {
+      if (!panel.hidden) refrescarStats();
+    }, 30000);
+
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden && !panel.hidden) refrescarStats();
+    });
+  })();
+
+})();
+</script>
+{% endblock extra_js %}

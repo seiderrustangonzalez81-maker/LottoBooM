@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block page_title %}Estructura Global{% endblock %}
+{% block page_subtitle %}Jerarquía organizacional{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="card border-0 shadow-sm rounded-4">
+        <div class="card-header bg-gradient-primary text-white border-0 py-3" style="background: linear-gradient(135deg, #6C3CE1 0%, #8B5CF6 100%);">
+            <h5 class="mb-0 fw-bold"><i class="fas fa-sitemap me-2"></i> Estructura Global</h5>
+        </div>
+        <div class="card-body p-4">
+
+            {% for item in estructura %}
+                <div class="card mb-3">
+                    <div class="card-header bg-light">
+                        <h6 class="mb-0">
+                            {% if item.tipo == 'banco' %}
+                                🏦 <strong>{{ item.usuario.username }}</strong> (Banco) - Fondos: ${{ item.total_fondos|floatformat:2 }}
+                            {% elif item.tipo == 'comercial' %}
+                                👤 <strong>{{ item.usuario.username }}</strong> (Comercial) - Fondos: ${{ item.total_fondos|floatformat:2 }}
+                            {% endif %}
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        {% if item.comerciales %}
+                            <h6 class="fw-bold">Comerciales</h6>
+                            <ul class="list-group mb-3">
+                                {% for comercial in item.comerciales %}
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                        {{ comercial.usuario.username }}
+                                        <span class="badge bg-info">Fondos: ${{ comercial.total_fondos|floatformat:2 }}</span>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        {% endif %}
+
+                        {% if item.clientes_directos %}
+                            <h6 class="fw-bold">Clientes directos</h6>
+                            <ul class="list-group">
+                                {% for cliente in item.clientes_directos %}
+                                    <li class="list-group-item">{{ cliente.username }}</li>
+                                {% endfor %}
+                            </ul>
+                        {% endif %}
+
+                        {% if item.clientes %}
+                            <h6 class="fw-bold">Clientes</h6>
+                            <ul class="list-group">
+                                {% for cliente in item.clientes %}
+                                    <li class="list-group-item">{{ cliente.username }}</li>
+                                {% endfor %}
+                            </ul>
+                        {% endif %}
+                    </div>
+                </div>
+            {% empty %}
+                <div class="alert alert-warning">No hay estructura disponible para tu rol.</div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

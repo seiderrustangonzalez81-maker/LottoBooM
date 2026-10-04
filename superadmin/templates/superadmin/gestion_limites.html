@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block page_title %}Gestión de Límites de Apuesta{% endblock %}
+{% block page_subtitle %}Límites por comercial, sorteo y forma de juego{% endblock %}
+
+{% block content %}
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-white">
+        <h5 class="fw-bold mb-0">📏 Límites de Apuesta</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-sm table-hover">
+                <thead>
+                    <tr>
+                        <th>Comercial</th>
+                        <th>Banco</th>
+                        <th>Sorteo</th>
+                        <th>Forma de Juego</th>
+                        <th>Monto Máximo</th>
+                        <th>Activo</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for l in limites %}
+                    <tr>
+                        <td>{{ l.comercial.username|default:"Global" }}</td>
+                        <td>{{ l.banco.username|default:"-" }}</td>
+                        <td>{{ l.sorteo.nombre }}</td>
+                        <td>{{ l.forma_juego.nombre }}</td>
+                        <td><strong>${{ l.monto_maximo|floatformat:2 }}</strong></td>
+                        <td>{% if l.activo %}<span class="badge bg-success">Activo</span>{% else %}<span class="badge bg-secondary">Inactivo</span>{% endif %}</td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="6" class="text-center text-muted">No hay límites configurados.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

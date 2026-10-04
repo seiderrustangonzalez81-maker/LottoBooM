@@ -1,0 +1,193 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block page_title %}
+  {% if tipo == 'recarga' %}Solicitar Recarga{% elif tipo == 'cobro' %}Solicitar Cobro Premios{% elif tipo == 'prestamo' %}Solicitar Préstamo{% elif tipo == 'fondos' %}Solicitar Fondos{% else %}Solicitud{% endif %}
+{% endblock %}
+
+{% block extra_css %}
+<style>
+  .help-text {
+    font-size: 0.85rem;
+    color: #6c757d;
+  }
+  .input-group-text {
+    background-color: #e9ecef;
+  }
+  .btn-loading {
+    pointer-events: none;
+    opacity: 0.7;
+  }
+  .card-header i {
+    font-size: 1.2rem;
+  }
+  .form-label i {
+    margin-right: 6px;
+    color: #0d6efd;
+  }
+  .required-field::after {
+    content: " *";
+    color: #dc3545;
+    font-weight: bold;
+  }
+  .badge-pill {
+    border-radius: 50rem;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8 col-md-10">
+            <div class="card shadow-lg border-0">
+                <div class="card-header bg-gradient-primary text-white py-3">
+                    <h5 class="mb-0 d-flex align-items-center">
+                        {% if tipo == 'recarga' %}
+                            <i class="fas fa-plus-circle me-2"></i>Solicitar Recarga
+                        {% elif tipo == 'cobro' %}
+                            <i class="fas fa-hand-holding-usd me-2"></i>Solicitar Cobro Premios
+                        {% elif tipo == 'prestamo' %}
+                            <i class="fas fa-handshake me-2"></i>Solicitar Préstamo
+                        {% elif tipo == 'fondos' %}
+                            <i class="fas fa-money-bill-wave me-2"></i>Solicitar Fondos
+                        {% endif %}
+                        <span class="ms-auto small fw-light">#{{ tipo|capfirst }}</span>
+                    </h5>
+                </div>
+                <div class="card-body p-4">
+                    <form method="post" novalidate id="solicitudForm">
+                        {% csrf_token %}
+
+                        <!-- Gestor y Forma de pago (2 columnas) -->
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <label for="gestor" class="form-label fw-bold required-field">
+                                    <i class="fas fa-user-tie"></i> Gestor
+                                </label>
+                                <select name="gestor" id="gestor" class="form-select" required>
+                                    <option value="">-- Elegir gestor --</option>
+                                    {% for gd in gestores_data %}
+                                        <option value="{{ gd.gestor.id }}">{{ gd.gestor.username }}</option>
+                                    {% empty %}
+                                        {% for gestor in gestores %}
+                                            <option value="{{ gestor.id }}">{{ gestor.username }}</option>
+                                        {% endfor %}
+                                    {% endfor %}
+                                </select>
+                                <div class="help-text mt-1">
+                                    <i class="fas fa-info-circle"></i> Selecciona el gestor que procesará tu solicitud.
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label for="forma_pago" class="form-label fw-bold required-field">
+                                    <i class="fas fa-credit-card"></i> Forma de pago
+                                </label>
+                                <select name="forma_pago" id="forma_pago" class="form-select" required>
+                                    <option value="">-- Selecciona forma de pago --</option>
+                                    {% for fp in formas_pago %}
+                                        <option value="{{ fp.id }}">{{ fp.nombre }}</option>
+                                    {% endfor %}
+                                </select>
+                                <div class="help-text mt-1">
+                                    <i class="fas fa-info-circle"></i> Elige el método de pago que usarás.
+                                </div>
+                                {% if not formas_pago %}
+                                    <div class="text-danger mt-1">
+                                        <i class="fas fa-exclamation-triangle"></i> No hay formas de pago disponibles.
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Monto (con formato de moneda) -->
+                        <div class="mb-3">
+                            <label for="monto" class="form-label fw-bold required-field">
+                                <i class="fas fa-dollar-sign"></i> Monto
+                            </label>
+                            <div class="input-group">
+                                <span class="input-group-text">$</span>
+                                <input type="number" step="0.01" min="0.01" name="monto" id="monto"
+                                       class="form-control" placeholder="0" required>
+                            </div>
+                            <div class="help-text mt-1">
+                                <i class="fas fa-info-circle"></i> Monto mínimo: $0.01. El monto máximo depende del gestor.
+                            </div>
+                        </div>
+
+                        <!-- Mensaje (opcional) -->
+                        <div class="mb-3">
+                            <label for="mensaje" class="form-label fw-bold">
+                                <i class="fas fa-comment"></i> Mensaje para el gestor
+                            </label>
+                            <textarea name="mensaje" id="mensaje" rows="3" class="form-control"
+                                      placeholder="Escribe un mensaje opcional..."></textarea>
+                            <div class="help-text mt-1">
+                                <i class="fas fa-info-circle"></i> Opcional. Incluye detalles adicionales para el gestor.
+                            </div>
+                        </div>
+
+                        <!-- Motivo (para préstamo/fondos) -->
+                        {% if tipo in 'prestamo,fondos' %}
+                            <div class="mb-3">
+                                <label for="motivo" class="form-label fw-bold required-field">
+                                    <i class="fas fa-pencil-alt"></i> Motivo
+                                </label>
+                                <input type="text" name="motivo" id="motivo" class="form-control"
+                                       placeholder="Breve descripción del motivo" required>
+                                <div class="help-text mt-1">
+                                    <i class="fas fa-info-circle"></i> Explica brevemente el motivo de la solicitud.
+                                </div>
+                            </div>
+                        {% endif %}
+
+                        <!-- Botones -->
+                        <div class="d-flex flex-wrap justify-content-end gap-2 mt-4">
+                            <a href="{% url 'publico:home' %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-times me-1"></i> Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-primary" id="submitBtn">
+                                <i class="fas fa-paper-plane me-1"></i> Enviar Solicitud
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                <div class="card-footer bg-light text-muted small py-2 text-center">
+                    <i class="fas fa-shield-alt me-1"></i> Tu solicitud será procesada de forma segura.
+                    {% if tipo == 'recarga' %}
+                        <i class="fas fa-clock ms-2"></i> Tiempo estimado: 5-10 minutos.
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('solicitudForm');
+    const submitBtn = document.getElementById('submitBtn');
+
+    // Deshabilitar botón al enviar para evitar doble clic
+    form.addEventListener('submit', function() {
+        submitBtn.classList.add('btn-loading');
+        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Enviando...';
+        submitBtn.disabled = true;
+    });
+
+    // Validación visual del monto (mínimo $0.01)
+    const montoInput = document.getElementById('monto');
+    montoInput.addEventListener('blur', function() {
+        const val = parseFloat(this.value);
+        if (val < 0.01) {
+            this.classList.add('is-invalid');
+        } else {
+            this.classList.remove('is-invalid');
+        }
+    });
+});
+</script>
+{% endblock %}

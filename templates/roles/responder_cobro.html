@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block page_title %}📤 Responder Cobro de Premio{% endblock %}
+{% block page_subtitle %}Acepta o rechaza la solicitud de cobro de premio{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card shadow-sm">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="fas fa-hand-holding-usd me-2"></i>Responder Cobro de Premio</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <p><strong>Cliente:</strong> {{ solicitud.cliente.username }}</p>
+                        <p><strong>Monto:</strong> ${{ solicitud.monto }}</p>
+                        <p><strong>Forma de pago:</strong> {{ solicitud.forma_pago.nombre }}</p>
+                        <p><strong>Mensaje:</strong> {{ solicitud.mensaje_cliente|default:"Sin mensaje" }}</p>
+                    </div>
+
+                    {% if solicitud.estado == 'pendiente' %}
+                        <form method="post" id="responderForm">
+                            {% csrf_token %}
+                            <input type="hidden" name="accion" id="accion" value="aceptar">
+
+                            <!-- Vías de pago para ENVIAR -->
+                            <div class="mb-3">
+                                <label for="via_pago" class="form-label">Selecciona la vía de pago para enviar *</label>
+                                <select name="via_pago" id="via_pago" class="form-select" required>
+                                    <option value="">Selecciona una vía</option>
+                                    {% for via in vias_pago %}
+                                        <option value="{{ via.id }}" {% if via == via_por_defecto %}selected{% endif %}>
+                                            {{ via.nombre }} - {{ via.forma_pago.nombre }}
+                                            <span class="badge {% if via.direccion == 'enviar' %}bg-primary{% elif via.direccion == 'ambos' %}bg-secondary{% endif %}">
+                                                {{ via.get_direccion_display }}
+                                            </span>
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                                <small class="text-muted">Esta es la vía a través de la cual enviarás el pago al cliente.</small>
+                            </div>
+
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-success" onclick="document.getElementById('accion').value='aceptar'">
+                                    <i class="fas fa-check"></i> Aceptar Cobro
+                                </button>
+                                <button type="submit" class="btn btn-danger" onclick="document.getElementById('accion').value='rechazar'">
+                                    <i class="fas fa-times"></i> Rechazar Cobro
+                                </button>
+                                <a href="{% url 'roles:gestionar_solicitudes' 'cobro' %}" class="btn btn-outline-secondary">
+                                    <i class="fas fa-arrow-left"></i> Volver
+                                </a>
+                            </div>
+
+                            <div class="mt-3" id="motivoRechazo" style="display: none;">
+                                <div class="mb-3">
+                                    <label for="motivo" class="form-label">Motivo del rechazo</label>
+                                    <textarea name="motivo" id="motivo" class="form-control" rows="2" placeholder="Opcional"></textarea>
+                                </div>
+                            </div>
+                        </form>
+                    {% else %}
+                        <div class="alert alert-info">
+                            Esta solicitud ya fue {{ solicitud.get_estado_display|lower }}.
+                        </div>
+                        <a href="{% url 'roles:gestionar_solicitudes' 'cobro' %}" class="btn btn-outline-secondary">Volver</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.querySelectorAll('button[onclick*="rechazar"]').forEach(function(btn) {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            document.getElementById('motivoRechazo').style.display = 'block';
+            document.getElementById('accion').value = 'rechazar';
+            if (confirm('¿Estás seguro de que quieres rechazar este cobro?')) {
+                document.getElementById('responderForm').submit();
+            }
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,1356 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block page_title %}❓ Preguntas Frecuentes (FAQ){% endblock %}
+{% block page_subtitle %}Todo lo que necesitas saber sobre LottoBooM{% endblock %}
+
+{% block extra_css %}
+<style>
+    .faq-category { margin-bottom: 2rem; }
+    .faq-category h3 {
+        font-weight: 700; color: var(--text-primary); margin-bottom: 1rem;
+        padding-bottom: 0.5rem; border-bottom: 3px solid var(--primary);
+        display: inline-block;
+    }
+    .faq-item {
+        background: rgba(255,255,255,0.6); backdrop-filter: blur(8px);
+        border-radius: 12px; border: 1px solid rgba(255,255,255,0.3);
+        margin-bottom: 0.75rem; overflow: hidden; transition: all 0.2s ease;
+    }
+    .faq-item:hover { border-color: var(--primary); box-shadow: 0 4px 16px rgba(108,60,225,0.06); }
+    .faq-question {
+        padding: 16px 20px; cursor: pointer; display: flex;
+        justify-content: space-between; align-items: center;
+        font-weight: 600; color: var(--text-primary); transition: 0.2s;
+        user-select: none; background: rgba(255,255,255,0.2); border-radius: 12px;
+    }
+    .faq-question:hover { color: var(--primary); background: rgba(108,60,225,0.04); }
+    .faq-question.visited {
+        color: var(--primary); background: rgba(108,60,225,0.06);
+        border-left: 3px solid var(--primary);
+    }
+    .faq-question .icon {
+        font-size: 1.2rem; transition: transform 0.3s ease, color 0.2s;
+        color: var(--text-secondary); margin-left: 12px; flex-shrink: 0;
+    }
+    .faq-question .icon.open { transform: rotate(180deg); color: var(--primary); }
+    .faq-answer {
+        max-height: 0; overflow: hidden; transition: max-height 0.4s ease, padding 0.3s ease;
+        padding: 0 20px; color: var(--text-secondary); line-height: 1.6;
+        font-size: 0.95rem; background: rgba(255,255,255,0.2); border-radius: 0 0 12px 12px;
+    }
+    .faq-answer.open { max-height: 1400px; padding: 0 20px 20px; }
+    .faq-answer ul, .faq-answer ol { padding-left: 20px; margin: 8px 0; }
+    .faq-answer table {
+        width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 0.85rem;
+    }
+    .faq-answer table th, .faq-answer table td {
+        border: 1px solid #e9edf2; padding: 8px 12px; text-align: left;
+    }
+    .faq-answer table th { background: #f8fafc; font-weight: 600; }
+    .faq-answer .highlight {
+        background: #f0f4ff; padding: 2px 8px; border-radius: 4px;
+        color: var(--primary); font-weight: 500;
+    }
+    .faq-answer .priv-box {
+        background: linear-gradient(135deg, #ecfdf5, #d1fae5);
+        border-left: 4px solid #10b981;
+        padding: 12px 16px; border-radius: 8px; margin: 12px 0;
+        color: #065f46; font-size: 0.9rem;
+    }
+    .faq-answer .priv-box strong { color: #047857; }
+    .faq-search { margin-bottom: 2rem; }
+    .faq-search input {
+        width: 100%; max-width: 400px; padding: 10px 16px; border-radius: 40px;
+        border: 1px solid #e9edf2; font-size: 0.95rem; transition: 0.2s;
+        background: rgba(255,255,255,0.6); backdrop-filter: blur(4px);
+    }
+    .faq-search input:focus {
+        outline: none; border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(108,60,225,0.1);
+    }
+    @media (max-width: 576px) {
+        .faq-question { font-size: 0.9rem; padding: 12px 16px; }
+        .faq-answer { font-size: 0.85rem; }
+        .faq-answer.open { padding: 0 16px 16px; }
+        .faq-answer table { font-size: 0.75rem; }
+        .faq-answer table th, .faq-answer table td { padding: 4px 8px; }
+        .faq-answer .priv-box { font-size: 0.82rem; padding: 10px 12px; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-0">
+
+    <div class="faq-search">
+        <input type="text" id="faqSearch" placeholder="🔍 Buscar en las preguntas frecuentes..." onkeyup="filtrarFAQ()">
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         CATEGORÍA 1: GENERALES
+         ═══════════════════════════════════════════════════════════ -->
+    <div class="faq-category">
+        <h3>📌 Generales</h3>
+
+        <div class="faq-item">
+            <div class="faq-question" onclick="toggleFAQ(this)">
+                <span>¿Qué es LottoBooM y cuál es su propósito?</span>
+                <span class="icon">▼</span>
+            </div>
+            <div class="faq-answer">
+                LottoBooM es una plataforma diseñada para <strong>centralizar y gestionar todos los sorteos</strong> disponibles en el mercado, así como aquellos que bancos y comerciales soliciten incorporar. Nuestra misión es ser el punto de referencia para la gestión de loterías, ofreciendo una experiencia completa, transparente y eficiente para todos los actores involucrados.
+                <br><br>
+                <strong>La gran ventaja es que rompe con la dependencia de un dispositivo específico.</strong> Puedes acceder desde <strong>cualquier dispositivo con conexión a internet</strong>: computadora, laptop, tablet o teléfono móvil. Tienes el control de tu cuenta en la palma de tu mano.
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <div class="faq-question" onclick="toggleFAQ(this)">
+                <span>¿Quién administra la plataforma y cuál es su función?</span>
+                <span class="icon">▼</span>
+            </div>
+            <div class="faq-answer">
+                La plataforma es administrada por un equipo de soporte cuya labor se centra exclusivamente en:
+                <ul>
+                    <li>Mantener la infraestructura técnica estable y disponible.</li>
+                    <li>Atender sugerencias, dudas y reportes de errores.</li>
+                    <li>Implementar mejoras basadas en las necesidades reales de la comunidad.</li>
+                    <li>Garantizar que las reglas del sistema se apliquen de forma uniforme y justa.</li>
+                </ul>
+                <div class="priv-box">
+                </div>
+                La plataforma cuenta con <strong>3 cuentas de administración</strong> que trabajan de forma coordinada para asegurar respaldo y continuidad del servicio.
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <div class="faq-question" onclick="toggleFAQ(this)">
+                <span>¿Qué tan segura es la plataforma?</span>
+                <span class="icon">▼</span>
+            </div>
+            <div class="faq-answer">
+                <br><br>
+                <strong>Lo que solo tú puedes ver:</strong>
+                <ul>
+                    <li>Tus jugadas, premios y fondos.</li>
+                    <li>Tus datos personales (email, teléfono, contraseña).</li>
+                    <li>Tu historial completo de movimientos y transacciones.</li>
+                </ul>
+                <strong>Lo que compartes con tus gestores:</strong>
+                <ul>
+                    <li>La información necesaria para que operen las apuestas (monto, número, sorteo).</li>
+                    <li>La forma de pago acordada para cada transacción.</li>
+                </ul>
+                <div class="priv-box">
+                    <strong>🛡️ Cada operación es entre tú y tu gestor.</strong> La plataforma actúa únicamente como el canal tecnológico que registra y procesa las transacciones de forma segura. Nadie más interviene en la operación.
+                </div>
+                LottoBooM ofrece la misma dinámica de gestión que los grupos de WhatsApp, pero con ventajas clave: mayor rapidez, eliminación de errores humanos y actualización automática de todos los procesos.
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <div class="faq-question" onclick="toggleFAQ(this)">
+                <span>¿Quién puede ver mi información personal?</span>
+                <span class="icon">▼</span>
+            </div>
+            <div class="faq-answer">
+                Tu información personal está protegida y <strong>no se comparte con terceros</strong>. Específicamente:
+                <ul>
+                    <li><strong>Otros usuarios:</strong> nunca ven tus datos personales, jugadas, saldos ni movimientos.</li>
+                    <li><strong>Otros gestores:</strong> solo ven la información de las operaciones que realizan contigo, no de tus operaciones con otros gestores.</li>
+                    <li><strong>Tu gestor actual:</strong> ve únicamente lo necesario para operar: monto de la apuesta, número jugado, forma de pago y el resultado de la operación.</li>
+                </ul>
+                <div class="priv-box">
+                    <strong>🔐 Principio de mínimo acceso.</strong> Cada persona en la plataforma ve exclusivamente la información estrictamente necesaria para su función. Nadie tiene acceso amplio a los datos de otros usuarios.
+                </div>
+                Si deseas exportar, corregir o eliminar tu información personal, puedes solicitarlo desde tu perfil o contactar al soporte.
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <div class="faq-question" onclick="toggleFAQ(this)">
+                <span>¿LottoBooM reemplaza los grupos de WhatsApp?</span>
+                <span class="icon">▼</span>
+            </div>
+            <div class="faq-answer">
+                No. LottoBooM <strong>no pretende eliminar los vínculos de WhatsApp</strong>, ya que en ocasiones será necesario utilizarlos como canal de comunicación complementario. La plataforma ofrece una gestión más rápida y segura de sorteos, apuestas y pagos, pero la comunicación directa por WhatsApp sigue siendo útil en situaciones específicas. Ambos canales coexisten para brindar una mejor experiencia.
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <div class="faq-question" onclick="toggleFAQ(this)">
+                <span>¿Cómo puedo apoyar a LottoBooM?</span>
+                <span class="icon">▼</span>
+            </div>
+            <div class="faq-answer">
+                Los usuarios satisfechos con el servicio pueden realizar <strong>donaciones voluntarias</strong> para contribuir al mantenimiento de la plataforma, el alojamiento en servidores internacionales y la mejora continua. Las donaciones son completamente voluntarias y ayudan a garantizar la estabilidad del servicio.
+                <br><br>
+                Puedes realizar tu donación a través de los métodos de pago habilitados en la sección correspondiente.
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         CATEGORÍA 2: VISITANTES
+         ═══════════════════════════════════════════════════════════ -->
+    <div class="faq-category">
+        <h3>👤 Visitantes</h3>
+
+        <div class="faq-item">
+            <div class="faq-question" onclick="toggleFAQ(this)">
+                <span>¿Cómo me convierto en cliente de LottoBooM?</span>
+                <span class="icon">▼</span>
+            </div>
+            <div class="faq-answer">
+                Para convertirte en cliente, debes <strong>registrarte</strong> en la plataforma y luego <strong>recargar tu cuenta</strong> con un banco, comercial o superadmin en las formas de pago disponibles. Una vez que tengas saldo, podrás apostar en los sorteos asignados a tu gestor.
+                <br><br>
+                <strong>Importante:</strong> Un cliente puede tener fondos con varios comerciales, varios bancos y con la administración a la vez. Solo necesita tener fondos activos con cada uno.
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <div class="faq-question" onclick="toggleFAQ(this)">
+                <span>¿Cómo me convierto en comercial?</span>
+                <span class="icon">▼</span>
+            </div>
+            <div class="faq-answer">
+                Debes ser <strong>ascendido por un banco activo</strong>. El banco evalúa tu perfil y, si cumples con los requisitos, te asigna el rol de comercial. Una vez ascendido, podrás recargar clientes, gestionar cuadres y recibir comisiones por tus ventas.
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <div class="faq-question" onclick="toggleFAQ(this)">
+                <span>¿Cómo me convierto en banco?</span>
+                <span class="icon">▼</span>
+            </div>
+            <div class="faq-answer">
+                Debes ser <strong>recomendado por un banco o comercial activo</strong>. El equipo de administración evalúa la recomendación y, si procede, te asciende a banco con una suscripción activa y la asignación de recursos iniciales.
+                <br><br>
+                <strong>Solo los bancos pueden ascender a comerciales</strong>, y solo la administración puede ascender a bancos.
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         CATEGORÍA 3: CLIENTES
+         ═══════════════════════════════════════════════════════════ -->
+    <div class="faq-category">
+        <h3>🎯 Clientes</h3>
+
+        <div class="faq-item">
+            <div class="faq-question" onclick="toggleFAQ(this)">
+                <span>¿Cómo apuesto en LottoBooM?</span>
+                <span class="icon">▼</span>
+            </div>
+            <div class="faq-answer">
+                Para apostar necesitas saldo en alguna de las formas de pago que tu gestor tenga asignadas. Pasos:
+                <ol>
+                    <li>Ve al menú <strong>"Apostar"</strong>.</li>
+                    <li>Selecciona el <strong>sorteo</strong>.</li>
+                    <li>Elige la <strong>forma de juego</strong> (Pick 3, Fijo, Parlet, etc.).</li>
+                    <li>Ingresa el <strong>número</strong> que deseas jugar.</li>
+                    <li>Indica el <strong>monto</strong> a apostar.</li>
+                    <li>Confirma la apuesta.</li>
+                </ol>
+                La apuesta se registra en tu historial y se descuenta de tu saldo. Puedes apostar tanto como desees, siempre que tengas fondos disponibles.
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <div class="faq-question" onclick="toggleFAQ(this)">
+                <span>¿Hasta qué hora puedo apostar?</span>
+                <span class="icon">▼</span>
+            </div>
+            <div class="faq-answer">
+                Puedes apostar hasta el momento exacto en que se cierra cada sorteo. El <strong>horario de cierre</strong> aparece claramente en el panel de apuestas junto al nombre del sorteo. Una vez cerrado, no se aceptan más apuestas.
+                <br><br>
+                También puedes <strong>apostar con anticipación</strong> para sorteos futuros, seleccionando la fecha correspondiente.
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <div class="faq-question" onclick="toggleFAQ(this)">
+                <span>¿Qué son los límites de apuesta?</span>
+                <span class="icon">▼</span>
+            </div>
+            <div class="faq-answer">
+                Los bancos establecen <strong>límites de apuesta</strong> para cada comercial según los resultados de ganancia que aportan con frecuencia. Estos límites se actualizan <strong>dinámicamente</strong> según el consumo de números y formas de juego por formas de pago.
+                <br><br>
+                El sistema muestra en tiempo real el <strong>límite disponible</strong> al seleccionar un número y forma de juego. Si se completa el límite, no podrás apostar en esa combinación hasta que se reinicie.
+                <br><br>
+                Los comerciales cuentan con un <strong>sobrelímite</strong> asignado por su banco, que permite recibir apuestas más allá del límite normal. Si el sobrelímite también se agota, puedes realizar la apuesta restante con otro comercial o con la administración.
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <div class="faq-question" onclick="toggleFAQ(this)">
+                <span>¿Puedo modificar o cancelar una jugada?</span>
+                <span class="icon">▼</span>
+            </div>
+            <div class="faq-answer">
+                Sí, puedes <strong>modificar o cancelar</strong> tu jugada hasta el <strong>horario de cierre del sorteo</strong>. Una vez cerrado el sorteo, la jugada queda definitiva y no se puede modificar ni cancelar.
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <div class="faq-question" onclick="toggleFAQ(this)">
+                <span>¿Puedo apostar si no tengo fondos?</span>
+                <span class="icon">▼</span>
+            </div>
+            <div class="faq-answer">
+                No. Para poder apostar, tu cuenta debe tener <strong>fondos activos</strong> en alguna de las formas de pago disponibles. Si no te alcanza el dinero, puedes <strong>solicitar una recarga</strong> a tu comercial, banco o a la administración.
+                <br><br>
+                Si la recarga se realiza antes del cierre del sorteo, podrás completar tu jugada.
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <div class="faq-question" onclick="toggleFAQ(this)">
+                <span>¿Cómo recargo mi saldo?</span>
+                <span class="icon">▼</span>
+            </div>
+            <div class="faq-answer">
+                Para recargar tu saldo, debes contactar a tu <strong>comercial, banco o a la administración</strong>. Ellos podrán asignarte fondos en las formas de pago disponibles.
+                <br><br>
+                <strong>No hay comisiones por recarga.</strong>
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <div class="faq-question" onclick="toggleFAQ(this)">
+                <span>¿Cómo solicito el cobro de un premio?</span>
+                <span class="icon">▼</span>
+            </div>
+            <div class="faq-answer">
+                Si tu apuesta resulta ganadora, recibirás una notificación y el premio aparecerá en tu lista de premios. Para cobrarlo:
+                <ol>
+                    <li>Solicita el cobro al <strong>comercial, banco o administración</strong> que tramitó la apuesta.</li>
+                    <li>Ellos gestionarán el pago de la parte del fondo correspondiente.</li>
+                    <li>El pago se acredita en la forma de pago que tengas activa.</li>
+                </ol>
+                La demora depende de con quién hayas apostado y del valor del premio. Si hay resultados incorrectos, al actualizarse se recalculan los premios y se reactualizan los fondos.
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <div class="faq-question" onclick="toggleFAQ(this)">
+                <span>¿Cómo veo mis apuestas y premios?</span>
+                <span class="icon">▼</span>
+            </div>
+            <div class="faq-answer">
+                Puedes ver el historial completo de tus apuestas en <strong>"Mis Apuestas"</strong>, filtrando por estado (pendiente, ganadora, perdedora). Tus premios obtenidos aparecen en <strong>"Mis Premios"</strong>.
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         CATEGORÍA 4: COMERCIALES
+         ═══════════════════════════════════════════════════════════ -->
+    <div class="faq-category">
+        <h3>📈 Comerciales</h3>
+
+        <div class="faq-item">
+            <div class="faq-question" onclick="toggleFAQ(this)">
+                <span>¿Cómo recargo a mis clientes?</span>
+                <span class="icon">▼</span>
+            </div>
+            <div class="faq-answer">
+                Desde el menú <strong>"Recargar Cliente"</strong>, selecciona el cliente, la forma de pago y el monto. La recarga se acredita automáticamente al saldo del cliente y queda registrada en tu cuadre diario.
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <div class="faq-question" onclick="toggleFAQ(this)">
+                <span>¿Qué son los cuadres diarios?</span>
+                <span class="icon">▼</span>
+            </div>
+            <div class="faq-answer">
+                Los cuadres diarios son el resumen de todas tus operaciones del día:
+                <ul>
+                    <li><strong>Ventas:</strong> total de apuestas recibidas.</li>
+                    <li><strong>Comisiones:</strong> porcentaje que te corresponde por cada venta.</li>
+                    <li><strong>Premios pagados:</strong> montos entregados a clientes ganadores.</li>
+                    <li><strong>Movimientos de envío/recepción</strong> de fondos con tu banco.</li>
+                </ul>
+                En <strong>"Mis Cuadres"</strong> puedes ver el detalle de cada día y el <strong>fondo final</strong>, que coincide con el fondo inicial del día siguiente.
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <div class="faq-question" onclick="toggleFAQ(this)">
+                <span>¿Cómo veo mis comisiones?</span>
+                <span class="icon">▼</span>
+            </div>
+            <div class="faq-answer">
+                <!-- FIX_COMISIONES_V1 -->
+                Tus comisiones se calculan automáticamente como un <strong>porcentaje de cada venta</strong> que gestionas, sobre el <strong>total bruto del día</strong>.
+                <br><br>
+                <strong>¿Quién define el porcentaje?</strong>
+                <ul>
+                    <li>Si eres <strong>comercial</strong>, el % te lo define tu <strong>banco</strong>.</li>
+                    <li>Si eres <strong>banco</strong>, tú mismo te asignas el % de tus <strong>ventas directas</strong>. Puedes ponerlo en 0% si lo prefieres.</li>
+                    <li>La <strong>administración (Superadmin)</strong> no recibe comisiones.</li>
+                </ul>
+                <strong>Importante:</strong> el banco <strong>NO recibe un % automático</strong> de las ventas de sus comerciales. Los fondos que el banco recibe de sus comerciales son <strong>transferencias directas</strong> que el comercial envía al banco, no comisiones automáticas.
+                <br><br>
+                Puedes ver el total de comisiones acumuladas en tu <strong>"Panel Comercial"</strong> y el detalle en cada cuadre diario.
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <div class="faq-question" onclick="toggleFAQ(this)">
+                <span>¿Cómo puedo aumentar mis comisiones?</span>
+                <span class="icon">▼</span>
+            </div>
+            <div class="faq-answer">
+                <strong>Aumentando tus ventas.</strong> Cuantas más apuestas gestiones, mayores serán tus comisiones. Trabaja con tus clientes para fomentar su participación.
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         CATEGORÍA 5: BANCOS
+         ═══════════════════════════════════════════════════════════ -->
+    <div class="faq-category">
+        <h3>🏦 Bancos</h3>
+
+        <div class="faq-item">
+            <div class="faq-question" onclick="toggleFAQ(this)">
+                <span>¿Cómo funciona mi suscripción como banco?</span>
+                <span class="icon">▼</span>
+            </div>
+            <div class="faq-answer">
+                Tu suscripción define el <strong>período de actividad</strong> de tu cuenta. Debes pagar una cuota (mensual, diaria o por uso) para mantener activa tu cuenta y la de tus comerciales.
+                <br><br>
+                Puedes ver el estado, vencimiento y monto pendiente en <strong>"Mi Suscripción"</strong>.
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <div class="faq-question" onclick="toggleFAQ(this)">
+                <span>¿Cómo asigno recursos a mis comerciales?</span>
+                <span class="icon">▼</span>
+            </div>
+            <div class="faq-answer">
+                Desde <strong>"Asignar Recursos"</strong>, selecciona qué sorteos, formas de juego y formas de pago tendrán disponibles tus comerciales.
+                <br><br>
+                <strong>Importante:</strong> Solo puedes asignar recursos que te hayan sido asignados previamente a ti.
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <div class="faq-question" onclick="toggleFAQ(this)">
+                <span>¿Cómo asciendo un usuario a comercial?</span>
+                <span class="icon">▼</span>
+            </div>
+            <div class="faq-answer">
+                Desde <strong>"Ascender Usuario"</strong>, selecciona un cliente y asígnale el rol de comercial. El usuario queda subordinado a tu banco y puede comenzar a gestionar clientes.
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <div class="faq-question" onclick="toggleFAQ(this)">
+                <span>¿Cómo gestiono los límites de mis comerciales?</span>
+                <span class="icon">▼</span>
+            </div>
+            <div class="faq-answer">
+                Puedes gestionar los límites de apuesta de tus comerciales desde tu panel de banco, ajustando los valores según el rendimiento y las necesidades de tu red.
+                <br><br>
+                Los límites se actualizan dinámicamente según el consumo de números y formas de juego.
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         CATEGORÍA 6: PRÉSTAMOS
+         ═══════════════════════════════════════════════════════════ -->
+    <div class="faq-category">
+        <h3>💰 Préstamos</h3>
+
+        <div class="faq-item">
+            <div class="faq-question" onclick="toggleFAQ(this)">
+                <span>¿Cómo funcionan los préstamos entre clientes?</span>
+                <span class="icon">▼</span>
+            </div>
+            <div class="faq-answer">
+                Los clientes pueden solicitar préstamos solo a otros clientes que <strong>compartan el mismo comercial</strong>. No es posible solicitar préstamos a clientes de comerciales distintos.
+                <br><br>
+                <strong>Proceso:</strong>
+                <ol>
+                    <li>Ve a <strong>"Solicitar Préstamo"</strong>.</li>
+                    <li>Selecciona el cliente prestamista.</li>
+                    <li>Indica el monto y el motivo.</li>
+                    <li>El prestamista recibe una notificación para aprobar o rechazar.</li>
+                </ol>
+                <strong>Reglas:</strong>
+                <ul>
+                    <li>No es posible solicitar préstamos si tienes fondos en la forma de pago en la que deseas solicitar.</li>
+                    <li>El préstamo se descuenta inmediatamente al recargar tu cuenta.</li>
+                    <li>Se abona automáticamente al fondo en la forma de pago en que recibiste el préstamo.</li>
+                    <li>Ambos reciben la notificación correspondiente.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════
+     CATEGORÍA 6.5: POSTPAGO
+     FIX_POSTPAGO_V1
+     ═══════════════════════════════════════════════════════════ -->
+    <div class="faq-category">
+        <h3>💳 Postpago</h3>
+
+        <div class="faq-item">
+            <div class="faq-question" onclick="toggleFAQ(this)">
+                <span>¿Qué es el postpago?</span>
+                <span class="icon">▼</span>
+            </div>
+            <div class="faq-answer">
+                El postpago es un <strong>crédito</strong> que tu gestor (comercial o banco) te asigna cuando necesitas apostar y te has quedado sin saldo. Funciona como un <strong>préstamo de juego</strong>.
+                <br><br>
+                <strong>Características principales:</strong>
+                <ul>
+                    <li>Lo usas para <strong>apostar</strong> cuando el fondo y los bonos no alcanzan.</li>
+                    <li><strong>No vence</strong> mientras esté activo.</li>
+                    <li>Se <strong>descuenta automáticamente</strong> cuando:
+                        <ul>
+                            <li>Recibes una <strong>recarga</strong> de ese gestor</li>
+                            <li>Cobras un <strong>premio</strong> ganado con ese gestor</li>
+                        </ul>
+                    </li>
+                    <li>Está <strong>directamente ligado al gestor que lo otorgó</strong>.</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <div class="faq-question" onclick="toggleFAQ(this)">
+                <span>¿Cómo funciona el descuento del postpago?</span>
+                <span class="icon">▼</span>
+            </div>
+            <div class="faq-answer">
+                El postpago se descuenta <strong>automáticamente</strong> en dos situaciones:
+                <br><br>
+                <strong>1. Al recibir una recarga</strong>
+                <br>
+                Si tienes postpago pendiente con un gestor y ese mismo gestor te recarga, el monto de la recarga se usa primero para <strong>pagar el postpago</strong>. Lo que sobra se acredita a tu fondo.
+                <br><br>
+                <strong>2. Al cobrar un premio</strong>
+                <br>
+                Si ganas con ese gestor y cobras el premio, el monto del premio se usa primero para <strong>pagar el postpago</strong>. Lo que sobra se acredita a tu fondo.
+                <br><br>
+                <strong>Importante:</strong> el postpago está ligado <strong>al gestor específico que lo otorgó</strong>. Si tienes postpago con el gestor A y recargas con el gestor B, el postpago con A <strong>no se descuenta</strong>.
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <div class="faq-question" onclick="toggleFAQ(this)">
+                <span>¿Cómo obtengo un postpago?</span>
+                <span class="icon">▼</span>
+            </div>
+            <div class="faq-answer">
+                El postpago lo <strong>asigna tu gestor</strong>. No puedes solicitarlo tú directamente desde la plataforma.
+                <br><br>
+                Es una <strong>herramienta de confianza</strong> entre tú y tu gestor: él decide cuándo asignártelo, por cuánto monto y bajo qué condiciones.
+                <br><br>
+                Si necesitas un postpago, <strong>contacta a tu comercial o banco</strong> y explícale tu situación.
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <div class="faq-question" onclick="toggleFAQ(this)">
+                <span>¿Puedo tener postpago con varios gestores?</span>
+                <span class="icon">▼</span>
+            </div>
+            <div class="faq-answer">
+                <strong>Sí.</strong> Cada postpago es independiente y está ligado al gestor que lo otorgó.
+                <br><br>
+                Por ejemplo:
+                <ul>
+                    <li>Si tienes <strong>$100 de postpago con el gestor A</strong> y <strong>$50 con el gestor B</strong>, son dos deudas separadas.</li>
+                    <li>Al recargar con A, se descuenta de la deuda con A.</li>
+                    <li>Al recargar con B, se descuenta de la deuda con B.</li>
+                    <li>Las deudas <strong>no se mezclan ni se transfieren</strong> entre gestores.</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <div class="faq-question" onclick="toggleFAQ(this)">
+                <span>¿Dónde puedo ver mi postpago pendiente?</span>
+                <span class="icon">▼</span>
+            </div>
+            <div class="faq-answer">
+                Puedes ver tu postpago pendiente en:
+                <ul>
+                    <li>El <strong>footer del panel de apuestas</strong> ("Postpago: $X.XX").</li>
+                    <li>Tu <strong>perfil de usuario</strong> en la sección de saldos.</li>
+                    <li>La sección <strong>"Mis Postpagos"</strong> (si tu cuenta la muestra).</li>
+                </ul>
+                Ahí verás el monto total, el gestor que lo otorgó y el saldo pendiente.
+            </div>
+        </div>
+    </div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     CATEGORÍA 7: BONIFICACIÓN
+     FIX_BONOS_V1
+     ═══════════════════════════════════════════════════════════ -->
+    <div class="faq-category">
+        <h3>🎁 Sistema de Bonificación</h3>
+
+        <div class="faq-item">
+            <div class="faq-question" onclick="toggleFAQ(this)">
+                <span>¿Qué son los bonos y cómo funcionan?</span>
+                <span class="icon">▼</span>
+            </div>
+            <div class="faq-answer">
+                Los bonos son <strong>incentivos económicos</strong> que LottoBooM otorga para fomentar el registro y la recomendación de nuevos miembros. Funcionan como un <strong>saldo adicional</strong> que se suma a tu cuenta.
+                <br><br>
+                <strong>Reglas fundamentales:</strong>
+                <ul>
+                    <li>Son <strong>exclusivos para clientes</strong>. Si ascendés a comercial o banco, se anulan automáticamente.</li>
+                    <li><strong>No son transferibles</strong> a otro usuario ni a otro gestor.</li>
+                    <li><strong>No son cobrables.</strong> No se convierten a dinero real.</li>
+                    <li>Son <strong>acumulativos</strong>: podés tener varios bonos activos a la vez.</li>
+                    <li>Se usan para <strong>pagar jugadas cuando el fondo de tarjeta no alcanza</strong>.</li>
+                    <li>Para consumirlos, <strong>primero debés haber realizado otras apuestas</strong>.</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <div class="faq-question" onclick="toggleFAQ(this)">
+                <span>¿Qué tipos de bonos existen y cuánto vale cada uno?</span>
+                <span class="icon">▼</span>
+            </div>
+            <div class="faq-answer">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Bono</th>
+                            <th>Quién lo recibe</th>
+                            <th>Monto</th>
+                            <th>Se consume con</th>
+                            <th>Vence</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Registro</strong></td>
+                            <td>Cliente nuevo</td>
+                            <td>$50</td>
+                            <td>Superadmin</td>
+                            <td>Sí, 15 días</td>
+                        </tr>
+                        <tr>
+                            <td rowspan="2"><strong>Referido por cliente</strong></td>
+                            <td>Cliente nuevo</td>
+                            <td>$25</td>
+                            <td>Superadmin</td>
+                            <td>Sí, 15 días</td>
+                        </tr>
+                        <tr>
+                            <td>Cliente que refirió</td>
+                            <td>$25</td>
+                            <td>Superadmin</td>
+                            <td>Sí, 15 días</td>
+                        </tr>
+                        <tr>
+                            <td rowspan="2"><strong>Referido por gestor</strong></td>
+                            <td>Cliente nuevo</td>
+                            <td>$25</td>
+                            <td>El gestor que dio el enlace</td>
+                            <td>No</td>
+                        </tr>
+                        <tr>
+                            <td>Gestor que refirió</td>
+                            <td>$25</td>
+                            <td>Él mismo</td>
+                            <td>No</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <br>
+                <strong>Diferencia clave:</strong> los bonos generados por un <strong>cliente</strong> vencen a los 15 días y se consumen a través del Superadmin. Los bonos generados por un <strong>gestor</strong> (comercial o banco) <strong>no vencen</strong> y se consumen con ese mismo gestor.
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <div class="faq-question" onclick="toggleFAQ(this)">
+                <span>¿Cómo se consumen mis bonos?</span>
+                <span class="icon">▼</span>
+            </div>
+            <div class="faq-answer">
+                <strong>Requisito previo:</strong> solo podés usar tus bonos <strong>después de haber realizado al menos una apuesta</strong>. No se activan automáticamente al registrarte.
+                <br><br>
+                <strong>Uso automático al apostar:</strong>
+                <ol>
+                    <li>Hacés una apuesta normalmente.</li>
+                    <li>El sistema descuenta primero del <strong>fondo de tarjeta</strong>.</li>
+                    <li>Si el fondo no alcanza, se usa <strong>automáticamente el bono</strong> para completar el monto.</li>
+                    <li>Si hay varios bonos activos, se descuenta primero <strong>el que vence antes</strong> (para que no pierdas ninguno por vencimiento).</li>
+                </ol>
+                <br>
+                <strong>¿Con quién se consume?</strong>
+                <ul>
+                    <li><strong>Bonos de registro</strong> y <strong>de referidos por cliente:</strong> con el Superadmin.</li>
+                    <li><strong>Bonos de referidos por gestor:</strong> con el gestor que te dio el enlace.</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <div class="faq-question" onclick="toggleFAQ(this)">
+                <span>¿Puedo perder mi bono?</span>
+                <span class="icon">▼</span>
+            </div>
+            <div class="faq-answer">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Causa</th>
+                            <th>Descripción</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Expirado</strong></td>
+                            <td>Los bonos de <strong>registro</strong> y de <strong>referido por cliente</strong> vencen a los <strong>15 días</strong>. Los bonos de <strong>referido por gestor</strong> no vencen.</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Ascenso de rol</strong></td>
+                            <td>Si sos ascendido a comercial o banco, tus bonos de cliente se anulan automáticamente.</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Bloqueo</strong></td>
+                            <td>Si el sistema detecta un uso indebido.</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Cancelación</strong></td>
+                            <td>Si el Superadmin decide cancelarlo por incumplimiento de normas.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <div class="faq-question" onclick="toggleFAQ(this)">
+                <span>¿Dónde puedo ver el estado de mis bonos?</span>
+                <span class="icon">▼</span>
+            </div>
+            <div class="faq-answer">
+                En tu <strong>perfil de usuario</strong> o en tu <strong>dashboard</strong> aparecerán:
+                <ul>
+                    <li>El tipo de bono (registro o referido).</li>
+                    <li>El monto total y el saldo restante.</li>
+                    <li>El estado (activo, consumido, expirado).</li>
+                    <li>La fecha de vencimiento (si aplica).</li>
+                    <li>Con quién se consume (Superadmin o gestor específico).</li>
+                </ul>
+                También recibirás <strong>notificaciones</strong> sobre la asignación, cumplimiento y expiración de bonos.
+            </div>
+        </div>
+    </div>
+
+<!-- ═══════════════════════════════════════════════════════════
+         CATEGORÍA 8: NOTIFICACIONES
+         ═══════════════════════════════════════════════════════════ -->
+    <div class="faq-category">
+        <h3>🔔 Notificaciones y Configuración</h3>
+
+        <div class="faq-item">
+            <div class="faq-question" onclick="toggleFAQ(this)">
+                <span>¿Qué tipo de notificaciones recibiré?</span>
+                <span class="icon">▼</span>
+            </div>
+            <div class="faq-answer">
+                Recibirás notificaciones referentes a los procesos que ejecutes en la plataforma:
+                <ul>
+                    <li>Confirmación de apuestas.</li>
+                    <li>Recargas de saldo.</li>
+                    <li>Premios obtenidos.</li>
+                    <li>Cambios de estado de tus jugadas.</li>
+                    <li>Vencimientos de suscripción (si eres banco).</li>
+                </ul>
+                Las notificaciones son <strong>meramente informativas</strong> y puedes consultarlas en el panel de notificaciones, donde puedes marcarlas como leídas o no.
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <div class="faq-question" onclick="toggleFAQ(this)">
+                <span>¿Puedo cambiar mi perfil sin perder mis datos?</span>
+                <span class="icon">▼</span>
+            </div>
+            <div class="faq-answer">
+                Sí. Todos los cambios que realices en tu perfil <strong>no te desvincularán de tu cuenta</strong>, ni de tus fondos, ni de tu comercial o banco. Además, el sistema notificará esos cambios para mantenerte informado.
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <div class="faq-question" onclick="toggleFAQ(this)">
+                <span>¿Puedo eliminar mi cuenta?</span>
+                <span class="icon">▼</span>
+            </div>
+            <div class="faq-answer">
+                Sí, si tus fondos están completamente en <strong>$0</strong>, puedes eliminar tu cuenta si lo deseas.
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         CATEGORÍA 9: AUDITORÍA Y TRANSPARENCIA
+         ═══════════════════════════════════════════════════════════ -->
+    <div class="faq-category">
+        <h3>🔍 Auditoría y Transparencia</h3>
+
+        <div class="faq-item">
+            <div class="faq-question" onclick="toggleFAQ(this)">
+                <span>¿Cómo puedo ver mi historial completo de transacciones?</span>
+                <span class="icon">▼</span>
+            </div>
+            <div class="faq-answer">
+                Puedes consultar tu historial de <strong>apuestas, movimientos de fondos, cuadres y premios</strong> desde tu propia cuenta. El sistema cuenta con historiales detallados que esperamos cumplan con tus expectativas de auditoría.
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <div class="faq-question" onclick="toggleFAQ(this)">
+                <span>¿Qué pasa si hay un error en un resultado?</span>
+                <span class="icon">▼</span>
+            </div>
+            <div class="faq-answer">
+                Si hay resultados incorrectos, al actualizarse se <strong>recalculan los premios</strong> y se <strong>reactualizan los fondos</strong> automáticamente.
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <div class="faq-question" onclick="toggleFAQ(this)">
+                <span>¿Cómo se gestionan los premios no pagados?</span>
+                <span class="icon">▼</span>
+            </div>
+            <div class="faq-answer">
+                Los premios no pagados se reclaman al <strong>mismo comercial o banco</strong> con quien realizaste la apuesta.
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         CATEGORÍA 10: FORMAS DE JUEGO
+         ═══════════════════════════════════════════════════════════ -->
+    <div class="faq-category">
+        <h3>🎲 Formas de Juego</h3>
+
+        <div class="faq-item">
+            <div class="faq-question" onclick="toggleFAQ(this)">
+                <span>¿Qué son las formas de juego y cuáles existen?</span>
+                <span class="icon">▼</span>
+            </div>
+            <div class="faq-answer">
+                Las formas de juego son las diferentes maneras de apostar en un sorteo. Cada una tiene sus propias reglas y condiciones de premio. La disponibilidad depende de lo que tu banco o comercial tenga asignado.
+                <br><br>
+                <strong>Pick 2, Pick 3, Pick 4, Pick 5:</strong> Eliges un número de 2, 3, 4 o 5 dígitos. Ganas si coincide exactamente con el número ganador.
+                <br><br>
+                <strong>Fijo:</strong> Eliges un número de 2 dígitos (00-99). Ganas si el número sale en el sorteo.
+                <br><br>
+                <strong>Corrido (Corrido 1, Corrido 2):</strong> Eliges un número de 2 dígitos que cubre varias combinaciones. Se pagan una vez y existen dos probabilidades de ganar; el pago es menor que en Fijo.
+                <br><br>
+                <strong>Centena Corrida 1 y 2:</strong> Eliges un número de 3 dígitos. Centena Corrida 1: todas las combinaciones posibles. Centena Corrida 2: combinaciones adicionales.
+                <br><br>
+                <strong>Parlet:</strong> Eliges dos números de 2 dígitos (ej: 12 x 34). Se gana si ambos números salen en el sorteo. Si en una jugada existe un número repetido y se corresponde con uno de los parlet, se paga ese parlet doble. Pero si sale un número doble y no está doble en la jugada, no tiene ese premio doble.
+                <br><br>
+                <strong>PF (Par Frontal):</strong> Son los dos primeros dígitos del Pick 3. Se paga idéntico al Fijo y Pick 2.
+                <br><br>
+                <strong>Posiciones:</strong> Se escogen 3 números de 2 dígitos. Si en la posición que el cliente puso el primero sale fijo, gana; si en la segunda posición sale el primer corrido, tiene premio; igual para la tercera. Multiplica las posibilidades de ganar 3 veces un número por su posición.
+                <br><br>
+                <strong>Tripleta:</strong> Se aciertan los tres números y se es ganador de ese tipo de forma de juego.
+                <br><br>
+                <strong>Super Parlet:</strong> Es el parlet que se forma entre el fijo de dos loterías específicas seleccionadas. Si salen los dos números en las loterías seleccionadas como fijo, tiene el super. Si el número se repite, no es ganador.
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         CATEGORÍA 11: SOBRELÍMITES
+         ═══════════════════════════════════════════════════════════ -->
+    <div class="faq-category">
+        <h3>📊 Sobrelímites</h3>
+
+        <div class="faq-item">
+            <div class="faq-question" onclick="toggleFAQ(this)">
+                <span>¿Qué es un sobrelímite?</span>
+                <span class="icon">▼</span>
+            </div>
+            <div class="faq-answer">
+                Un sobrelímite es un <strong>monto adicional</strong> que un banco otorga a un comercial para que pueda seguir recibiendo apuestas <strong>más allá del límite normal</strong> establecido para una combinación de sorteo, forma de juego y forma de pago.
+                <br><br>
+                Cuando el límite normal se agota, el sistema automáticamente utiliza el sobrelímite disponible. Si el sobrelímite también se agota, el cliente debe optar por otro comercial, banco o la administración.
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <div class="faq-question" onclick="toggleFAQ(this)">
+                <span>¿Cómo se solicita un sobrelímite?</span>
+                <span class="icon">▼</span>
+            </div>
+            <div class="faq-answer">
+                La solicitud de sobrelímite es un proceso automático que se activa cuando un cliente intenta apostar una cantidad que supera el límite disponible en ese momento. El sistema genera una <strong>solicitud de sobrelímite</strong> que queda en estado <strong>"pendiente"</strong>.
+                <br><br>
+                El comercial o banco correspondiente recibe una notificación para <strong>autorizar o rechazar</strong> la solicitud. Si se autoriza, la jugada se confirma por el monto excedido. Si se rechaza, la jugada se ajusta al límite permitido o se cancela.
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <div class="faq-question" onclick="toggleFAQ(this)">
+                <span>¿Qué ocurre si el sobrelímite no es suficiente?</span>
+                <span class="icon">▼</span>
+            </div>
+            <div class="faq-answer">
+                Si el sobrelímite también se agota, la solicitud queda en estado <strong>"pendiente"</strong> y se puede <strong>compensar</strong> con otro banco o con la administración. El comercial o banco puede solicitar compensación a otro banco con disponibilidad, y si este la acepta, la jugada se confirma. Si no se encuentra compensación, la apuesta se rechaza.
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <div class="faq-question" onclick="toggleFAQ(this)">
+                <span>¿Cómo veo mis solicitudes de sobrelímite?</span>
+                <span class="icon">▼</span>
+            </div>
+            <div class="faq-answer">
+                Comerciales, bancos y administración tienen acceso al <strong>"Panel de Sobrelímites"</strong>, donde pueden ver todas las solicitudes pendientes, aprobadas y rechazadas, con detalles de fechas, montos y estados.
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         CATEGORÍA 12: VÍAS DE PAGO
+         ═══════════════════════════════════════════════════════════ -->
+    <div class="faq-category">
+        <h3>💳 Vías de Pago</h3>
+
+        <div class="faq-item">
+            <div class="faq-question" onclick="toggleFAQ(this)">
+                <span>¿Qué son las vías de pago?</span>
+                <span class="icon">▼</span>
+            </div>
+            <div class="faq-answer">
+                Las vías de pago son los <strong>canales o destinos</strong> a través de los cuales un gestor (comercial, banco) puede <strong>recibir o enviar dinero</strong> a sus clientes. Pueden ser cuentas bancarias, tarjetas, monederos electrónicos, efectivo, criptomonedas, etc.
+                <br><br>
+                Cada gestor puede tener <strong>una o varias vías de pago</strong> para cada forma de pago. Una de ellas puede marcarse como <strong>"por defecto"</strong> para agilizar los procesos.
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <div class="faq-question" onclick="toggleFAQ(this)">
+                <span>¿Cómo registro una nueva vía de pago?</span>
+                <span class="icon">▼</span>
+            </div>
+            <div class="faq-answer">
+                Los gestores (comerciales y bancos) pueden registrar vías de pago desde su panel, en la sección <strong>"Mis Vías de Pago"</strong>. Allí podrán añadir:
+                <ul>
+                    <li>El tipo de vía (tarjeta, cuenta, monedero, etc.).</li>
+                    <li>Un nombre o alias identificativo.</li>
+                    <li>El número de cuenta, tarjeta o dirección del monedero.</li>
+                    <li>Información adicional en formato JSON (opcional).</li>
+                    <li>Un contacto para notificaciones (teléfono o email).</li>
+                </ul>
+                Una vez guardada, la vía estará disponible para ser seleccionada al aceptar solicitudes de recarga o cobro.
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <div class="faq-question" onclick="toggleFAQ(this)">
+                <span>¿Puedo tener varias vías de pago para la misma forma de pago?</span>
+                <span class="icon">▼</span>
+            </div>
+            <div class="faq-answer">
+                Sí, un gestor puede tener <strong>múltiples vías</strong> para la misma forma de pago. Sin embargo, solo una de ellas puede ser la <strong>vía por defecto</strong> para esa forma de pago.
+                <br><br>
+                Al marcar una vía como "por defecto", las demás se desmarcan automáticamente.
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <div class="faq-question" onclick="toggleFAQ(this)">
+                <span>¿Los clientes pueden ver mis vías de pago?</span>
+                <span class="icon">▼</span>
+            </div>
+            <div class="faq-answer">
+                No directamente. Las vías de pago son solo visibles para el gestor que las crea. Cuando un cliente solicita una recarga o un cobro, el gestor selecciona internamente una de sus vías para completar la operación. El cliente recibe la notificación correspondiente, pero no ve los datos completos de la vía (por seguridad).
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         CATEGORÍA 13: RECARGAS Y COBROS (GESTOR)
+         ═══════════════════════════════════════════════════════════ -->
+    <div class="faq-category">
+        <h3>🔄 Gestión de Recargas y Cobros</h3>
+
+        <div class="faq-item">
+            <div class="faq-question" onclick="toggleFAQ(this)">
+                <span>¿Cómo recibo una solicitud de recarga?</span>
+                <span class="icon">▼</span>
+            </div>
+            <div class="faq-answer">
+                Cuando un cliente solicita una recarga, el gestor recibe una <strong>notificación</strong> y ve la solicitud en la sección <strong>"Gestionar Recargas"</strong>. Allí puede ver los detalles: cliente solicitante, forma de pago, monto y mensaje del cliente (opcional).
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <div class="faq-question" onclick="toggleFAQ(this)">
+                <span>¿Qué hago después de aceptar una recarga?</span>
+                <span class="icon">▼</span>
+            </div>
+            <div class="faq-answer">
+                Después de aceptar una recarga, el gestor debe <strong>confirmar el pago</strong> (indicar que ya recibió el dinero del cliente). Esto se hace desde la misma solicitud, seleccionando la vía de pago correspondiente y registrando el monto abonado.
+                <br><br>
+                Una vez confirmado, el sistema <strong>acredita automáticamente</strong> el monto en el fondo del cliente en la forma de pago seleccionada, y envía una notificación al cliente.
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <div class="faq-question" onclick="toggleFAQ(this)">
+                <span>¿Cómo gestiono una solicitud de cobro de premio?</span>
+                <span class="icon">▼</span>
+            </div>
+            <div class="faq-answer">
+                Los clientes pueden solicitar cobro de premios (cuando tienen fondos a su favor). El gestor recibe la solicitud en <strong>"Gestionar Cobros"</strong>. Allí puede:
+                <ol>
+                    <li><strong>Aceptar</strong> la solicitud: se confirma el cobro y se selecciona la vía de pago.</li>
+                    <li><strong>Rechazar</strong> la solicitud (con motivo).</li>
+                </ol>
+                Al aceptar, el gestor debe <strong>confirmar el pago</strong> (indicar que ya pagó al cliente). El sistema entonces descuenta el monto del fondo del cliente y registra la transacción.
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <div class="faq-question" onclick="toggleFAQ(this)">
+                <span>¿Qué vías de pago puedo usar para pagar o recibir?</span>
+                <span class="icon">▼</span>
+            </div>
+            <div class="faq-answer">
+                Solo puedes usar <strong>tus propias vías de pago registradas</strong>. Al aceptar una recarga o cobro, el sistema te mostrará las vías que hayas creado para la forma de pago solicitada, y podrás elegir la que prefieras (por defecto se mostrará la marcada como "por defecto").
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         CATEGORÍA 14: CUADRE DIARIO
+         ═══════════════════════════════════════════════════════════ -->
+    <div class="faq-category">
+        <h3>📒 Cuadre Diario</h3>
+
+        <div class="faq-item">
+            <div class="faq-question" onclick="toggleFAQ(this)">
+                <span>¿Qué información incluye el cuadre diario?</span>
+                <span class="icon">▼</span>
+            </div>
+            <div class="faq-answer">
+                El cuadre diario es el <strong>resumen de todas las operaciones</strong> de un usuario en un día determinado. Incluye:
+                <ul>
+                    <li><strong>Fondos iniciales:</strong> saldo en cada forma de pago al inicio del día.</li>
+                    <li><strong>Ajustes:</strong> modificaciones manuales realizadas por el usuario o su banco.</li>
+                    <li><strong>Envíos al banco:</strong> montos enviados al banco.</li>
+                    <li><strong>Recibido del banco:</strong> montos recibidos del banco.</li>
+                    <li><strong>Deuda total:</strong> suma de deudas pendientes al cierre.</li>
+                    <li><strong>Pagado:</strong> total pagado en deudas durante el día.</li>
+                    <li><strong>Fondos finales:</strong> saldo resultante al cierre.</li>
+                </ul>
+                Todo se desglosa por forma de pago.
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <div class="faq-question" onclick="toggleFAQ(this)">
+                <span>¿Cómo se calcula el fondo final?</span>
+                <span class="icon">▼</span>
+            </div>
+            <div class="faq-answer">
+                El fondo final se calcula automáticamente con la fórmula:
+                <br><br>
+                <!-- FIX_FAQ_CUADRE_V1 -->
+                <strong>Fondo Final = Fondo Inicial + Limpio</strong>
+                <br><br>
+                Donde <strong>Limpio</strong> por cada forma de pago es:
+                <br>
+                <code style="display:block;background:#f1f5f9;padding:10px;border-radius:8px;margin:8px 0;">
+                  Limpio = Ventas − Comisión − Premios + Recibí − Envié + Ajuste
+                </code>
+                <br>
+                <strong>Ejemplo:</strong>
+                <br>
+                Un comercial con comisión 15%, en la forma de pago Tarjeta:
+                <ul>
+                    <li>Fondo Inicial: $1,000</li>
+                    <li>Ventas: +$500</li>
+                    <li>Comisión (15%): −$75</li>
+                    <li>Premios: −$200</li>
+                    <li>Recibí del banco: +$100</li>
+                    <li>Envié al banco: −$300</li>
+                    <li>Ajuste: +$50</li>
+                </ul>
+                Limpio = 500 − 75 − 200 + 100 − 300 + 50 = <strong>$75</strong>
+                <br>
+                Fondo Final = 1000 + 75 = <strong>$1,075</strong>
+                <br><br>
+                <strong>Importante:</strong> el Fondo Final de hoy se convierte automáticamente
+                en el Fondo Inicial de mañana. Los fondos negativos se arrastran tal cual
+                (si la cantidad de premios supera las ventas del día).
+                <br><br>
+                <strong>Cierre automático:</strong> cada cuadre se cierra automáticamente
+                a las <strong>06:00 AM del día siguiente</strong>. Una vez cerrado, no se
+                puede modificar.
+                <br><br>
+                <strong>Transferencias:</strong> el banco puede agregar, modificar o eliminar
+                transferencias (Recibí / Envié / Ajuste) con sus comerciales. Los comerciales
+                solo ven sus propias transferencias, no las de otros.
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <div class="faq-question" onclick="toggleFAQ(this)">
+                <span>¿Puedo editar un cuadre después de cerrado?</span>
+                <span class="icon">▼</span>
+            </div>
+            <div class="faq-answer">
+                No. Una vez que un cuadre está <strong>cerrado</strong>, no se puede modificar. Solo los bancos y la administración pueden cerrar cuadres. Si hay errores después del cierre, se deben realizar ajustes en el cuadre del día siguiente.
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <div class="faq-question" onclick="toggleFAQ(this)">
+                <span>¿Cómo veo el cuadre de un comercial como banco?</span>
+                <span class="icon">▼</span>
+            </div>
+            <div class="faq-answer">
+                Como banco, puedes acceder al <strong>"Historial de Cuadres"</strong> y filtrar por el comercial que te interese. Allí podrás ver todos sus cuadres y acceder al detalle de cada uno. También puedes editar (si no está cerrado) o cerrar el cuadre del comercial.
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         CATEGORÍA 15: ESTRUCTURA DE RED
+         ═══════════════════════════════════════════════════════════ -->
+    <div class="faq-category">
+        <h3>🌐 Estructura de Red</h3>
+
+        <div class="faq-item">
+            <div class="faq-question" onclick="toggleFAQ(this)">
+                <span>¿Cómo se organiza la jerarquía en LottoBooM?</span>
+                <span class="icon">▼</span>
+            </div>
+            <div class="faq-answer">
+                La plataforma tiene una estructura jerárquica clara:
+                <ul>
+                    <li><strong>Administración:</strong> gestiona la plataforma, ascensos a bancos, suscripciones y soporte.</li>
+                    <li><strong>Banco:</strong> tiene suscripción, puede ascender comerciales, asignar recursos y gestionar su red.</li>
+                    <li><strong>Comercial:</strong> depende de un banco, gestiona clientes, recibe comisiones.</li>
+                    <li><strong>Cliente:</strong> usuario final, apuesta, recarga, cobra premios.</li>
+                </ul>
+                Las relaciones se registran en los modelos <strong>Subordinacion</strong>, <strong>Rol</strong> y <strong>RelacionClienteGestor</strong>.
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <div class="faq-question" onclick="toggleFAQ(this)">
+                <span>¿Puedo tener múltiples bancos o comerciales?</span>
+                <span class="icon">▼</span>
+            </div>
+            <div class="faq-answer">
+                <strong>Sí.</strong> Un cliente puede tener fondos con varios comerciales y varios bancos a la vez. Cada gestor puede tener sus propios límites, formas de pago y condiciones.
+                <br><br>
+                Un banco puede tener múltiples comerciales subordinados, y un comercial puede tener múltiples clientes.
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <div class="faq-question" onclick="toggleFAQ(this)">
+                <span>¿Cómo se asignan los recursos en la red?</span>
+                <span class="icon">▼</span>
+            </div>
+            <div class="faq-answer">
+                La administración asigna <strong>recursos globales</strong> (sorteos, formas de juego, formas de pago) a los bancos. Cada banco, a su vez, puede <strong>asignar esos mismos recursos</strong> (o un subconjunto) a sus comerciales. Los comerciales ofrecen esos recursos a sus clientes.
+                <br><br>
+                Esta jerarquía asegura que cada nivel tenga control sobre lo que ofrece a sus subordinados.
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         CATEGORÍA 16: SUSCRIPCIÓN DE BANCOS
+         ═══════════════════════════════════════════════════════════ -->
+    <div class="faq-category">
+        <h3>💲 Suscripción de Bancos</h3>
+
+        <div class="faq-item">
+            <div class="faq-question" onclick="toggleFAQ(this)">
+                <span>¿Qué tipos de pago existen para la suscripción?</span>
+                <span class="icon">▼</span>
+            </div>
+            <div class="faq-answer">
+                Los bancos pueden elegir entre <strong>tres tipos de pago</strong>:
+                <ul>
+                    <li><strong>Mensual:</strong> se paga una cuota fija cada mes.</li>
+                    <li><strong>Diario:</strong> se paga una cuota fija cada día.</li>
+                    <li><strong>Por uso (por ganancia):</strong> se paga un porcentaje de las ganancias generadas.</li>
+                </ul>
+                El banco puede <strong>solicitar cambiar el tipo de pago</strong> a la administración, pero solo puede hacerlo el día anterior al vencimiento de la suscripción.
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <div class="faq-question" onclick="toggleFAQ(this)">
+                <span>¿Cómo se renueva la suscripción?</span>
+                <span class="icon">▼</span>
+            </div>
+            <div class="faq-answer">
+                La suscripción se renueva al realizar el pago correspondiente (cuota fija o porcentaje). El banco debe asegurarse de tener fondos suficientes. Si no se paga a tiempo, la suscripción <strong>puede vencer</strong> y el banco perderá sus privilegios.
+                <br><br>
+                La administración puede registrar manualmente los pagos de los bancos.
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <div class="faq-question" onclick="toggleFAQ(this)">
+                <span>¿Qué pasa si mi suscripción vence?</span>
+                <span class="icon">▼</span>
+            </div>
+            <div class="faq-answer">
+                Si la suscripción vence, el banco pierde acceso a sus funcionalidades (no puede ascender comerciales ni gestionar su red). Sin embargo, los comerciales y clientes que ya están registrados no se eliminan, pero no se podrán realizar nuevas asignaciones.
+                <br><br>
+                El banco puede <strong>renovar</strong> su suscripción poniéndose al día con el pago y solicitando la reactivación.
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         CATEGORÍA 17: NÚMEROS RESTRINGIDOS
+         ═══════════════════════════════════════════════════════════ -->
+    <div class="faq-category">
+        <h3>🚫 Números Restringidos</h3>
+
+        <div class="faq-item">
+            <div class="faq-question" onclick="toggleFAQ(this)">
+                <span>¿Qué son los números restringidos?</span>
+                <span class="icon">▼</span>
+            </div>
+            <div class="faq-answer">
+                Los números restringidos son <strong>combinaciones numéricas</strong> que un gestor (comercial o banco) puede <strong>bloquear</strong> para que un cliente específico, o todos sus clientes, no puedan apostarlos en un sorteo determinado.
+                <br><br>
+                Esto es útil para evitar apuestas en números que se consideran "calientes" o que generan pérdidas recurrentes.
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <div class="faq-question" onclick="toggleFAQ(this)">
+                <span>¿Cómo se crea una restricción?</span>
+                <span class="icon">▼</span>
+            </div>
+            <div class="faq-answer">
+                Desde <strong>"Gestión de Números Restringidos"</strong>, el gestor puede:
+                <ul>
+                    <li>Seleccionar el sorteo.</li>
+                    <li>Elegir el cliente (si se deja en blanco, aplica a todos sus clientes).</li>
+                    <li>Ingresar el número a restringir.</li>
+                    <li>Opcionalmente, establecer fechas de inicio y fin.</li>
+                </ul>
+                Solo el gestor que crea la restricción o la administración pueden eliminarla.
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <div class="faq-question" onclick="toggleFAQ(this)">
+                <span>¿Puedo tener restricciones globales?</span>
+                <span class="icon">▼</span>
+            </div>
+            <div class="faq-answer">
+                Sí. Si al crear una restricción no seleccionas un cliente específico (dejas el campo vacío), la restricción se aplicará a <strong>todos tus clientes</strong>. Solo la administración puede crear restricciones globales que afecten a todos los gestores.
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <div class="faq-question" onclick="toggleFAQ(this)">
+                <span>¿Qué pasa si un cliente intenta apostar un número restringido?</span>
+                <span class="icon">▼</span>
+            </div>
+            <div class="faq-answer">
+                El sistema <strong>bloqueará la apuesta</strong> y mostrará un mensaje informando que el número está restringido. El cliente deberá elegir otro número o ponerse en contacto con su gestor para solicitar la desactivación temporal de la restricción.
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         CATEGORÍA 18: SOPORTE Y CONTACTO
+         ═══════════════════════════════════════════════════════════ -->
+    <div class="faq-category">
+        <h3>📞 Soporte y Contacto</h3>
+
+        <div class="faq-item">
+            <div class="faq-question" onclick="toggleFAQ(this)">
+                <span>¿Cómo puedo contactar al soporte?</span>
+                <span class="icon">▼</span>
+            </div>
+            <div class="faq-answer">
+                Puedes contactar al soporte a través de los siguientes canales:
+                <ul>
+                    <li><strong>Correo electrónico:</strong> [soporte@lottoboom.com] (reemplazar por el correo real).</li>
+                    <li><strong>WhatsApp:</strong> [Número de soporte] (si está habilitado).</li>
+                    <li><strong>Desde la plataforma:</strong> usa el formulario de contacto en la sección "Ayuda" (si existe).</li>
+                </ul>
+                Los bancos y comerciales también pueden contactar directamente a la administración a través de las notificaciones internas.
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <div class="faq-question" onclick="toggleFAQ(this)">
+                <span>¿Qué debo hacer si encuentro un error en la plataforma?</span>
+                <span class="icon">▼</span>
+            </div>
+            <div class="faq-answer">
+                Si encuentras un error (fallo en apuestas, resultados incorrectos, problemas de carga, etc.), repórtalo al <strong>soporte</strong> o a la <strong>administración</strong>. Proporciona todos los detalles posibles (fecha, hora, acción que realizabas, capturas si es posible). El equipo revisará y corregirá el problema lo antes posible.
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <div class="faq-question" onclick="toggleFAQ(this)">
+                <span>¿Hay un canal para sugerencias de mejora?</span>
+                <span class="icon">▼</span>
+            </div>
+            <div class="faq-answer">
+                Sí. Los usuarios pueden enviar sugerencias a través del mismo canal de soporte o mediante el formulario de sugerencias (si está disponible). Todas las sugerencias son evaluadas por el equipo de desarrollo y, si son viables, se implementan en futuras actualizaciones.
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    function toggleFAQ(element) {
+        const answer = element.nextElementSibling;
+        const icon = element.querySelector('.icon');
+        const isOpen = answer.classList.contains('open');
+        if (isOpen) {
+            answer.classList.remove('open');
+            icon.classList.remove('open');
+        } else {
+            answer.classList.add('open');
+            icon.classList.add('open');
+            element.classList.add('visited');
+        }
+    }
+
+    function filtrarFAQ() {
+        const input = document.getElementById('faqSearch');
+        const filter = input.value.toLowerCase();
+        const items = document.querySelectorAll('.faq-item');
+        items.forEach(item => {
+            const question = item.querySelector('.faq-question span').textContent.toLowerCase();
+            const answer = item.querySelector('.faq-answer')?.textContent?.toLowerCase() || '';
+            const match = question.includes(filter) || answer.includes(filter);
+            item.style.display = match ? '' : 'none';
+        });
+    }
+</script>
+{% endblock %}

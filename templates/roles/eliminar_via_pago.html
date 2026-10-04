@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block page_title %}🗑️ Eliminar Vía de Pago{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0"><i class="fas fa-exclamation-triangle me-2"></i>Eliminar Vía de Pago</h5>
+                </div>
+                <div class="card-body">
+                    <p>¿Estás seguro de que deseas <strong>desactivar</strong> la vía de pago?</p>
+                    <div class="alert alert-warning">
+                        <p><strong>Nombre:</strong> {{ via.nombre }}</p>
+                        <p><strong>Forma de pago:</strong> {{ via.forma_pago.nombre }}</p>
+                        <p><strong>Tipo:</strong> {{ via.get_tipo_display }}</p>
+                    </div>
+                    <p class="text-muted small">La vía se desactivará, pero los registros históricos se mantendrán.</p>
+
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-danger">
+                                <i class="fas fa-trash"></i> Desactivar Vía de Pago
+                            </button>
+                            <a href="{% url 'roles:mis_vias_pago' %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left"></i> Cancelar
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

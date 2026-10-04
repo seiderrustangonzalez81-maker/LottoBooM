@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block page_title %}📤 Responder Retiro{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+  <div class="row justify-content-center">
+    <div class="col-lg-7">
+
+      <div class="card shadow">
+        <div class="card-header text-white" style="background:linear-gradient(135deg,#4f46e5,#7c3aed);">
+          <h5 class="mb-0"><i class="fas fa-hand-holding-usd me-2"></i>Responder Solicitud de Retiro</h5>
+        </div>
+
+        <div class="card-body">
+
+          {% if messages %}
+            {% for message in messages %}
+              <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+            {% endfor %}
+          {% endif %}
+
+          <div class="mb-3 p-3 rounded" style="background:#f8f9fc;">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <div>
+                <strong>Solicitud #{{ solicitud.id }}</strong>
+                <span class="badge {% if solicitud.estado == 'pendiente' %}bg-warning text-dark{% elif solicitud.estado == 'aceptada' %}bg-info{% elif solicitud.estado == 'pagada' %}bg-success{% else %}bg-danger{% endif %} ms-2">
+                  {{ solicitud.get_estado_display }}
+                </span>
+              </div>
+              <small class="text-muted">{{ solicitud.fecha_solicitud|date:"d/m/Y H:i" }}</small>
+            </div>
+            <div class="row g-2">
+              <div class="col-md-6">
+                <div class="small text-muted">Cliente</div>
+                <strong>{{ solicitud.cliente.username }}</strong>
+              </div>
+              <div class="col-md-6">
+                <div class="small text-muted">Monto a retirar</div>
+
+              <div class="motivo-cliente-wrap" style="background:#fef3c7;border-left:4px solid #f59e0b;padding:10px 14px;border-radius:8px;margin:12px 0;">
+                <div style="font-size:.7rem;font-weight:800;color:#78350f;text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px;">Motivo declarado por el cliente</div>
+                <div style="font-weight:700;color:#78350f;font-size:.88rem;">
+                  {{ solicitud.get_motivo_tipo_display }}
+                  {% if solicitud.motivo_detalle %} — {{ solicitud.motivo_detalle }}{% endif %}
+                </div>
+              </div>
+                <strong class="text-primary" style="font-family:'SF Mono',monospace;">${{ solicitud.monto|floatformat:2 }}</strong>
+              </div>
+              <div class="col-md-6">
+                <div class="small text-muted">Forma de pago</div>
+                <strong>{{ solicitud.forma_pago.nombre }}</strong>
+              </div>
+            </div>
+          </div>
+
+          {% if solicitud.datos_via_cliente %}
+            <div class="mb-3 p-3 rounded" style="background:#eef0ff;border:1px solid #c7d2fe;">
+              <div class="fw-bold mb-2" style="color:#4338ca;">
+                <i class="fas fa-credit-card"></i> Datos de la vía del cliente (a dónde transferir)
+              </div>
+              {% if solicitud.datos_via_cliente.numero_tarjeta %}
+                <div class="d-flex align-items-center gap-2 mb-1">
+                  <span class="text-muted small" style="min-width:90px;">Tarjeta:</span>
+                  <code id="ret-dato-tarjeta">{{ solicitud.datos_via_cliente.numero_tarjeta }}</code>
+                  <button type="button" class="btn btn-sm btn-outline-primary" onclick="copiarRet('ret-dato-tarjeta')">
+                    <i class="fas fa-copy"></i>
+                  </button>
+                </div>
+              {% endif %}
+              {% if solicitud.datos_via_cliente.telefono %}
+                <div class="d-flex align-items-center gap-2">
+                  <span class="text-muted small" style="min-width:90px;">Teléfono:</span>
+                  <code id="ret-dato-telefono">{{ solicitud.datos_via_cliente.telefono }}</code>
+                  <button type="button" class="btn btn-sm btn-outline-primary" onclick="copiarRet('ret-dato-telefono')">
+                    <i class="fas fa-copy"></i>
+                  </button>
+                </div>
+              {% endif %}
+            </div>
+          {% endif %}
+
+          {% if solicitud.mensaje_cliente %}
+            <div class="mb-3">
+              <div class="small text-muted">Mensaje del cliente:</div>
+              <div class="p-2 rounded" style="background:#fff7ed;">{{ solicitud.mensaje_cliente }}</div>
+            </div>
+          {% endif %}
+
+          {% if solicitud.estado == 'pendiente' %}
+            <div class="d-flex gap-2 mb-2">
+              <form method="post" action="{% url 'roles:responder_solicitud' 'retiro' solicitud.id 'aceptar' %}" style="flex:1;">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-success w-100">
+                  <i class="fas fa-check"></i> Aceptar
+                </button>
+              </form>
+              <button type="button" class="btn btn-danger" data-bs-toggle="collapse" data-bs-target="#rechazarForm" style="flex:1;">
+                <i class="fas fa-times"></i> Rechazar
+              </button>
+            </div>
+            <div class="collapse" id="rechazarForm">
+              <form method="post" action="{% url 'roles:responder_solicitud' 'retiro' solicitud.id 'rechazar' %}">
+                {% csrf_token %}
+                <textarea name="motivo" class="form-control mb-2" rows="2" placeholder="Motivo del rechazo (opcional)"></textarea>
+                <button type="submit" class="btn btn-danger w-100">Confirmar rechazo</button>
+              </form>
+            </div>
+          {% endif %}
+
+          {% if solicitud.estado == 'aceptada' %}
+            <form method="post" action="{% url 'roles:responder_solicitud' 'retiro' solicitud.id 'confirmar' %}">
+              {% csrf_token %}
+              <div class="mb-2">
+                <label class="form-label small fw-bold">Monto realmente transferido</label>
+                <input type="number" step="0.01" name="monto_pagado" class="form-control"
+                       value="{{ solicitud.monto }}" required>
+              </div>
+              <button type="submit" class="btn btn-primary w-100">
+                <i class="fas fa-check-double"></i> Confirmar Pago
+              </button>
+            </form>
+          {% endif %}
+
+          <div class="mt-3 text-end">
+            <a href="{% url 'roles:gestionar_solicitudes' 'retiro' %}" class="btn btn-outline-secondary btn-sm">
+              <i class="fas fa-arrow-left"></i> Volver
+            </a>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+function copiarRet(elemId) {
+  const txt = document.getElementById(elemId).textContent.trim();
+  navigator.clipboard.writeText(txt).then(() => {
+    alert('✅ Copiado: ' + txt);
+  }).catch(() => {
+    // fallback
+    const tmp = document.createElement('textarea');
+    tmp.value = txt; document.body.appendChild(tmp);
+    tmp.select(); document.execCommand('copy'); document.body.removeChild(tmp);
+  });
+}
+</script>
+{% endblock %}

@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block page_title %}Solicitar Cobro{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card shadow-sm">
+        <div class="card-header bg-success text-white">
+            <h4 class="mb-0"><i class="fas fa-hand-holding-usd me-2"></i> Cobrar Premio</h4>
+        </div>
+        <div class="card-body">
+            <div class="alert alert-info">
+                <p><strong>Detalle del premio:</strong></p>
+                <ul>
+                    <li>Sorteo: <strong>{{ premio.jugada.sorteo.nombre }}</strong></li>
+                    <li>Número: <strong>{{ premio.jugada.numero }}</strong></li>
+                    <li>Monto: <strong class="text-success">${{ premio.monto_premio|floatformat:2 }}</strong></li>
+                    <li>Multiplicador: {{ premio.multiplicador_aplicado }}x</li>
+                </ul>
+            </div>
+            <p>Al confirmar, el monto se acreditará en tu saldo disponible.</p>
+            <form method="post">
+                {% csrf_token %}
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-check me-1"></i> Confirmar Cobro
+                    </button>
+                    <a href="{% url 'resultados:mis_premios' %}" class="btn btn-secondary">Cancelar</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

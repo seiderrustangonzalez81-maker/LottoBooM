@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block page_title %}Registrar Pago{% endblock %}
+{% block page_subtitle %}Registrar pago de {{ suscripcion.banco.username }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid" style="max-width: 500px;">
+    <div class="card border-0 shadow-sm rounded-4">
+        <div class="card-header bg-gradient-success text-white border-0 py-3" style="background: linear-gradient(135deg, #10B981 0%, #059669 100%);">
+            <h5 class="mb-0 fw-bold"><i class="fas fa-dollar-sign me-2"></i> Registrar Pago</h5>
+        </div>
+        <div class="card-body p-4">
+            <p>Banco: <strong>{{ suscripcion.banco.username }}</strong></p>
+            <p>Monto pendiente: <strong>${{ suscripcion.cuota_fija|floatformat:2 }}</strong></p>
+            <form method="post">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label class="form-label">Monto a pagar ($)</label>
+                    <input type="number" name="monto" class="form-control" step="0.01" value="{{ suscripcion.cuota_fija|floatformat:2 }}" required>
+                </div>
+                <button type="submit" class="btn btn-success w-100 rounded-pill py-2"><i class="fas fa-check"></i> Registrar Pago</button>
+            </form>
+            <div class="mt-3"><a href="{% url 'roles:panel_bancos' %}" class="btn btn-outline-secondary rounded-pill w-100"><i class="fas fa-arrow-left"></i> Volver</a></div>
+        </div>
+    </div>
+</div>
+{% endblock %}

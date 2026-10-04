@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block page_title %}Panel de Administración{% endblock %}
+{% block page_subtitle %}Bienvenido al panel de control de LottoBooM{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Tarjetas de resumen -->
+    <div class="col-md-3 col-sm-6 mb-3">
+        <div class="card border-0 shadow-sm text-center">
+            <div class="card-body">
+                <h5 class="card-title text-muted">Usuarios</h5>
+                <h2>{{ total_usuarios }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6 mb-3">
+        <div class="card border-0 shadow-sm text-center">
+            <div class="card-body">
+                <h5 class="card-title text-muted">Sorteos Activos</h5>
+                <h2>{{ total_sorteos }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6 mb-3">
+        <div class="card border-0 shadow-sm text-center">
+            <div class="card-body">
+                <h5 class="card-title text-muted">Jugadas Hoy</h5>
+                <h2>{{ total_jugadas_hoy }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6 mb-3">
+        <div class="card border-0 shadow-sm text-center">
+            <div class="card-body">
+                <h5 class="card-title text-muted">Ventas Hoy</h5>
+                <h2 class="text-success">${{ ventas_hoy|floatformat:2 }}</h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Últimas jugadas -->
+    <div class="col-md-6 mb-3">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white">
+                <h6 class="fw-bold mb-0">📋 Últimas jugadas</h6>
+            </div>
+            <div class="card-body" style="max-height: 300px; overflow-y: auto;">
+                <ul class="list-unstyled">
+                    {% for jugada in ultimas_jugadas %}
+                    <li class="border-bottom py-2">
+                        <div class="d-flex justify-content-between">
+                            <span><strong>{{ jugada.usuario.username }}</strong> - {{ jugada.sorteo.nombre }}</span>
+                            <span class="badge bg-success">${{ jugada.monto|floatformat:2 }}</span>
+                        </div>
+                        <small class="text-muted">{{ jugada.fecha|date:"d/m/Y H:i" }}</small>
+                    </li>
+                    {% empty %}
+                    <li class="text-muted">No hay jugadas recientes.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            <div class="card-footer text-end">
+                <a href="{% url 'superadmin:jugadas_list' %}" class="btn btn-sm btn-primary">Ver todas</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sorteos abiertos -->
+    <div class="col-md-6 mb-3">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white">
+                <h6 class="fw-bold mb-0">🎯 Sorteos abiertos</h6>
+            </div>
+            <div class="card-body" style="max-height: 300px; overflow-y: auto;">
+                <ul class="list-unstyled">
+                    {% for sorteo in sorteos_abiertos %}
+                    <li class="border-bottom py-2">
+                        <div class="d-flex justify-content-between">
+                            <span><strong>{{ sorteo.nombre }}</strong></span>
+                            <span class="badge bg-success">Abierto</span>
+                        </div>
+                        <small class="text-muted">Cierra en: {{ sorteo.tiempo_restante }}</small>
+                    </li>
+                    {% empty %}
+                    <li class="text-muted">No hay sorteos abiertos en este momento.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            <div class="card-footer text-end">
+                <a href="{% url 'superadmin:sorteos_list' %}" class="btn btn-sm btn-primary">Ver todos</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Notificaciones -->
+    <div class="col-md-6 mb-3">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white">
+                <h6 class="fw-bold mb-0">🔔 Notificaciones no leídas</h6>
+            </div>
+            <div class="card-body" style="max-height: 250px; overflow-y: auto;">
+                <ul class="list-unstyled">
+                    {% for notif in notificaciones %}
+                    <li class="border-bottom py-2">
+                        <div class="d-flex justify-content-between">
+                            <span>{{ notif.mensaje|truncatechars:60 }}</span>
+                            <small class="text-muted">{{ notif.creado_en|date:"d/m/Y H:i" }}</small>
+                        </div>
+                    </li>
+                    {% empty %}
+                    <li class="text-muted">No hay notificaciones.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            <div class="card-footer text-end">
+                <a href="{% url 'roles:notificaciones' %}" class="btn btn-sm btn-primary">Ver todas</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Últimos movimientos -->
+    <div class="col-md-6 mb-3">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white">
+                <h6 class="fw-bold mb-0">💰 Últimos movimientos de fondos</h6>
+            </div>
+            <div class="card-body" style="max-height: 250px; overflow-y: auto;">
+                <ul class="list-unstyled">
+                    {% for mov in movimientos %}
+                    <li class="border-bottom py-2">
+                        <div class="d-flex justify-content-between">
+                            <span>
+                                {% if mov.emisor %}
+                                {{ mov.emisor.username }} →
+                                {% endif %}
+                                {{ mov.receptor.username }}
+                            </span>
+                            <span class="badge bg-primary">${{ mov.monto|floatformat:2 }}</span>
+                        </div>
+                        <small class="text-muted">{{ mov.tipo }} - {{ mov.creado_en|date:"d/m/Y H:i" }}</small>
+                    </li>
+                    {% empty %}
+                    <li class="text-muted">No hay movimientos recientes.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

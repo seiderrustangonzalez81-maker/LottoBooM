@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block page_title %}✅ Confirmar Pago de Cobro{% endblock %}
+{% block page_subtitle %}Registra el pago del cobro de premio al cliente{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="fas fa-check-circle me-2"></i>Confirmar Pago de Cobro</h5>
+                </div>
+                <div class="card-body">
+                    <!-- ============================================================ -->
+                    <!-- DETALLE DE LA SOLICITUD                                       -->
+                    <!-- ============================================================ -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <p><strong><i class="fas fa-user me-1"></i> Cliente:</strong> {{ solicitud.cliente.username }}</p>
+                            <p><strong><i class="fas fa-money-bill-wave me-1"></i> Monto:</strong> <span class="fw-bold">${{ solicitud.monto|floatformat:2 }}</span></p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong><i class="fas fa-credit-card me-1"></i> Forma de pago:</strong> {{ solicitud.forma_pago.nombre }}</p>
+                            <p><strong><i class="fas fa-exchange-alt me-1"></i> Vía de pago:</strong> {{ solicitud.via_pago.nombre|default:"No asignada" }}</p>
+                        </div>
+                    </div>
+
+                    {% if solicitud.estado == 'aceptada' %}
+                        <!-- ============================================================ -->
+                        <!-- FORMULARIO DE CONFIRMACIÓN                                   -->
+                        <!-- ============================================================ -->
+                        <form method="post">
+                            {% csrf_token %}
+
+                            <div class="alert alert-success">
+                                <i class="fas fa-info-circle me-2"></i>
+                                Al confirmar, se <strong>descontará el monto</strong> del fondo del cliente y la solicitud se marcará como <strong>pagada</strong>.
+                            </div>
+
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                <button type="submit" class="btn btn-success btn-lg">
+                                    <i class="fas fa-check-circle me-2"></i> Confirmar Pago
+                                </button>
+                                <a href="{% url 'roles:gestionar_solicitudes' 'cobro' %}" class="btn btn-outline-secondary">
+                                    <i class="fas fa-arrow-left me-1"></i> Volver
+                                </a>
+                            </div>
+                        </form>
+
+                    {% else %}
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            Esta solicitud no está en estado <strong>aceptada</strong> (estado actual: {{ solicitud.get_estado_display }}).
+                        </div>
+                        <a href="{% url 'roles:gestionar_solicitudes' 'cobro' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-1"></i> Volver
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

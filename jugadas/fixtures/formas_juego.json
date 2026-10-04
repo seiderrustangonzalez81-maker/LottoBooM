@@ -1,0 +1,16 @@
+[
+  { "model": "jugadas.formajuego", "pk": 1, "fields": { "nombre": "Pick 2", "digitos_esperados": 2, "activo": true } },
+  { "model": "jugadas.formajuego", "pk": 2, "fields": { "nombre": "Pick 3", "digitos_esperados": 3, "activo": true } },
+  { "model": "jugadas.formajuego", "pk": 3, "fields": { "nombre": "Pick 4", "digitos_esperados": 4, "activo": true } },
+  { "model": "jugadas.formajuego", "pk": 4, "fields": { "nombre": "Pick 5", "digitos_esperados": 5, "activo": true } },
+  { "model": "jugadas.formajuego", "pk": 5, "fields": { "nombre": "Fijo", "digitos_esperados": 2, "activo": true } },
+  { "model": "jugadas.formajuego", "pk": 6, "fields": { "nombre": "Corrido 1", "digitos_esperados": 2, "activo": true } },
+  { "model": "jugadas.formajuego", "pk": 7, "fields": { "nombre": "Corrido 2", "digitos_esperados": 2, "activo": true } },
+  { "model": "jugadas.formajuego", "pk": 8, "fields": { "nombre": "Centena Corrida 1", "digitos_esperados": 3, "activo": true } },
+  { "model": "jugadas.formajuego", "pk": 9, "fields": { "nombre": "Centena Corrida 2", "digitos_esperados": 3, "activo": true } },
+  { "model": "jugadas.formajuego", "pk": 10, "fields": { "nombre": "Parlet", "digitos_esperados": 5, "activo": true } },
+  { "model": "jugadas.formajuego", "pk": 11, "fields": { "nombre": "Par frontal", "digitos_esperados": 2, "activo": true } },
+  { "model": "jugadas.formajuego", "pk": 12, "fields": { "nombre": "VS", "digitos_esperados": 2, "activo": true } },
+  { "model": "jugadas.formajuego", "pk": 13, "fields": { "nombre": "Superparlet", "digitos_esperados": 5, "activo": true } },
+  { "model": "jugadas.formajuego", "pk": 14, "fields": { "nombre": "Tripleta", "digitos_esperados": 3, "activo": true } }
+]

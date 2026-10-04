@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block page_title %}{% if sorteo %}Editar{% else %}Nuevo{% endif %} Sorteo{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white">
+                <h5 class="fw-bold mb-0">{% if sorteo %}✏️ Editar{% else %}➕ Nuevo{% endif %} Sorteo</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label">Nombre</label>
+                        <input type="text" name="nombre" class="form-control" value="{{ sorteo.nombre|default:'' }}" required>
+                    </div>
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" name="activo" class="form-check-input" id="activo" {% if sorteo.activo %}checked{% endif %}>
+                        <label class="form-check-label" for="activo">Activo</label>
+                    </div>
+                    <hr>
+                    <h6 class="fw-bold">Horarios</h6>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Invierno</h6>
+                            {% for dia in 'lunes,martes,miercoles,jueves,viernes,sabado,domingo'|split:',' %}
+                            <div class="mb-2">
+                                <label class="form-label small">{{ dia|title }}</label>
+                                <input type="time" name="invierno_{{ dia }}" class="form-control form-control-sm" value="{{ sorteo.horarios.invierno|default:''|get_item:dia }}">
+                            </div>
+                            {% endfor %}
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Verano</h6>
+                            {% for dia in 'lunes,martes,miercoles,jueves,viernes,sabado,domingo'|split:',' %}
+                            <div class="mb-2">
+                                <label class="form-label small">{{ dia|title }}</label>
+                                <input type="time" name="verano_{{ dia }}" class="form-control form-control-sm" value="{{ sorteo.horarios.verano|default:''|get_item:dia }}">
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-between mt-3">
+                        <a href="{% url 'superadmin:sorteos_list' %}" class="btn btn-secondary">Cancelar</a>
+                        <button type="submit" class="btn btn-primary">Guardar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

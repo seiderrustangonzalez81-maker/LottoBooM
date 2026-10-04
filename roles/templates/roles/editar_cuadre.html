@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block page_title %}Editar Cuadre{% endblock %}
+{% block page_subtitle %}Editar cuadre del {{ cuadre.fecha|date:"d/m/Y" }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="card border-0 shadow-sm rounded-4">
+        <div class="card-header bg-gradient-warning text-white border-0 py-3" style="background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);">
+            <h5 class="mb-0 fw-bold"><i class="fas fa-edit me-2"></i> Editar Cuadre</h5>
+        </div>
+        <div class="card-body p-4">
+            <form method="post">
+                {% csrf_token %}
+                <div class="table-responsive">
+                    <table class="table table-bordered">
+                        <thead class="table-light"><tr>
+                            <th>Forma de Pago</th>
+                            <th>Enviado a Banco</th>
+                            <th>Recibido de Banco</th>
+                        </tr></thead>
+                        <tbody>
+                            {% for fp in formas_pago %}
+                                <tr>
+                                    <td>{{ fp.nombre }}</td>
+                                    <td><input type="number" name="enviado_{{ fp.id }}" class="form-control" step="0.01" value="{{ cuadre.enviado_banco|default:""|floatformat:2 }}"></td>
+                                    <td><input type="number" name="recibido_{{ fp.id }}" class="form-control" step="0.01" value="{{ cuadre.recibido_banco|default:""|floatformat:2 }}"></td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <button type="submit" class="btn btn-warning rounded-pill w-100 py-2"><i class="fas fa-save"></i> Guardar Cambios</button>
+            </form>
+            <div class="mt-3"><a href="{% url 'roles:resumen_diario' cuadre.id %}" class="btn btn-outline-secondary rounded-pill w-100"><i class="fas fa-arrow-left"></i> Volver</a></div>
+        </div>
+    </div>
+</div>
+{% endblock %}

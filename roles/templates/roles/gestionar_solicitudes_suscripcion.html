@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block page_title %}📋 Gestionar solicitudes de suscripción{% endblock %}
+{% block page_subtitle %}Aprueba o rechaza solicitudes de cambios de los bancos{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h4><i class="fas fa-tasks me-2 text-primary"></i>Solicitudes pendientes</h4>
+
+    {% if solicitudes %}
+        <div class="row">
+            {% for suscripcion in solicitudes %}
+                <div class="col-md-6 mb-3">
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <span><i class="fas fa-university me-2"></i>{{ suscripcion.banco.username }}</span>
+                            <span class="badge bg-warning text-dark">Pendiente</span>
+                        </div>
+                        <div class="card-body">
+                            <p><strong>Tipo:</strong> {{ suscripcion.get_solicitud_tipo_display }}</p>
+                            <p><strong>Detalle:</strong></p>
+                            <pre class="bg-light p-2 rounded" style="font-size:0.8rem;">{{ suscripcion.solicitud_detalle|pprint }}</pre>
+                            <p><strong>Comerciales actuales:</strong> {{ suscripcion.comerciales_activos }} / {{ suscripcion.comerciales_permitidos }}</p>
+                            <p><strong>Recursos actuales:</strong> {{ suscripcion.recursos_activos.count }}</p>
+
+                            <form method="post" class="d-flex gap-2">
+                                {% csrf_token %}
+                                <input type="hidden" name="suscripcion_id" value="{{ suscripcion.id }}">
+                                <button type="submit" name="accion" value="aprobar" class="btn btn-success">
+                                    <i class="fas fa-check me-1"></i> Aprobar
+                                </button>
+                                <button type="submit" name="accion" value="rechazar" class="btn btn-danger">
+                                    <i class="fas fa-times me-1"></i> Rechazar
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="alert alert-info text-center py-4">
+            <i class="fas fa-inbox fa-3x d-block mb-3 text-muted"></i>
+            <p class="mb-0">No hay solicitudes pendientes.</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

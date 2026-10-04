@@ -1,0 +1,2027 @@
+{% extends "base.html" %}
+{% load static %}
+{% load roles_extras %}
+
+{% block page_title %}Mi Perfil{% endblock %}
+{% block page_subtitle %}Panel de control personalizado{% endblock %}
+
+{% block extra_css %}
+<style>
+/* ══════════════════════════════════════════════════════════════════════
+   SISTEMA DE TEMAS
+   ══════════════════════════════════════════════════════════════════════ */
+:root {
+  --pf-hue: 260;
+  --pf-hue-2: calc(var(--pf-hue) + 60);
+  --pf-hue-3: calc(var(--pf-hue) + 120);
+  --pf-hue-4: calc(var(--pf-hue) + 180);
+}
+
+/* ─── TEMA CLARO (default) ────────────────────────────────────────── */
+[data-theme="light"] {
+  --pf-bg: #f5f7fc;
+  --pf-bg-2: #eef1f8;
+  --pf-surface: rgba(255, 255, 255, 0.82);
+  --pf-surface-solid: #ffffff;
+  --pf-surface-soft: rgba(255, 255, 255, 0.55);
+  --pf-text: #0f172a;
+  --pf-text-2: #475569;
+  --pf-text-3: #94a3b8;
+  --pf-border: rgba(255, 255, 255, 0.7);
+  --pf-border-soft: rgba(148, 163, 184, 0.15);
+  --pf-grad-1: hsla(var(--pf-hue), 80%, 65%, 0.22);
+  --pf-grad-2: hsla(var(--pf-hue-2), 80%, 60%, 0.16);
+  --pf-grad-3: hsla(var(--pf-hue-3), 80%, 65%, 0.14);
+  --pf-accent: hsl(var(--pf-hue), 60%, 45%);
+  --pf-accent-soft: hsla(var(--pf-hue), 80%, 92%, 0.85);
+  --pf-shadow: 0 12px 32px -16px hsla(var(--pf-hue), 60%, 45%, 0.18);
+  --pf-shadow-hover: 0 20px 50px -20px hsla(var(--pf-hue), 60%, 40%, 0.35);
+  --pf-glass-blur: 14px;
+  --pf-overlay: rgba(15, 23, 42, 0.6);
+}
+
+/* ─── TEMA OSCURO ─────────────────────────────────────────────────── */
+[data-theme="dark"] {
+  --pf-bg: #0a0a12;
+  --pf-bg-2: #12121c;
+  --pf-surface: rgba(24, 24, 34, 0.72);
+  --pf-surface-solid: #181822;
+  --pf-surface-soft: rgba(30, 30, 45, 0.6);
+  --pf-text: #f4f4f9;
+  --pf-text-2: #b5b5c2;
+  --pf-text-3: #7a7a88;
+  --pf-border: rgba(255, 255, 255, 0.08);
+  --pf-border-soft: rgba(255, 255, 255, 0.06);
+  --pf-grad-1: hsla(var(--pf-hue), 70%, 45%, 0.32);
+  --pf-grad-2: hsla(var(--pf-hue-2), 70%, 40%, 0.24);
+  --pf-grad-3: hsla(var(--pf-hue-3), 70%, 45%, 0.20);
+  --pf-accent: hsl(var(--pf-hue), 80%, 70%);
+  --pf-accent-soft: hsla(var(--pf-hue), 60%, 25%, 0.7);
+  --pf-shadow: 0 12px 32px -16px rgba(0, 0, 0, 0.6);
+  --pf-shadow-hover: 0 24px 60px -20px hsla(var(--pf-hue), 70%, 45%, 0.5);
+  --pf-glass-blur: 16px;
+  --pf-overlay: rgba(0, 0, 0, 0.75);
+}
+
+/* ─── TEMA NEÓN (cyberpunk) ───────────────────────────────────────── */
+[data-theme="neon"] {
+  --pf-hue: 280;
+  --pf-hue-2: 320;
+  --pf-hue-3: 180;
+  --pf-bg: #050510;
+  --pf-bg-2: #0a0a18;
+  --pf-surface: rgba(10, 10, 25, 0.85);
+  --pf-surface-solid: #0a0a18;
+  --pf-surface-soft: rgba(15, 15, 35, 0.7);
+  --pf-text: #e6f6ff;
+  --pf-text-2: #7df3ff;
+  --pf-text-3: #4a7a9a;
+  --pf-border: rgba(0, 255, 255, 0.15);
+  --pf-border-soft: rgba(0, 255, 255, 0.08);
+  --pf-grad-1: hsla(300, 100%, 60%, 0.35);
+  --pf-grad-2: hsla(180, 100%, 55%, 0.30);
+  --pf-grad-3: hsla(340, 100%, 60%, 0.25);
+  --pf-accent: #00ffff;
+  --pf-accent-soft: rgba(0, 255, 255, 0.12);
+  --pf-shadow: 0 0 20px rgba(0, 255, 255, 0.15), 0 0 40px rgba(255, 0, 255, 0.08);
+  --pf-shadow-hover: 0 0 30px rgba(0, 255, 255, 0.3), 0 0 60px rgba(255, 0, 255, 0.15);
+  --pf-glass-blur: 12px;
+  --pf-overlay: rgba(0, 0, 0, 0.85);
+}
+
+/* ─── TEMA PASTEL ─────────────────────────────────────────────────── */
+[data-theme="pastel"] {
+  --pf-hue: 340;
+  --pf-hue-2: 30;
+  --pf-hue-3: 280;
+  --pf-bg: #fef6f0;
+  --pf-bg-2: #fceee6;
+  --pf-surface: rgba(255, 252, 250, 0.88);
+  --pf-surface-solid: #fffcf9;
+  --pf-surface-soft: rgba(255, 250, 245, 0.6);
+  --pf-text: #4a3849;
+  --pf-text-2: #8b7a8c;
+  --pf-text-3: #b5a8b3;
+  --pf-border: rgba(255, 255, 255, 0.8);
+  --pf-border-soft: rgba(200, 180, 200, 0.15);
+  --pf-grad-1: hsla(340, 80%, 78%, 0.28);
+  --pf-grad-2: hsla(30, 90%, 80%, 0.24);
+  --pf-grad-3: hsla(280, 70%, 82%, 0.20);
+  --pf-accent: hsl(340, 65%, 60%);
+  --pf-accent-soft: hsla(340, 80%, 94%, 0.85);
+  --pf-shadow: 0 12px 32px -16px hsla(340, 60%, 60%, 0.22);
+  --pf-shadow-hover: 0 20px 50px -20px hsla(340, 60%, 50%, 0.35);
+  --pf-glass-blur: 16px;
+  --pf-overlay: rgba(74, 56, 73, 0.55);
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   BASE
+   ══════════════════════════════════════════════════════════════════════ */
+.pf-page {
+  background: var(--pf-bg);
+  min-height: 100vh;
+  padding-bottom: 40px;
+  transition: background 0.4s ease;
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   CAPAS DE FONDO 3D
+   ══════════════════════════════════════════════════════════════════════ */
+.pf-bg-root { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+.pf-aurora {
+  position: absolute; inset: -20%;
+  background:
+    radial-gradient(ellipse 800px 600px at var(--ax, 15%) var(--ay, 10%), var(--pf-grad-1), transparent 55%),
+    radial-gradient(ellipse 900px 700px at var(--bx, 85%) var(--by, 20%), var(--pf-grad-2), transparent 55%),
+    radial-gradient(ellipse 1000px 800px at 50% var(--cy, 90%), var(--pf-grad-3), transparent 60%);
+  animation: pf-drift 40s ease-in-out infinite alternate;
+  will-change: transform;
+}
+@keyframes pf-drift {
+  0%   { transform: translate3d(0,0,0) scale(1); }
+  50%  { transform: translate3d(-2%,1%,0) scale(1.06); }
+  100% { transform: translate3d(2%,-1%,0) scale(1); }
+}
+.pf-grid {
+  position: absolute; inset: 0;
+  background-image:
+    linear-gradient(hsla(var(--pf-hue), 60%, 60%, 0.10) 1px, transparent 1px),
+    linear-gradient(90deg, hsla(var(--pf-hue), 60%, 60%, 0.10) 1px, transparent 1px);
+  background-size: 60px 60px;
+  transform: perspective(600px) rotateX(55deg) translateY(30%);
+  transform-origin: center bottom;
+  mask-image: linear-gradient(to bottom, transparent 30%, #000 80%);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 30%, #000 80%);
+  animation: pf-grid-move 12s linear infinite;
+  opacity: 0.55;
+}
+@keyframes pf-grid-move { to { background-position: 0 60px, 60px 0; } }
+.pf-orb {
+  position: absolute; border-radius: 50%;
+  filter: blur(50px); opacity: 0.5; will-change: transform;
+}
+.pf-orb.o1 {
+  width: 400px; height: 400px;
+  background: radial-gradient(circle, hsla(var(--pf-hue), 90%, 70%, 0.9), transparent 70%);
+  top: 10%; left: 10%;
+  animation: pf-orb-1 26s ease-in-out infinite;
+}
+.pf-orb.o2 {
+  width: 500px; height: 500px;
+  background: radial-gradient(circle, hsla(var(--pf-hue-2), 90%, 70%, 0.7), transparent 70%);
+  top: 30%; right: 5%;
+  animation: pf-orb-2 32s ease-in-out infinite;
+}
+.pf-orb.o3 {
+  width: 350px; height: 350px;
+  background: radial-gradient(circle, hsla(var(--pf-hue-3), 90%, 70%, 0.6), transparent 70%);
+  bottom: 10%; left: 40%;
+  animation: pf-orb-3 28s ease-in-out infinite;
+}
+@keyframes pf-orb-1 {
+  0%, 100% { transform: translate(0,0) scale(1); }
+  33%      { transform: translate(80px,-40px) scale(1.15); }
+  66%      { transform: translate(-40px,60px) scale(0.9); }
+}
+@keyframes pf-orb-2 {
+  0%, 100% { transform: translate(0,0) scale(1); }
+  50%      { transform: translate(-120px,80px) scale(1.2); }
+}
+@keyframes pf-orb-3 {
+  0%, 100% { transform: translate(0,0) scale(1); }
+  50%      { transform: translate(60px,-80px) scale(0.85); }
+}
+.pf-spotlight {
+  position: absolute; inset: 0;
+  background: radial-gradient(600px circle at var(--mx, 50%) var(--my, 50%),
+    hsla(var(--pf-hue), 80%, 70%, 0.10), transparent 40%);
+  opacity: 0; transition: opacity 0.4s ease;
+}
+.pf-spotlight.active { opacity: 1; }
+.pf-noise {
+  position: absolute; inset: 0; opacity: 0.035; mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+}
+
+.pf-progress-bar {
+  position: fixed; top: 0; left: 0; height: 2px;
+  background: linear-gradient(90deg,
+    hsl(var(--pf-hue), 80%, 60%),
+    hsl(var(--pf-hue-2), 80%, 60%),
+    hsl(var(--pf-hue-3), 80%, 60%));
+  z-index: 9999; transition: width 0.3s ease; width: 0%;
+  box-shadow: 0 0 12px var(--pf-accent);
+}
+.pf-cursor {
+  position: fixed; width: 26px; height: 26px; border-radius: 50%;
+  border: 1.5px solid var(--pf-accent);
+  background: hsla(var(--pf-hue), 80%, 70%, 0.10);
+  pointer-events: none; z-index: 9998;
+  transform: translate(-50%, -50%);
+  transition: width 0.2s, height 0.2s, background 0.2s;
+  mix-blend-mode: screen; opacity: 0;
+}
+.pf-cursor.active { opacity: 1; }
+.pf-cursor.click { width: 40px; height: 40px; background: hsla(var(--pf-hue), 80%, 70%, 0.25); }
+
+/* ══════════════════════════════════════════════════════════════════════
+   LAYOUT
+   ══════════════════════════════════════════════════════════════════════ */
+.pf-wrap { position: relative; z-index: 2; max-width: 1400px; margin: 0 auto; padding: 0 16px; }
+
+/* ══════════════════════════════════════════════════════════════════════
+   THEME SWITCHER
+   ══════════════════════════════════════════════════════════════════════ */
+.pf-theme-switcher {
+  position: fixed; top: 84px; right: 20px; z-index: 9000;
+  display: flex; flex-direction: column; gap: 6px;
+  background: var(--pf-surface); backdrop-filter: blur(var(--pf-glass-blur));
+  -webkit-backdrop-filter: blur(var(--pf-glass-blur));
+  border: 1px solid var(--pf-border); border-radius: 999px;
+  padding: 8px; box-shadow: var(--pf-shadow);
+  transition: transform 0.3s;
+}
+.pf-theme-btn {
+  width: 40px; height: 40px; border-radius: 50%;
+  border: 2px solid transparent; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.1rem; background: var(--pf-surface-soft);
+  color: var(--pf-text-2); transition: all 0.25s;
+  position: relative;
+}
+.pf-theme-btn:hover { transform: scale(1.1); color: var(--pf-accent); }
+.pf-theme-btn.active {
+  border-color: var(--pf-accent);
+  box-shadow: 0 0 0 3px hsla(var(--pf-hue), 80%, 60%, 0.2);
+}
+.pf-theme-btn[data-theme-value="light"]  { background: linear-gradient(135deg, #fff, #e8ecf5); }
+.pf-theme-btn[data-theme-value="dark"]   { background: linear-gradient(135deg, #1e1e2e, #0a0a12); color: #fff; }
+.pf-theme-btn[data-theme-value="neon"]   { background: linear-gradient(135deg, #00ffff, #ff00ff); }
+.pf-theme-btn[data-theme-value="pastel"] { background: linear-gradient(135deg, #ffc8dd, #ffafcc); }
+.pf-theme-btn[data-theme-value="auto"]   { background: linear-gradient(135deg, #fff 50%, #1e1e2e 50%); }
+
+.pf-theme-tooltip {
+  position: absolute; right: 100%; top: 50%;
+  transform: translateY(-50%) translateX(-8px);
+  background: var(--pf-text); color: var(--pf-bg);
+  padding: 4px 10px; border-radius: 6px;
+  font-size: 0.7rem; font-weight: 700;
+  white-space: nowrap; opacity: 0; pointer-events: none;
+  transition: opacity 0.2s;
+}
+.pf-theme-btn:hover .pf-theme-tooltip { opacity: 1; }
+
+@media (max-width: 768px) {
+  .pf-theme-switcher { top: auto; bottom: 90px; right: 12px; flex-direction: row; }
+  .pf-theme-tooltip { display: none; }
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   HEADER HOLOGRÁFICO
+   ══════════════════════════════════════════════════════════════════════ */
+.pf-header {
+  position: relative;
+  display: flex; align-items: center; gap: 20px;
+  padding: 24px 28px; border-radius: 22px; overflow: hidden;
+  background: var(--pf-surface);
+  backdrop-filter: blur(var(--pf-glass-blur)) saturate(1.6);
+  -webkit-backdrop-filter: blur(var(--pf-glass-blur)) saturate(1.6);
+  border: 1px solid var(--pf-border);
+  box-shadow:
+    0 1px 0 rgba(255,255,255,0.95) inset,
+    0 1px 2px rgba(15,23,42,0.04),
+    0 8px 24px rgba(15,23,42,0.05),
+    0 32px 80px -30px hsla(var(--pf-hue), 60%, 45%, 0.35);
+  margin-bottom: 22px; flex-wrap: wrap; isolation: isolate;
+  transform-style: preserve-3d; will-change: transform;
+  transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1), background 0.4s;
+}
+.pf-header::before {
+  content: ''; position: absolute; inset: -20%; z-index: -1;
+  background: conic-gradient(from 180deg at 50% 50%,
+    hsla(var(--pf-hue), 85%, 70%, 0.45),
+    hsla(var(--pf-hue-2), 85%, 70%, 0.38),
+    hsla(var(--pf-hue-3), 85%, 70%, 0.45),
+    hsla(var(--pf-hue), 85%, 70%, 0.45));
+  filter: blur(60px) saturate(1.5);
+  animation: pf-header-rotate 28s linear infinite; opacity: 0.6;
+}
+@keyframes pf-header-rotate { to { transform: rotate(360deg); } }
+.pf-header::after {
+  content: ''; position: absolute; inset: 0; pointer-events: none;
+  background: repeating-linear-gradient(0deg,
+    transparent 0, transparent 3px,
+    hsla(var(--pf-hue), 80%, 70%, 0.04) 3px,
+    hsla(var(--pf-hue), 80%, 70%, 0.04) 4px);
+  animation: pf-scanline 8s linear infinite;
+}
+@keyframes pf-scanline { to { transform: translateY(40px); } }
+.pf-header > * { position: relative; z-index: 1; }
+.pf-header-beam {
+  position: absolute; top: 0; left: 10%; right: 10%; height: 2px;
+  background: linear-gradient(90deg, transparent, var(--pf-accent), transparent);
+  filter: blur(1px); animation: pf-beam-slide 4s ease-in-out infinite;
+}
+@keyframes pf-beam-slide {
+  0%, 100% { opacity: 0.4; transform: scaleX(0.6); }
+  50%      { opacity: 1; transform: scaleX(1); }
+}
+
+/* ─── Saldo destacado en el header ─── */
+.pf-balance-badge {
+  position: absolute; top: 20px; right: 24px;
+  padding: 8px 16px; border-radius: 999px;
+  background: linear-gradient(135deg,
+    hsla(var(--pf-hue), 85%, 55%, 0.95),
+    hsla(var(--pf-hue-2), 85%, 50%, 0.95));
+  color: #fff; font-family: 'Orbitron', monospace;
+  font-weight: 800; font-size: 0.95rem; letter-spacing: 0.5px;
+  box-shadow: 0 8px 24px hsla(var(--pf-hue), 80%, 50%, 0.4);
+  animation: pf-balance-breathe 3s ease-in-out infinite;
+  display: flex; align-items: center; gap: 6px;
+  z-index: 10;
+}
+.pf-balance-badge .lbl {
+  font-size: 0.6rem; opacity: 0.85;
+  font-weight: 600; letter-spacing: 1px;
+}
+@keyframes pf-balance-breathe {
+  0%, 100% { transform: scale(1); box-shadow: 0 8px 24px hsla(var(--pf-hue), 80%, 50%, 0.4); }
+  50%      { transform: scale(1.03); box-shadow: 0 12px 32px hsla(var(--pf-hue), 80%, 50%, 0.6); }
+}
+@media (max-width: 768px) {
+  .pf-balance-badge { position: relative; top: auto; right: auto; margin: 8px 0 0 0; }
+}
+
+/* ─── Avatar ─── */
+.pf-avatar-wrap { position: relative; flex-shrink: 0; width: 84px; height: 84px; transform-style: preserve-3d; }
+.pf-avatar {
+  position: absolute; inset: 10px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 2.1rem; font-weight: 900; color: #fff;
+  background: radial-gradient(circle at 30% 25%,
+    hsla(var(--pf-hue), 90%, 80%, 1),
+    hsla(var(--pf-hue-2), 85%, 55%, 1) 70%);
+  box-shadow:
+    0 1px 0 rgba(255,255,255,0.6) inset,
+    0 8px 30px hsla(var(--pf-hue), 70%, 50%, 0.45),
+    0 0 60px hsla(var(--pf-hue), 80%, 60%, 0.3);
+  z-index: 3; animation: pf-avatar-breathe 4s ease-in-out infinite;
+}
+@keyframes pf-avatar-breathe {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.04); }
+}
+.pf-ring {
+  position: absolute; inset: 0; border-radius: 50%;
+  border: 1.5px solid hsla(var(--pf-hue), 80%, 65%, 0.5);
+  pointer-events: none; will-change: transform;
+}
+.pf-ring.r1 { animation: pf-orbit-x 8s linear infinite; transform: rotateX(70deg); }
+.pf-ring.r2 { animation: pf-orbit-y 12s linear infinite; transform: rotateY(70deg); }
+.pf-ring.r3 {
+  animation: pf-orbit-z 10s linear infinite;
+  transform: rotateZ(35deg) rotateX(45deg);
+  border-color: hsla(var(--pf-hue-2), 80%, 65%, 0.5);
+}
+@keyframes pf-orbit-x { to { transform: rotateX(70deg) rotateZ(360deg); } }
+@keyframes pf-orbit-y { to { transform: rotateY(70deg) rotateX(360deg); } }
+@keyframes pf-orbit-z { to { transform: rotateZ(35deg) rotateX(45deg) rotateY(360deg); } }
+.pf-satellite {
+  position: absolute; width: 6px; height: 6px; border-radius: 50%;
+  background: hsl(var(--pf-hue), 90%, 70%);
+  box-shadow: 0 0 8px var(--pf-accent);
+  top: 50%; left: 50%; transform-origin: 0 0; pointer-events: none;
+}
+.pf-satellite.s1 { animation: pf-sat-1 6s linear infinite; }
+.pf-satellite.s2 {
+  animation: pf-sat-2 9s linear infinite;
+  background: hsl(var(--pf-hue-2), 90%, 70%);
+}
+@keyframes pf-sat-1 {
+  from { transform: rotate(0deg) translateX(42px) rotate(0deg); }
+  to   { transform: rotate(360deg) translateX(42px) rotate(-360deg); }
+}
+@keyframes pf-sat-2 {
+  from { transform: rotate(0deg) translateX(48px) rotate(0deg); }
+  to   { transform: rotate(-360deg) translateX(48px) rotate(360deg); }
+}
+
+/* ─── Identidad ─── */
+.pf-id { flex: 1; min-width: 220px; }
+.pf-greeting {
+  font-size: 0.72rem; color: var(--pf-text-3);
+  font-weight: 700; text-transform: uppercase;
+  letter-spacing: 1.2px; margin-bottom: 3px;
+}
+.pf-name-row {
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 5px; flex-wrap: wrap;
+}
+.pf-id h3 {
+  margin: 0; font-size: 1.4rem; font-weight: 900;
+  color: var(--pf-text); letter-spacing: -0.4px;
+  background: linear-gradient(120deg,
+    var(--pf-text) 0%,
+    hsl(var(--pf-hue), 50%, 42%) 50%,
+    var(--pf-text) 100%);
+  background-size: 200% 100%;
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: pf-name-shine 8s ease-in-out infinite;
+}
+@keyframes pf-name-shine {
+  0%, 100% { background-position: 0% 50%; }
+  50%      { background-position: 100% 50%; }
+}
+.pf-live {
+  position: relative; width: 10px; height: 10px; border-radius: 50%;
+  background: #10b981; animation: pf-live-pulse 2s ease-out infinite;
+  flex-shrink: 0;
+}
+@keyframes pf-live-pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(16,185,129,0.7); }
+  70%  { box-shadow: 0 0 0 9px rgba(16,185,129,0); }
+  100% { box-shadow: 0 0 0 0 rgba(16,185,129,0); }
+}
+.pf-streak {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 5px 12px;
+  background: linear-gradient(135deg, #fef3c7, #fed7aa);
+  border: 1px solid #fb923c; border-radius: 999px;
+  font-size: 0.72rem; font-weight: 800; color: #92400e;
+  box-shadow: 0 4px 12px rgba(251,146,60,0.25);
+}
+.pf-streak .fire { font-size: 0.9rem; animation: pf-fire 1.5s ease-in-out infinite alternate; }
+@keyframes pf-fire {
+  0%   { transform: scale(1) rotate(-3deg); }
+  100% { transform: scale(1.12) rotate(3deg); }
+}
+.pf-contact {
+  font-size: 0.76rem; color: var(--pf-text-2);
+  margin-bottom: 8px; display: flex; flex-wrap: wrap; gap: 4px 12px;
+}
+.pf-contact i { color: var(--pf-accent); margin-right: 4px; }
+.pf-badges { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.rol-badge {
+  position: relative; display: inline-flex; align-items: center; gap: 4px;
+  padding: 4px 11px; border-radius: 999px;
+  font-weight: 800; font-size: 0.66rem;
+  text-transform: uppercase; letter-spacing: 0.5px;
+  overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+}
+.rol-badge::before {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(115deg,
+    transparent 30%, rgba(255,255,255,0.6) 50%, transparent 70%);
+  transform: translateX(-100%);
+  animation: pf-shimmer 4s ease-in-out infinite;
+}
+@keyframes pf-shimmer {
+  0%, 60%, 100% { transform: translateX(-100%); }
+  20%           { transform: translateX(100%); }
+}
+.rol-badge.superadmin { background: linear-gradient(135deg, #f43f5e, #e11d48); color: #fff; }
+.rol-badge.banco      { background: linear-gradient(135deg, #3b82f6, #1d4ed8); color: #fff; }
+.rol-badge.comercial  { background: linear-gradient(135deg, #f59e0b, #d97706); color: #fff; }
+.rol-badge.cliente    { background: linear-gradient(135deg, #10b981, #059669); color: #fff; }
+.rol-badge.auditor    { background: linear-gradient(135deg, #8b5cf6, #7c3aed); color: #fff; }
+.rol-badge.default    { background: linear-gradient(135deg, #64748b, #475569); color: #fff; }
+
+/* ─── Badges verificados ─── */
+.pf-verified {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 3px 9px; border-radius: 999px;
+  background: var(--pf-accent-soft);
+  color: var(--pf-accent);
+  font-size: 0.62rem; font-weight: 700;
+}
+.pf-verified i { font-size: 0.7rem; }
+
+/* ─── Perfil completado ─── */
+.pf-completion {
+  display: flex; align-items: center; gap: 10px;
+  padding: 6px 12px; border-radius: 999px;
+  background: var(--pf-surface-soft);
+  border: 1px solid var(--pf-border-soft);
+  font-size: 0.72rem; font-weight: 700;
+  color: var(--pf-text-2);
+}
+.pf-completion-ring {
+  position: relative; width: 28px; height: 28px;
+}
+.pf-completion-ring svg {
+  transform: rotate(-90deg); width: 100%; height: 100%;
+}
+.pf-completion-ring circle {
+  fill: none; stroke-width: 3;
+  transition: stroke-dashoffset 1s ease;
+}
+.pf-completion-ring .bg { stroke: var(--pf-border-soft); }
+.pf-completion-ring .fg { stroke: url(#pf-grad-completion); stroke-linecap: round; }
+.pf-completion-ring .pct {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.55rem; font-weight: 900; color: var(--pf-accent);
+}
+
+/* ─── Botón editar ─── */
+.pf-header-actions .btn-edit {
+  position: relative; padding: 9px 22px; border-radius: 999px;
+  border: 1px solid hsla(var(--pf-hue), 30%, 80%);
+  background: var(--pf-surface);
+  color: var(--pf-accent);
+  font-size: 0.78rem; font-weight: 800;
+  text-decoration: none;
+  display: inline-flex; align-items: center; gap: 6px;
+  overflow: hidden; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 1;
+}
+.pf-header-actions .btn-edit::after {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(115deg, transparent 30%,
+    hsla(var(--pf-hue), 80%, 70%, 0.5) 50%, transparent 70%);
+  transform: translateX(-100%); transition: transform 0.6s; z-index: -1;
+}
+.pf-header-actions .btn-edit:hover {
+  color: #fff;
+  background: hsl(var(--pf-hue), 60%, 45%);
+  border-color: transparent;
+  box-shadow: 0 8px 24px hsla(var(--pf-hue), 60%, 45%, 0.45);
+  transform: translateY(-1px);
+}
+.pf-header-actions .btn-edit:hover::after { transform: translateX(100%); }
+
+/* ─── Barra de nivel ─── */
+.pf-level-bar {
+  margin-top: 14px; padding-top: 14px;
+  border-top: 1px solid var(--pf-border-soft);
+  display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+}
+.pf-level-info { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.pf-level-icon {
+  width: 34px; height: 34px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  background: linear-gradient(135deg,
+    hsl(var(--pf-hue), 80%, 60%),
+    hsl(var(--pf-hue-2), 80%, 55%));
+  color: #fff; font-weight: 900; font-size: 0.85rem;
+  box-shadow: 0 4px 12px hsla(var(--pf-hue), 60%, 50%, 0.35);
+}
+.pf-level-text {
+  font-size: 0.72rem; color: var(--pf-text-3);
+  font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;
+}
+.pf-level-text strong { color: var(--pf-accent); font-size: 0.85rem; }
+.pf-level-track {
+  flex: 1; min-width: 140px; height: 8px;
+  background: var(--pf-border-soft);
+  border-radius: 999px; overflow: hidden; position: relative;
+}
+.pf-level-fill {
+  height: 100%;
+  background: linear-gradient(90deg,
+    hsl(var(--pf-hue), 80%, 60%),
+    hsl(var(--pf-hue-2), 80%, 55%));
+  border-radius: 999px;
+  transition: width 1.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+  position: relative; box-shadow: 0 0 12px var(--pf-accent);
+}
+.pf-level-fill::after {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.5), transparent);
+  animation: pf-level-shine 2s ease-in-out infinite;
+}
+@keyframes pf-level-shine { to { transform: translateX(100%); } }
+
+/* ══════════════════════════════════════════════════════════════════════
+   STATS CON PROGRESS RINGS
+   ══════════════════════════════════════════════════════════════════════ */
+.pf-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px; margin-bottom: 22px;
+}
+.pf-stat {
+  position: relative;
+  background: var(--pf-surface);
+  backdrop-filter: blur(var(--pf-glass-blur));
+  border: 1px solid var(--pf-border);
+  border-radius: 14px; padding: 16px;
+  overflow: hidden;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s, background 0.4s;
+  box-shadow:
+    0 1px 0 rgba(255,255,255,0.95) inset,
+    0 1px 2px rgba(15,23,42,0.03),
+    var(--pf-shadow);
+  display: flex; align-items: center; gap: 14px;
+}
+.pf-stat::before {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(120deg, transparent 40%,
+    hsla(var(--pf-hue), 90%, 75%, 0.3) 50%, transparent 60%);
+  transform: translateX(-100%); transition: transform 0.9s;
+  pointer-events: none;
+}
+.pf-stat:hover { transform: translateY(-4px); box-shadow: var(--pf-shadow-hover); }
+.pf-stat:hover::before { transform: translateX(100%); }
+.pf-ring-stat {
+  position: relative; width: 64px; height: 64px; flex-shrink: 0;
+}
+.pf-ring-stat svg { transform: rotate(-90deg); width: 100%; height: 100%; }
+.pf-ring-stat circle { fill: none; stroke-width: 5; }
+.pf-ring-stat .bg { stroke: var(--pf-border-soft); }
+.pf-ring-stat .fg {
+  stroke: url(#pf-grad-ring);
+  stroke-linecap: round;
+  transition: stroke-dashoffset 1.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.pf-ring-stat .icon {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.4rem;
+}
+.pf-stat-body { min-width: 0; flex: 1; }
+.pf-stat-num {
+  font-size: 1.25rem; font-weight: 900;
+  color: var(--pf-accent);
+  font-family: 'SF Mono','Courier New',monospace;
+  line-height: 1.1; letter-spacing: -0.5px;
+}
+.pf-stat-lbl {
+  font-size: 0.6rem; color: var(--pf-text-3);
+  text-transform: uppercase; font-weight: 800;
+  letter-spacing: 0.5px; margin-top: 2px;
+}
+.pf-sparkline { display: block; width: 100%; height: 22px; margin-top: 6px; }
+
+/* ══════════════════════════════════════════════════════════════════════
+   SECCIONES
+   ══════════════════════════════════════════════════════════════════════ */
+.pf-section {
+  font-weight: 800; font-size: 0.72rem;
+  color: var(--pf-accent);
+  text-transform: uppercase; letter-spacing: 1px;
+  margin: 24px 0 12px;
+  display: flex; align-items: center; gap: 10px;
+}
+.pf-section::before {
+  content: ""; width: 4px; height: 16px;
+  background: linear-gradient(180deg,
+    hsl(var(--pf-hue), 80%, 60%),
+    hsl(var(--pf-hue), 60%, 40%));
+  border-radius: 2px; box-shadow: 0 0 12px var(--pf-accent);
+}
+.pf-section::after {
+  content: ""; flex: 1; height: 1px;
+  background: linear-gradient(90deg, hsla(var(--pf-hue), 60%, 60%, 0.35), transparent);
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   GRUPOS DE LINKS
+   ══════════════════════════════════════════════════════════════════════ */
+.pf-groups {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 14px; margin-bottom: 22px;
+}
+.pf-group {
+  position: relative;
+  background: var(--pf-surface);
+  backdrop-filter: blur(var(--pf-glass-blur));
+  border: 1px solid var(--pf-border);
+  border-radius: 14px; padding: 14px 16px;
+  overflow: hidden;
+  transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.5s, border-color 0.5s, background 0.4s;
+  transform-style: preserve-3d; will-change: transform;
+  box-shadow:
+    0 1px 0 rgba(255,255,255,0.95) inset,
+    0 1px 2px rgba(15,23,42,0.03),
+    var(--pf-shadow);
+}
+.pf-group::after {
+  content: ''; position: absolute; top: -50%; right: -50%;
+  width: 200%; height: 100%;
+  background: linear-gradient(115deg, transparent 40%, rgba(255,255,255,0.5) 50%, transparent 60%);
+  transform: translateX(-100%); transition: transform 0.8s;
+  pointer-events: none; opacity: 0;
+}
+.pf-group:hover::after { transform: translateX(50%); opacity: 1; }
+.pf-group:hover {
+  border-color: hsla(var(--pf-hue), 60%, 70%, 0.7);
+  box-shadow: var(--pf-shadow-hover);
+}
+.pf-group-head {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 0.68rem; font-weight: 900;
+  text-transform: uppercase; letter-spacing: 0.7px;
+  padding-bottom: 9px; margin-bottom: 8px;
+  border-bottom: 1px solid var(--pf-border-soft);
+}
+.pf-group-head i {
+  font-size: 0.85rem; padding: 5px;
+  border-radius: 8px; transition: transform 0.3s;
+}
+.pf-group:hover .pf-group-head i { transform: rotate(-8deg) scale(1.1); }
+.pf-group-head.op  { color: #1e40af; } .pf-group-head.op i  { background: #dbeafe; color: #1e40af; }
+.pf-group-head.fin { color: #15803d; } .pf-group-head.fin i { background: #dcfce7; color: #15803d; }
+.pf-group-head.ctl { color: #b45309; } .pf-group-head.ctl i { background: #fef3c7; color: #b45309; }
+.pf-group-head.usr { color: #7c3aed; } .pf-group-head.usr i { background: #ede9fe; color: #7c3aed; }
+.pf-group-head.sys { color: #be123c; } .pf-group-head.sys i { background: #fee2e2; color: #be123c; }
+.pf-group-head.sol { color: #0891b2; } .pf-group-head.sol i { background: #cffafe; color: #0891b2; }
+.pf-group-head.lim { color: #6d28d9; } .pf-group-head.lim i { background: #ede9fe; color: #6d28d9; }
+.pf-group-links { display: flex; flex-direction: column; gap: 2px; }
+.pf-link {
+  display: flex; align-items: center; gap: 10px;
+  padding: 7px 9px; border-radius: 9px;
+  font-size: 0.82rem; font-weight: 500;
+  color: var(--pf-text-2);
+  text-decoration: none;
+  position: relative;
+  transition: all 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.pf-link::after {
+  content: '›'; position: absolute; right: 9px; top: 50%;
+  transform: translateY(-50%) translateX(-6px);
+  opacity: 0; font-size: 1.1rem; font-weight: 800;
+  color: var(--pf-accent); transition: all 0.3s;
+}
+.pf-link:hover, .pf-link:focus-visible {
+  background: var(--pf-accent-soft);
+  color: var(--pf-accent);
+  padding-left: 13px; outline: none;
+}
+.pf-link:hover::after { opacity: 1; transform: translateY(-50%) translateX(0); }
+.pf-link i {
+  width: 18px; text-align: center;
+  color: var(--pf-accent); font-size: 0.85rem;
+  flex-shrink: 0; transition: transform 0.3s;
+}
+.pf-link:hover i { transform: scale(1.2) rotate(-6deg); }
+
+/* ══════════════════════════════════════════════════════════════════════
+   CARDS DE INFO
+   ══════════════════════════════════════════════════════════════════════ */
+.pf-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 14px; margin-bottom: 20px;
+}
+.pf-card {
+  position: relative;
+  background: var(--pf-surface);
+  backdrop-filter: blur(var(--pf-glass-blur));
+  border: 1px solid var(--pf-border);
+  border-radius: 14px; overflow: hidden;
+  transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.35s, background 0.4s;
+  box-shadow:
+    0 1px 0 rgba(255,255,255,0.95) inset,
+    0 1px 2px rgba(15,23,42,0.03),
+    var(--pf-shadow);
+}
+.pf-card:hover { transform: translateY(-3px); box-shadow: var(--pf-shadow-hover); }
+.pf-card-head {
+  padding: 11px 16px; font-size: 0.76rem; font-weight: 800;
+  color: var(--pf-accent);
+  background: linear-gradient(180deg, var(--pf-accent-soft), transparent);
+  border-bottom: 1px solid var(--pf-border-soft);
+  display: flex; align-items: center; gap: 8px;
+  text-transform: uppercase; letter-spacing: 0.5px;
+}
+.pf-card-body { padding: 8px 16px; }
+.pf-list-item {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 8px 0; border-bottom: 1px solid var(--pf-border-soft);
+  font-size: 0.82rem;
+}
+.pf-list-item:last-child { border-bottom: none; }
+.pf-list-item .lbl { color: var(--pf-text-2); }
+.pf-list-item .val {
+  font-weight: 700; color: var(--pf-accent);
+  font-family: 'SF Mono','Courier New',monospace;
+}
+.pf-list-item .val.ok { color: #15803d; }
+.pf-list-item .val.bad { color: #b91c1c; }
+.pf-empty {
+  text-align: center; padding: 22px 8px;
+  color: var(--pf-text-3); font-size: 0.78rem;
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   TIMELINE DE ACTIVIDAD
+   ══════════════════════════════════════════════════════════════════════ */
+.pf-timeline {
+  padding: 12px 16px 16px; position: relative;
+}
+.pf-timeline::before {
+  content: ''; position: absolute; left: 28px; top: 20px; bottom: 20px;
+  width: 2px;
+  background: linear-gradient(180deg, var(--pf-accent), transparent);
+  opacity: 0.3;
+}
+.pf-tl-item {
+  position: relative; padding-left: 44px; padding-bottom: 16px;
+}
+.pf-tl-item:last-child { padding-bottom: 0; }
+.pf-tl-icon {
+  position: absolute; left: 14px; top: 0;
+  width: 30px; height: 30px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.85rem; color: #fff;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  z-index: 1;
+}
+.pf-tl-icon.apuesta { background: linear-gradient(135deg, #3b82f6, #1d4ed8); }
+.pf-tl-icon.recarga { background: linear-gradient(135deg, #10b981, #059669); }
+.pf-tl-icon.premio  { background: linear-gradient(135deg, #f59e0b, #d97706); }
+.pf-tl-icon.cancion { background: linear-gradient(135deg, #ef4444, #b91c1c); }
+.pf-tl-icon.sistema { background: linear-gradient(135deg, #64748b, #475569); }
+.pf-tl-body {
+  padding: 8px 12px; border-radius: 10px;
+  background: var(--pf-surface-soft);
+  border: 1px solid var(--pf-border-soft);
+}
+.pf-tl-title {
+  font-size: 0.8rem; font-weight: 700;
+  color: var(--pf-text);
+  display: flex; justify-content: space-between; align-items: center;
+  gap: 8px;
+}
+.pf-tl-desc { font-size: 0.72rem; color: var(--pf-text-2); margin-top: 2px; }
+.pf-tl-time { font-size: 0.62rem; color: var(--pf-text-3); margin-top: 3px; }
+
+/* ══════════════════════════════════════════════════════════════════════
+   HEATMAP SEMANAL
+   ══════════════════════════════════════════════════════════════════════ */
+.pf-heatmap {
+  padding: 14px 16px 18px;
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+.pf-hm-day {
+  aspect-ratio: 1; border-radius: 4px;
+  background: var(--pf-border-soft);
+  transition: transform 0.2s;
+  cursor: pointer;
+  position: relative;
+}
+.pf-hm-day.lvl-0 { background: var(--pf-border-soft); }
+.pf-hm-day.lvl-1 { background: hsla(var(--pf-hue), 70%, 70%, 0.4); }
+.pf-hm-day.lvl-2 { background: hsla(var(--pf-hue), 70%, 60%, 0.6); }
+.pf-hm-day.lvl-3 { background: hsla(var(--pf-hue), 75%, 50%, 0.8); }
+.pf-hm-day.lvl-4 { background: hsl(var(--pf-hue), 80%, 45%); }
+.pf-hm-day:hover { transform: scale(1.2); z-index: 2; }
+.pf-hm-day:hover::after {
+  content: attr(data-tip);
+  position: absolute; bottom: 110%; left: 50%;
+  transform: translateX(-50%);
+  background: var(--pf-text); color: var(--pf-bg);
+  padding: 4px 8px; border-radius: 6px;
+  font-size: 0.65rem; font-weight: 600;
+  white-space: nowrap; pointer-events: none;
+  z-index: 10;
+}
+.pf-heatmap-legend {
+  display: flex; align-items: center; gap: 6px; justify-content: flex-end;
+  padding: 0 16px 12px;
+  font-size: 0.65rem; color: var(--pf-text-3);
+}
+.pf-hm-legend-cell {
+  width: 12px; height: 12px; border-radius: 3px;
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   LOGROS
+   ══════════════════════════════════════════════════════════════════════ */
+.pf-achievements {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+  gap: 10px; padding: 8px 16px 16px;
+}
+.pf-achievement {
+  aspect-ratio: 1; border-radius: 12px;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 4px;
+  background: linear-gradient(135deg, var(--pf-accent-soft), transparent);
+  border: 1px solid var(--pf-border-soft);
+  font-size: 1.4rem;
+  transition: transform 0.3s, box-shadow 0.3s;
+  cursor: default; position: relative; overflow: hidden;
+}
+.pf-achievement small {
+  font-size: 0.55rem; font-weight: 800;
+  text-transform: uppercase; letter-spacing: 0.3px;
+  color: var(--pf-text-2);
+  text-align: center; line-height: 1.1; padding: 0 4px;
+}
+.pf-achievement.locked { filter: grayscale(1) opacity(0.4); }
+.pf-achievement:not(.locked):hover {
+  transform: scale(1.08) rotate(-3deg);
+  box-shadow: 0 12px 32px -10px hsla(var(--pf-hue), 60%, 45%, 0.4);
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   QUICK ACTIONS (FABs)
+   ══════════════════════════════════════════════════════════════════════ */
+.pf-quick-actions {
+  position: fixed; bottom: 24px; right: 24px;
+  display: flex; flex-direction: column; gap: 10px;
+  z-index: 8000;
+}
+.pf-fab {
+  position: relative;
+  width: 56px; height: 56px; border-radius: 50%;
+  border: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.3rem; color: #fff;
+  background: linear-gradient(135deg,
+    hsl(var(--pf-hue), 75%, 55%),
+    hsl(var(--pf-hue-2), 75%, 50%));
+  box-shadow:
+    0 8px 24px hsla(var(--pf-hue), 70%, 45%, 0.4),
+    0 0 0 0 hsla(var(--pf-hue), 80%, 60%, 0.4);
+  transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+  text-decoration: none;
+}
+.pf-fab:hover {
+  transform: translateY(-4px) scale(1.05);
+  box-shadow:
+    0 12px 32px hsla(var(--pf-hue), 70%, 45%, 0.55),
+    0 0 0 8px hsla(var(--pf-hue), 80%, 60%, 0.15);
+  color: #fff;
+}
+.pf-fab-label {
+  position: absolute; right: 100%; top: 50%;
+  transform: translateY(-50%) translateX(-10px);
+  background: var(--pf-text); color: var(--pf-bg);
+  padding: 6px 12px; border-radius: 8px;
+  font-size: 0.72rem; font-weight: 700;
+  white-space: nowrap;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.2s;
+}
+.pf-fab:hover .pf-fab-label { opacity: 1; }
+.pf-fab-main {
+  width: 60px; height: 60px; font-size: 1.5rem;
+  animation: pf-fab-pulse 3s ease-in-out infinite;
+}
+@keyframes pf-fab-pulse {
+  0%, 100% { box-shadow: 0 8px 24px hsla(var(--pf-hue), 70%, 45%, 0.4), 0 0 0 0 hsla(var(--pf-hue), 80%, 60%, 0.4); }
+  50%      { box-shadow: 0 12px 32px hsla(var(--pf-hue), 70%, 45%, 0.5), 0 0 0 12px hsla(var(--pf-hue), 80%, 60%, 0.05); }
+}
+
+@media (max-width: 768px) {
+  .pf-quick-actions { bottom: 90px; right: 12px; }
+  .pf-fab { width: 48px; height: 48px; font-size: 1.1rem; }
+  .pf-fab-main { width: 52px; height: 52px; }
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   SKELETON LOADING
+   ══════════════════════════════════════════════════════════════════════ */
+.pf-skeleton {
+  background: linear-gradient(90deg,
+    var(--pf-border-soft) 0%,
+    var(--pf-surface-soft) 50%,
+    var(--pf-border-soft) 100%);
+  background-size: 200% 100%;
+  animation: pf-skeleton-shimmer 1.5s infinite;
+  border-radius: 8px;
+}
+@keyframes pf-skeleton-shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   EFECTOS
+   ══════════════════════════════════════════════════════════════════════ */
+.pf-ripple {
+  position: absolute; border-radius: 50%;
+  background: hsla(var(--pf-hue), 80%, 65%, 0.4);
+  transform: scale(0);
+  animation: pf-ripple-anim 0.6s ease-out;
+  pointer-events: none;
+}
+@keyframes pf-ripple-anim { to { transform: scale(4); opacity: 0; } }
+.pf-reveal {
+  opacity: 0; transform: translateY(16px);
+  transition: opacity 0.7s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.7s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.pf-reveal.visible { opacity: 1; transform: translateY(0); }
+.pf-confetti {
+  position: fixed; width: 8px; height: 8px;
+  pointer-events: none; z-index: 9999; border-radius: 2px;
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   RESPONSIVE
+   ══════════════════════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  .pf-header { padding: 16px; gap: 14px; }
+  .pf-avatar-wrap { width: 66px; height: 66px; }
+  .pf-avatar { font-size: 1.5rem; inset: 8px; }
+  .pf-id h3 { font-size: 1.1rem; }
+  .pf-groups, .pf-cards { grid-template-columns: 1fr; }
+  .pf-achievements { grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); }
+  .pf-theme-switcher { top: auto; bottom: 90px; right: 12px; flex-direction: row; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pf-aurora, .pf-grid, .pf-orb,
+  .pf-header::before, .pf-header::after, .pf-header-beam,
+  .pf-avatar, .pf-ring, .pf-satellite,
+  .pf-id h3, .rol-badge::before,
+  .pf-live, .pf-level-fill::after,
+  .pf-streak, .pf-streak .fire,
+  .pf-balance-badge, .pf-fab-main,
+  .pf-skeleton {
+    animation: none !important;
+  }
+  .pf-reveal { opacity: 1; transform: none; transition: none; }
+  .pf-cursor { display: none; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="pf-page">
+
+{# SVG gradients compartidos #}
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <linearGradient id="pf-grad-ring" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="hsl(var(--pf-hue), 80%, 60%)"/>
+      <stop offset="100%" stop-color="hsl(var(--pf-hue-2), 80%, 55%)"/>
+    </linearGradient>
+    <linearGradient id="pf-grad-completion" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="hsl(var(--pf-hue), 80%, 60%)"/>
+      <stop offset="100%" stop-color="hsl(var(--pf-hue-2), 80%, 55%)"/>
+    </linearGradient>
+  </defs>
+</svg>
+
+{# Barra de progreso superior #}
+<div class="pf-progress-bar" id="pfProgressBar"></div>
+
+{# Capas de fondo 3D #}
+<div class="pf-bg-root" aria-hidden="true">
+  <div class="pf-aurora"></div>
+  <div class="pf-grid"></div>
+  <div class="pf-orb o1"></div>
+  <div class="pf-orb o2"></div>
+  <div class="pf-orb o3"></div>
+  <div class="pf-spotlight" id="pfSpotlight"></div>
+  <div class="pf-noise"></div>
+</div>
+
+{# Cursor glow #}
+<div class="pf-cursor" id="pfCursor" aria-hidden="true"></div>
+
+{# ═══════════════════════════════════════════════════════════════════════ #}
+{# THEME SWITCHER FLOTANTE                                                  #}
+{# ═══════════════════════════════════════════════════════════════════════ #}
+<div class="pf-theme-switcher" id="pfThemeSwitcher" role="group" aria-label="Cambiar tema">
+  <button class="pf-theme-btn" data-theme-value="light" title="Tema Claro" aria-label="Claro">
+    ☀️<span class="pf-theme-tooltip">Claro</span>
+  </button>
+  <button class="pf-theme-btn" data-theme-value="dark" title="Tema Oscuro" aria-label="Oscuro">
+    🌙<span class="pf-theme-tooltip">Oscuro</span>
+  </button>
+  <button class="pf-theme-btn" data-theme-value="neon" title="Tema Neón" aria-label="Neón">
+    🌈<span class="pf-theme-tooltip">Neón</span>
+  </button>
+  <button class="pf-theme-btn" data-theme-value="pastel" title="Tema Pastel" aria-label="Pastel">
+    🍑<span class="pf-theme-tooltip">Pastel</span>
+  </button>
+  <button class="pf-theme-btn" data-theme-value="auto" title="Automático (según sistema)" aria-label="Auto">
+    🎨<span class="pf-theme-tooltip">Auto</span>
+  </button>
+</div>
+
+<div class="pf-wrap">
+
+  {# ─── DEBUG ────────────────────────────────────────────────────── #}
+  <details class="pf-debug" style="background:var(--pf-surface);border:1px solid var(--pf-border);border-radius:10px;margin-bottom:14px;font-size:0.72rem;color:var(--pf-text-3);">
+    <summary style="cursor:pointer;padding:7px 14px;font-weight:600;list-style:none;user-select:none;">🔧 Info de sesión</summary>
+    <div style="padding:4px 14px 10px;">
+      <strong>Roles activos:</strong>
+      {% for rol in user|get_active_roles %}
+        {{ rol.get_tipo_display }}{% if not forloop.last %}, {% endif %}
+      {% endfor %}
+    </div>
+  </details>
+
+  {# ═══════════════════════════════════════════════════════════════ #}
+  {# HEADER                                                          #}
+  {# ═══════════════════════════════════════════════════════════════ #}
+  <div class="pf-header" id="pfHeader">
+    <div class="pf-header-beam" aria-hidden="true"></div>
+
+    {# Saldo destacado #}
+    <div class="pf-balance-badge">
+      <span class="lbl">SALDO</span>
+      <span>${{ saldo_total|default:0|floatformat:2 }}</span>
+    </div>
+
+    <div class="pf-avatar-wrap">
+      <div class="pf-ring r1"></div>
+      <div class="pf-ring r2"></div>
+      <div class="pf-ring r3"></div>
+      <div class="pf-satellite s1"></div>
+      <div class="pf-satellite s2"></div>
+      <div class="pf-avatar">{{ user.username|first|upper }}</div>
+    </div>
+
+    <div class="pf-id">
+      <div class="pf-greeting" id="pfGreeting">Bienvenido</div>
+      <div class="pf-name-row">
+        <h3 id="pfName">{{ user.get_full_name|default:user.username }}</h3>
+        {% if user|has_any_role:'comercial,banco,superadmin' %}
+          <span class="pf-live" title="Sesión activa"></span>
+        {% endif %}
+        {% if streak_dias and streak_dias >= 3 %}
+          <span class="pf-streak"><span class="fire">🔥</span> {{ streak_dias }}d</span>
+        {% endif %}
+      </div>
+      <div class="pf-contact">
+        <span><i class="fas fa-envelope"></i>{{ user.email }}</span>
+        {% if user.perfil.telefono %}
+          <span><i class="fas fa-phone"></i>{{ user.perfil.telefono }}</span>
+        {% endif %}
+        <span><i class="fas fa-calendar"></i>Desde {{ user.date_joined|date:"d/m/Y" }}</span>
+      </div>
+      <div class="pf-badges">
+        {% for rol in user|get_active_roles %}
+          <span class="rol-badge
+            {% if rol.tipo == 'superadmin' %}superadmin
+            {% elif rol.tipo == 'banco' %}banco
+            {% elif rol.tipo == 'comercial' %}comercial
+            {% elif rol.tipo == 'cliente' %}cliente
+            {% elif rol.tipo == 'auditor' %}auditor
+            {% else %}default{% endif %}">
+            {% if rol.tipo == 'superadmin' %}🛡️
+            {% elif rol.tipo == 'banco' %}🏦
+            {% elif rol.tipo == 'comercial' %}📈
+            {% elif rol.tipo == 'cliente' %}👤
+            {% elif rol.tipo == 'auditor' %}🔍
+            {% else %}👤{% endif %}
+            {{ rol.get_tipo_display }}
+          </span>
+        {% empty %}
+          <span class="rol-badge default">👤 Usuario</span>
+        {% endfor %}
+
+        {# Badges verificados #}
+        {% if user.email %}<span class="pf-verified"><i class="fas fa-envelope"></i> Email</span>{% endif %}
+        {% if user.perfil.telefono %}<span class="pf-verified"><i class="fas fa-phone"></i> Teléfono</span>{% endif %}
+        <span class="pf-verified"><i class="fas fa-calendar-check"></i> {{ user.date_joined|timesince }}</span>
+      </div>
+    </div>
+
+    {# Perfil completado #}
+    <div class="pf-completion">
+      <div class="pf-completion-ring">
+        <svg viewBox="0 0 36 36">
+          <circle class="bg" cx="18" cy="18" r="15"/>
+          <circle class="fg" cx="18" cy="18" r="15"
+                  stroke-dasharray="94.2"
+                  stroke-dashoffset="{{ perfil_completado_offset|default:'94.2' }}"/>
+        </svg>
+        <span class="pct">{{ perfil_completado|default:0 }}%</span>
+      </div>
+      <span>Perfil</span>
+    </div>
+
+    <div class="pf-header-actions">
+      <a href="{% url 'usuarios:editar_perfil' %}" class="btn-edit">
+        <i class="fas fa-edit"></i> Editar
+      </a>
+    </div>
+
+    <div class="pf-level-bar" style="width:100%;">
+      <div class="pf-level-info">
+        <div class="pf-level-icon">{{ nivel_usuario|default:"1" }}</div>
+        <div class="pf-level-text">
+          Nivel <strong>{{ nivel_usuario|default:"1" }}</strong><br>
+          <span style="font-size:0.62rem;">{{ puntos_siguiente_nivel|default:"50" }} XP para subir</span>
+        </div>
+      </div>
+      <div class="pf-level-track">
+        <div class="pf-level-fill" style="width: {{ progreso_nivel|default:0 }}%;"></div>
+      </div>
+    </div>
+  </div>
+
+  {# ═══════════════════════════════════════════════════════════════ #}
+  {# STATS CON PROGRESS RINGS                                        #}
+  {# ═══════════════════════════════════════════════════════════════ #}
+  <div class="pf-stats pf-reveal" data-delay="100">
+
+    <div class="pf-stat">
+      <div class="pf-ring-stat">
+        <svg viewBox="0 0 36 36">
+          <circle class="bg" cx="18" cy="18" r="15"/>
+          <circle class="fg" cx="18" cy="18" r="15"
+                  stroke-dasharray="94.2"
+                  stroke-dashoffset="{{ ring_saldo|default:'40' }}"/>
+        </svg>
+        <span class="icon">💰</span>
+      </div>
+      <div class="pf-stat-body">
+        <div class="pf-stat-num" data-count="{{ saldo_total|default:0 }}" data-money="1">$0.00</div>
+        <div class="pf-stat-lbl">Saldo Total</div>
+      </div>
+    </div>
+
+    <div class="pf-stat">
+      <div class="pf-ring-stat">
+        <svg viewBox="0 0 36 36">
+          <circle class="bg" cx="18" cy="18" r="15"/>
+          <circle class="fg" cx="18" cy="18" r="15"
+                  stroke-dasharray="94.2"
+                  stroke-dashoffset="{{ ring_bonos|default:'60' }}"/>
+        </svg>
+        <span class="icon">🎁</span>
+      </div>
+      <div class="pf-stat-body">
+        <div class="pf-stat-num" data-count="{{ total_bonos|default:0 }}" data-money="1">$0.00</div>
+        <div class="pf-stat-lbl">Bonos Activos</div>
+      </div>
+    </div>
+
+    <div class="pf-stat">
+      <div class="pf-ring-stat">
+        <svg viewBox="0 0 36 36">
+          <circle class="bg" cx="18" cy="18" r="15"/>
+          <circle class="fg" cx="18" cy="18" r="15"
+                  stroke-dasharray="94.2"
+                  stroke-dashoffset="{{ ring_jugadas|default:'30' }}"/>
+        </svg>
+        <span class="icon">🎲</span>
+      </div>
+      <div class="pf-stat-body">
+        <div class="pf-stat-num" data-count="{{ total_jugadas|default:0 }}" data-money="0">0</div>
+        <div class="pf-stat-lbl">Jugadas</div>
+      </div>
+    </div>
+
+    <div class="pf-stat">
+      <div class="pf-ring-stat">
+        <svg viewBox="0 0 36 36">
+          <circle class="bg" cx="18" cy="18" r="15"/>
+          <circle class="fg" cx="18" cy="18" r="15"
+                  stroke-dasharray="94.2"
+                  stroke-dashoffset="{{ ring_clientes|default:'50' }}"/>
+        </svg>
+        <span class="icon">👥</span>
+      </div>
+      <div class="pf-stat-body">
+        <div class="pf-stat-num" data-count="{{ clientes_asignados|default:0 }}" data-money="0">0</div>
+        <div class="pf-stat-lbl">
+          {% if user|has_any_role:'banco,comercial,superadmin' %}Clientes{% else %}Referidos{% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {# ═══════════════════════════════════════════════════════════════ #}
+  {# CONFIGURACIÓN AVANZADA                                          #}
+  {# ═══════════════════════════════════════════════════════════════ #}
+  {% if user|has_role:'cliente' or user|has_any_role:'comercial,banco,superadmin' %}
+    <div class="pf-section pf-reveal" data-delay="200">
+      <span>⚙️ Configuración Avanzada</span>
+    </div>
+
+    <div class="pf-groups pf-reveal" data-delay="250" id="pfGroups">
+
+      {# ═══════ CLIENTE ═══════ #}
+      {% if user|has_role:'cliente' %}
+
+        <div class="pf-group" data-tilt>
+          <div class="pf-group-head lim"><i class="fas fa-balance-scale"></i> Mis Límites y Dosis</div>
+          <div class="pf-group-links">
+            <a href="{% url 'usuarios:mis_limites' %}" class="pf-link">
+              <i class="fas fa-sliders-h"></i> Consultar Límites
+            </a>
+          </div>
+        </div>
+
+        <div class="pf-group" data-tilt>
+          <div class="pf-group-head sol"><i class="fas fa-hand-holding-usd"></i> Solicitar</div>
+          <div class="pf-group-links">
+            <a href="{% url 'roles:solicitar' 'recarga' %}" class="pf-link">
+              <i class="fas fa-plus-circle"></i> Recarga
+            </a>
+            <a href="{% url 'roles:solicitar' 'cobro' %}" class="pf-link">
+              <i class="fas fa-hand-holding-usd"></i> Cobro
+            </a>
+            <a href="{% url 'roles:solicitar' 'prestamo' %}" class="pf-link">
+              <i class="fas fa-hand-holding-heart"></i> Préstamo
+            </a>
+          </div>
+        </div>
+      {% endif %}
+
+      {# ═══════ COMERCIAL / BANCO / SUPERADMIN ═══════ #}
+      {% if user|has_any_role:'comercial,banco,superadmin' %}
+
+        <div class="pf-group" data-tilt>
+          <div class="pf-group-head lim"><i class="fas fa-balance-scale"></i> Mis Límites y Dosis</div>
+          <div class="pf-group-links">
+            <a href="{% url 'usuarios:mis_limites' %}" class="pf-link">
+              <i class="fas fa-sliders-h"></i> Consultar Límites
+            </a>
+          </div>
+        </div>
+
+        <div class="pf-group" data-tilt>
+          <div class="pf-group-head op"><i class="fas fa-chart-line"></i> Historiales y Análisis</div>
+          <div class="pf-group-links">
+            <a href="{% url 'roles:historial_cuadres' %}" class="pf-link">
+              <i class="fas fa-history"></i> Historial Cuadres
+            </a>
+            <a href="{% url 'roles:historial_ventas' %}" class="pf-link">
+              <i class="fas fa-file-invoice-dollar"></i> Historial Ventas
+            </a>
+            <a href="{% url 'roles:analisis_rendimiento' %}" class="pf-link">
+              <i class="fas fa-chart-pie"></i> Análisis Rendimiento
+            </a>
+          </div>
+        </div>
+
+        <div class="pf-group" data-tilt>
+          <div class="pf-group-head ctl"><i class="fas fa-shield-alt"></i> Control</div>
+          <div class="pf-group-links">
+            <a href="{% url 'roles:panel_sobrelimites' %}" class="pf-link">
+              <i class="fas fa-exclamation-triangle"></i> Sobre-límites
+            </a>
+            <a href="{% url 'roles:gestion_numeros_restringidos' %}" class="pf-link">
+              <i class="fas fa-ban"></i> Números Restringidos
+            </a>
+            <a href="{% url 'roles:estructura_global' %}" class="pf-link">
+              <i class="fas fa-sitemap"></i> Estructura Global
+            </a>
+          </div>
+        </div>
+
+        <div class="pf-group" data-tilt>
+          <div class="pf-group-head fin"><i class="fas fa-credit-card"></i> Mis Herramientas</div>
+          <div class="pf-group-links">
+            {% if user|has_any_role:'comercial,banco' %}
+              <a href="{% url 'roles:mis_vias_pago' %}" class="pf-link">
+                <i class="fas fa-credit-card"></i> Mis Vías de Pago
+              </a>
+            {% endif %}
+            {% if user|has_role:'comercial' %}
+              <a href="{% url 'roles:gestionar_postpagos' %}" class="pf-link">
+                <i class="fas fa-hand-holding-usd"></i> Gestionar Postpagos
+              </a>
+            {% endif %}
+          </div>
+        </div>
+      {% endif %}
+
+      {% if user|has_any_role:'banco,superadmin' %}
+        <div class="pf-group" data-tilt>
+          <div class="pf-group-head usr"><i class="fas fa-users-cog"></i> Gestión de Usuarios</div>
+          <div class="pf-group-links">
+            <a href="{% url 'roles:ascender_usuario' %}" class="pf-link">
+              <i class="fas fa-arrow-up"></i> Ascender / Descender
+            </a>
+            <a href="{% url 'roles:gestion_limites_dosis' %}" class="pf-link">
+              <i class="fas fa-balance-scale"></i> Límites y Dosis
+            </a>
+          </div>
+        </div>
+      {% endif %}
+
+      {% if user|has_role:'banco' %}
+        <div class="pf-group" data-tilt>
+          <div class="pf-group-head sys"><i class="fas fa-university"></i> Administración Banco</div>
+          <div class="pf-group-links">
+            <a href="{% url 'roles:asignar_recursos_banco' %}" class="pf-link">
+              <i class="fas fa-boxes"></i> Asignar Recursos
+            </a>
+            <a href="{% url 'roles:panel_suscripcion_banco' %}" class="pf-link">
+              <i class="fas fa-crown"></i> Mi Suscripción
+            </a>
+            <a href="{% url 'roles:solicitar_cambios_suscripcion' %}" class="pf-link">
+              <i class="fas fa-edit"></i> Solicitar Cambios
+            </a>
+          </div>
+        </div>
+      {% endif %}
+
+      {% if user|has_role:'superadmin' %}
+        <div class="pf-group" data-tilt>
+          <div class="pf-group-head sys"><i class="fas fa-globe"></i> Administración Global</div>
+          <div class="pf-group-links">
+            <a href="{% url 'roles:panel_bancos' %}" class="pf-link">
+              <i class="fas fa-university"></i> Panel Bancos
+            </a>
+            <a href="{% url 'roles:gestionar_solicitudes_suscripcion' %}" class="pf-link">
+              <i class="fas fa-inbox"></i> Solicitudes Suscripción
+            </a>
+          </div>
+        </div>
+
+        <div class="pf-group" data-tilt>
+          <div class="pf-group-head sys"><i class="fas fa-tools"></i> Contenido del Sistema</div>
+          <div class="pf-group-links">
+            <a href="{% url 'resultados:crear_resultado' %}" class="pf-link">
+              <i class="fas fa-plus-circle"></i> Crear Resultado
+            </a>
+            <a href="{% url 'sorteos:sorteo_crear' %}" class="pf-link">
+              <i class="fas fa-plus-circle"></i> Crear Sorteo
+            </a>
+          </div>
+        </div>
+      {% endif %}
+
+    </div>
+  {% endif %}
+
+  {# ═══════════════════════════════════════════════════════════════ #}
+  {# ACTIVIDAD + HEATMAP                                             #}
+  {# ═══════════════════════════════════════════════════════════════ #}
+  <div class="pf-section pf-reveal" data-delay="300"><span>📈 Actividad</span></div>
+
+  <div class="pf-cards">
+    <div class="pf-card pf-reveal" data-delay="100">
+      <div class="pf-card-head"><i class="fas fa-stream"></i> Timeline reciente</div>
+      <div class="pf-timeline">
+        {% if ultimas_jugadas %}
+          {% for j in ultimas_jugadas|slice:":5" %}
+            <div class="pf-tl-item">
+              <div class="pf-tl-icon apuesta">🎲</div>
+              <div class="pf-tl-body">
+                <div class="pf-tl-title">
+                  <span>{{ j.sorteo.nombre|default:"Sorteo" }}</span>
+                  <span style="color:var(--pf-accent);">${{ j.monto|floatformat:2 }}</span>
+                </div>
+                <div class="pf-tl-desc">Número <strong>{{ j.numero }}</strong></div>
+                <div class="pf-tl-time">{{ j.fecha|date:"d/m/Y H:i" }}</div>
+              </div>
+            </div>
+          {% endfor %}
+        {% else %}
+          <div class="pf-empty">Sin actividad reciente</div>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="pf-card pf-reveal" data-delay="150">
+      <div class="pf-card-head"><i class="fas fa-fire"></i> Últimas 5 semanas</div>
+      <div class="pf-heatmap">
+        {% for d in heatmap_dias %}
+          <div class="pf-hm-day lvl-{{ d.level|default:0 }}"
+               data-tip="{{ d.fecha|date:'d/m' }} · {{ d.count }} apuestas"></div>
+        {% empty %}
+          {% for i in "12345678901234567890123456789012345"|make_list %}
+            <div class="pf-hm-day lvl-0" data-tip="Sin datos"></div>
+          {% endfor %}
+        {% endfor %}
+      </div>
+      <div class="pf-heatmap-legend">
+        <span>Menos</span>
+        <div class="pf-hm-legend-cell lvl-0" style="background:var(--pf-border-soft)"></div>
+        <div class="pf-hm-legend-cell lvl-1" style="background:hsla(var(--pf-hue),70%,70%,0.4)"></div>
+        <div class="pf-hm-legend-cell lvl-2" style="background:hsla(var(--pf-hue),70%,60%,0.6)"></div>
+        <div class="pf-hm-legend-cell lvl-3" style="background:hsla(var(--pf-hue),75%,50%,0.8)"></div>
+        <div class="pf-hm-legend-cell lvl-4" style="background:hsl(var(--pf-hue),80%,45%)"></div>
+        <span>Más</span>
+      </div>
+    </div>
+  </div>
+
+  {# ═══════════════════════════════════════════════════════════════ #}
+  {# LOGROS                                                          #}
+  {# ═══════════════════════════════════════════════════════════════ #}
+  <div class="pf-section pf-reveal" data-delay="350"><span>🏆 Logros</span></div>
+  <div class="pf-card pf-reveal" data-delay="400">
+    <div class="pf-card-head"><i class="fas fa-medal"></i> Desbloqueables</div>
+    <div class="pf-achievements">
+      <div class="pf-achievement {% if total_jugadas < 1 %}locked{% endif %}">🎯<small>Primera</small></div>
+      <div class="pf-achievement {% if total_jugadas < 10 %}locked{% endif %}">🎲<small>10</small></div>
+      <div class="pf-achievement {% if total_jugadas < 100 %}locked{% endif %}">🎰<small>100</small></div>
+      <div class="pf-achievement {% if saldo_total < 50 %}locked{% endif %}">💵<small>$50</small></div>
+      <div class="pf-achievement {% if saldo_total < 500 %}locked{% endif %}">💰<small>$500</small></div>
+      <div class="pf-achievement {% if clientes_asignados < 1 %}locked{% endif %}">👥<small>1 amigo</small></div>
+      <div class="pf-achievement {% if streak_dias < 7 %}locked{% endif %}">🔥<small>Racha 7</small></div>
+      <div class="pf-achievement {% if not user.is_staff %}locked{% endif %}">🛡️<small>Admin</small></div>
+    </div>
+  </div>
+
+  {# ═══════════════════════════════════════════════════════════════ #}
+  {# INFORMACIÓN                                                     #}
+  {# ═══════════════════════════════════════════════════════════════ #}
+  <div class="pf-section pf-reveal" data-delay="450"><span>📊 Información</span></div>
+
+  <div class="pf-cards">
+
+    <div class="pf-card pf-reveal" data-delay="100">
+      <div class="pf-card-head"><i class="fas fa-coins"></i> Fondos por Forma de Pago</div>
+      <div class="pf-card-body">
+        {% if fondos %}
+          {% for fondo in fondos %}
+            <div class="pf-list-item">
+              <span class="lbl">{{ fondo.forma_pago.nombre|default:"Sin forma" }}</span>
+              <span class="val">${{ fondo.monto|floatformat:2 }}</span>
+            </div>
+          {% endfor %}
+        {% else %}
+          <div class="pf-empty">Sin fondos disponibles</div>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="pf-card pf-reveal" data-delay="150">
+      <div class="pf-card-head"><i class="fas fa-gift"></i> Bonos Activos</div>
+      <div class="pf-card-body">
+        {% if bonos %}
+          {% for bono in bonos %}
+            {% if bono.estado == 'activo' %}
+              <div class="pf-list-item">
+                <span class="lbl">{{ bono.get_tipo_display }}</span>
+                <span class="val ok">${{ bono.saldo_restante|floatformat:2 }}</span>
+              </div>
+            {% endif %}
+          {% endfor %}
+        {% else %}
+          <div class="pf-empty">Sin bonos activos</div>
+        {% endif %}
+      </div>
+    </div>
+
+    {% if user|has_role:'banco' %}
+      <div class="pf-card pf-reveal" data-delay="200">
+        <div class="pf-card-head"><i class="fas fa-university"></i> Información de Banco</div>
+        <div class="pf-card-body">
+          <div class="pf-list-item">
+            <span class="lbl">📊 Ventas totales</span>
+            <span class="val">${{ ventas_totales|floatformat:2 }}</span>
+          </div>
+          <div class="pf-list-item">
+            <span class="lbl">👥 Comerciales activos</span>
+            <span class="val">{{ clientes_asignados|default:0 }}</span>
+          </div>
+          <div class="pf-list-item">
+            <span class="lbl">📅 Última actividad</span>
+            <span class="val" style="font-size:0.72rem;">{{ user.last_login|date:"d/m/Y H:i" }}</span>
+          </div>
+        </div>
+      </div>
+    {% endif %}
+
+    {% if user|has_role:'comercial' %}
+      <div class="pf-card pf-reveal" data-delay="200">
+        <div class="pf-card-head"><i class="fas fa-chart-line"></i> Información de Comercial</div>
+        <div class="pf-card-body">
+          <div class="pf-list-item">
+            <span class="lbl">📊 Ventas totales</span>
+            <span class="val">${{ ventas_totales|floatformat:2 }}</span>
+          </div>
+          <div class="pf-list-item">
+            <span class="lbl">👤 Clientes asignados</span>
+            <span class="val">{{ clientes_asignados|default:0 }}</span>
+          </div>
+          <div class="pf-list-item">
+            <span class="lbl">💰 Comisiones</span>
+            <span class="val ok">${{ comisiones|floatformat:2 }}</span>
+          </div>
+        </div>
+      </div>
+    {% endif %}
+
+    <div class="pf-card pf-reveal" data-delay="250">
+      <div class="pf-card-head"><i class="fas fa-users"></i> Mis Referidos</div>
+      <div class="pf-card-body">
+        {% if referidos %}
+          {% for ref in referidos|slice:":5" %}
+            <div class="pf-list-item">
+              <span class="lbl">{{ ref.username }}</span>
+              <span class="val" style="font-size:0.72rem;">{{ ref.date_joined|date:"d/m/Y" }}</span>
+            </div>
+          {% endfor %}
+        {% else %}
+          <div class="pf-empty">Sin referidos aún</div>
+        {% endif %}
+      </div>
+    </div>
+
+  </div>
+
+  {# ═══════════════════════════════════════════════════════════════ #}
+  {# REFERRAL                                                        #}
+  {# ═══════════════════════════════════════════════════════════════ #}
+  {% if user|has_role:'cliente' and codigo_referido %}
+    <div class="pf-referral pf-reveal" data-delay="500"
+         style="position:relative;background:linear-gradient(135deg,var(--pf-accent-soft),var(--pf-surface));
+                border:1px solid var(--pf-border);border-radius:16px;padding:16px 20px;
+                display:flex;align-items:center;gap:16px;flex-wrap:wrap;overflow:hidden;
+                box-shadow:var(--pf-shadow);">
+      <div style="flex:1;min-width:220px;">
+        <h5 style="font-size:0.92rem;font-weight:800;color:var(--pf-accent);margin:0 0 3px;">
+          <i class="fas fa-share-alt me-1"></i> Tu código de referido
+        </h5>
+        <p style="font-size:0.75rem;color:var(--pf-text-2);margin:0;">
+          Comparte y gana <strong>$25</strong> por cada amigo que se registre.
+        </p>
+      </div>
+      <div style="display:flex;gap:0;min-width:280px;flex:1;">
+        <input type="text" id="codigoReferido" value="{{ codigo_referido }}" readonly
+               style="flex:1;border-radius:10px 0 0 10px;border:1px solid var(--pf-border);border-right:none;
+                      font-size:0.82rem;background:var(--pf-surface-solid);
+                      font-family:'SF Mono','Courier New',monospace;font-weight:700;
+                      letter-spacing:1px;color:var(--pf-accent);padding:0.5rem 0.9rem;">
+        <button id="btnCopiarCodigo"
+                style="border-radius:0 10px 10px 0;font-size:0.8rem;padding:0 16px;
+                       background:hsl(var(--pf-hue),60%,45%);border:none;color:#fff;font-weight:700;
+                       transition:all 0.2s;cursor:pointer;">
+          <i class="fas fa-copy"></i> Copiar
+        </button>
+      </div>
+    </div>
+  {% endif %}
+
+</div>
+
+{# ═══════════════════════════════════════════════════════════════════════ #}
+{# QUICK ACTIONS FLOTANTES                                                  #}
+{# ═══════════════════════════════════════════════════════════════════════ #}
+<div class="pf-quick-actions">
+  {% if user|has_role:'cliente' %}
+    <a href="{% url 'jugadas:apostar' %}" class="pf-fab" aria-label="Apostar">
+      <i class="fas fa-dice"></i>
+      <span class="pf-fab-label">Apostar</span>
+    </a>
+    <a href="{% url 'usuarios:mis_limites' %}" class="pf-fab" aria-label="Mis Límites">
+      <i class="fas fa-sliders-h"></i>
+      <span class="pf-fab-label">Mis Límites</span>
+    </a>
+    <a href="{% url 'roles:solicitar' 'recarga' %}" class="pf-fab" aria-label="Recargar">
+      <i class="fas fa-plus"></i>
+      <span class="pf-fab-label">Recargar</span>
+    </a>
+  {% elif user|has_role:'banco' %}
+    <a href="{% url 'banco:recargar_usuario' %}" class="pf-fab" aria-label="Recargar usuario">
+      <i class="fas fa-plus"></i>
+      <span class="pf-fab-label">Recargar</span>
+    </a>
+    <a href="{% url 'roles:cuadre_diario' %}" class="pf-fab" aria-label="Cuadre">
+      <i class="fas fa-cash-register"></i>
+      <span class="pf-fab-label">Cuadre</span>
+    </a>
+    <a href="{% url 'banco:gestion_comerciales' %}" class="pf-fab" aria-label="Comerciales">
+      <i class="fas fa-users"></i>
+      <span class="pf-fab-label">Comerciales</span>
+    </a>
+  {% elif user|has_role:'comercial' %}
+    <a href="{% url 'comercial:recargar_usuario' %}" class="pf-fab" aria-label="Recargar">
+      <i class="fas fa-plus"></i>
+      <span class="pf-fab-label">Recargar</span>
+    </a>
+    <a href="{% url 'comercial:lista_clientes' %}" class="pf-fab" aria-label="Mis clientes">
+      <i class="fas fa-users"></i>
+      <span class="pf-fab-label">Mis Clientes</span>
+    </a>
+    <a href="{% url 'roles:cuadre_diario' %}" class="pf-fab" aria-label="Cuadre">
+      <i class="fas fa-cash-register"></i>
+      <span class="pf-fab-label">Cuadre</span>
+    </a>
+  {% elif user.is_superuser or user|has_role:'superadmin' %}
+    <a href="{% url 'superadmin:usuarios_list' %}" class="pf-fab" aria-label="Usuarios">
+      <i class="fas fa-users-cog"></i>
+      <span class="pf-fab-label">Usuarios</span>
+    </a>
+    <a href="{% url 'superadmin:reporte_ventas' %}" class="pf-fab" aria-label="Reportes">
+      <i class="fas fa-chart-line"></i>
+      <span class="pf-fab-label">Reportes</span>
+    </a>
+    <a href="/admin/" class="pf-fab" aria-label="Admin Django">
+      <i class="fas fa-cog"></i>
+      <span class="pf-fab-label">Admin</span>
+    </a>
+  {% endif %}
+</div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function() {
+  'use strict';
+
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const isTouch = window.matchMedia('(hover: none)').matches;
+
+  // ══════════════════════════════════════════════════════════════════
+  // 1. SISTEMA DE TEMAS
+  // ══════════════════════════════════════════════════════════════════
+  const THEMES = ['light', 'dark', 'neon', 'pastel', 'auto'];
+  const STORAGE_KEY = 'pf_theme';
+
+  function applyTheme(theme) {
+    if (!THEMES.includes(theme)) theme = 'auto';
+
+    if (theme === 'auto') {
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      document.documentElement.setAttribute('data-theme', prefersDark ? 'dark' : 'light');
+    } else {
+      document.documentElement.setAttribute('data-theme', theme);
+    }
+
+    // Actualizar botón activo
+    document.querySelectorAll('.pf-theme-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.themeValue === theme);
+    });
+
+    try { localStorage.setItem(STORAGE_KEY, theme); } catch(e) {}
+  }
+
+  // Aplicar tema guardado inmediatamente (antes del render)
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    applyTheme(saved || 'auto');
+  } catch(e) { applyTheme('auto'); }
+
+  // Escuchar cambios de tema del sistema (para "auto")
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+    const current = localStorage.getItem(STORAGE_KEY) || 'auto';
+    if (current === 'auto') applyTheme('auto');
+  });
+
+  // Listeners de los botones
+  document.querySelectorAll('.pf-theme-btn').forEach(btn => {
+    btn.addEventListener('click', () => applyTheme(btn.dataset.themeValue));
+  });
+
+  // ══════════════════════════════════════════════════════════════════
+  // 2. HUE PERSONAL + ADAPTACIÓN POR HORA
+  // ══════════════════════════════════════════════════════════════════
+  const username = "{{ user.username|escapejs }}";
+  let hash = 0;
+  for (let i = 0; i < username.length; i++) hash = username.charCodeAt(i) + ((hash << 5) - hash);
+  const baseHue = Math.abs(hash) % 360;
+
+  const hour = new Date().getHours();
+  let hueShift = 0;
+  if (hour >= 5 && hour < 9)       hueShift = -25;
+  else if (hour >= 9 && hour < 17) hueShift = 0;
+  else if (hour >= 17 && hour < 21) hueShift = 12;
+  else                              hueShift = 25;
+
+  const finalHue = (baseHue + hueShift + 360) % 360;
+  document.documentElement.style.setProperty('--pf-hue', finalHue);
+  document.documentElement.style.setProperty('--pf-hue-2', (finalHue + 60) % 360);
+  document.documentElement.style.setProperty('--pf-hue-3', (finalHue + 120) % 360);
+
+  // ══════════════════════════════════════════════════════════════════
+  // 3. GREETING
+  // ══════════════════════════════════════════════════════════════════
+  const greetingEl = document.getElementById('pfGreeting');
+  if (greetingEl) {
+    let g = 'Bienvenido';
+    if (hour >= 5 && hour < 12) g = '☀️ Buenos días';
+    else if (hour >= 12 && hour < 19) g = '🌤️ Buenas tardes';
+    else if (hour >= 19 && hour < 23) g = '🌙 Buenas noches';
+    else g = '✨ Buenas madrugadas';
+    greetingEl.textContent = g;
+  }
+
+  // ══════════════════════════════════════════════════════════════════
+  // 4. PROGRESS BAR
+  // ══════════════════════════════════════════════════════════════════
+  const progressBar = document.getElementById('pfProgressBar');
+  if (progressBar) {
+    progressBar.style.width = '30%';
+    setTimeout(() => progressBar.style.width = '70%', 100);
+    window.addEventListener('load', () => {
+      progressBar.style.width = '100%';
+      setTimeout(() => progressBar.style.opacity = '0', 400);
+    });
+    setTimeout(() => {
+      if (progressBar.style.opacity !== '0') {
+        progressBar.style.width = '100%';
+        setTimeout(() => progressBar.style.opacity = '0', 400);
+      }
+    }, 1500);
+  }
+
+  // ══════════════════════════════════════════════════════════════════
+  // 5. COUNT-UP EN STATS
+  // ══════════════════════════════════════════════════════════════════
+  document.querySelectorAll('.pf-stat-num[data-count]').forEach(el => {
+    const target = parseFloat(el.dataset.count) || 0;
+    const money = el.dataset.money === '1';
+    const duration = reduceMotion ? 0 : 1100;
+    const startTime = performance.now();
+    function tick(now) {
+      if (duration === 0) {
+        el.textContent = money ? '$' + target.toFixed(2) : Math.floor(target).toLocaleString('es-ES');
+        return;
+      }
+      const t = Math.min((now - startTime) / duration, 1);
+      const eased = 1 - Math.pow(1 - t, 3);
+      const v = target * eased;
+      el.textContent = money ? '$' + v.toFixed(2) : Math.floor(v).toLocaleString('es-ES');
+      if (t < 1) requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+  });
+
+  // ══════════════════════════════════════════════════════════════════
+  // 6. PARALLAX + SPOTLIGHT + CURSOR
+  // ══════════════════════════════════════════════════════════════════
+  const spotlight = document.getElementById('pfSpotlight');
+  const aurora = document.querySelector('.pf-aurora');
+  const cursor = document.getElementById('pfCursor');
+  let rafMouse = null, lastX = 0, lastY = 0;
+
+  function onMouseMove(e) {
+    lastX = e.clientX; lastY = e.clientY;
+    if (rafMouse) return;
+    rafMouse = requestAnimationFrame(() => {
+      rafMouse = null;
+      const w = window.innerWidth, h = window.innerHeight;
+      const px = (lastX / w) * 100, py = (lastY / h) * 100;
+
+      if (spotlight) {
+        spotlight.style.setProperty('--mx', px + '%');
+        spotlight.style.setProperty('--my', py + '%');
+        spotlight.classList.add('active');
+      }
+      if (cursor) {
+        cursor.style.left = lastX + 'px';
+        cursor.style.top = lastY + 'px';
+        cursor.classList.add('active');
+      }
+      if (aurora) {
+        aurora.style.setProperty('--ax', (15 + (px - 50) * 0.08) + '%');
+        aurora.style.setProperty('--ay', (10 + (py - 50) * 0.08) + '%');
+        aurora.style.setProperty('--bx', (85 + (px - 50) * 0.05) + '%');
+        aurora.style.setProperty('--by', (20 + (py - 50) * 0.05) + '%');
+      }
+    });
+  }
+
+  if (!isTouch && !reduceMotion) {
+    document.addEventListener('mousemove', onMouseMove, { passive: true });
+    document.addEventListener('mouseleave', () => {
+      if (spotlight) spotlight.classList.remove('active');
+      if (cursor) cursor.classList.remove('active');
+    });
+    document.addEventListener('mousedown', () => cursor && cursor.classList.add('click'));
+    document.addEventListener('mouseup', () => cursor && cursor.classList.remove('click'));
+
+    document.querySelectorAll('a, button, [data-tilt]').forEach(el => {
+      el.addEventListener('mouseenter', () => cursor && cursor.classList.add('click'));
+      el.addEventListener('mouseleave', () => cursor && cursor.classList.remove('click'));
+    });
+  }
+
+  // ══════════════════════════════════════════════════════════════════
+  // 7. HEADER TILT 3D
+  // ══════════════════════════════════════════════════════════════════
+  const header = document.getElementById('pfHeader');
+  if (header && !isTouch && !reduceMotion) {
+    let rafH = null;
+    header.addEventListener('mousemove', e => {
+      if (rafH) return;
+      rafH = requestAnimationFrame(() => {
+        const r = header.getBoundingClientRect();
+        const x = (e.clientX - r.left) / r.width - 0.5;
+        const y = (e.clientY - r.top) / r.height - 0.5;
+        header.style.transform = `perspective(1200px) rotateY(${x * 2}deg) rotateX(${-y * 2}deg)`;
+        rafH = null;
+      });
+    });
+    header.addEventListener('mouseleave', () => header.style.transform = '');
+  }
+
+  // ══════════════════════════════════════════════════════════════════
+  // 8. TILT 3D EN GRUPOS
+  // ══════════════════════════════════════════════════════════════════
+  if (!isTouch && !reduceMotion) {
+    document.querySelectorAll('[data-tilt]').forEach(card => {
+      let rafId = null;
+      card.addEventListener('mousemove', e => {
+        if (rafId) return;
+        rafId = requestAnimationFrame(() => {
+          const r = card.getBoundingClientRect();
+          const x = (e.clientX - r.left) / r.width - 0.5;
+          const y = (e.clientY - r.top) / r.height - 0.5;
+          card.style.transform = `perspective(900px) rotateY(${x * 3.5}deg) rotateX(${-y * 3.5}deg) translateY(-4px) scale(1.01)`;
+          rafId = null;
+        });
+      });
+      card.addEventListener('mouseleave', () => card.style.transform = '');
+    });
+  }
+
+  // ══════════════════════════════════════════════════════════════════
+  // 9. SCROLL REVEAL
+  // ══════════════════════════════════════════════════════════════════
+  const revealEls = document.querySelectorAll('.pf-reveal');
+  if ('IntersectionObserver' in window && !reduceMotion) {
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const delay = parseInt(entry.target.dataset.delay || 0);
+          setTimeout(() => entry.target.classList.add('visible'), delay);
+          io.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+    revealEls.forEach(el => io.observe(el));
+  } else {
+    revealEls.forEach(el => el.classList.add('visible'));
+  }
+
+  // ══════════════════════════════════════════════════════════════════
+  // 10. RIPPLE
+  // ══════════════════════════════════════════════════════════════════
+  document.querySelectorAll('.pf-group, .pf-card').forEach(el => {
+    el.style.position = 'relative';
+    el.style.overflow = 'hidden';
+    el.addEventListener('click', e => {
+      const r = el.getBoundingClientRect();
+      const x = e.clientX - r.left;
+      const y = e.clientY - r.top;
+      const size = Math.max(r.width, r.height);
+      const ripple = document.createElement('span');
+      ripple.className = 'pf-ripple';
+      ripple.style.width = ripple.style.height = size + 'px';
+      ripple.style.left = (x - size / 2) + 'px';
+      ripple.style.top = (y - size / 2) + 'px';
+      el.appendChild(ripple);
+      setTimeout(() => ripple.remove(), 700);
+    });
+  });
+
+  // ══════════════════════════════════════════════════════════════════
+  // 11. COPIAR REFERIDO + CONFETTI
+  // ══════════════════════════════════════════════════════════════════
+  const btnCopiar = document.getElementById('btnCopiarCodigo');
+  const inputCodigo = document.getElementById('codigoReferido');
+
+  function burstConfetti(x, y) {
+    if (reduceMotion) return;
+    const colors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
+    for (let i = 0; i < 24; i++) {
+      const c = document.createElement('span');
+      c.className = 'pf-confetti';
+      c.style.background = colors[Math.floor(Math.random() * colors.length)];
+      c.style.left = x + 'px';
+      c.style.top = y + 'px';
+      c.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+      document.body.appendChild(c);
+      const angle = (Math.PI * 2 * i) / 24 + (Math.random() - 0.5) * 0.6;
+      const velocity = 3 + Math.random() * 4;
+      const dx = Math.cos(angle) * velocity * 20;
+      const dy = Math.sin(angle) * velocity * 20 + 100;
+      let px = 0, py = 0, t = 0;
+      const rot = Math.random() * 360;
+      function step() {
+        t++;
+        px += dx / 30;
+        py += dy / 30 + t * 0.35;
+        c.style.transform = `translate(${px}px, ${py}px) rotate(${rot + t * 12}deg)`;
+        c.style.opacity = 1 - t / 45;
+        if (t < 45) requestAnimationFrame(step);
+        else c.remove();
+      }
+      requestAnimationFrame(step);
+    }
+  }
+
+  if (btnCopiar && inputCodigo) {
+    btnCopiar.addEventListener('click', function() {
+      inputCodigo.select();
+      const rect = btnCopiar.getBoundingClientRect();
+      const done = () => {
+        const original = btnCopiar.innerHTML;
+        btnCopiar.innerHTML = '<i class="fas fa-check"></i> ¡Copiado!';
+        burstConfetti(rect.left + rect.width / 2, rect.top + rect.height / 2);
+        setTimeout(() => btnCopiar.innerHTML = original, 1800);
+      };
+      try {
+        navigator.clipboard.writeText(inputCodigo.value).then(done).catch(() => {
+          document.execCommand('copy');
+          done();
+        });
+      } catch (e) {
+        document.execCommand('copy');
+        done();
+      }
+    });
+  }
+
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block page_title %}Panel Comercial{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-6 mb-3">
+        <div class="card border-0 shadow-sm text-center">
+            <div class="card-body">
+                <h5 class="text-muted">Ventas Hoy</h5>
+                <h2 class="text-success">${{ ventas_hoy|floatformat:2 }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 mb-3">
+        <div class="card border-0 shadow-sm text-center">
+            <div class="card-body">
+                <h5 class="text-muted">Jugadas Hoy</h5>
+                <h2>{{ jugadas_hoy }}</h2>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-white"><h6 class="fw-bold mb-0">📋 Últimas jugadas recibidas</h6></div>
+    <div class="card-body">
+        <ul class="list-unstyled">
+            {% for j in ultimas_jugadas %}
+            <li class="border-bottom py-2">{{ j.usuario.username }} - {{ j.sorteo.nombre }} - ${{ j.monto|floatformat:2 }}</li>
+            {% empty %}
+            <li class="text-muted">No hay jugadas recientes.</li>
+            {% endfor %}
+        </ul>
+        <a href="{% url 'comercial:resumen_ventas_comercial' %}" class="btn btn-sm btn-primary">Ver resumen completo</a>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,353 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block page_title %}🏆 Premios{% endblock %}
+{% block page_subtitle %}
+  {% if es_superadmin %}Todos los premios de la plataforma
+  {% elif es_banco %}Premios de tu red (clientes + comerciales)
+  {% elif es_comercial %}Premios de tus clientes
+  {% else %}Premios de tu grupo{% endif %}
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.px-wrap{max-width:1400px;margin:0 auto;padding:20px;font-family:'Inter',system-ui,sans-serif;}
+.px-head{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:20px;}
+.px-head h1{font-size:1.4rem;font-weight:900;color:#0f172a;margin:0;letter-spacing:-.02em;}
+.px-head .sub{font-size:.85rem;color:#64748b;margin-top:4px;}
+
+.px-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:22px;}
+.px-kpi{background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:16px 18px;box-shadow:0 2px 8px rgba(15,23,42,.04);position:relative;overflow:hidden;}
+.px-kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#10b981,#3b82f6);}
+.px-kpi.hoy::before{background:linear-gradient(90deg,#f59e0b,#f97316);}
+.px-kpi.d7::before{background:linear-gradient(90deg,#10b981,#059669);}
+.px-kpi.d30::before{background:linear-gradient(90deg,#3b82f6,#6366f1);}
+.px-kpi.total::before{background:linear-gradient(90deg,#8b5cf6,#a855f7);}
+.px-kpi .lbl{font-size:.68rem;font-weight:800;color:#64748b;text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px;display:flex;align-items:center;gap:5px;}
+.px-kpi .val{font-size:1.5rem;font-weight:900;color:#0f172a;font-family:'Courier New',monospace;letter-spacing:-.5px;}
+.px-kpi.hoy .val{color:#ea580c;}
+.px-kpi.d7 .val{color:#059669;}
+.px-kpi.d30 .val{color:#2563eb;}
+.px-kpi.total .val{color:#7c3aed;}
+.px-kpi .small{font-size:.72rem;color:#94a3b8;font-weight:600;margin-top:2px;}
+
+.px-filters{background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:14px 16px;margin-bottom:20px;box-shadow:0 2px 8px rgba(15,23,42,.04);}
+.px-filters .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;align-items:end;}
+.px-filters label{font-size:.68rem;font-weight:800;color:#64748b;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:4px;}
+.px-filters select,.px-filters input{padding:8px 10px;border:1px solid #cbd5e1;border-radius:9px;font-size:.85rem;font-weight:600;color:#1e293b;background:#fff;width:100%;min-height:38px;box-sizing:border-box;}
+.px-filters .btns{display:flex;gap:6px;}
+.px-filters .btn{padding:8px 16px;border-radius:9px;font-weight:800;font-size:.78rem;border:none;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:5px;min-height:38px;}
+.px-filters .btn.primary{background:linear-gradient(135deg,#10b981,#059669);color:#fff;}
+.px-filters .btn.ghost{background:#f1f5f9;color:#475569;border:1px solid #cbd5e1;}
+
+.px-period{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;}
+.px-period a{padding:6px 14px;border-radius:9px;font-size:.78rem;font-weight:800;text-decoration:none;background:#fff;color:#475569;border:1.5px solid #e2e8f0;}
+.px-period a.active{background:linear-gradient(135deg,#10b981,#059669);color:#fff;border-color:#059669;}
+
+.px-grupo{background:#fff;border:1px solid #e2e8f0;border-radius:16px;margin-bottom:16px;overflow:hidden;box-shadow:0 4px 12px rgba(15,23,42,.05);}
+.px-grupo-head{background:linear-gradient(135deg,#f8fafc,#f1f5f9);padding:14px 18px;border-bottom:1px solid #e2e8f0;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;}
+.px-grupo-head .info{display:flex;align-items:center;gap:10px;flex-wrap:wrap;min-width:0;}
+.px-grupo-head .avatar{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#10b981,#3b82f6);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:.9rem;flex-shrink:0;}
+.px-grupo-head .name{font-weight:900;color:#0f172a;font-size:1rem;}
+.px-grupo-head .meta{font-size:.78rem;color:#64748b;font-weight:600;}
+.px-grupo-head .badge-sorteo{background:#eff6ff;color:#1e40af;padding:3px 10px;border-radius:20px;font-size:.72rem;font-weight:800;border:1px solid #bfdbfe;}
+.px-grupo-head .total{background:linear-gradient(135deg,#10b981,#059669);color:#fff;padding:6px 14px;border-radius:10px;font-weight:900;font-size:1rem;font-family:'Courier New',monospace;box-shadow:0 2px 8px rgba(16,185,129,.3);}
+
+.px-fp{margin:14px 18px;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;}
+.px-fp-head{background:#f8fafc;padding:8px 14px;font-size:.78rem;font-weight:800;color:#475569;text-transform:uppercase;letter-spacing:.4px;border-bottom:1px solid #e2e8f0;display:flex;justify-content:space-between;align-items:center;}
+.px-fp-head .sub{background:#e0e7ff;color:#3730a3;padding:2px 10px;border-radius:20px;font-size:.72rem;font-family:'Courier New',monospace;}
+.px-tabla{width:100%;border-collapse:collapse;font-size:.85rem;}
+.px-tabla thead th{background:#fafbfc;padding:8px 12px;text-align:left;font-size:.66rem;font-weight:800;color:#64748b;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid #e2e8f0;}
+.px-tabla tbody td{padding:9px 12px;border-bottom:1px solid #f1f5f9;color:#334155;font-weight:600;}
+.px-tabla tbody tr:last-child td{border-bottom:none;}
+.px-tabla .num{font-family:'Courier New',monospace;font-weight:900;color:#0f172a;background:#f1f5f9;padding:2px 8px;border-radius:5px;font-size:.8rem;}
+.px-tabla .money{font-family:'Courier New',monospace;font-weight:900;color:#10b981;text-align:right;}
+.px-tabla .money.apuesta{color:#64748b;}
+.px-tabla tbody tr:hover td{background:#fafbfc;}
+
+.px-fp-foot{background:linear-gradient(135deg,#f0fdf4,#dcfce7);padding:10px 14px;display:flex;justify-content:space-between;align-items:center;font-weight:800;border-top:1px solid #bbf7d0;}
+.px-fp-foot .lbl{color:#166534;font-size:.78rem;text-transform:uppercase;letter-spacing:.4px;}
+.px-fp-foot .val{color:#047857;font-family:'Courier New',monospace;font-size:1.05rem;font-weight:900;}
+
+.px-empty{text-align:center;padding:60px 24px;color:#94a3b8;background:#fff;border:2px dashed #e2e8f0;border-radius:16px;}
+.px-empty .ico{font-size:3rem;display:block;margin-bottom:12px;opacity:.5;}
+.px-empty h3{font-size:1rem;font-weight:800;color:#475569;margin:0 0 6px;}
+.px-empty p{margin:0;font-size:.85rem;}
+
+@media(max-width:768px){
+  .px-wrap{padding:12px;}
+  .px-head h1{font-size:1.15rem;}
+  .px-kpi{padding:12px 14px;}
+  .px-kpi .val{font-size:1.15rem;}
+  .px-tabla{font-size:.75rem;}
+  .px-tabla thead th,.px-tabla tbody td{padding:6px 8px;}
+  .px-grupo-head{padding:10px 12px;}
+  .px-fp{margin:10px 12px;}
+}
+
+.px-grupo-head .rx-chip{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:8px;background:linear-gradient(135deg,#f8fafc,#eef2ff);border:1px solid #cbd5e1;font-family:'Courier New',monospace;font-size:.72rem;font-weight:800;color:#1e293b;white-space:nowrap;}
+.px-grupo-head .rx-chip.rx-premiado{background:linear-gradient(135deg,#fee2e2,#fecaca);border-color:#fca5a5;color:#991b1b;box-shadow:0 0 0 2px rgba(220,38,38,.2);}
+.rx-wa-btn{background:linear-gradient(135deg,#25d366,#128c7e);color:#fff;border:none;padding:8px 14px;border-radius:10px;font-weight:800;font-size:.78rem;cursor:pointer;display:inline-flex;align-items:center;gap:6px;flex-shrink:0;box-shadow:0 2px 8px rgba(16,185,129,.3);}
+.rx-wa-btn:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(16,185,129,.4);}
+.rx-fj-icon{display:inline-flex;align-items:center;gap:4px;font-weight:700;color:#475569;font-size:.78rem;}
+
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="px-wrap">
+
+  <div class="px-head">
+    <div>
+      <h1>🏆 Premios
+        {% if es_superadmin %} · Global
+        {% elif es_banco %} · Mi Red
+        {% elif es_comercial %} · Mis Clientes
+        {% else %} · Mi Grupo{% endif %}
+      </h1>
+      <div class="sub">
+        {% if es_superadmin %}Vista completa de la plataforma
+        {% elif es_banco %}Clientes directos + comerciales + clientes de comerciales
+        {% elif es_comercial %}Todos los premios de tus clientes
+        {% else %}Tú y los clientes que comparten tu gestor{% endif %}
+      </div>
+    </div>
+  </div>
+
+  {# KPIs por periodo #}
+  <div class="px-kpis">
+    <div class="px-kpi hoy">
+      <div class="lbl">💰 Hoy</div>
+      <div class="val">${{ total_hoy|floatformat:2|intcomma }}</div>
+      <div class="small">{{ cantidad_hoy }} premio{{ cantidad_hoy|pluralize:"s" }}</div>
+    </div>
+    <div class="px-kpi d7">
+      <div class="lbl">📅 Últimos 7 días</div>
+      <div class="val">${{ total_7d|floatformat:2|intcomma }}</div>
+    </div>
+    <div class="px-kpi d30">
+      <div class="lbl">📅 Últimos 30 días</div>
+      <div class="val">${{ total_30d|floatformat:2|intcomma }}</div>
+    </div>
+    <div class="px-kpi total">
+      <div class="lbl">🏆 Histórico</div>
+      <div class="val">${{ total_historico|floatformat:2|intcomma }}</div>
+    </div>
+  </div>
+
+  {# Filtros #}
+  <form class="px-filters" method="get">
+    <div class="grid">
+      <div>
+        <label>Sorteo</label>
+        <select onchange="this.form.submit()" name="sorteo">
+          <option value="">Todos</option>
+          {% for s in sorteos %}
+            <option value="{{ s.id }}" {% if s.id|stringformat:"s" == sorteo_seleccionado %}selected{% endif %}>{{ s.nombre }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label>Forma de juego</label>
+        <select onchange="this.form.submit()" name="forma_juego">
+          <option value="">Todas</option>
+          {% for f in formas_juego %}
+            <option value="{{ f.id }}" {% if f.id|stringformat:"s" == forma_juego_seleccionada %}selected{% endif %}>{{ f.nombre }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label>Forma de pago</label>
+        <select onchange="this.form.submit()" name="forma_pago">
+          <option value="">Todas</option>
+          {% for f in formas_pago %}
+            <option value="{{ f.id }}" {% if f.id|stringformat:"s" == forma_pago_seleccionada %}selected{% endif %}>{{ f.nombre }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label>Estado</label>
+        <select onchange="this.form.submit()" name="estado">
+          <option value="">Todos</option>
+          <option value="pendiente" {% if estado_seleccionado == 'pendiente' %}selected{% endif %}>Pendientes</option>
+          <option value="cobrado" {% if estado_seleccionado == 'cobrado' %}selected{% endif %}>Sumados al fondo</option>
+        </select>
+      </div>
+      <div>
+        <label>Desde</label>
+        <input onchange="this.form.submit()" type="date" name="fecha_desde" value="{{ fecha_desde }}">
+      </div>
+      <div>
+        <label>Hasta</label>
+        <input onchange="this.form.submit()" type="date" name="fecha_hasta" value="{{ fecha_hasta }}">
+      </div>
+      <div>
+        <label>&nbsp;</label>
+        <div class="btns">
+          <a href="{% url 'resultados:mis_premios' %}" class="btn ghost">Limpiar</a>
+          </div>
+      </div>
+    </div>
+  </form>
+
+  {# Filtros rápidos de periodo #}
+  <div class="px-period">
+    <a href="?{% if sorteo_seleccionado %}sorteo={{ sorteo_seleccionado }}&{% endif %}{% if forma_juego_seleccionada %}forma_juego={{ forma_juego_seleccionada }}&{% endif %}{% if forma_pago_seleccionada %}forma_pago={{ forma_pago_seleccionada }}&{% endif %}{% if estado_seleccionado %}estado={{ estado_seleccionado }}&{% endif %}" class="{% if not periodo_seleccionado %}active{% endif %}">Todos</a>
+    <a href="?periodo=hoy{% if sorteo_seleccionado %}&sorteo={{ sorteo_seleccionado }}{% endif %}{% if forma_juego_seleccionada %}&forma_juego={{ forma_juego_seleccionada }}{% endif %}{% if forma_pago_seleccionada %}&forma_pago={{ forma_pago_seleccionada }}{% endif %}{% if estado_seleccionado %}&estado={{ estado_seleccionado }}{% endif %}" class="{% if periodo_seleccionado == 'hoy' %}active{% endif %}">Hoy</a>
+    <a href="?periodo=7d{% if sorteo_seleccionado %}&sorteo={{ sorteo_seleccionado }}{% endif %}{% if forma_juego_seleccionada %}&forma_juego={{ forma_juego_seleccionada }}{% endif %}{% if forma_pago_seleccionada %}&forma_pago={{ forma_pago_seleccionada }}{% endif %}{% if estado_seleccionado %}&estado={{ estado_seleccionado }}{% endif %}" class="{% if periodo_seleccionado == '7d' %}active{% endif %}">7 días</a>
+    <a href="?periodo=30d{% if sorteo_seleccionado %}&sorteo={{ sorteo_seleccionado }}{% endif %}{% if forma_juego_seleccionada %}&forma_juego={{ forma_juego_seleccionada }}{% endif %}{% if forma_pago_seleccionada %}&forma_pago={{ forma_pago_seleccionada }}{% endif %}{% if estado_seleccionado %}&estado={{ estado_seleccionado }}{% endif %}" class="{% if periodo_seleccionado == '30d' %}active{% endif %}">30 días</a>
+  </div>
+
+  {# Un bloque por sorteo, tabla unica #}
+  {% for g in grupos %}
+    <div class="px-grupo">
+      <div class="px-grupo-head" style="align-items:flex-start;">
+        <div class="info" style="flex:1;min-width:0;">
+          <div class="avatar" style="background:linear-gradient(135deg,#f59e0b,#ea580c);">🎰</div>
+          <div style="flex:1;min-width:0;">
+            <div class="name">{{ g.sorteo.nombre }}</div>
+            <div class="meta">
+              {% if g.fecha_sorteo %}📅 {{ g.fecha_sorteo|date:"d/m/Y" }} · {% endif %}
+              {{ g.cantidad_premios }} premio{{ g.cantidad_premios|pluralize:"s" }} · {{ g.ganadores|length }} ganador{{ g.ganadores|length|pluralize:"es" }}
+            </div>
+            {% if g.resultado %}
+              <div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:4px;">
+                {% with r=g.resultado %}
+                  {% if r.pick2 or r.pick3 or r.pick4 or r.pick5 %}
+                    {% if r.pick2 %}<span class="rx-chip {% if r.pick2 in g.numeros_premiados %}rx-premiado{% endif %}">P2 {{ r.pick2 }}</span>{% endif %}
+                    {% if r.pick3 %}<span class="rx-chip {% if r.pick3 in g.numeros_premiados %}rx-premiado{% endif %}">P3 {{ r.pick3 }}</span>{% endif %}
+                    {% if r.pick4 %}<span class="rx-chip {% if r.pick4 in g.numeros_premiados %}rx-premiado{% endif %}">P4 {{ r.pick4 }}</span>{% endif %}
+                    {% if r.pick5 %}<span class="rx-chip {% if r.pick5 in g.numeros_premiados %}rx-premiado{% endif %}">P5 {{ r.pick5 }}</span>{% endif %}
+                  {% else %}
+                    {% if r.fijo %}<span class="rx-chip {% if r.fijo in g.numeros_premiados %}rx-premiado{% endif %}">F {{ r.fijo }}</span>{% endif %}
+                    {% if r.corrido_1 %}<span class="rx-chip {% if r.corrido_1 in g.numeros_premiados %}rx-premiado{% endif %}">C1 {{ r.corrido_1 }}</span>{% endif %}
+                    {% if r.corrido_2 %}<span class="rx-chip {% if r.corrido_2 in g.numeros_premiados %}rx-premiado{% endif %}">C2 {{ r.corrido_2 }}</span>{% endif %}
+                  {% endif %}
+                  {% if g.lineas %}
+                    {% with primera=g.lineas.0 %}
+                      {# Derivados: mostrar siempre #}
+                      {% if r.pf %}<span class="rx-chip {% if r.pf in g.numeros_premiados %}rx-premiado{% endif %}">PF {{ r.pf }}</span>{% endif %}
+                      {% if r.parlet %}
+                        {% for p in r.parlet.split %}<span class="rx-chip {% if p in g.numeros_premiados %}rx-premiado{% endif %}">{{ p }}</span>{% endfor %}
+                      {% endif %}
+                      {% if r.posicion %}<span class="rx-chip {% if r.posicion in g.numeros_premiados %}rx-premiado{% endif %}">Pos {{ r.posicion }}</span>{% endif %}
+                      {% if r.tripleta %}<span class="rx-chip {% if r.tripleta in g.numeros_premiados %}rx-premiado{% endif %}">Tri {{ r.tripleta }}</span>{% endif %}
+                      {% if r.vspf %}<span class="rx-chip {% if r.vspf in g.numeros_premiados %}rx-premiado{% endif %}">VSPF {{ r.vspf }}</span>{% endif %}
+                      {% if r.vspick2 %}<span class="rx-chip {% if r.vspick2 in g.numeros_premiados %}rx-premiado{% endif %}">VSP2 {{ r.vspick2 }}</span>{% endif %}
+                      {% if r.pick2vspf %}<span class="rx-chip {% if r.pick2vspf in g.numeros_premiados %}rx-premiado{% endif %}">P2PF {{ r.pick2vspf }}</span>{% endif %}
+                    {% endwith %}
+                  {% endif %}
+                {% endwith %}
+              </div>
+            {% endif %}
+          </div>
+        </div>
+        <button type="button" class="rx-wa-btn" onclick="compartirPremios('{{ g.sorteo.id }}', '{{ g.fecha_sorteo|date:"Y-m-d" }}')" title="Compartir por WhatsApp">
+          <i class="fab fa-whatsapp"></i>
+        </button>
+      </div>
+
+      <div style="margin:14px 18px;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;">
+        <div style="overflow-x:auto;">
+          <table class="px-tabla">
+            <thead>
+              <tr>
+                <th>Ganador</th>
+                <th>Número</th>
+                <th style="text-align:right;">Apuesta</th>
+                <th>Forma de pago</th>
+                <th style="text-align:right;">Premio</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for gan in g.ganadores %}
+                {% if gan.formas|length == 1 %}
+                  {% with f=gan.formas.0 %}
+                  <tr>
+                    <td>
+                      <div style="display:flex;align-items:center;gap:8px;">
+                        <div style="width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,#10b981,#3b82f6);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:.72rem;flex-shrink:0;">{{ gan.cliente|first|upper }}</div>
+                        <span style="font-weight:800;color:#0f172a;font-size:.85rem;">{{ gan.cliente }}</span>
+                      </div>
+                    </td>
+                    <td><span class="num">{{ f.numero }}</span></td>
+                    <td class="money apuesta">${{ f.apuesta|floatformat:2|intcomma }}</td>
+                    <td><span class="rx-fj-icon">{{ f.forma_juego }}</span></td>
+                    <td class="money">${{ gan.total_premio|floatformat:2|intcomma }}</td>
+                  </tr>
+                  {% endwith %}
+                {% else %}
+                  <tr>
+                    <td rowspan="{{ gan.formas|length }}">
+                      <div style="display:flex;align-items:center;gap:8px;">
+                        <div style="width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,#10b981,#3b82f6);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:.72rem;flex-shrink:0;">{{ gan.cliente|first|upper }}</div>
+                        <span style="font-weight:800;color:#0f172a;font-size:.85rem;">{{ gan.cliente }}</span>
+                      </div>
+                    </td>
+                    {% for f in gan.formas %}
+                      {% if forloop.first %}
+                      <td><span class="num">{{ f.numero }}</span></td>
+                      <td class="money apuesta">${{ f.apuesta|floatformat:2|intcomma }}</td>
+                      <td><span class="rx-fj-icon">{{ f.forma_juego }}</span></td>
+                      <td class="money">${{ f.premio|floatformat:2|intcomma }}</td>
+                      {% endif %}
+                    {% endfor %}
+                  </tr>
+                  {% for f in gan.formas %}
+                    {% if not forloop.first %}
+                    <tr>
+                      <td><span class="num">{{ f.numero }}</span></td>
+                      <td class="money apuesta">${{ f.apuesta|floatformat:2|intcomma }}</td>
+                      <td><span class="rx-fj-icon">{{ f.forma_juego }}</span></td>
+                      <td class="money">${{ f.premio|floatformat:2|intcomma }}</td>
+                    </tr>
+                    {% endif %}
+                  {% endfor %}
+                  <tr style="background:#f0fdf4;font-weight:900;">
+                    <td colspan="3" style="text-align:right;color:#166534;">TOTAL {{ gan.cliente }}:</td>
+                    <td colspan="2" style="text-align:right;color:#047857;font-family:'Courier New',monospace;font-size:1rem;">${{ gan.total_premio|floatformat:2|intcomma }}</td>
+                  </tr>
+                {% endif %}
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        <div style="background:linear-gradient(135deg,#f0fdf4,#dcfce7);padding:10px 14px;border-top:1px solid #bbf7d0;">
+          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+            <span style="color:#166534;font-size:.78rem;text-transform:uppercase;letter-spacing:.4px;font-weight:800;">Totales por forma de pago</span>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+              {% for fp_nombre, fp_total in g.totales_fp %}
+                <span style="background:#fff;color:#047857;padding:3px 10px;border-radius:20px;font-size:.72rem;font-family:'Courier New',monospace;font-weight:800;border:1px solid #86efac;">
+                  {{ fp_nombre }}: ${{ fp_total|floatformat:2|intcomma }}
+                </span>
+              {% endfor %}
+            </div>
+            <span style="color:#047857;font-family:'Courier New',monospace;font-size:1.05rem;font-weight:900;">TOTAL: ${{ g.total_sorteo|floatformat:2|intcomma }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  {% empty %}
+    <div class="px-empty">
+      <span class="ico">🏆</span>
+      <h3>Sin premios todavía</h3>
+      <p>{% if es_cliente %}Cuando tú o alguien de tu grupo gane, aparecerá aquí.{% else %}Cuando alguno de tus clientes gane, aparecerá aquí.{% endif %}</p>
+    </div>
+  {% endfor %}
+
+</div>
+
+<script>
+function compartirPremios(sorteoId, fecha){
+  const url = '/resultados/api/premios-sorteo/?sorteo_id=' + sorteoId + '&fecha=' + fecha;
+  fetch(url).then(function(r){ return r.json(); }).then(function(d){
+    if (d.success){
+      window.open('https://wa.me/?text=' + encodeURIComponent(d.resumen), '_blank');
+    } else {
+      alert(d.error || 'Error');
+    }
+  });
+}
+</script>
+
+{% endblock %}

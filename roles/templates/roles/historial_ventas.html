@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block page_title %}Historial de Ventas{% endblock %}
+{% block page_subtitle %}Ventas agrupadas por sorteo y forma de juego{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="card border-0 shadow-sm rounded-4">
+        <div class="card-header bg-gradient-primary text-white border-0 py-3" style="background: linear-gradient(135deg, #6C3CE1 0%, #8B5CF6 100%);">
+            <h5 class="mb-0 fw-bold"><i class="fas fa-chart-line me-2"></i> Historial de Ventas</h5>
+        </div>
+        <div class="card-body p-4">
+
+            <form method="get" class="row g-3 mb-4">
+                <div class="col-md-3">
+                    <label class="form-label">Desde</label>
+                    <input onchange="this.form.submit()" type="date" name="fecha_inicio" class="form-control" value="{{ fecha_inicio|default:'' }}">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Hasta</label>
+                    <input onchange="this.form.submit()" type="date" name="fecha_fin" class="form-control" value="{{ fecha_fin|default:'' }}">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Sorteo</label>
+                    <select onchange="this.form.submit()" name="sorteo" class="form-select">
+                        <option value="">Todos</option>
+                        {% for s in sorteos %}
+                            <option value="{{ s.id }}" {% if sorteo_seleccionado|stringformat:"s" == s.id|stringformat:"s" %}selected{% endif %}>{{ s.nombre }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3 d-flex align-items-end">
+                    </div>
+            </form>
+
+            <div class="row g-3 mb-4">
+                <div class="col-md-4"><div class="alert alert-info">💰 Total Ventas: ${{ total_ventas|floatformat:2 }}</div></div>
+                <div class="col-md-4"><div class="alert alert-success">🏆 Total Premios: ${{ total_premios|floatformat:2 }}</div></div>
+                <div class="col-md-4"><div class="alert alert-secondary">🎯 Total Jugadas: {{ total_jugadas }}</div></div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Sorteo</th>
+                            <th>Forma de Juego</th>
+                            <th>Fecha</th>
+                            <th>Total Monto</th>
+                            <th>Total Premios</th>
+                            <th>Jugadas</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if ventas %}
+                            {% for item in ventas %}
+                                <tr>
+                                    <td>{{ item.sorteo__nombre|default:"-" }}</td>
+                                    <td>{{ item.forma_juego__nombre|default:"-" }}</td>
+                                    <td>{{ item.fecha_sorteo|date:"d/m/Y" }}</td>
+                                    <td>${{ item.total_monto|floatformat:2 }}</td>
+                                    <td>${{ item.total_premios|floatformat:2|default:"0.00" }}</td>
+                                    <td>{{ item.total_jugadas }}</td>
+                                </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr><td colspan="6" class="text-center py-4 text-muted">No hay ventas registradas.</td></tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

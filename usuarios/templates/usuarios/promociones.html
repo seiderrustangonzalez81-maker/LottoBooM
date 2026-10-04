@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block page_title %}Mis Promociones{% endblock %}
+{% block page_subtitle %}Bonos y promociones disponibles{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+    <!-- ============================================================ -->
+    <!-- ESTADÍSTICAS DE BONOS                                          -->
+    <!-- ============================================================ -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-4 col-6">
+            <div class="card border-0 shadow-sm h-100 text-center p-3" style="border-radius: 16px;">
+                <div class="card-body">
+                    <h5 class="display-6 fw-bold text-success">${{ total_bonos_activos|floatformat:2 }}</h5>
+                    <p class="text-muted small mb-0">Bonos Activos</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 col-6">
+            <div class="card border-0 shadow-sm h-100 text-center p-3" style="border-radius: 16px;">
+                <div class="card-body">
+                    <h5 class="display-6 fw-bold text-warning">${{ total_bonos_pendientes|floatformat:2 }}</h5>
+                    <p class="text-muted small mb-0">Bonos Pendientes</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 col-6">
+            <div class="card border-0 shadow-sm h-100 text-center p-3" style="border-radius: 16px;">
+                <div class="card-body">
+                    <h5 class="display-6 fw-bold text-secondary">${{ total_bonos_agotados|floatformat:2 }}</h5>
+                    <p class="text-muted small mb-0">Bonos Agotados</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- LISTA DE BONOS                                               -->
+    <!-- ============================================================ -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white py-3">
+            <h5 class="fw-bold mb-0">🎁 Mis Bonos</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Tipo</th>
+                            <th>Monto</th>
+                            <th>Saldo restante</th>
+                            <th>Estado</th>
+                            <th>Fecha asignación</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for bono in bonos_usuario %}
+                        <tr>
+                            <td>{{ bono.get_tipo_display }}</td>
+                            <td>${{ bono.monto|floatformat:2 }}</td>
+                            <td>${{ bono.saldo_restante|floatformat:2 }}</td>
+                            <td>
+                                <span class="badge {% if bono.estado == 'activo' %}bg-success{% elif bono.estado == 'agotado' %}bg-secondary{% elif bono.estado == 'anulado' %}bg-danger{% else %}bg-warning text-dark{% endif %}">
+                                    {{ bono.get_estado_display }}
+                                </span>
+                            </td>
+                            <td>{{ bono.creado_en|date:"d/m/Y" }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="5" class="text-muted text-center py-4">No tienes bonos aún.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- RECARGAS RECIENTES (si existen)                              -->
+    <!-- ============================================================ -->
+    {% if recargas_recientes %}
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white py-3">
+            <h5 class="fw-bold mb-0">📥 Recargas Recientes</h5>
+        </div>
+        <div class="card-body">
+            <ul class="list-group list-group-flush">
+                {% for recarga in recargas_recientes %}
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <span>${{ recarga.monto|floatformat:2 }}</span>
+                    <span class="text-muted small">{{ recarga.fecha_solicitud|date:"d/m/Y H:i" }}</span>
+                    <span class="badge bg-info">{{ recarga.get_estado_display }}</span>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}

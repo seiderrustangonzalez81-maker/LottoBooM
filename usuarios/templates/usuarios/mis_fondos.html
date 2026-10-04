@@ -1,0 +1,819 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block page_title %}💰 Mis Fondos{% endblock %}
+{% block page_subtitle %}Resumen detallado de tus fondos según tu rol{% endblock %}
+
+{% block extra_css %}
+<style>
+    .fondo-card {
+        border-left: 4px solid #4361ee;
+        margin-bottom: 1.5rem;
+    }
+    .fondo-card .card-header {
+        background: #f8fafc;
+        font-weight: 600;
+    }
+    .fondo-card .card-header .badge {
+        font-size: 0.7rem;
+    }
+    .fondo-card .card-body {
+        padding: 0.5rem 1rem;
+    }
+    .fondo-card .card-body .table {
+        margin-bottom: 0;
+        font-size: 0.85rem;
+    }
+    .fondo-card .card-body .table th {
+        background: #f1f5f9;
+        font-weight: 600;
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+    }
+    .fondo-card .card-body .table td {
+        padding: 0.3rem 0.5rem;
+        vertical-align: middle;
+    }
+    .fondo-card .card-body .table .total-row {
+        background: #f8fafc;
+        font-weight: 700;
+    }
+    .sub-card {
+        background: #fafcff;
+        border: 1px solid #e9ecef;
+        border-radius: 6px;
+        margin: 0.5rem 0;
+        padding: 0.5rem 0.8rem;
+    }
+    .sub-card .sub-header {
+        font-weight: 600;
+        color: #4361ee;
+        font-size: 0.8rem;
+        border-bottom: 1px dashed #e9ecef;
+        padding-bottom: 0.2rem;
+        margin-bottom: 0.3rem;
+    }
+    .monto-positivo { color: #059669; font-weight: 600; }
+    .monto-negativo { color: #dc2626; font-weight: 600; }
+    .monto-cero { color: #6c757d; }
+    .total-general {
+        background: #eef2ff;
+        border-radius: 8px;
+        padding: 0.8rem 1.2rem;
+        margin-top: 1rem;
+    }
+    .total-general .label {
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        color: #475569;
+    }
+    .total-general .value {
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: #1a1a2e;
+    }
+    .badge-rol {
+        font-size: 0.6rem;
+        padding: 0.1rem 0.4rem;
+        border-radius: 30px;
+    }
+    @media (max-width: 768px) {
+        .fondo-card .card-body .table {
+            font-size: 0.75rem;
+        }
+        .fondo-card .card-body .table td,
+        .fondo-card .card-body .table th {
+            padding: 0.2rem 0.3rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+
+    <h4 class="mb-3">
+        <i class="fas fa-wallet me-2 text-primary"></i>Mis Fondos
+        <span class="badge bg-secondary ms-2">{{ rol|capfirst }}</span>
+    </h4>
+
+    {% if rol == 'cliente' %}
+        <!-- ============================================================ -->
+        <!-- CLIENTE: Fondos por gestor y forma de pago                    -->
+        <!-- ============================================================ -->
+        {% if gestores_data %}
+            {% for gestor_item in gestores_data %}
+                <!-- Solo mostrar si el total del gestor es > 0 -->
+                {% if gestor_item.total_gestor > 0 %}
+                <div class="card fondo-card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span>
+                            <i class="fas fa-user-circle me-2"></i>
+                            {{ gestor_item.gestor.username }}
+                            <span class="badge-rol badge bg-info">Gestor</span>
+                        </span>
+                        <span class="badge bg-primary">Total: ${{ gestor_item.total_gestor|floatformat:2 }}</span>
+                    </div>
+                    <div class="card-body">
+                        {% if gestor_item.fondos %}
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Forma de Pago</th>
+                                            <th class="text-end">Saldo</th>
+                                            <th class="text-center">Estado</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for f in gestor_item.fondos %}
+                                            {% if f.monto != 0 %}
+                                            <tr>
+                                                <td>{{ f.forma_pago.nombre|default:"Sin forma de pago" }}</td>
+                                                <td class="text-end">
+                                                    <span class="{% if f.monto > 0 %}monto-positivo{% elif f.monto < 0 %}monto-negativo{% else %}monto-cero{% endif %}">
+                                                        ${{ f.monto|floatformat:2 }}
+                                                    </span>
+                                                </td>
+                                                <td class="text-center">
+                                                    {% if f.monto > 0 %}
+                                                        <span class="badge bg-success">Activo</span>
+                                                    {% elif f.monto == 0 %}
+                                                        <span class="badge bg-secondary">Sin saldo</span>
+                                                    {% else %}
+                                                        <span class="badge bg-danger">Modular</span>
+                                                    {% endif %}
+                                                </td>
+                                            </tr>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% else %}
+                            <p class="text-muted small mb-0">No hay fondos con este gestor.</p>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+            {% endfor %}
+
+            <!-- Total general del cliente -->
+            <div class="total-general">
+                <div class="row align-items-center">
+                    <div class="col-8">
+                        <span class="label"><i class="fas fa-coins me-2"></i>Total general de todos tus fondos</span>
+                    </div>
+                    <div class="col-4 text-end">
+                        <span class="value {% if total_general >= 0 %}monto-positivo{% else %}monto-negativo{% endif %}">
+                            ${{ total_general|floatformat:2 }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        {% else %}
+            <div class="alert alert-info text-center py-4">
+                <i class="fas fa-inbox fa-3x d-block mb-3 text-muted"></i>
+                <p class="mb-0">No tienes fondos con ningún gestor.</p>
+                <a href="{% url 'roles:solicitar' 'recarga' %}" class="btn btn-primary mt-3">
+                    <i class="fas fa-plus-circle"></i> Solicitar Recarga
+                </a>
+            </div>
+        {% endif %}
+
+    {% elif rol == 'comercial' %}
+        <!-- ============================================================ -->
+        <!-- COMERCIAL: Fondos de clientes + fondo con banco              -->
+        <!-- ============================================================ -->
+
+        <!-- 1. Fondos de clientes (solo con saldo > 0) -->
+        <h5 class="mt-3 mb-2"><i class="fas fa-users me-2 text-success"></i>Fondos de tus clientes</h5>
+        {% if clientes_data %}
+            {% for cliente_item in clientes_data %}
+                {% if cliente_item.total_cliente > 0 %}
+                <div class="card fondo-card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span>
+                            <i class="fas fa-user-circle me-2"></i>
+                            {{ cliente_item.cliente.username }}
+                            <span class="badge-rol badge bg-secondary">Cliente</span>
+                        </span>
+                        <span class="badge bg-primary">Total: ${{ cliente_item.total_cliente|floatformat:2 }}</span>
+                    </div>
+                    <div class="card-body">
+                        {% if cliente_item.fondos %}
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Forma de Pago</th>
+                                            <th class="text-end">Saldo</th>
+                                            <th class="text-center">Estado</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for f in cliente_item.fondos %}
+                                            {% if f.monto != 0 %}
+                                            <tr>
+                                                <td>{{ f.forma_pago.nombre|default:"Sin forma de pago" }}</td>
+                                                <td class="text-end">
+                                                    <span class="{% if f.monto > 0 %}monto-positivo{% elif f.monto < 0 %}monto-negativo{% else %}monto-cero{% endif %}">
+                                                        ${{ f.monto|floatformat:2 }}
+                                                    </span>
+                                                </td>
+                                                <td class="text-center">
+                                                    {% if f.monto > 0 %}
+                                                        <span class="badge bg-success">Activo</span>
+                                                    {% elif f.monto == 0 %}
+                                                        <span class="badge bg-secondary">Sin saldo</span>
+                                                    {% else %}
+                                                        <span class="badge bg-danger">Modular</span>
+                                                    {% endif %}
+                                                </td>
+                                            </tr>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </tbody>
+                                    <tfoot>
+                                        <tr class="total-row">
+                                            <td><strong>Total cliente</strong></td>
+                                            <td class="text-end"><strong>${{ cliente_item.total_cliente|floatformat:2 }}</strong></td>
+                                            <td></td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+                        {% else %}
+                            <p class="text-muted small mb-0">Este cliente no tiene fondos activos.</p>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+            {% endfor %}
+
+            <!-- Total de clientes (solo si hay alguno) -->
+            {% if total_clientes > 0 %}
+            <div class="total-general" style="border-left-color: var(--success);">
+                <div class="row align-items-center">
+                    <div class="col-8">
+                        <span class="label"><i class="fas fa-users me-2"></i>Total de todos tus clientes</span>
+                    </div>
+                    <div class="col-4 text-end">
+                        <span class="value monto-positivo">${{ total_clientes|floatformat:2 }}</span>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        {% else %}
+            <div class="alert alert-info text-center py-3">
+                <p class="mb-0">No tienes clientes con fondos activos.</p>
+            </div>
+        {% endif %}
+
+        <!-- 2. Fondo con el banco -->
+        {% if banco_asignado and fondo_banco_data and fondo_banco_data.fondo_neto != 0 %}
+            <h5 class="mt-4 mb-2"><i class="fas fa-university me-2 text-primary"></i>Fondo con tu banco ({{ banco_asignado.username }})</h5>
+            <div class="card fondo-card" style="border-left-color: #8b5cf6;">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span>
+                        <i class="fas fa-university me-2"></i>
+                        {{ banco_asignado.username }}
+                        <span class="badge-rol badge bg-primary">Banco</span>
+                    </span>
+                    <span class="badge bg-warning text-dark">
+                        Comisión: {{ fondo_banco_data.porcentaje_comision|floatformat:2 }}%
+                    </span>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="sub-card">
+                                <div class="sub-header">📊 Detalle de fondo</div>
+                                <table class="table table-sm table-borderless">
+                                    <tr>
+                                        <td>Total jugadas recibidas:</td>
+                                        <td class="text-end"><strong>${{ fondo_banco_data.total_jugadas|floatformat:2 }}</strong></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Comisiones del banco ({{ fondo_banco_data.porcentaje_comision|floatformat:2 }}%):</td>
+                                        <td class="text-end text-danger"><strong>-${{ fondo_banco_data.total_comisiones|floatformat:2 }}</strong></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Premios pagados a clientes:</td>
+                                        <td class="text-end text-danger"><strong>-${{ fondo_banco_data.total_premios|floatformat:2 }}</strong></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Enviado al banco:</td>
+                                        <td class="text-end text-danger"><strong>-${{ fondo_banco_data.total_enviado_banco|floatformat:2 }}</strong></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Recibido del banco:</td>
+                                        <td class="text-end text-success"><strong>+${{ fondo_banco_data.total_recibido_banco|floatformat:2 }}</strong></td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="sub-card" style="border-left-color: #059669;">
+                                <div class="sub-header">💰 Fondo neto</div>
+                                <div class="text-center py-3">
+                                    <div class="display-6 {% if fondo_banco_data.fondo_neto >= 0 %}monto-positivo{% else %}monto-negativo{% endif %}">
+                                        ${{ fondo_banco_data.fondo_neto|floatformat:2 }}
+                                    </div>
+                                    <small class="text-muted">Fondo disponible con tu banco</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+
+        <!-- Total general del comercial -->
+        <div class="total-general" style="border-left-color: #8b5cf6;">
+            <div class="row align-items-center">
+                <div class="col-8">
+                    <span class="label"><i class="fas fa-coins me-2"></i>Total general (clientes + fondo con banco)</span>
+                </div>
+                <div class="col-4 text-end">
+                    <span class="value {% if total_general >= 0 %}monto-positivo{% else %}monto-negativo{% endif %}">
+                        ${{ total_general|floatformat:2 }}
+                    </span>
+                </div>
+            </div>
+        </div>
+
+    {% elif rol == 'banco' %}
+        <!-- ============================================================ -->
+        <!-- BANCO: Comerciales + Clientes directos + Fondos propios      -->
+        <!-- ============================================================ -->
+
+        <!-- 1. Comerciales del banco (solo con saldo > 0) -->
+        <h5 class="mt-3 mb-2"><i class="fas fa-user-tie me-2 text-primary"></i>Comerciales del banco</h5>
+        {% if comerciales_data %}
+            {% for comercial_item in comerciales_data %}
+                {% if comercial_item.total_comercial > 0 %}
+                <div class="card fondo-card" style="border-left-color: #8b5cf6;">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span>
+                            <i class="fas fa-user-tie me-2"></i>
+                            {{ comercial_item.comercial.username }}
+                            <span class="badge-rol badge bg-info">Comercial</span>
+                        </span>
+                        <span class="badge bg-primary">Total: ${{ comercial_item.total_comercial|floatformat:2 }}</span>
+                    </div>
+                    <div class="card-body">
+                        {% if comercial_item.fondos %}
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Forma de Pago</th>
+                                            <th class="text-end">Saldo</th>
+                                            <th class="text-center">Estado</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for f in comercial_item.fondos %}
+                                            {% if f.monto != 0 %}
+                                            <tr>
+                                                <td>{{ f.forma_pago.nombre|default:"Sin forma de pago" }}</td>
+                                                <td class="text-end">
+                                                    <span class="{% if f.monto > 0 %}monto-positivo{% elif f.monto < 0 %}monto-negativo{% else %}monto-cero{% endif %}">
+                                                        ${{ f.monto|floatformat:2 }}
+                                                    </span>
+                                                </td>
+                                                <td class="text-center">
+                                                    {% if f.monto > 0 %}
+                                                        <span class="badge bg-success">Activo</span>
+                                                    {% elif f.monto == 0 %}
+                                                        <span class="badge bg-secondary">Sin saldo</span>
+                                                    {% else %}
+                                                        <span class="badge bg-danger">Modular</span>
+                                                    {% endif %}
+                                                </td>
+                                            </tr>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </tbody>
+                                    <tfoot>
+                                        <tr class="total-row">
+                                            <td><strong>Total comercial</strong></td>
+                                            <td class="text-end"><strong>${{ comercial_item.total_comercial|floatformat:2 }}</strong></td>
+                                            <td></td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+                        {% else %}
+                            <p class="text-muted small mb-0">Este comercial no tiene fondos activos.</p>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+            {% endfor %}
+
+            <!-- Total de comerciales -->
+            {% if total_comerciales > 0 %}
+            <div class="total-general" style="border-left-color: #8b5cf6;">
+                <div class="row align-items-center">
+                    <div class="col-8">
+                        <span class="label"><i class="fas fa-user-tie me-2"></i>Total de todos los comerciales</span>
+                    </div>
+                    <div class="col-4 text-end">
+                        <span class="value monto-positivo">${{ total_comerciales|floatformat:2 }}</span>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        {% else %}
+            <div class="alert alert-info text-center py-3">
+                <p class="mb-0">No tienes comerciales con fondos activos.</p>
+            </div>
+        {% endif %}
+
+        <!-- 2. Clientes directos del banco (solo con saldo > 0) -->
+        <h5 class="mt-4 mb-2"><i class="fas fa-user-circle me-2 text-success"></i>Clientes directos</h5>
+        {% if clientes_directos_data %}
+            {% for cliente_item in clientes_directos_data %}
+                {% if cliente_item.total_cliente > 0 %}
+                <div class="card fondo-card" style="border-left-color: #059669;">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span>
+                            <i class="fas fa-user-circle me-2"></i>
+                            {{ cliente_item.cliente.username }}
+                            <span class="badge-rol badge bg-secondary">Cliente</span>
+                        </span>
+                        <span class="badge bg-primary">Total: ${{ cliente_item.total_cliente|floatformat:2 }}</span>
+                    </div>
+                    <div class="card-body">
+                        {% if cliente_item.fondos %}
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Forma de Pago</th>
+                                            <th class="text-end">Saldo</th>
+                                            <th class="text-center">Estado</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for f in cliente_item.fondos %}
+                                            {% if f.monto != 0 %}
+                                            <tr>
+                                                <td>{{ f.forma_pago.nombre|default:"Sin forma de pago" }}</td>
+                                                <td class="text-end">
+                                                    <span class="{% if f.monto > 0 %}monto-positivo{% elif f.monto < 0 %}monto-negativo{% else %}monto-cero{% endif %}">
+                                                        ${{ f.monto|floatformat:2 }}
+                                                    </span>
+                                                </td>
+                                                <td class="text-center">
+                                                    {% if f.monto > 0 %}
+                                                        <span class="badge bg-success">Activo</span>
+                                                    {% elif f.monto == 0 %}
+                                                        <span class="badge bg-secondary">Sin saldo</span>
+                                                    {% else %}
+                                                        <span class="badge bg-danger">Modular</span>
+                                                    {% endif %}
+                                                </td>
+                                            </tr>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </tbody>
+                                    <tfoot>
+                                        <tr class="total-row">
+                                            <td><strong>Total cliente</strong></td>
+                                            <td class="text-end"><strong>${{ cliente_item.total_cliente|floatformat:2 }}</strong></td>
+                                            <td></td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+                        {% else %}
+                            <p class="text-muted small mb-0">Este cliente no tiene fondos activos.</p>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+            {% endfor %}
+
+            <!-- Total de clientes directos -->
+            {% if total_clientes_directos > 0 %}
+            <div class="total-general" style="border-left-color: #059669;">
+                <div class="row align-items-center">
+                    <div class="col-8">
+                        <span class="label"><i class="fas fa-user-circle me-2"></i>Total de todos los clientes directos</span>
+                    </div>
+                    <div class="col-4 text-end">
+                        <span class="value monto-positivo">${{ total_clientes_directos|floatformat:2 }}</span>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        {% else %}
+            <div class="alert alert-info text-center py-3">
+                <p class="mb-0">No tienes clientes directos con fondos activos.</p>
+            </div>
+        {% endif %}
+
+        <!-- 3. Fondos propios del banco (solo si hay saldo) -->
+        <h5 class="mt-4 mb-2"><i class="fas fa-university me-2 text-warning"></i>Fondos propios del banco</h5>
+        {% if fondos_propios_data %}
+            {% if total_fondos_propios > 0 %}
+            <div class="card fondo-card" style="border-left-color: #f59e0b;">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span>
+                        <i class="fas fa-university me-2"></i>
+                        {{ user.username }}
+                        <span class="badge-rol badge bg-primary">Banco</span>
+                    </span>
+                    <span class="badge bg-primary">Total: ${{ total_fondos_propios|floatformat:2 }}</span>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Forma de Pago</th>
+                                    <th class="text-end">Saldo</th>
+                                    <th class="text-center">Estado</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for f in fondos_propios_data %}
+                                    {% if f.monto != 0 %}
+                                    <tr>
+                                        <td>{{ f.forma_pago.nombre|default:"Sin forma de pago" }}</td>
+                                        <td class="text-end">
+                                            <span class="{% if f.monto > 0 %}monto-positivo{% elif f.monto < 0 %}monto-negativo{% else %}monto-cero{% endif %}">
+                                                ${{ f.monto|floatformat:2 }}
+                                            </span>
+                                        </td>
+                                        <td class="text-center">
+                                            {% if f.monto > 0 %}
+                                                <span class="badge bg-success">Activo</span>
+                                            {% elif f.monto == 0 %}
+                                                <span class="badge bg-secondary">Sin saldo</span>
+                                            {% else %}
+                                                <span class="badge bg-danger">Modular</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endif %}
+                                {% endfor %}
+                            </tbody>
+                            <tfoot>
+                                <tr class="total-row">
+                                    <td><strong>Total fondos propios</strong></td>
+                                    <td class="text-end"><strong>${{ total_fondos_propios|floatformat:2 }}</strong></td>
+                                    <td></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Total de fondos propios -->
+            <div class="total-general" style="border-left-color: #f59e0b;">
+                <div class="row align-items-center">
+                    <div class="col-8">
+                        <span class="label"><i class="fas fa-university me-2"></i>Total de fondos propios</span>
+                    </div>
+                    <div class="col-4 text-end">
+                        <span class="value monto-positivo">${{ total_fondos_propios|floatformat:2 }}</span>
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <div class="alert alert-info text-center py-3">
+                <p class="mb-0">No tienes fondos propios activos.</p>
+            </div>
+            {% endif %}
+        {% else %}
+            <div class="alert alert-info text-center py-3">
+                <p class="mb-0">No tienes fondos propios activos.</p>
+            </div>
+        {% endif %}
+
+        <!-- Total general del banco -->
+        <div class="total-general" style="border-left-color: #4361ee;">
+            <div class="row align-items-center">
+                <div class="col-8">
+                    <span class="label"><i class="fas fa-coins me-2"></i>Total general del banco (comerciales + clientes directos + fondos propios)</span>
+                </div>
+                <div class="col-4 text-end">
+                    <span class="value {% if total_general >= 0 %}monto-positivo{% else %}monto-negativo{% endif %}">
+                        ${{ total_general|floatformat:2 }}
+                    </span>
+                </div>
+            </div>
+        </div>
+
+    {% elif rol == 'superadmin' or user.is_superuser %}
+        <!-- ============================================================ -->
+        <!-- SUPERADMIN: Resumen por banco                                -->
+        <!-- ============================================================ -->
+        {% if bancos_data %}
+            <h5 class="mt-3 mb-2"><i class="fas fa-building me-2 text-primary"></i>Resumen por Banco</h5>
+            {% for banco_item in bancos_data %}
+                <div class="card fondo-card" style="border-left-color: #7c3aed;">
+                    <div class="card-header d-flex justify-content-between align-items-center bg-light">
+                        <span>
+                            <i class="fas fa-building me-2"></i>
+                            <strong>{{ banco_item.banco.username }}</strong>
+                            <span class="badge-rol badge bg-primary">Banco</span>
+                        </span>
+                        <span class="badge bg-primary">Total banco: ${{ banco_item.total_banco|floatformat:2 }}</span>
+                    </div>
+                    <div class="card-body">
+
+                        <!-- Comerciales del banco (solo saldo > 0) -->
+                        {% if banco_item.comerciales_data %}
+                            <h6 class="mt-2"><i class="fas fa-user-tie me-1 text-info"></i>Comerciales</h6>
+                            {% for comercial_item in banco_item.comerciales_data %}
+                                {% if comercial_item.total_comercial > 0 %}
+                                <div class="sub-card">
+                                    <div class="sub-header d-flex justify-content-between">
+                                        <span>{{ comercial_item.comercial.username }}</span>
+                                        <span class="badge bg-primary">${{ comercial_item.total_comercial|floatformat:2 }}</span>
+                                    </div>
+                                    <div class="table-responsive">
+                                        <table class="table table-sm table-hover">
+                                            <thead>
+                                                <tr>
+                                                    <th>Forma de Pago</th>
+                                                    <th class="text-end">Saldo</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for f in comercial_item.fondos %}
+                                                    {% if f.monto != 0 %}
+                                                    <tr>
+                                                        <td>{{ f.forma_pago.nombre|default:"Sin forma" }}</td>
+                                                        <td class="text-end">
+                                                            <span class="{% if f.monto > 0 %}monto-positivo{% elif f.monto < 0 %}monto-negativo{% else %}monto-cero{% endif %}">
+                                                                ${{ f.monto|floatformat:2 }}
+                                                            </span>
+                                                        </td>
+                                                    </tr>
+                                                    {% endif %}
+                                                {% empty %}
+                                                    <tr><td colspan="2" class="text-muted small">Sin fondos</td></tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                {% endif %}
+                            {% endfor %}
+                            {% if banco_item.total_comerciales > 0 %}
+                            <div class="total-general" style="border-left-color: #8b5cf6; padding: 0.4rem 0.8rem; margin: 0.3rem 0;">
+                                <div class="row">
+                                    <div class="col-8"><strong>Total comerciales</strong></div>
+                                    <div class="col-4 text-end"><strong>${{ banco_item.total_comerciales|floatformat:2 }}</strong></div>
+                                </div>
+                            </div>
+                            {% endif %}
+                        {% endif %}
+
+                        <!-- Clientes directos del banco (solo saldo > 0) -->
+                        {% if banco_item.clientes_directos_data %}
+                            <h6 class="mt-3"><i class="fas fa-user-circle me-1 text-success"></i>Clientes directos</h6>
+                            {% for cliente_item in banco_item.clientes_directos_data %}
+                                {% if cliente_item.total_cliente > 0 %}
+                                <div class="sub-card">
+                                    <div class="sub-header d-flex justify-content-between">
+                                        <span>{{ cliente_item.cliente.username }}</span>
+                                        <span class="badge bg-primary">${{ cliente_item.total_cliente|floatformat:2 }}</span>
+                                    </div>
+                                    <div class="table-responsive">
+                                        <table class="table table-sm table-hover">
+                                            <thead>
+                                                <tr>
+                                                    <th>Forma de Pago</th>
+                                                    <th class="text-end">Saldo</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for f in cliente_item.fondos %}
+                                                    {% if f.monto != 0 %}
+                                                    <tr>
+                                                        <td>{{ f.forma_pago.nombre|default:"Sin forma" }}</td>
+                                                        <td class="text-end">
+                                                            <span class="{% if f.monto > 0 %}monto-positivo{% elif f.monto < 0 %}monto-negativo{% else %}monto-cero{% endif %}">
+                                                                ${{ f.monto|floatformat:2 }}
+                                                            </span>
+                                                        </td>
+                                                    </tr>
+                                                    {% endif %}
+                                                {% empty %}
+                                                    <tr><td colspan="2" class="text-muted small">Sin fondos</td></tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                {% endif %}
+                            {% endfor %}
+                            {% if banco_item.total_clientes_directos > 0 %}
+                            <div class="total-general" style="border-left-color: #059669; padding: 0.4rem 0.8rem; margin: 0.3rem 0;">
+                                <div class="row">
+                                    <div class="col-8"><strong>Total clientes directos</strong></div>
+                                    <div class="col-4 text-end"><strong>${{ banco_item.total_clientes_directos|floatformat:2 }}</strong></div>
+                                </div>
+                            </div>
+                            {% endif %}
+                        {% endif %}
+
+                        <!-- Fondos propios del banco (solo saldo > 0) -->
+                        {% if banco_item.fondos_propios_data %}
+                            <h6 class="mt-3"><i class="fas fa-university me-1 text-warning"></i>Fondos propios del banco</h6>
+                            <div class="sub-card">
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th>Forma de Pago</th>
+                                                <th class="text-end">Saldo</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for f in banco_item.fondos_propios_data %}
+                                                {% if f.monto != 0 %}
+                                                <tr>
+                                                    <td>{{ f.forma_pago.nombre|default:"Sin forma" }}</td>
+                                                    <td class="text-end">
+                                                        <span class="{% if f.monto > 0 %}monto-positivo{% elif f.monto < 0 %}monto-negativo{% else %}monto-cero{% endif %}">
+                                                            ${{ f.monto|floatformat:2 }}
+                                                        </span>
+                                                    </td>
+                                                </tr>
+                                                {% endif %}
+                                            {% empty %}
+                                                <tr><td colspan="2" class="text-muted small">Sin fondos</td></tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                                {% if banco_item.total_fondos_propios > 0 %}
+                                <div class="total-general" style="border-left-color: #f59e0b; padding: 0.4rem 0.8rem; margin: 0.3rem 0;">
+                                    <div class="row">
+                                        <div class="col-8"><strong>Total fondos propios</strong></div>
+                                        <div class="col-4 text-end"><strong>${{ banco_item.total_fondos_propios|floatformat:2 }}</strong></div>
+                                    </div>
+                                </div>
+                                {% endif %}
+                            </div>
+                        {% endif %}
+
+                        <!-- Total banco -->
+                        <div class="total-general" style="border-left-color: #7c3aed; margin-top: 0.8rem;">
+                            <div class="row align-items-center">
+                                <div class="col-8">
+                                    <span class="label"><i class="fas fa-building me-2"></i>Total {{ banco_item.banco.username }}</span>
+                                </div>
+                                <div class="col-4 text-end">
+                                    <span class="value monto-positivo">${{ banco_item.total_banco|floatformat:2 }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+
+            <!-- Total general superadmin -->
+            <div class="total-general" style="border-left-color: #7c3aed; background: #f3e8ff;">
+                <div class="row align-items-center">
+                    <div class="col-8">
+                        <span class="label"><i class="fas fa-globe me-2"></i>Total general de todos los bancos</span>
+                    </div>
+                    <div class="col-4 text-end">
+                        <span class="value monto-positivo">${{ total_superadmin|floatformat:2 }}</span>
+                    </div>
+                </div>
+            </div>
+        {% else %}
+            <div class="alert alert-info text-center py-4">
+                <i class="fas fa-inbox fa-3x d-block mb-3 text-muted"></i>
+                <p class="mb-0">No hay bancos registrados en el sistema.</p>
+            </div>
+        {% endif %}
+
+    {% else %}
+        <!-- ============================================================ -->
+        <!-- USUARIO SIN ROL O ROL DESCONOCIDO                           -->
+        <!-- ============================================================ -->
+        <div class="alert alert-warning text-center py-4">
+            <i class="fas fa-exclamation-triangle fa-3x d-block mb-3"></i>
+            <p class="mb-0">No se pudo determinar tu rol o no tienes un rol asignado.</p>
+            <a href="{% url 'publico:home' %}" class="btn btn-outline-secondary mt-3">
+                <i class="fas fa-home"></i> Volver al inicio
+            </a>
+        </div>
+    {% endif %}
+
+</div>
+{% endblock %}

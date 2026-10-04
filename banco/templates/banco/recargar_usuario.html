@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block page_title %}💳 Recargar Usuario{% endblock %}
+{% block page_subtitle %}Realiza una recarga a un usuario{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card shadow-sm border-0 rounded-3">
+        <div class="card-header bg-gradient-success text-white py-3">
+            <h5 class="mb-0"><i class="fas fa-plus-circle me-2"></i>Recargar Usuario</h5>
+            <small class="text-white-50">Selecciona el usuario, la forma de pago y el monto</small>
+        </div>
+        <div class="card-body">
+
+            <!-- ===== DEPURACIÓN ===== -->
+            <div class="alert alert-info alert-dismissible fade show" role="alert">
+                <strong><i class="fas fa-info-circle"></i> Depuración:</strong><br>
+                Total de usuarios en el sistema: <span class="badge bg-primary">{{ total_usuarios|default:0 }}</span><br>
+                {% if usuarios %}
+                    Usuarios disponibles:
+                    {% for u in usuarios %}
+                        <span class="badge bg-secondary">{{ u.username }}</span>
+                    {% endfor %}
+                {% else %}
+                    <span class="text-danger">⚠️ No hay usuarios en el contexto.</span>
+                {% endif %}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            <!-- ===== FIN DEPURACIÓN ===== -->
+
+            <!-- Mensajes de éxito/error -->
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            <form method="post" id="recargaForm">
+                {% csrf_token %}
+
+                <!-- Usuario -->
+                <div class="mb-3">
+                    <label for="usuario" class="form-label fw-bold">
+                        <i class="fas fa-user text-primary me-1"></i>Usuario a recargar
+                    </label>
+                    <select name="usuario_id" id="usuario" class="form-select form-select-lg" required>
+                        <option value="">— Selecciona un usuario —</option>
+                        {% for u in usuarios %}
+                            <option value="{{ u.id }}">{{ u.username }} ({{ u.get_full_name|default:u.username }})</option>
+                        {% empty %}
+                            <option value="" disabled>No hay usuarios disponibles</option>
+                        {% endfor %}
+                    </select>
+                    <div class="form-text text-muted">
+                        <i class="fas fa-info-circle"></i> Solo se muestran los usuarios a los que puedes recargar según tu rol.
+                    </div>
+                </div>
+
+                <!-- Forma de Pago -->
+                <div class="mb-3">
+                    <label for="forma_pago" class="form-label fw-bold">
+                        <i class="fas fa-credit-card text-warning me-1"></i>Forma de Pago
+                    </label>
+                    <select name="forma_pago_id" id="forma_pago" class="form-select form-select-lg" required>
+                        <option value="">— Selecciona una forma de pago —</option>
+                        {% for fp in formas_pago %}
+                            <option value="{{ fp.id }}">{{ fp.nombre }}</option>
+                        {% empty %}
+                            <option value="" disabled>No hay formas de pago disponibles</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Monto -->
+                <div class="mb-3">
+                    <label for="monto" class="form-label fw-bold">
+                        <i class="fas fa-dollar-sign text-success me-1"></i>Monto a recargar
+                    </label>
+                    <div class="input-group input-group-lg">
+                        <span class="input-group-text">$</span>
+                        <input type="number" name="monto" id="monto" class="form-control" step="0.01" min="0.01"
+                               placeholder="0.00" required>
+                    </div>
+                    <div class="form-text text-muted">
+                        <i class="fas fa-info-circle"></i> El monto debe ser mayor a 0.
+                    </div>
+                </div>
+
+                <!-- Botones -->
+                <div class="d-flex gap-2 mt-4">
+                    <button type="submit" class="btn btn-success btn-lg px-5">
+                        <i class="fas fa-check-circle me-2"></i>Recargar
+                    </button>
+                    <a href="{% url 'banco:dashboard' %}" class="btn btn-outline-secondary btn-lg">
+                        <i class="fas fa-times me-2"></i>Cancelar
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+    .bg-gradient-success {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    }
+    .card {
+        border: none;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.1) !important;
+    }
+    .form-select-lg, .form-control-lg {
+        font-size: 1.1rem;
+        padding: 0.6rem 1rem;
+    }
+    .btn-lg {
+        padding: 0.6rem 2rem;
+        font-weight: 600;
+    }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const selectUsuario = document.getElementById('usuario');
+    const selectFormaPago = document.getElementById('forma_pago');
+    const montoInput = document.getElementById('monto');
+
+    // Validación del formulario
+    document.getElementById('recargaForm').addEventListener('submit', function(e) {
+        if (!selectUsuario.value) {
+            e.preventDefault();
+            alert('⚠️ Por favor, selecciona un usuario.');
+            selectUsuario.focus();
+            return false;
+        }
+        if (!selectFormaPago.value) {
+            e.preventDefault();
+            alert('⚠️ Por favor, selecciona una forma de pago.');
+            selectFormaPago.focus();
+            return false;
+        }
+        if (!montoInput.value || parseFloat(montoInput.value) <= 0) {
+            e.preventDefault();
+            alert('⚠️ Por favor, ingresa un monto válido (mayor a 0).');
+            montoInput.focus();
+            return false;
+        }
+        return true;
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container" style="max-width:500px; margin:auto; padding:20px;">
+    <div style="background:#ffffff; border-radius:24px; padding:32px; box-shadow:0 2px 12px rgba(0,0,0,0.04); border:1px solid #eef2f6; text-align:center;">
+        <h2 style="color:#dc2626;">⚠️ Confirmar eliminación</h2>
+        <p style="font-size:1.1rem; margin:20px 0;">¿Estás seguro de que deseas eliminar el sorteo <strong>"{{ sorteo.nombre }}"</strong>?</p>
+        <p style="color:#6b7280;">Esta acción no se puede deshacer.</p>
+        <form method="post" style="display:flex; gap:12px; justify-content:center; margin-top:24px;">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger">Sí, eliminar</button>
+            <a href="{% url 'sorteos:lista_sorteos' %}" class="btn btn-secondary">Cancelar</a>
+        </form>
+    </div>
+</div>
+<style>
+    .btn {
+        display: inline-block;
+        padding: 10px 24px;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: 600;
+        border: none;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    .btn-danger {
+        background: #dc2626;
+        color: #ffffff;
+    }
+    .btn-danger:hover {
+        background: #b91c1c;
+    }
+    .btn-secondary {
+        background: #eef2f6;
+        color: #1a1a2e;
+    }
+    .btn-secondary:hover {
+        background: #e2e8f0;
+    }
+</style>
+{% endblock %}

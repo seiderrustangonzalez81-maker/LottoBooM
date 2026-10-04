@@ -1,0 +1,171 @@
+<!-- ESTADÍSTICAS -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="label">Total jugadas</div>
+        <div class="value">{{ estadisticas.total_jugadas }}</div>
+    </div>
+    <div class="stat-card" style="border-left-color: var(--warning);">
+        <div class="label">Total apostado</div>
+        <div class="value warning">${{ estadisticas.total_apostado|floatformat:2 }}</div>
+    </div>
+    <div class="stat-card" style="border-left-color: var(--success);">
+        <div class="label">Premios ganados</div>
+        <div class="value success">${{ estadisticas.total_premios|floatformat:2 }}</div>
+    </div>
+    <div class="stat-card" style="border-left-color: var(--primary);">
+        <div class="label">Tasa de acierto</div>
+        <div class="value primary">{{ estadisticas.tasa_acierto|floatformat:1 }}%</div>
+    </div>
+</div>
+
+<!-- ACCIONES MASIVAS -->
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <input type="checkbox" id="selectAllJugadas" class="me-2">
+        <label for="selectAllJugadas" class="small">Seleccionar todas</label>
+        <button id="cancelarSeleccionadas" class="btn btn-danger btn-sm ms-2" disabled>
+            <i class="fas fa-times"></i> Cancelar seleccionadas
+        </button>
+        <span id="seleccionadasContador" class="small text-muted ms-2">0 seleccionadas</span>
+    </div>
+    <div>
+        <button class="btn btn-outline-secondary btn-sm toggle-all-clients" data-sorteo-id="all">
+            <i class="fas fa-expand-alt"></i> Expandir/Colapsar todos
+        </button>
+    </div>
+</div>
+
+<!-- RESULTADOS -->
+{% if page_obj.object_list %}
+    {% for sorteo_data in page_obj.object_list %}
+        <div class="card-sorteo" data-sorteo-id="{{ sorteo_data.sorteo.id }}">
+            <div class="card-header">
+                <h6>
+                    <i class="fas fa-calendar-alt me-2"></i>{{ sorteo_data.sorteo.nombre }}
+                    <small class="text-muted ms-2">{{ sorteo_data.sorteo.fecha|date:"d/m/Y" }}</small>
+                </h6>
+                <div>
+                    <span class="badge bg-primary bg-opacity-10 text-primary me-2">
+                        {{ sorteo_data.clientes|length }} cliente(s)
+                    </span>
+                    <button class="btn btn-sm btn-outline-secondary toggle-clients-sorteo" data-sorteo-id="{{ sorteo_data.sorteo.id }}">
+                        <i class="fas fa-expand-alt"></i> Toggle
+                    </button>
+                </div>
+            </div>
+            {% for cliente_data in sorteo_data.clientes %}
+                <div class="card-cliente" data-cliente-id="{{ cliente_data.cliente.id }}">
+                    <div class="cliente-header" data-bs-toggle="collapse" data-bs-target="#cliente-{{ sorteo_data.sorteo.id }}-{{ cliente_data.cliente.id }}" aria-expanded="true" aria-controls="cliente-{{ sorteo_data.sorteo.id }}-{{ cliente_data.cliente.id }}">
+                        <div class="cliente-info">
+                            <i class="fas fa-user-circle me-1"></i>{{ cliente_data.cliente.username }}
+                            <span class="rol-badge">
+                                {% if cliente_data.cliente == user %}
+                                    <i class="fas fa-user-check"></i> Tú
+                                {% else %}
+                                    <i class="fas fa-user-tie"></i> Gestor
+                                {% endif %}
+                            </span>
+                            <span class="badge bg-secondary">{{ cliente_data.cantidad_jugadas }} jugadas</span>
+                        </div>
+                        <div class="resumen">
+                            <span><strong>Total:</strong> ${{ cliente_data.total_apostado|floatformat:2 }}</span>
+                            {% if cliente_data.total_premios > 0 %}
+                                <span><strong class="text-success">Premios:</strong> ${{ cliente_data.total_premios|floatformat:2 }}</span>
+                            {% endif %}
+                            <span class="ganancia {% if cliente_data.ganancia_neta >= 0 %}positiva{% else %}negativa{% endif %}">
+                                <i class="fas fa-coins"></i> {{ cliente_data.ganancia_neta|floatformat:2 }}
+                            </span>
+                            <span class="estado-badge {{ cliente_data.estado_general }}">
+                                <i class="fas fa-circle"></i>
+                                {{ cliente_data.estado_general|capfirst }}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="collapse show" id="cliente-{{ sorteo_data.sorteo.id }}-{{ cliente_data.cliente.id }}">
+                        {% for fp_data in cliente_data.formas_pago %}
+                            <div class="forma-pago-block">
+                                <div class="fp-header">
+                                    <i class="fas fa-credit-card me-1"></i>{{ fp_data.forma_pago.nombre|default:"Sin forma de pago" }}
+                                </div>
+                                {% for fj_data in fp_data.formas_juego %}
+                                    <div class="forma-juego-group" data-forma="{{ fj_data.forma_nombre }}">
+                                        <span class="fj-nombre">{{ fj_data.forma_nombre|default:"Sin tipo" }}</span>
+                                        <span class="fj-numeros">
+                                            {% for item in fj_data.numeros_con_monto %}
+                                                <span data-bs-toggle="tooltip" title="Monto individual: ${{ item.monto|floatformat:2 }} (Total grupo: ${{ fj_data.monto_total|floatformat:2 }})">
+                                                    {{ item.numero }} <span class="text-muted">${{ item.monto|floatformat:2 }}</span>
+                                                </span>
+                                            {% endfor %}
+                                        </span>
+                                        <span class="fj-monto">${{ fj_data.monto_total|floatformat:2 }}</span>
+                                        <span class="fj-estado">
+                                            <span class="estado-badge {{ fj_data.estado }}">
+                                                <i class="fas fa-circle"></i>
+                                                {{ fj_data.estado|capfirst }}
+                                            </span>
+                                        </span>
+                                        <span class="fj-acciones">
+                                            {% for jugada in fj_data.jugadas %}
+                                                <input type="checkbox" class="checkbox-jugada" data-jugada-id="{{ jugada.id }}" {% if jugada.estado != 'pendiente' %}disabled{% endif %}>
+                                                {% if jugada.estado == 'pendiente' and jugada.puede_modificar %}
+                                                    <button class="btn-accion cancelar cancelar-btn"
+                                                            data-id="{{ jugada.id }}"
+                                                            data-sorteo="{{ jugada.sorteo.nombre }}"
+                                                            title="Cancelar jugada">
+                                                        <i class="fas fa-times"></i>
+                                                    </button>
+                                                {% endif %}
+                                                <button class="btn-accion detalle btn-detalle"
+                                                        data-id="{{ jugada.id }}"
+                                                        title="Ver detalle"
+                                                        data-bs-toggle="modal"
+                                                        data-bs-target="#detalleModal">
+                                                    <i class="fas fa-eye"></i>
+                                                </button>
+                                            {% endfor %}
+                                        </span>
+                                    </div>
+                                {% empty %}
+                                    <div class="text-muted small py-1">Sin jugadas</div>
+                                {% endfor %}
+                            </div>
+                        {% empty %}
+                            <div class="text-muted small py-1">Sin formas de pago</div>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% endfor %}
+
+    <!-- PAGINACIÓN -->
+    {% if page_obj.has_other_pages %}
+        <div class="pagination-wrapper">
+            <nav aria-label="Navegación de apuestas">
+                <ul class="pagination">
+                    {% if page_obj.has_previous %}
+                        <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}&{{ request.GET.urlencode }}">Anterior</a></li>
+                    {% else %}
+                        <li class="page-item disabled"><span class="page-link">Anterior</span></li>
+                    {% endif %}
+                    {% for num in page_obj.paginator.page_range %}
+                        <li class="page-item {% if num == page_obj.number %}active{% endif %}">
+                            <a class="page-link" href="?page={{ num }}&{{ request.GET.urlencode }}">{{ num }}</a>
+                        </li>
+                    {% endfor %}
+                    {% if page_obj.has_next %}
+                        <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}&{{ request.GET.urlencode }}">Siguiente</a></li>
+                    {% else %}
+                        <li class="page-item disabled"><span class="page-link">Siguiente</span></li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+    {% endif %}
+
+{% else %}
+    <div class="alert alert-info text-center py-4">
+        <i class="fas fa-inbox fa-3x d-block mb-3 text-muted"></i>
+        <p class="mb-0">No se encontraron apuestas con los filtros seleccionados.</p>
+    </div>
+{% endif %}

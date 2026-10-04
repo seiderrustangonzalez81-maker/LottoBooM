@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container">
+    <h2>Gestión de Postpagos</h2>
+
+    <!-- Filtros -->
+    <div class="row">
+        <div class="col-md-6">
+            <label>Buscar cliente</label>
+            <input type="text" id="buscarCliente" class="form-control" placeholder="Nombre o email...">
+        </div>
+        <div class="col-md-6">
+            <label>Filtrar por estado</label>
+            <select class="form-control" id="filtroEstado">
+                <option value="todos">Todos</option>
+                <option value="con_saldo">Con saldo positivo</option>
+                <option value="sin_saldo">Saldo cero</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- Listado de clientes con saldo -->
+    <div class="card mt-3">
+        <div class="card-header">
+            <h5>Clientes con Postpago</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Cliente</th>
+                            <th>Saldo actual</th>
+                            <th>Última adición</th>
+                            <th>Días desde última</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in clientes %}
+                        <tr>
+                            <td>{{ item.cliente.username }}</td>
+                            <td>
+                                <span class="badge {% if item.saldo > 0 %}bg-warning{% else %}bg-success{% endif %}">
+                                    ${{ item.saldo }}
+                                </span>
+                            </td>
+                            <td>{{ item.ultima_adicion|date:"d/m/Y" }}</td>
+                            <td>{{ item.dias_transcurridos }}</td>
+                            <td>
+                                <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#modalPostpago" onclick="cargarCliente('{{ item.cliente.id }}', '{{ item.cliente.username }}')">
+                                    <i class="fas fa-plus"></i> Añadir
+                                </button>
+                                <button class="btn btn-sm btn-info" onclick="verHistorial('{{ item.cliente.id }}')">
+                                    <i class="fas fa-history"></i> Historial
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Historial de postpagos del cliente seleccionado -->
+    <div class="card mt-3" id="historialPostpagos" style="display:none;">
+        <div class="card-header">
+            <h5>Historial de Postpagos de <span id="clienteHistorial"></span></h5>
+            <button class="btn btn-sm btn-secondary" onclick="cerrarHistorial()">Cerrar</button>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Tipo</th>
+                            <th>Monto</th>
+                            <th>Concepto</th>
+                            <th>Días</th>
+                        </tr>
+                    </thead>
+                    <tbody id="historialBody">
+                        <!-- Se llena con AJAX -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para añadir postpago -->
+    <div class="modal fade" id="modalPostpago" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Añadir Postpago</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="modal-body">
+                        <input type="hidden" name="cliente" id="clienteId">
+                        <p><strong>Cliente:</strong> <span id="clienteNombre"></span></p>
+                        <div class="mb-3">
+                            <label for="monto" class="form-label">Monto</label>
+                            <input type="number" step="0.01" name="monto" id="monto" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="concepto" class="form-label">Concepto</label>
+                            <input type="text" name="concepto" id="concepto" class="form-control" placeholder="Ej: Crédito para apuestas">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" name="crear_postpago" class="btn btn-primary">Guardar</button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function cargarCliente(id, nombre) {
+    document.getElementById('clienteId').value = id;
+    document.getElementById('clienteNombre').textContent = nombre;
+}
+
+function verHistorial(id) {
+    document.getElementById('historialPostpagos').style.display = 'block';
+    // Llamada AJAX para cargar historial
+    fetch(`/roles/api/postpagos/historial/${id}/`)
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('clienteHistorial').textContent = data.cliente;
+            let tbody = document.getElementById('historialBody');
+            tbody.innerHTML = '';
+            data.historial.forEach(item => {
+                let row = `<tr>
+                    <td>${item.fecha}</td>
+                    <td>${item.tipo}</td>
+                    <td>$${item.monto}</td>
+                    <td>${item.concepto}</td>
+                    <td>${item.dias}</td>
+                </tr>`;
+                tbody.innerHTML += row;
+            });
+        });
+}
+
+function cerrarHistorial() {
+    document.getElementById('historialPostpagos').style.display = 'none';
+}
+</script>
+{% endblock %}

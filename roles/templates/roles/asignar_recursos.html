@@ -1,0 +1,192 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block page_title %}Asignar Recursos a Comercial{% endblock %}
+
+{% block extra_css %}
+<style>
+    .card-header {
+        background: linear-gradient(135deg, #6C3CE1, #8B5CF6);
+    }
+    .card-header h5 {
+        color: #fff;
+    }
+    .select2-container .select2-selection--multiple {
+        min-height: 45px;
+        border: 1px solid #ced4da;
+        border-radius: 8px;
+    }
+    .select2-container--default .select2-selection--multiple .select2-selection__choice {
+        background: #6C3CE1;
+        color: #fff;
+        border: none;
+        border-radius: 20px;
+        padding: 2px 12px;
+        margin: 4px 4px 0 0;
+    }
+    .select2-container--default .select2-selection--multiple .select2-selection__choice__remove {
+        color: #fff;
+        margin-right: 6px;
+        opacity: 0.8;
+    }
+    .select2-container--default .select2-selection--multiple .select2-selection__choice__remove:hover {
+        color: #fff;
+        opacity: 1;
+    }
+    .badge-asignado {
+        font-size: 0.75rem;
+        padding: 4px 10px;
+        border-radius: 20px;
+        background: #e2e8f0;
+        color: #1e293b;
+        display: inline-block;
+        margin: 2px 4px;
+    }
+    .badge-asignado i {
+        margin-right: 4px;
+        color: #22c55e;
+    }
+    .filter-section {
+        background: #f8fafc;
+        border-radius: 12px;
+        padding: 16px;
+        margin-bottom: 20px;
+        border: 1px solid #e9edf4;
+    }
+</style>
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="card shadow-lg border-0">
+                <div class="card-header py-3">
+                    <h5 class="mb-0">
+                        <i class="fas fa-tasks me-2"></i> Asignar Recursos a Comercial
+                    </h5>
+                </div>
+                <div class="card-body p-4">
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+
+                    <form method="post" id="asignarForm" novalidate>
+                        {% csrf_token %}
+
+                        <!-- Comercial -->
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="comercial" class="form-label fw-bold">
+                                    <i class="fas fa-user-tie me-1"></i> Comercial *
+                                </label>
+                                <select name="comercial" id="comercial" class="form-select" required>
+                                    <option value="">-- Selecciona un comercial --</option>
+                                    {% for c in comerciales %}
+                                        <option value="{{ c.id }}">{{ c.username }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-6 d-flex align-items-end">
+                                <button type="submit" class="btn btn-primary w-100" id="submitBtn">
+                                    <i class="fas fa-save me-1"></i> Asignar Recursos
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Sorteos -->
+                        <div class="mb-3">
+                            <label for="sorteos" class="form-label fw-bold">
+                                <i class="fas fa-calendar-alt me-1"></i> Sorteos
+                            </label>
+                            <select name="sorteos_seleccionados" id="sorteos" class="form-select select2-multiple" multiple>
+                                {% for s in sorteos %}
+                                    <option value="{{ s.id }}">{{ s.nombre }}</option>
+                                {% endfor %}
+                            </select>
+                            <div class="form-text">Mantén presionado Ctrl (Cmd en Mac) para seleccionar múltiples.</div>
+                        </div>
+
+                        <!-- Formas de juego -->
+                        <div class="mb-3">
+                            <label for="formas_juego" class="form-label fw-bold">
+                                <i class="fas fa-dice me-1"></i> Formas de Juego
+                            </label>
+                            <select name="formas_juego_seleccionadas" id="formas_juego" class="form-select select2-multiple" multiple>
+                                {% for fj in formas_juego %}
+                                    <option value="{{ fj.id }}">{{ fj.nombre }}</option>
+                                {% endfor %}
+                            </select>
+                            <div class="form-text">Mantén presionado Ctrl (Cmd en Mac) para seleccionar múltiples.</div>
+                        </div>
+
+                        <!-- Formas de pago -->
+                        <div class="mb-3">
+                            <label for="formas_pago" class="form-label fw-bold">
+                                <i class="fas fa-credit-card me-1"></i> Formas de Pago
+                            </label>
+                            <select name="formas_pago_seleccionadas" id="formas_pago" class="form-select select2-multiple" multiple>
+                                {% for fp in formas_pago %}
+                                    <option value="{{ fp.id }}">{{ fp.nombre }}</option>
+                                {% endfor %}
+                            </select>
+                            <div class="form-text">Mantén presionado Ctrl (Cmd en Mac) para seleccionar múltiples.</div>
+                        </div>
+
+                        <!-- Recursos ya asignados (solo visual) -->
+                        {% if recursos_asignados %}
+                            <div class="mt-4">
+                                <h6 class="fw-bold"><i class="fas fa-check-circle text-success me-1"></i> Recursos ya asignados a este comercial</h6>
+                                <div class="filter-section">
+                                    {% for ra in recursos_asignados %}
+                                        <span class="badge-asignado">
+                                            <i class="fas fa-check-circle"></i>
+                                            {% if ra.tipo == 'sorteo' %}
+                                                {{ ra.sorteo.nombre }}
+                                            {% elif ra.tipo == 'forma_juego' %}
+                                                {{ ra.forma_juego.nombre }}
+                                            {% elif ra.tipo == 'forma_pago' %}
+                                                {{ ra.forma_pago.nombre }}
+                                            {% else %}
+                                                {{ ra.tipo|capfirst }}
+                                            {% endif %}
+                                        </span>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        {% endif %}
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script>
+    $(document).ready(function() {
+        // Inicializar Select2 para búsqueda en selects múltiples
+        $('.select2-multiple').select2({
+            placeholder: 'Escribe para buscar...',
+            allowClear: true,
+            width: '100%',
+            theme: 'default'
+        });
+
+        // Deshabilitar botón al enviar para evitar doble clic
+        $('#asignarForm').on('submit', function() {
+            const btn = $('#submitBtn');
+            btn.prop('disabled', true);
+            btn.html('<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Asignando...');
+        });
+    });
+</script>
+{% endblock %}

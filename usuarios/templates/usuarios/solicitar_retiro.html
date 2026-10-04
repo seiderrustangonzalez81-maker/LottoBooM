@@ -1,0 +1,556 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block page_title %}💰 Solicitar Cobro de Premios{% endblock %}
+{% block page_subtitle %}Selecciona el gestor y la forma de pago para cobrar tus premios{% endblock %}
+
+{% block extra_css %}
+<style>
+    .table-cobros {
+        font-size: 0.9rem;
+    }
+    .table-cobros thead th {
+        background: #f1f5f9;
+        font-weight: 700;
+        text-align: center;
+        padding: 0.6rem 0.3rem;
+        border-bottom: 2px solid #e9ecef;
+        white-space: nowrap;
+    }
+    .table-cobros tbody td {
+        padding: 0.6rem 0.3rem;
+        vertical-align: middle;
+        text-align: center;
+    }
+    .table-cobros .gestor-nombre {
+        font-weight: 600;
+        text-align: left;
+    }
+    .table-cobros .saldo-monto {
+        font-weight: 700;
+        font-size: 1rem;
+    }
+    .table-cobros .saldo-disponible {
+        color: #059669;
+    }
+    .table-cobros .saldo-insuficiente {
+        color: #dc2626;
+        font-size: 0.8rem;
+    }
+    .btn-solicitar {
+        padding: 0.2rem 0.8rem;
+        font-size: 0.75rem;
+        border-radius: 20px;
+        font-weight: 600;
+        transition: 0.15s;
+    }
+    .btn-solicitar:hover:not(:disabled) {
+        transform: scale(1.05);
+    }
+    .btn-solicitar:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+    .modal-cobro .form-control {
+        border-radius: 8px;
+    }
+    .modal-cobro .form-label {
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+    .modal-cobro .input-group-text {
+        background: #f1f5f9;
+        font-weight: 600;
+    }
+    .detalle-cobro {
+        background: #f8fafc;
+        border-radius: 8px;
+        padding: 0.8rem;
+        margin-bottom: 0.5rem;
+    }
+    .detalle-cobro .label {
+        font-weight: 500;
+        color: #475569;
+        font-size: 0.8rem;
+    }
+    .detalle-cobro .value {
+        font-weight: 700;
+        font-size: 0.95rem;
+        color: #1a1a2e;
+    }
+    .tarjeta-input {
+        font-family: 'Courier New', monospace;
+        letter-spacing: 2px;
+    }
+    .tarjeta-input::placeholder {
+        letter-spacing: 0;
+        font-family: system-ui;
+    }
+    @media (max-width: 768px) {
+        .table-cobros {
+            font-size: 0.75rem;
+        }
+        .table-cobros thead th {
+            font-size: 0.65rem;
+            padding: 0.3rem 0.1rem;
+        }
+        .table-cobros tbody td {
+            padding: 0.3rem 0.1rem;
+        }
+        .btn-solicitar {
+            font-size: 0.6rem;
+            padding: 0.1rem 0.4rem;
+        }
+        .modal-cobro .modal-dialog {
+            margin: 0.5rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap">
+        <h4 class="fw-bold"><i class="fas fa-trophy text-warning me-2"></i>Cobro de Premios</h4>
+        <div>
+            <span class="badge bg-success bg-opacity-10 text-success p-2">
+                <i class="fas fa-circle me-1" style="font-size:0.4rem;"></i>
+                Saldo total: <strong id="saldoTotalDisplay">$0.00</strong>
+            </span>
+        </div>
+    </div>
+
+    <!-- TABLA DE COBROS -->
+    <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-cobros mb-0">
+                    <thead>
+                        <tr>
+                            <th style="min-width:120px;">Gestor</th>
+                            {% for fp in formas_pago %}
+                                <th style="min-width:100px;">{{ fp.nombre }}</th>
+                            {% endfor %}
+                            <th style="min-width:80px;">Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for gestor_data in gestores %}
+                            <tr>
+                                <td class="gestor-nombre">
+                                    <i class="fas fa-user-circle me-1 text-primary"></i>
+                                    {{ gestor_data.gestor.username }}
+                                </td>
+                                {% for fp in formas_pago %}
+                                    {% with fondo=gestor_data.fondos|get_item:fp.id %}
+                                        <td class="text-center">
+                                            {% if fondo %}
+                                                <div class="saldo-monto saldo-disponible" id="saldo-{{ gestor_data.gestor.id }}-{{ fp.id }}">
+                                                    ${{ fondo.monto|floatformat:2 }}
+                                                </div>
+                                                <button class="btn btn-success btn-solicitar mt-1"
+                                                        data-gestor-id="{{ gestor_data.gestor.id }}"
+                                                        data-gestor-nombre="{{ gestor_data.gestor.username }}"
+                                                        data-forma-pago-id="{{ fp.id }}"
+                                                        data-forma-pago-nombre="{{ fp.nombre }}"
+                                                        data-monto-disponible="{{ fondo.monto }}"
+                                                        onclick="abrirModalCobro(this)"
+                                                        {% if fondo.monto <= 0 %}disabled{% endif %}>
+                                                    <i class="fas fa-hand-holding-usd"></i> Solicitar
+                                                </button>
+                                            {% else %}
+                                                <span class="text-muted small">—</span>
+                                            {% endif %}
+                                        </td>
+                                    {% endwith %}
+                                {% endfor %}
+                                <td>
+                                    <button class="btn btn-outline-secondary btn-sm" onclick="verDetalle({{ gestor_data.gestor.id }})" title="Ver detalle">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="{{ formas_pago|length|add:2 }}" class="text-center py-4 text-muted">
+                                    <i class="fas fa-inbox fa-2x d-block mb-2"></i>
+                                    No tienes gestores con fondos activos.
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- BOTONES DE ACCIÓN -->
+    <div class="d-flex gap-2 mt-4">
+        <a href="{% url 'usuarios:perfil_cliente' %}" class="btn btn-outline-secondary"><i class="fas fa-arrow-left"></i> Volver</a>
+        <a href="{% url 'jugadas:mis_apuestas' %}" class="btn btn-outline-info"><i class="fas fa-list"></i> Mis Apuestas</a>
+    </div>
+
+</div>
+
+<!-- MODAL PARA SOLICITAR COBRO -->
+<div class="modal fade modal-cobro" id="modalCobro" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title"><i class="fas fa-hand-holding-usd me-2"></i>Solicitar Cobro</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="formCobro" novalidate>
+                    <input type="hidden" id="clienteId" value="{{ user.id }}">
+                    <input type="hidden" id="gestorId" value="">
+                    <input type="hidden" id="formaPagoId" value="">
+                    <input type="hidden" id="montoDisponible" value="0">
+
+                    <!-- Datos fijos -->
+                    <div class="detalle-cobro">
+                        <div class="row">
+                            <div class="col-6">
+                                <div class="label">Gestor</div>
+                                <div class="value" id="modalGestorNombre">—</div>
+                            </div>
+                            <div class="col-6">
+                                <div class="label">Forma de pago</div>
+                                <div class="value" id="modalFormaPagoNombre">—</div>
+                            </div>
+                        </div>
+                        <div class="row mt-1">
+                            <div class="col-6">
+                                <div class="label">Disponible</div>
+                                <div class="value text-success" id="modalMontoDisponible">$0.00</div>
+                            </div>
+                            <div class="col-6">
+                                <div class="label">A cobrar</div>
+                                <div class="value text-primary" id="modalMontoActual">$0.00</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Cantidad -->
+                    <div class="mb-3">
+                        <label for="montoCobro" class="form-label">Monto a cobrar ($)</label>
+                        <div class="input-group">
+                            <span class="input-group-text">$</span>
+                            <input type="number" class="form-control" id="montoCobro" min="0.01" step="0.01" placeholder="0" required>
+                        </div>
+                        <div class="invalid-feedback" id="montoError">El monto no puede exceder el disponible.</div>
+                    </div>
+
+                    <!-- Teléfono -->
+                    <div class="mb-3">
+                        <label for="telefonoCobro" class="form-label">Teléfono</label>
+                        <input type="tel" class="form-control" id="telefonoCobro" placeholder="+5355551234" required>
+                        <div class="form-text">Incluye el código de país.</div>
+                    </div>
+
+                    <!-- Número de tarjeta (solo para tarjeta/clásica) -->
+                    <div class="mb-3" id="campoTarjeta" style="display:none;">
+                        <label for="tarjetaCobro" class="form-label">Número de tarjeta (16 dígitos)</label>
+                        <input type="text" class="form-control tarjeta-input" id="tarjetaCobro" placeholder="1234 5678 9012 3456" maxlength="19" pattern="[0-9]{4} [0-9]{4} [0-9]{4} [0-9]{4}" inputmode="numeric">
+                        <div class="form-text">Formato: 1234 5678 9012 3456</div>
+                    </div>
+
+                    <div class="alert alert-info small">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Al confirmar, el monto será descontado de tu fondo y se enviará una solicitud al gestor para su aprobación.
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-success" id="btnConfirmarCobro">
+                    <i class="fas fa-check"></i> Confirmar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL DETALLE (opcional) -->
+<div class="modal fade" id="modalDetalle" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title"><i class="fas fa-eye me-2"></i>Detalle del Gestor</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="detalleBody">
+                <div class="text-center py-3">
+                    <div class="spinner-border text-info" role="status"></div>
+                    <p class="text-muted mt-2">Cargando...</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+
+    // ============================================================
+    // ABRIR MODAL DE COBRO
+    // ============================================================
+    window.abrirModalCobro = function(btn) {
+        const gestorId = btn.dataset.gestorId;
+        const gestorNombre = btn.dataset.gestorNombre;
+        const formaPagoId = btn.dataset.formaPagoId;
+        const formaPagoNombre = btn.dataset.formaPagoNombre;
+        const montoDisponible = parseFloat(btn.dataset.montoDisponible) || 0;
+
+        document.getElementById('gestorId').value = gestorId;
+        document.getElementById('formaPagoId').value = formaPagoId;
+        document.getElementById('montoDisponible').value = montoDisponible;
+        document.getElementById('modalGestorNombre').textContent = gestorNombre;
+        document.getElementById('modalFormaPagoNombre').textContent = formaPagoNombre;
+        document.getElementById('modalMontoDisponible').textContent = '$' + montoDisponible.toFixed(2);
+        document.getElementById('modalMontoActual').textContent = '$0.00';
+
+        // Resetear formulario
+        const form = document.getElementById('formCobro');
+        form.reset();
+        document.getElementById('montoCobro').value = '';
+        document.getElementById('telefonoCobro').value = '';
+        document.getElementById('tarjetaCobro').value = '';
+        document.getElementById('montoCobro').classList.remove('is-invalid');
+        document.getElementById('montoError').style.display = 'none';
+
+        // Mostrar campo de tarjeta según forma de pago
+        const esTarjeta = formaPagoNombre.toLowerCase().includes('tarjeta') || formaPagoNombre.toLowerCase().includes('clásica');
+        document.getElementById('campoTarjeta').style.display = esTarjeta ? 'block' : 'none';
+        if (esTarjeta) {
+            document.getElementById('tarjetaCobro').required = true;
+        } else {
+            document.getElementById('tarjetaCobro').required = false;
+        }
+
+        // Abrir modal
+        const modal = new bootstrap.Modal(document.getElementById('modalCobro'));
+        modal.show();
+    };
+
+    // ============================================================
+    // ACTUALIZAR MONTO EN TIEMPO REAL
+    // ============================================================
+    document.getElementById('montoCobro').addEventListener('input', function() {
+        const val = parseFloat(this.value) || 0;
+        const disponible = parseFloat(document.getElementById('montoDisponible').value) || 0;
+        document.getElementById('modalMontoActual').textContent = '$' + val.toFixed(2);
+
+        if (val > disponible) {
+            this.classList.add('is-invalid');
+            document.getElementById('montoError').style.display = 'block';
+        } else {
+            this.classList.remove('is-invalid');
+            document.getElementById('montoError').style.display = 'none';
+        }
+    });
+
+    // ============================================================
+    // FORMATO DE TARJETA (16 dígitos agrupados)
+    // ============================================================
+    document.getElementById('tarjetaCobro').addEventListener('input', function() {
+        let value = this.value.replace(/\D/g, '');
+        if (value.length > 16) value = value.slice(0, 16);
+        let formatted = '';
+        for (let i = 0; i < value.length; i++) {
+            if (i > 0 && i % 4 === 0) formatted += ' ';
+            formatted += value[i];
+        }
+        this.value = formatted;
+    });
+
+    // ============================================================
+    // CONFIRMAR COBRO
+    // ============================================================
+    document.getElementById('btnConfirmarCobro').addEventListener('click', function() {
+        const btn = this;
+        const form = document.getElementById('formCobro');
+        const monto = parseFloat(document.getElementById('montoCobro').value);
+        const disponible = parseFloat(document.getElementById('montoDisponible').value) || 0;
+        const gestorId = document.getElementById('gestorId').value;
+        const formaPagoId = document.getElementById('formaPagoId').value;
+        const clienteId = document.getElementById('clienteId').value;
+        const telefono = document.getElementById('telefonoCobro').value.trim();
+        const tarjeta = document.getElementById('tarjetaCobro').value.trim();
+
+        // Validaciones
+        if (!gestorId || !formaPagoId) {
+            mostrarToast('Error: faltan datos del gestor o forma de pago.', 'danger');
+            return;
+        }
+
+        if (!monto || monto <= 0) {
+            document.getElementById('montoCobro').classList.add('is-invalid');
+            document.getElementById('montoError').textContent = 'Ingresa un monto válido.';
+            document.getElementById('montoError').style.display = 'block';
+            return;
+        }
+
+        if (monto > disponible) {
+            document.getElementById('montoCobro').classList.add('is-invalid');
+            document.getElementById('montoError').textContent = 'El monto no puede exceder el disponible.';
+            document.getElementById('montoError').style.display = 'block';
+            return;
+        }
+
+        if (!telefono) {
+            document.getElementById('telefonoCobro').classList.add('is-invalid');
+            mostrarToast('Ingresa tu número de teléfono.', 'warning');
+            return;
+        }
+
+        const esTarjeta = document.getElementById('campoTarjeta').style.display !== 'none';
+        if (esTarjeta && tarjeta.replace(/\s/g, '').length !== 16) {
+            document.getElementById('tarjetaCobro').classList.add('is-invalid');
+            mostrarToast('Ingresa un número de tarjeta válido (16 dígitos).', 'warning');
+            return;
+        }
+
+        // Confirmación final
+        if (!confirm(`¿Confirmas la solicitud de cobro de $${monto.toFixed(2)} a través de ${document.getElementById('modalFormaPagoNombre').textContent}?`)) {
+            return;
+        }
+
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Enviando...';
+
+        fetch('/usuarios/api/solicitar-cobro/', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name="csrfmiddlewaretoken"]').value,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                gestor_id: gestorId,
+                forma_pago_id: formaPagoId,
+                monto: monto.toFixed(2),
+                telefono: telefono,
+                numero_tarjeta: tarjeta,
+                cliente_id: clienteId,
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                mostrarToast(data.message, 'success');
+                // Actualizar saldo en la tabla
+                const saldoElement = document.getElementById(`saldo-${gestorId}-${formaPagoId}`);
+                if (saldoElement) {
+                    saldoElement.textContent = '$' + data.nuevo_saldo.toFixed(2);
+                    const btnSolicitar = saldoElement.closest('td').querySelector('.btn-solicitar');
+                    if (btnSolicitar) {
+                        btnSolicitar.dataset.montoDisponible = data.nuevo_saldo;
+                        if (data.nuevo_saldo <= 0) {
+                            btnSolicitar.disabled = true;
+                        }
+                    }
+                }
+                // Actualizar saldo total
+                actualizarSaldoTotal();
+                // Cerrar modal
+                bootstrap.Modal.getInstance(document.getElementById('modalCobro')).hide();
+            } else {
+                mostrarToast(data.error || 'Error al procesar la solicitud.', 'danger');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            mostrarToast('Error de conexión. Intenta de nuevo.', 'danger');
+        })
+        .finally(() => {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-check"></i> Confirmar';
+        });
+    });
+
+    // ============================================================
+    // FUNCIONES AUXILIARES
+    // ============================================================
+    function mostrarToast(mensaje, tipo = 'info') {
+        const toastContainer = document.getElementById('toastContainer');
+        if (!toastContainer) {
+            // Crear container si no existe
+            const container = document.createElement('div');
+            container.id = 'toastContainer';
+            container.style.position = 'fixed';
+            container.style.bottom = '16px';
+            container.style.right = '16px';
+            container.style.zIndex = '9999';
+            container.style.maxWidth = '340px';
+            document.body.appendChild(container);
+        }
+        const container = document.getElementById('toastContainer');
+        const bg = tipo === 'danger' ? 'danger' : tipo === 'success' ? 'success' : 'primary';
+        const icon = tipo === 'danger' ? 'exclamation-circle' : tipo === 'success' ? 'check-circle' : 'info-circle';
+        const toastId = 'toast-' + Date.now();
+        const html = `
+            <div id="${toastId}" class="toast align-items-center text-white bg-${bg} border-0" role="alert" style="margin-bottom:8px;">
+                <div class="d-flex">
+                    <div class="toast-body"><i class="fas fa-${icon} me-2"></i> ${mensaje}</div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                </div>
+            </div>
+        `;
+        container.insertAdjacentHTML('beforeend', html);
+        const el = document.getElementById(toastId);
+        const toast = new bootstrap.Toast(el, { delay: 5000 });
+        toast.show();
+        el.addEventListener('hidden.bs.toast', () => el.remove());
+    }
+
+    function actualizarSaldoTotal() {
+        let total = 0;
+        document.querySelectorAll('.saldo-monto').forEach(el => {
+            const monto = parseFloat(el.textContent.replace('$', '').replace(',', '')) || 0;
+            total += monto;
+        });
+        document.getElementById('saldoTotalDisplay').textContent = '$' + total.toFixed(2);
+    }
+
+    // Inicializar saldo total
+    actualizarSaldoTotal();
+
+    // ============================================================
+    // VER DETALLE DEL GESTOR (opcional)
+    // ============================================================
+    window.verDetalle = function(gestorId) {
+        const modal = new bootstrap.Modal(document.getElementById('modalDetalle'));
+        const body = document.getElementById('detalleBody');
+        body.innerHTML = `<div class="text-center py-3"><div class="spinner-border text-info"></div><p class="text-muted mt-2">Cargando detalles...</p></div>`;
+        modal.show();
+
+        fetch(`/usuarios/api/detalle-gestor/?gestor_id=${gestorId}`)
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    let html = `<div class="row g-3">`;
+                    html += `<div class="col-12"><div class="info-row"><span class="label">Gestor</span><span class="value">${data.gestor.username}</span></div></div>`;
+                    data.fondos.forEach(f => {
+                        html += `<div class="col-6"><div class="info-row"><span class="label">${f.forma_pago}</span><span class="value">$${f.monto}</span></div></div>`;
+                    });
+                    html += `</div>`;
+                    body.innerHTML = html;
+                } else {
+                    body.innerHTML = `<div class="alert alert-danger">${data.error || 'Error'}</div>`;
+                }
+            })
+            .catch(() => {
+                body.innerHTML = `<div class="alert alert-danger">Error de conexión</div>`;
+            });
+    };
+
+});
+</script>
+{% endblock extra_js %}

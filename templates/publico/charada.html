@@ -1,0 +1,621 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block page_title %}🔮 La Charada{% endblock %}
+{% block page_subtitle %}Consulta cualquier número del 0 al 99{% endblock %}
+
+{% block extra_css %}
+<style>
+:root{
+  --ch-bg:#fafaf8; --ch-surface:#fff; --ch-text:#0f172a; --ch-muted:#64748b;
+  --ch-border:#e5e7eb; --ch-primary:#7c3aed; --ch-primary-dark:#5b21b6;
+  --ch-gold:#fbbf24; --ch-radius:18px;
+}
+@media (prefers-color-scheme: dark){
+  :root{ --ch-bg:#0a0a1a; --ch-surface:#15152b; --ch-text:#f1f5f9; --ch-muted:#94a3b8; --ch-border:#2d2d4a; --ch-primary:#a78bfa; }
+}
+.ch-wrapper{
+  max-width:1400px; margin:0 auto; padding:32px 20px 80px;
+  background:var(--ch-bg); min-height:100vh; color:var(--ch-text);
+  font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+}
+.ch-header{ text-align:center; margin-bottom:32px; }
+.ch-title{
+  font-family:'Caveat','Dancing Script',cursive;
+  font-size:clamp(2.5rem,6vw,4.2rem); font-weight:700;
+  background:linear-gradient(135deg,var(--ch-primary),var(--ch-gold),var(--ch-primary));
+  background-size:200% auto; -webkit-background-clip:text; background-clip:text;
+  -webkit-text-fill-color:transparent; margin:0 0 8px; line-height:1.1;
+  animation:ch-shine 5s linear infinite;
+}
+@keyframes ch-shine{ to{ background-position:200% center; } }
+.ch-sub{ font-size:.95rem; color:var(--ch-muted); margin:0; font-weight:500; }
+
+.ch-search-bar{
+  position:sticky; top:10px; z-index:50; background:var(--ch-surface);
+  border:1px solid var(--ch-border); border-radius:var(--ch-radius);
+  padding:16px 18px; margin-bottom:24px;
+  box-shadow:0 8px 24px rgba(124,58,237,.10);
+}
+.ch-search-row{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+.ch-search-input-wrap{ flex:1 1 280px; position:relative; }
+.ch-search-icon{ position:absolute; left:14px; top:50%; transform:translateY(-50%); color:var(--ch-muted); pointer-events:none; }
+.ch-search-input{
+  width:100%; padding:12px 40px 12px 44px; border-radius:12px;
+  border:1.5px solid var(--ch-border); background:var(--ch-bg); color:var(--ch-text);
+  font-size:.95rem; font-weight:500; transition:all .2s;
+}
+.ch-search-input:focus{ outline:none; border-color:var(--ch-primary); box-shadow:0 0 0 4px rgba(124,58,237,.15); }
+.ch-clear-btn{
+  position:absolute; right:12px; top:50%; transform:translateY(-50%);
+  background:transparent; border:none; color:var(--ch-muted); cursor:pointer;
+  font-size:1.1rem; padding:4px; border-radius:6px; display:none;
+}
+.ch-search-input.has-value + .ch-clear-btn{ display:block; }
+.ch-chips{ display:flex; gap:8px; flex-wrap:wrap; }
+.ch-chip{
+  padding:8px 16px; border-radius:20px; border:1.5px solid var(--ch-border);
+  background:var(--ch-surface); color:var(--ch-muted); font-size:.8rem;
+  font-weight:700; cursor:pointer; transition:all .15s; font-family:inherit;
+}
+.ch-chip:hover{ border-color:var(--ch-primary); color:var(--ch-primary); transform:translateY(-1px); }
+.ch-chip.active{
+  background:linear-gradient(135deg,var(--ch-primary),var(--ch-primary-dark));
+  color:#fff; border-color:var(--ch-primary-dark);
+  box-shadow:0 4px 12px rgba(124,58,237,.3);
+}
+.ch-random-btn{
+  padding:8px 14px; border-radius:20px; border:1.5px dashed var(--ch-primary);
+  background:transparent; color:var(--ch-primary); font-size:.8rem;
+  font-weight:700; cursor:pointer; font-family:inherit;
+}
+.ch-random-btn:hover{ background:var(--ch-primary); color:#fff; border-style:solid; }
+.ch-results-info{ margin-top:12px; font-size:.82rem; color:var(--ch-muted); font-weight:600; }
+.ch-results-info strong{ color:var(--ch-primary); font-weight:800; }
+
+.ch-grid{
+  display:grid; grid-template-columns:repeat(auto-fill,minmax(170px,1fr));
+  gap:14px;
+}
+.ch-card{
+  background:var(--ch-surface); border:1px solid var(--ch-border);
+  border-radius:var(--ch-radius); padding:16px 14px; cursor:pointer;
+  transition:all .3s cubic-bezier(.2,.8,.2,1); position:relative;
+  overflow:hidden; box-shadow:0 1px 3px rgba(15,23,42,.05);
+}
+.ch-card::before{
+  content:''; position:absolute; top:0; left:0; right:0;
+  height:4px; background:var(--ch-color,#7c3aed);
+}
+.ch-card:hover{
+  transform:translateY(-4px) scale(1.02);
+  box-shadow:0 20px 50px rgba(124,58,237,.15);
+  border-color:var(--ch-color,#7c3aed);
+}
+.ch-card-top{
+  display:flex; align-items:center; justify-content:space-between;
+  gap:8px; margin-bottom:10px;
+}
+.ch-card-num{
+  font-size:2rem; font-weight:900; line-height:1;
+  color:var(--ch-color,#7c3aed);
+  font-family:'JetBrains Mono','Courier New',monospace; letter-spacing:-.03em;
+}
+.ch-card-emoji{ font-size:1.6rem; line-height:1; }
+.ch-card-preview{
+  font-size:.72rem; color:var(--ch-muted); line-height:1.5;
+  font-weight:500; display:-webkit-box; -webkit-line-clamp:3;
+  -webkit-box-orient:vertical; overflow:hidden; min-height:3.2em;
+}
+.ch-card-preview strong{ color:var(--ch-text); font-weight:700; }
+.ch-card-badge{ display:none !important; }
+.ch-card.highlight{ animation:ch-pulse 1.2s ease-in-out; }
+
+@keyframes ch-pulse{
+  0%,100%{ transform:scale(1); }
+  50%{ transform:scale(1.05); }
+}
+
+.ch-empty{ text-align:center; padding:80px 24px; color:var(--ch-muted); display:none; }
+.ch-empty .ico{ font-size:64px; display:block; margin-bottom:16px; opacity:.5; }
+.ch-empty h4{ font-size:1.1rem; font-weight:700; color:var(--ch-text); margin:0 0 6px; }
+
+.ch-modal{
+  position:fixed; inset:0; background:rgba(15,23,42,.7);
+  backdrop-filter:blur(6px); z-index:9999; display:none;
+  align-items:center; justify-content:center; padding:20px;
+}
+.ch-modal.open{ display:flex; }
+.ch-modal-content{
+  background:var(--ch-surface); border-radius:20px; max-width:720px;
+  width:100%; max-height:85vh; overflow:hidden; display:flex;
+  flex-direction:column; box-shadow:0 30px 80px rgba(0,0,0,.4);
+  position:relative;
+}
+.ch-modal-header{
+  padding:24px 28px; color:#fff; display:flex; align-items:center;
+  gap:16px; position:relative;
+  background:linear-gradient(135deg,var(--ch-primary),var(--ch-primary-dark));
+}
+.ch-modal-num{
+  font-size:3.5rem; font-weight:900; line-height:1;
+  font-family:'JetBrains Mono','Courier New',monospace; letter-spacing:-.03em;
+}
+.ch-modal-emoji{ font-size:2.4rem; }
+.ch-modal-title-wrap{ flex:1; }
+.ch-modal-title{ font-size:1.2rem; font-weight:800; margin:0; }
+.ch-modal-subtitle{ font-size:.8rem; opacity:.9; margin-top:2px; }
+.ch-modal-close{
+  position:absolute; top:16px; right:16px; width:36px; height:36px;
+  border-radius:50%; border:none; background:rgba(255,255,255,.2);
+  color:#fff; font-size:1.1rem; cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+}
+.ch-modal-close:hover{ background:rgba(255,255,255,.35); transform:rotate(90deg); }
+.ch-modal-body{ padding:24px 28px; overflow-y:auto; flex:1; }
+.ch-modal-section{ margin-bottom:24px; }
+.ch-modal-section:last-child{ margin-bottom:0; }
+.ch-modal-section-title{
+  font-size:.72rem; font-weight:800; text-transform:uppercase;
+  letter-spacing:.1em; color:var(--ch-muted); margin-bottom:10px;
+  display:flex; align-items:center; gap:8px;
+}
+.ch-modal-section-title::after{
+  content:''; flex:1; height:1px; background:var(--ch-border);
+}
+.ch-modal-items{ display:flex; flex-wrap:wrap; gap:6px; }
+.ch-modal-item{
+  padding:5px 12px; border-radius:8px; background:var(--ch-bg);
+  border:1px solid var(--ch-border); font-size:.8rem; font-weight:600;
+  color:var(--ch-text);
+}
+.ch-modal-section.principales .ch-modal-item{
+  background:var(--ch-color-suave,#ede9fe);
+  border-color:var(--ch-color,#7c3aed);
+  color:var(--ch-color,#7c3aed); font-weight:800;
+}
+.ch-modal-footer{
+  padding:16px 28px; border-top:1px solid var(--ch-border);
+  display:flex; gap:10px; justify-content:flex-end; background:var(--ch-bg);
+}
+.ch-btn{
+  padding:10px 20px; border-radius:10px; border:none; font-weight:700;
+  font-size:.82rem; cursor:pointer; font-family:inherit;
+  display:inline-flex; align-items:center; gap:6px;
+}
+.ch-btn-primary{ background:linear-gradient(135deg,var(--ch-primary),var(--ch-primary-dark)); color:#fff; }
+.ch-btn-wa{ background:linear-gradient(135deg,#25d366,#128c7e); color:#fff; }
+.ch-btn-copy{ background:var(--ch-bg); border:1px solid var(--ch-border); color:var(--ch-text); }
+
+.ch-toast{
+  position:fixed; bottom:30px; left:50%; transform:translateX(-50%) translateY(100px);
+  background:#0f172a; color:#fff; padding:12px 24px; border-radius:12px;
+  font-weight:700; font-size:.85rem; z-index:99999; opacity:0;
+  transition:all .3s; box-shadow:0 12px 30px rgba(0,0,0,.3);
+}
+.ch-toast.show{ transform:translateX(-50%) translateY(0); opacity:1; }
+
+@media (max-width:640px){
+  .ch-wrapper{ padding:20px 12px 60px; }
+  .ch-title{ font-size:2.4rem; }
+  .ch-grid{ grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:10px; }
+  .ch-card{ padding:12px 10px; }
+  .ch-card-num{ font-size:1.6rem; }
+  .ch-card-emoji{ font-size:1.3rem; }
+  .ch-search-bar{ padding:12px; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="ch-wrapper">
+
+  <div class="ch-header">
+    <h1 class="ch-title">🔮 La Charada</h1>
+    <p class="ch-sub">Consulta cualquier número del 0 al 99 · {{ total_numeros }} números disponibles</p>
+  </div>
+
+  <div class="ch-search-bar">
+    <div class="ch-search-row">
+      <div class="ch-search-input-wrap">
+        <i class="fas fa-search ch-search-icon"></i>
+        <input type="text" id="chSearchInput" class="ch-search-input"
+               placeholder="Buscar número (ej: 5) o palabra (ej: perro)..."
+               autocomplete="off" spellcheck="false">
+        <button type="button" class="ch-clear-btn" id="chClearBtn" title="Limpiar">✕</button>
+      </div>
+    </div>
+    <div class="ch-search-row" style="margin-top:12px;">
+      <div class="ch-chips">
+        <button type="button" class="ch-chip active" data-filter="todos">🌟 Todos</button>
+        <button type="button" class="ch-chip" data-filter="principales">⭐ Principales</button>
+        <button type="button" class="ch-chip" data-filter="todas">📚 Todas</button>
+      </div>
+      <button type="button" class="ch-random-btn" id="chRandomBtn">🎲 Sorpréndeme</button>
+    </div>
+    <div class="ch-results-info" id="chResultsInfo">
+      Mostrando <strong>{{ total_numeros }}</strong> números
+    </div>
+  </div>
+
+  <div class="ch-grid" id="chGrid">
+    {% for e in entradas %}
+    <div class="ch-card"
+         data-numero="{{ e.numero }}"
+         data-numero-str="{{ e.numero|stringformat:"02d" }}"
+         data-emoji="{{ e.emoji }}"
+         data-color="{{ e.color }}"
+         data-color-suave="{{ e.color_suave }}"
+         data-principales="{{ e.principales|join:', ' }}"
+         data-todas="{{ e.todas|join:', ' }}"
+         style="--ch-color:{{ e.color }}; --ch-color-suave:{{ e.color_suave }};">
+      <div class="ch-card-top">
+        <div class="ch-card-num">{{ e.numero|stringformat:"02d" }}</div>
+        <div class="ch-card-emoji">{{ e.emoji }}</div>
+      </div>
+      <div class="ch-card-preview">
+        {% if e.principales %}
+          <strong>{{ e.principales|slice:":2"|join:", " }}</strong>{% if e.principales|length > 2 %}...{% endif %}
+        {% else %}
+          —
+        {% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <div class="ch-empty" id="chEmptyState">
+    <span class="ico">🔍</span>
+    <h4>Sin resultados</h4>
+    <p>No se encontraron números que coincidan con tu búsqueda.</p>
+  </div>
+
+</div>
+
+<div class="ch-modal" id="chRandomModal">
+  <div class="ch-modal-content" style="max-width:900px;">
+    <div class="ch-modal-header" style="background:linear-gradient(135deg,#f59e0b,#d97706);">
+      <span class="ch-modal-emoji">🎲</span>
+      <div class="ch-modal-title-wrap">
+        <h3 class="ch-modal-title">16 números al azar</h3>
+        <div class="ch-modal-subtitle">Toca cualquier número para ver su detalle</div>
+      </div>
+      <button type="button" class="ch-modal-close" id="chRandomClose">✕</button>
+    </div>
+    <div class="ch-modal-body">
+      <div id="chRandomGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;"></div>
+    </div>
+    <div class="ch-modal-footer">
+      <button type="button" class="ch-btn" id="chRandomReroll" style="background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;">
+        🔄 Otros 16
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="ch-modal" id="chModal">
+  <div class="ch-modal-content">
+    <div class="ch-modal-header">
+      <span class="ch-modal-emoji" id="chModalEmoji">🔮</span>
+      <span class="ch-modal-num" id="chModalNum">0</span>
+      <div class="ch-modal-title-wrap">
+        <h3 class="ch-modal-title" id="chModalTitle">La Charada</h3>
+        <div class="ch-modal-subtitle">Consulta completa</div>
+      </div>
+      <button type="button" class="ch-modal-close" id="chModalClose">✕</button>
+    </div>
+    <div class="ch-modal-body">
+      <div class="ch-modal-section principales" id="chModalPrincipalesWrap">
+        <div class="ch-modal-section-title">⭐ Principales</div>
+        <div class="ch-modal-items" id="chModalPrincipales"></div>
+      </div>
+      <div class="ch-modal-section" id="chModalTodasWrap">
+        <div class="ch-modal-section-title">📚 Todas</div>
+        <div class="ch-modal-items" id="chModalTodas"></div>
+      </div>
+    </div>
+    <div class="ch-modal-footer">
+      <button type="button" class="ch-btn ch-btn-copy" id="chBtnCopy">
+        <i class="fas fa-copy"></i> Copiar
+      </button>
+      <button type="button" class="ch-btn ch-btn-wa" id="chBtnWa">
+        <i class="fab fa-whatsapp"></i> Compartir
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="ch-toast" id="chToast"></div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function(){
+  'use strict';
+
+  var inp = document.getElementById('chSearchInput');
+  var clearBtn = document.getElementById('chClearBtn');
+  var grid = document.getElementById('chGrid');
+  var info = document.getElementById('chResultsInfo');
+  var empty = document.getElementById('chEmptyState');
+  var chips = document.querySelectorAll('.ch-chip');
+  var randomBtn = document.getElementById('chRandomBtn');
+  var modal = document.getElementById('chModal');
+  var toast = document.getElementById('chToast');
+
+  var cards = Array.prototype.slice.call(document.querySelectorAll('.ch-card'));
+  var filtroActual = 'todos';
+  var queryActual = '';
+  var cardActual = null;
+
+  function normalizar(str){
+    return String(str || '').toLowerCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  }
+
+  function escaparHtml(s){
+    return String(s).replace(/[&<>"']/g, function(c){
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
+
+  function showToast(msg){
+    if (!toast) return;
+    toast.textContent = msg;
+    toast.classList.add('show');
+    setTimeout(function(){ toast.classList.remove('show'); }, 2000);
+  }
+
+  function aplicarFiltro(){
+    if (!grid || !info) return;
+    var qRaw = queryActual.trim();
+    // Si es 0X (00, 01, ..., 09) → normalizar a X para buscar
+    var qNum = qRaw;
+    if (/^0\d$/.test(qNum)) qNum = String(parseInt(qNum, 10));
+    var q = normalizar(qRaw);
+    var esNumero = /^\d{1,2}$/.test(qRaw);
+    var visibles = 0;
+
+    cards.forEach(function(card){
+      var numero = card.dataset.numero;
+      var principales = normalizar(card.dataset.principales || '');
+      var todas = normalizar(card.dataset.todas || '');
+      var textoCompleto = principales + ' ' + todas;
+      var mostrar = true;
+      var destacar = false;
+
+      if (q){
+        if (esNumero){
+          mostrar = (numero === qNum);
+          destacar = mostrar;
+        } else {
+          var textoBusqueda;
+          if (filtroActual === 'principales') textoBusqueda = principales;
+          else if (filtroActual === 'todas') textoBusqueda = todas;
+          else textoBusqueda = textoCompleto;
+          mostrar = textoBusqueda.indexOf(q) !== -1;
+        }
+      }
+
+      card.style.display = mostrar ? '' : 'none';
+      card.classList.toggle('highlight', destacar);
+      if (mostrar) visibles++;
+    });
+
+    if (q){
+      info.innerHTML = '<strong>' + visibles + '</strong> número' + (visibles !== 1 ? 's' : '') + ' encontrado' + (visibles !== 1 ? 's' : '') + ' para &quot;' + escaparHtml(qRaw) + '&quot;';
+    } else {
+      info.innerHTML = 'Mostrando <strong>' + visibles + '</strong> números';
+    }
+
+    if (empty) empty.style.display = visibles === 0 ? 'block' : 'none';
+    grid.style.display = visibles === 0 ? 'none' : 'grid';
+  }
+
+  if (inp){
+    inp.addEventListener('input', function(){
+      queryActual = this.value;
+      this.classList.toggle('has-value', !!queryActual);
+      aplicarFiltro();
+    });
+  }
+
+  if (clearBtn){
+    clearBtn.addEventListener('click', function(){
+      inp.value = '';
+      queryActual = '';
+      inp.classList.remove('has-value');
+      inp.focus();
+      aplicarFiltro();
+    });
+  }
+
+  chips.forEach(function(ch){
+    ch.addEventListener('click', function(){
+      chips.forEach(function(c){ c.classList.remove('active'); });
+      this.classList.add('active');
+      filtroActual = this.dataset.filter;
+      aplicarFiltro();
+    });
+  });
+
+  // ═══════════════════════════════════════════════════════════════
+  // SORPRÉNDEME — 16 números al azar
+  // ═══════════════════════════════════════════════════════════════
+  var randomModal = document.getElementById('chRandomModal');
+  var randomGrid = document.getElementById('chRandomGrid');
+  var randomClose = document.getElementById('chRandomClose');
+  var randomReroll = document.getElementById('chRandomReroll');
+
+  function generar16Random(){
+    if (!cards.length) return;
+    // Copiar array y shuffle Fisher-Yates
+    var pool = cards.slice();
+    for (var i = pool.length - 1; i > 0; i--){
+      var j = Math.floor(Math.random() * (i + 1));
+      var tmp = pool[i]; pool[i] = pool[j]; pool[j] = tmp;
+    }
+    var seleccion = pool.slice(0, 16);
+
+    randomGrid.innerHTML = seleccion.map(function(card){
+      var numStr = card.dataset.numeroStr || card.dataset.numero;
+      var emoji = card.dataset.emoji || '🔮';
+      var color = card.dataset.color || '#7c3aed';
+      var colorSuave = card.dataset.colorSuave || '#ede9fe';
+      var p = card.dataset.principales || '';
+      var preview = p.split(', ').slice(0, 2).join(', ');
+      return '<div class="ch-card" data-target="' + card.dataset.numero + '" ' +
+             'style="--ch-color:' + color + '; --ch-color-suave:' + colorSuave + '; cursor:pointer; padding:12px 10px;">' +
+             '<div class="ch-card-top" style="margin-bottom:6px;">' +
+             '<div class="ch-card-num" style="font-size:1.6rem;">' + numStr + '</div>' +
+             '<div class="ch-card-emoji" style="font-size:1.3rem;">' + emoji + '</div>' +
+             '</div>' +
+             '<div class="ch-card-preview" style="font-size:.68rem; min-height:2.4em;">' + preview + '</div>' +
+             '</div>';
+    }).join('');
+
+    // Wire clicks de las mini-cards → abrir modal de detalle
+    randomGrid.querySelectorAll('.ch-card[data-target]').forEach(function(mini){
+      mini.addEventListener('click', function(){
+        var target = cards.filter(function(c){ return c.dataset.numero === mini.dataset.target; })[0];
+        if (target){
+          randomModal.classList.remove('open');
+          setTimeout(function(){ abrirModal(target); }, 200);
+        }
+      });
+    });
+  }
+
+  function cerrarRandom(){
+    if (!randomModal) return;
+    randomModal.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  if (randomBtn && randomModal && randomGrid){
+    randomBtn.addEventListener('click', function(){
+      generar16Random();
+      randomModal.classList.add('open');
+      document.body.style.overflow = 'hidden';
+    });
+  }
+
+  if (randomClose) randomClose.addEventListener('click', cerrarRandom);
+  if (randomModal) randomModal.addEventListener('click', function(e){
+    if (e.target === randomModal) cerrarRandom();
+  });
+  if (randomReroll) randomReroll.addEventListener('click', generar16Random);
+
+  function abrirModal(card){
+    if (!modal) return;
+    cardActual = card;
+    var num = card.dataset.numero;
+    var emoji = card.dataset.emoji;
+    var color = card.dataset.color;
+    var colorSuave = card.dataset.colorSuave;
+    var principales = card.dataset.principales ? card.dataset.principales.split(', ').filter(function(x){return x;}) : [];
+    var todas = card.dataset.todas ? card.dataset.todas.split(', ').filter(function(x){return x;}) : [];
+
+    var numStr = card.dataset.numeroStr || num;
+    document.getElementById('chModalNum').textContent = numStr;
+    document.getElementById('chModalEmoji').textContent = emoji;
+    document.getElementById('chModalTitle').textContent = 'Número ' + numStr;
+
+    var content = modal.querySelector('.ch-modal-content');
+    if (content){
+      content.style.setProperty('--ch-color', color);
+      content.style.setProperty('--ch-color-suave', colorSuave);
+    }
+    var header = modal.querySelector('.ch-modal-header');
+    if (header) header.style.background = 'linear-gradient(135deg, ' + color + ', ' + color + ')';
+
+    var wp = document.getElementById('chModalPrincipalesWrap');
+    var cp = document.getElementById('chModalPrincipales');
+    if (principales.length){
+      wp.style.display = '';
+      cp.innerHTML = principales.map(function(p){ return '<span class="ch-modal-item">' + escaparHtml(p) + '</span>'; }).join('');
+    } else {
+      wp.style.display = 'none';
+    }
+
+    var wt = document.getElementById('chModalTodasWrap');
+    var ct = document.getElementById('chModalTodas');
+    if (todas.length){
+      wt.style.display = '';
+      ct.innerHTML = todas.map(function(t){ return '<span class="ch-modal-item">' + escaparHtml(t) + '</span>'; }).join('');
+    } else {
+      wt.style.display = 'none';
+    }
+
+    modal.classList.add('open');
+    document.body.style.overflow = 'hidden';
+    history.replaceState(null, '', '#' + num);
+  }
+
+  function cerrarModal(){
+    if (!modal) return;
+    modal.classList.remove('open');
+    document.body.style.overflow = '';
+    cardActual = null;
+    history.replaceState(null, '', window.location.pathname);
+  }
+
+  var btnClose = document.getElementById('chModalClose');
+  if (btnClose) btnClose.addEventListener('click', cerrarModal);
+  if (modal) modal.addEventListener('click', function(e){
+    if (e.target === modal) cerrarModal();
+  });
+  document.addEventListener('keydown', function(e){
+    if (e.key === 'Escape'){
+      if (modal && modal.classList.contains('open')) cerrarModal();
+      if (randomModal && randomModal.classList.contains('open')) cerrarRandom();
+    }
+  });
+
+  cards.forEach(function(card){
+    card.addEventListener('click', function(){ abrirModal(card); });
+  });
+
+  var btnCopy = document.getElementById('chBtnCopy');
+  if (btnCopy) btnCopy.addEventListener('click', function(){
+    if (!cardActual) return;
+    var num = cardActual.dataset.numero;
+    var p = cardActual.dataset.principales || '';
+    var t = cardActual.dataset.todas || '';
+    var texto = 'La Charada - Numero ' + num + '\n\nPrincipales: ' + p + '\n\nTodas: ' + t + '\n\nCompartido de LottoBooM';
+    if (navigator.clipboard){
+      navigator.clipboard.writeText(texto).then(function(){
+        showToast('✅ Copiado al portapapeles');
+      }).catch(function(){
+        showToast('❌ No se pudo copiar');
+      });
+    }
+  });
+
+  var btnWa = document.getElementById('chBtnWa');
+  if (btnWa) btnWa.addEventListener('click', function(){
+    if (!cardActual) return;
+    var num = cardActual.dataset.numero;
+    var e = cardActual.dataset.emoji;
+    var p = cardActual.dataset.principales || '';
+    var t = cardActual.dataset.todas || '';
+    var texto = '*La Charada* - Numero ' + num + ' ' + e + '\n\n*Principales:* ' + p + '\n\n*Todas:* ' + t + '\n\n_Compartido de LottoBooM_';
+    window.open('https://wa.me/?text=' + encodeURIComponent(texto), '_blank', 'noopener,noreferrer');
+  });
+
+  var hash = window.location.hash.replace('#', '');
+  var hashNum = hash;
+  if (/^0\d$/.test(hashNum)) hashNum = String(parseInt(hashNum, 10));
+  if (hash && /^\d{1,2}$/.test(hash)){
+    var target = cards.filter(function(c){ return c.dataset.numero === hashNum; })[0];
+    if (target){
+      target.scrollIntoView({behavior:'smooth', block:'center'});
+      setTimeout(function(){ target.click(); }, 400);
+    }
+  }
+
+  aplicarFiltro();
+  console.log('[charada] Lista. Cards:', cards.length);
+})();
+</script>
+{% endblock %}

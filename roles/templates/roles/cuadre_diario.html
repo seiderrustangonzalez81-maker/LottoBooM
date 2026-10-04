@@ -1,0 +1,1120 @@
+{% extends "base.html" %}
+{% load humanize roles_extras %}
+
+{% block page_title %}📊 Cuadre Diario{% endblock %}
+{% block page_subtitle %}Resumen diario por gestor{% endblock %}
+
+{% block extra_css %}
+{{ block.super }}
+<style>
+/* ═══════════════════════════════════════════════════════════════
+   CUADRE DIARIO — Filas redondeadas tipo tarjeta
+   ═══════════════════════════════════════════════════════════════ */
+
+:root{
+  --bg:#f5f7fa;
+  --surface:#ffffff;
+  --border:#e5e7eb;
+  --text:#0f172a;
+  --text-muted:#64748b;
+  --primary:#4f46e5;
+  --primary-hover:#4338ca;
+}
+
+.cd-wrapper{
+  max-width:1320px;
+  margin:0 auto;
+  padding:36px 28px;
+  min-height:100vh;
+  font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  color:var(--text);
+  -webkit-font-smoothing:antialiased;
+  background:
+    radial-gradient(circle at 20% 10%, rgba(79,70,229,.05), transparent 40%),
+    radial-gradient(circle at 80% 90%, rgba(6,182,212,.05), transparent 40%),
+    #f5f7fa;
+}
+
+/* ═══════════ HEADER ═══════════ */
+.cd-header{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  flex-wrap:wrap;
+  gap:16px;
+  margin-bottom:24px;
+  padding-bottom:22px;
+  border-bottom:1px solid var(--border);
+}
+.cd-title{
+  font-size:26px;
+  font-weight:700;
+  letter-spacing:-.02em;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  color:var(--text);
+}
+.cd-sub{
+  font-size:13px;
+  color:var(--text-muted);
+  margin-top:8px;
+  display:flex;
+  align-items:center;
+  flex-wrap:wrap;
+  gap:8px;
+}
+.cd-sub strong{ color:var(--text); font-weight:600; }
+
+.cd-badge{
+  display:inline-flex;
+  align-items:center;
+  gap:5px;
+  padding:3px 10px;
+  border-radius:999px;
+  font-size:11px;
+  font-weight:600;
+  border:1px solid transparent;
+}
+.cd-badge.cerrado{ background:#ecfdf5; color:#059669; border-color:#a7f3d0; }
+.cd-badge.encurso{ background:#fffbeb; color:#d97706; border-color:#fde68a; }
+.cd-badge::before{
+  content:''; width:6px; height:6px; border-radius:50%; background:currentColor;
+}
+
+/* ═══════════ FILTROS ═══════════ */
+.cd-filters{
+  display:flex; gap:10px; align-items:flex-end;
+  padding:16px; background:var(--surface);
+  border:1px solid var(--border); border-radius:14px;
+  margin-bottom:28px; flex-wrap:wrap;
+  box-shadow:0 1px 3px rgba(15,23,42,.04);
+}
+.cd-filters .fgrp{ display:flex; flex-direction:column; gap:6px; min-width:160px; }
+.cd-filters label{
+  font-size:11px; font-weight:600; color:var(--text-muted);
+  text-transform:uppercase; letter-spacing:.04em;
+}
+.cd-filters select, .cd-filters input{
+  padding:8px 12px; border-radius:10px;
+  border:1px solid #d1d5db; font-size:13px;
+  background:var(--surface); color:var(--text);
+  transition:all .15s; font-weight:500;
+}
+.cd-filters select:focus, .cd-filters input:focus{
+  outline:none; border-color:var(--primary);
+  box-shadow:0 0 0 3px rgba(79,70,229,.12);
+}
+
+/* ═══════════ SECCIÓN ═══════════ */
+.cd-section{
+  display:flex; align-items:baseline; gap:10px;
+  margin:20px 0 14px; font-size:15px; font-weight:600;
+  color:var(--text); letter-spacing:-.01em;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   TABLA CON FILAS REDONDEADAS
+   ═══════════════════════════════════════════════════════════════ */
+
+.cd-table-wrap{ background:transparent; border:none; box-shadow:none; overflow:visible; }
+.cd-table-scroll{
+  overflow-x:auto;
+  -webkit-overflow-scrolling:touch;
+  padding:4px 6px 8px;
+  border-radius:14px;
+}
+
+.cd-table{
+  width:100%;
+  min-width:700px;
+  border-collapse:separate;
+  border-spacing:0 8px;
+  font-size:13px;
+  table-layout:auto;
+}
+
+/* ═══════════ THEAD ═══════════ */
+.cd-table thead th{
+  background:transparent;
+  color:var(--text-muted);
+  font-weight:600;
+  font-size:11px;
+  text-transform:uppercase;
+  letter-spacing:.06em;
+  padding:6px 18px 10px;
+  text-align:right;
+  white-space:nowrap;
+  border:none;
+}
+.cd-table thead th:first-child{
+  text-align:left;
+  padding-left:22px;
+}
+
+/* ═══════════ FILAS ═══════════ */
+.cd-table tbody tr{
+  position:relative;
+  transition:all .15s;
+}
+.cd-table tbody td{
+  padding:16px 18px;
+  text-align:right;
+  font-family:'JetBrains Mono','SF Mono','Courier New',monospace;
+  font-size:13px;
+  font-weight:500;
+  color:var(--text);
+  background:#fff;
+  border-top:1px solid var(--border);
+  border-bottom:1px solid var(--border);
+  transition:all .15s;
+  font-variant-numeric:tabular-nums;
+  white-space:nowrap;
+}
+.cd-table tbody td:first-child{
+  text-align:left;
+  font-family:inherit;
+  font-weight:600;
+  font-size:11px;
+  color:var(--text-muted);
+  text-transform:uppercase;
+  letter-spacing:.05em;
+  padding-left:22px;
+  position:relative;
+  border-left:1px solid var(--border);
+  border-top-left-radius:12px;
+  border-bottom-left-radius:12px;
+  min-width:140px;
+}
+.cd-table tbody td:last-child{
+  border-right:1px solid var(--border);
+  border-top-right-radius:12px;
+  border-bottom-right-radius:12px;
+}
+.cd-table .zero{ color:#cbd5e1; font-weight:400; }
+
+/* Indicador vertical izquierdo */
+.cd-table tbody td:first-child::before{
+  content:'';
+  position:absolute;
+  left:8px;
+  top:50%;
+  transform:translateY(-50%);
+  width:4px;
+  height:22px;
+  border-radius:3px;
+  background:#cbd5e1;
+  transition:all .15s;
+}
+
+/* Hover */
+.cd-table tbody tr:hover td{
+  box-shadow:0 4px 12px rgba(15,23,42,.06);
+  transform:translateY(-1px);
+}
+.cd-table tbody tr:hover td:first-child::before{
+  height:28px;
+  width:5px;
+  box-shadow:0 0 8px currentColor;
+}
+
+/* ═══════════ COLORES POR TIPO DE FILA ═══════════ */
+
+/* Fondo Inicial */
+.cd-table tr.row-fondo-inicial td{
+  background:linear-gradient(90deg,#f0f9ff 0%,#e0f2fe 100%);
+  color:#075985;
+  font-weight:600;
+  border-color:#bae6fd;
+}
+.cd-table tr.row-fondo-inicial td:first-child{
+  color:#0c4a6e;
+  background:linear-gradient(90deg,#e0f2fe 0%,#bae6fd 100%);
+}
+.cd-table tr.row-fondo-inicial td:first-child::before{
+  background:linear-gradient(180deg,#0ea5e9,#0284c7);
+  box-shadow:0 0 8px rgba(14,165,233,.5);
+}
+
+/* Ventas */
+.cd-table tr.row-ventas td:first-child::before{
+  background:linear-gradient(180deg,#94a3b8,#64748b);
+}
+
+/* Comisión */
+.cd-table tr.row-comision td{
+  background:linear-gradient(90deg,#fffbeb 0%,#fef3c7 100%);
+  color:#78350f;
+  font-weight:600;
+  border-color:#fde68a;
+}
+.cd-table tr.row-comision td:first-child{
+  color:#92400e;
+  background:linear-gradient(90deg,#fef3c7 0%,#fde68a 100%);
+}
+.cd-table tr.row-comision td:first-child::before{
+  background:linear-gradient(180deg,#fbbf24,#d97706);
+  box-shadow:0 0 8px rgba(251,191,36,.5);
+}
+
+/* Premios */
+.cd-table tr.row-premios td{
+  background:linear-gradient(90deg,#fef2f2 0%,#fee2e2 100%);
+  color:#991b1b;
+  border-color:#fecaca;
+}
+.cd-table tr.row-premios td:first-child{
+  color:#7f1d1d;
+  background:linear-gradient(90deg,#fee2e2 0%,#fecaca 100%);
+}
+.cd-table tr.row-premios td:first-child::before{
+  background:linear-gradient(180deg,#f43f5e,#be123c);
+  box-shadow:0 0 8px rgba(244,63,94,.5);
+}
+
+/* Recibí */
+.cd-table tr.row-recibi td{
+  background:linear-gradient(90deg,#f0fdf4 0%,#dcfce7 100%);
+  color:#065f46;
+  font-weight:600;
+  border-color:#bbf7d0;
+}
+.cd-table tr.row-recibi td:first-child{
+  color:#064e3b;
+  background:linear-gradient(90deg,#dcfce7 0%,#bbf7d0 100%);
+}
+.cd-table tr.row-recibi td:first-child::before{
+  background:linear-gradient(180deg,#10b981,#047857);
+  box-shadow:0 0 8px rgba(16,185,129,.5);
+}
+
+/* Envié */
+.cd-table tr.row-envie td{
+  background:linear-gradient(90deg,#fff1f2 0%,#ffe4e6 100%);
+  color:#9f1239;
+  font-weight:600;
+  border-color:#fecdd3;
+}
+.cd-table tr.row-envie td:first-child{
+  color:#881337;
+  background:linear-gradient(90deg,#ffe4e6 0%,#fecdd3 100%);
+}
+.cd-table tr.row-envie td:first-child::before{
+  background:linear-gradient(180deg,#fb7185,#e11d48);
+  box-shadow:0 0 8px rgba(251,113,133,.5);
+}
+
+/* Ajuste */
+.cd-table tr.row-ajuste td{
+  background:linear-gradient(90deg,#faf5ff 0%,#f3e8ff 100%);
+  color:#5b21b6;
+  border-color:#e9d5ff;
+}
+.cd-table tr.row-ajuste td:first-child{
+  color:#4c1d95;
+  background:linear-gradient(90deg,#f3e8ff 0%,#e9d5ff 100%);
+}
+.cd-table tr.row-ajuste td:first-child::before{
+  background:linear-gradient(180deg,#a855f7,#7e22ce);
+  box-shadow:0 0 8px rgba(168,85,247,.5);
+}
+
+/* Limpio */
+.cd-table tr.row-neto td{
+  background:linear-gradient(90deg,#ecfdf5 0%,#d1fae5 100%);
+  color:#065f46;
+  font-weight:800;
+  font-size:14px;
+  border-color:#6ee7b7;
+  box-shadow:0 0 0 1px rgba(16,185,129,.15);
+}
+.cd-table tr.row-neto td:first-child{
+  color:#064e3b;
+  background:linear-gradient(90deg,#a7f3d0 0%,#6ee7b7 100%);
+  font-weight:700;
+}
+.cd-table tr.row-neto td:first-child::before{
+  background:linear-gradient(180deg,#10b981,#047857);
+  box-shadow:0 0 12px rgba(16,185,129,.6);
+  width:5px;
+  height:28px;
+}
+
+/* ★★★ FONDO FINAL ★★★ */
+.cd-table tr.row-total td{
+  background:linear-gradient(135deg,#0f172a 0%,#1e293b 50%,#312e81 100%);
+  color:#fff;
+  font-weight:800;
+  font-size:16px;
+  padding:20px 18px;
+  border-color:#0f172a;
+  text-shadow:0 1px 2px rgba(0,0,0,.4);
+  box-shadow:0 8px 24px rgba(15,23,42,.25);
+}
+.cd-table tr.row-total td:first-child{
+  background:linear-gradient(135deg,#020617 0%,#0f172a 100%);
+  color:#a5b4fc;
+  font-size:12px;
+  letter-spacing:.15em;
+  font-weight:800;
+}
+.cd-table tr.row-total td:first-child::before{
+  background:linear-gradient(180deg,#818cf8,#4f46e5);
+  box-shadow:0 0 12px rgba(129,140,248,.7);
+  height:32px;
+  width:5px;
+}
+.cd-table tr.row-total:hover td{
+  box-shadow:0 12px 32px rgba(15,23,42,.35);
+  transform:translateY(-2px);
+}
+
+/* Sub-filas transferencias */
+.cd-table tr.row-transferencia td{
+  background:#fbfcfd;
+  font-size:11px;
+  color:#94a3b8;
+  padding:10px 18px;
+  border-color:#e2e8f0;
+  font-weight:500;
+}
+.cd-table tr.row-transferencia td:first-child{
+  padding-left:46px;
+  color:#94a3b8;
+  text-transform:none;
+  letter-spacing:0;
+  font-weight:500;
+  font-size:11px;
+}
+.cd-table tr.row-transferencia td:first-child::before{
+  width:2px;
+  height:14px;
+  background:#cbd5e1;
+  left:28px;
+  box-shadow:none;
+}
+.cd-table tr.row-transferencia:hover td{
+  background:#f1f5f9;
+  box-shadow:0 2px 6px rgba(15,23,42,.04);
+}
+.row-transferencia{ animation: rowFadeIn .2s ease; }
+@keyframes rowFadeIn{
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   ★ NÚMEROS POSITIVOS / NEGATIVOS ★
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Colores base en filas claras */
+.cd-table td.num-positivo{
+  color: #1d4ed8;
+  font-weight: 800;
+}
+.cd-table td.num-negativo{
+  color: #dc2626;
+  font-weight: 800;
+}
+.cd-table td.num-cero{
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+/* ★ Override para FONDO FINAL (fila oscura) → tonos claros para contraste ★ */
+.cd-table tr.row-total td.num-positivo{
+  color: #93c5fd;
+  text-shadow: 0 0 10px rgba(147,197,253,.5);
+  font-weight: 900;
+}
+.cd-table tr.row-total td.num-negativo{
+  color: #fca5a5;
+  text-shadow: 0 0 10px rgba(252,165,165,.5);
+  font-weight: 900;
+}
+.cd-table tr.row-total td.num-cero{
+  color: #94a3b8;
+  text-shadow: none;
+}
+
+/* ═══════════ BOTONES ═══════════ */
+.cd-btn-add, .cd-btn-edit, .cd-btn-del{
+  display:inline-flex; align-items:center; justify-content:center;
+  width:24px; height:24px; border-radius:6px;
+  border:1px solid; cursor:pointer; font-size:11px;
+  margin-left:6px; padding:0; line-height:1;
+  transition:all .12s; font-weight:700; vertical-align:middle;
+  background:#fff;
+}
+.cd-btn-add{ color:#4f46e5; border-color:#c7d2fe; background:#eef2ff; font-size:14px; }
+.cd-btn-add:hover{ background:#e0e7ff; border-color:#a5b4fc; transform:scale(1.1); box-shadow:0 2px 6px rgba(79,70,229,.3); }
+.cd-btn-edit{ color:#d97706; border-color:#fde68a; background:#fffbeb; }
+.cd-btn-edit:hover{ background:#fef3c7; border-color:#fcd34d; transform:scale(1.1); box-shadow:0 2px 6px rgba(217,119,6,.3); }
+.cd-btn-del{ color:#dc2626; border-color:#fecaca; background:#fef2f2; }
+.cd-btn-del:hover{ background:#fee2e2; border-color:#fca5a5; transform:scale(1.1); box-shadow:0 2px 6px rgba(220,38,38,.3); }
+
+/* ═══════════ KPIs ═══════════ */
+.cd-resumen{ margin-top:36px; }
+.cd-resumen-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+  gap:14px;
+}
+.cd-resumen-item{
+  background:#fff;
+  border:1px solid var(--border);
+  border-radius:14px;
+  padding:18px 20px;
+  box-shadow:0 1px 3px rgba(15,23,42,.04);
+  transition:all .2s;
+}
+.cd-resumen-item:hover{
+  transform:translateY(-3px);
+  box-shadow:0 8px 20px rgba(15,23,42,.08);
+  border-color:#cbd5e1;
+}
+.cd-resumen-item .lbl{
+  font-size:11px; color:var(--text-muted); font-weight:600;
+  letter-spacing:.04em; text-transform:uppercase;
+}
+.cd-resumen-item .val{
+  font-size:22px; font-weight:700; color:var(--text);
+  font-family:'JetBrains Mono','SF Mono','Courier New',monospace;
+  margin-top:8px; letter-spacing:-.02em;
+  font-variant-numeric:tabular-nums; word-break:break-all;
+}
+.cd-resumen-item .val.positive{ color:#059669; }
+.cd-resumen-item .val.negative{ color:#dc2626; }
+.cd-resumen-item .val.warning { color:#d97706; }
+
+.cd-resumen-item.cd-hero{
+  grid-column:1/-1;
+  background:linear-gradient(135deg,#0f172a 0%,#1e293b 50%,#312e81 100%);
+  border:none;
+  padding:28px 32px;
+  color:#fff;
+  box-shadow:0 8px 24px rgba(15,23,42,.25);
+  border-radius:16px;
+}
+.cd-resumen-item.cd-hero:hover{
+  transform:translateY(-3px);
+  box-shadow:0 16px 40px rgba(15,23,42,.35);
+}
+.cd-resumen-item.cd-hero .lbl{ color:#94a3b8; font-size:12px; }
+.cd-resumen-item.cd-hero .val{
+  font-size:38px;
+  margin-top:10px;
+  background:linear-gradient(90deg,#a5b4fc,#c4b5fd,#a5b4fc);
+  -webkit-background-clip:text;
+  background-clip:text;
+  -webkit-text-fill-color:transparent;
+  font-weight:800;
+}
+
+/* ═══════════ EMPTY ═══════════ */
+.cd-empty{
+  text-align:center; padding:80px 24px;
+  color:var(--text-muted); font-size:14px;
+  background:#fff; border:1px dashed #cbd5e1;
+  border-radius:16px; font-weight:500;
+}
+.cd-empty .ico{ font-size:56px; display:block; margin-bottom:16px; opacity:.5; }
+
+/* ═══════════ MODAL ═══════════ */
+#cd-modal > div{
+  background:#fff !important;
+  border-radius:14px !important;
+  padding:24px !important;
+  box-shadow:0 25px 50px rgba(15,23,42,.25) !important;
+  border:1px solid var(--border);
+}
+#cd-modal h3{
+  font-size:16px !important; color:var(--text) !important;
+  letter-spacing:-.01em !important;
+}
+#cd-modal label{
+  color:var(--text-muted) !important;
+  font-size:11px !important;
+  text-transform:uppercase;
+  letter-spacing:.04em;
+  font-weight:600 !important;
+}
+#cd-modal select, #cd-modal input{
+  border:1px solid #d1d5db !important;
+  border-radius:10px !important;
+  padding:9px 12px !important;
+  font-size:13px !important;
+}
+#cd-modal select:focus, #cd-modal input:focus{
+  outline:none;
+  border-color:var(--primary) !important;
+  box-shadow:0 0 0 3px rgba(79,70,229,.12);
+}
+#cd-modal-cancel{
+  background:#fff !important;
+  border:1px solid #d1d5db !important;
+  color:var(--text) !important;
+  border-radius:10px !important;
+  font-weight:600 !important;
+  padding:8px 16px !important;
+}
+#cd-modal-ok{
+  background:var(--primary) !important;
+  border:none !important;
+  color:#fff !important;
+  border-radius:10px !important;
+  font-weight:600 !important;
+  padding:8px 16px !important;
+}
+
+/* ═══════════ TOGGLES ═══════════ */
+.row-toggleable{ cursor:pointer; transition:background .15s; }
+.row-toggleable:hover td{ background: rgba(45,212,191,.08); }
+.row-toggleable .toggle-icon{
+  display:inline-block;
+  width:14px;
+  color:#14b8a6;
+  font-size:.75rem;
+  transition:transform .2s;
+  margin-right:4px;
+}
+.row-toggleable.open .toggle-icon{ transform: rotate(90deg); }
+
+.row-toggleable-sorteo{ cursor:pointer; }
+.row-toggleable-sorteo:hover td{ background: rgba(244,63,94,.06); }
+.toggle-icon-sorteo{
+  display:inline-block;
+  width:12px;
+  color:#e11d48;
+  font-size:.65rem;
+  transition:transform .2s;
+  margin-right:2px;
+}
+.row-toggleable-sorteo.open .toggle-icon-sorteo{ transform: rotate(90deg); }
+.badge-count-sub{
+  background:#fee2e2;
+  color:#991b1b;
+  font-size:.62rem;
+  padding:0 6px;
+  border-radius:20px;
+  font-weight:800;
+  margin-left:6px;
+  border:1px solid #fecaca;
+}
+.td-sub-2{ padding-left:70px; color:#64748b; font-style:italic; }
+
+/* ═══════════ RESPONSIVE ═══════════ */
+@media(max-width:900px){
+  .cd-wrapper{ padding:24px 14px; }
+  .cd-title{ font-size:20px; }
+  .cd-table{ font-size:11px; min-width:600px; border-spacing:0 6px; }
+  .cd-table thead th, .cd-table tbody td{ padding:11px 12px; }
+  .cd-table tbody td:first-child{
+    font-size:10px; padding-left:16px;
+    border-top-left-radius:10px; border-bottom-left-radius:10px;
+  }
+  .cd-table tbody td:last-child{
+    border-top-right-radius:10px; border-bottom-right-radius:10px;
+  }
+  .cd-table tbody td:first-child::before{ left:5px; width:3px; height:18px; }
+  .cd-table tr.row-total td{ font-size:14px; padding:14px 12px; }
+  .cd-filters{ padding:12px; }
+  .cd-filters .fgrp{ min-width:0; flex:1; }
+  .cd-resumen-item .val{ font-size:18px; }
+  .cd-resumen-item.cd-hero .val{ font-size:26px; }
+  .cd-resumen-item.cd-hero{ padding:20px; border-radius:14px; }
+  .cd-btn-add, .cd-btn-edit, .cd-btn-del{ width:22px; height:22px; font-size:10px; }
+}
+@media(max-width:640px){
+  .cd-table thead th, .cd-table tbody td{ padding:6px 8px; font-size:12px; }
+  .cd-table tbody td:first-child, .cd-table thead th:first-child{ min-width:110px; }
+}
+@media(max-width:480px){
+  .cd-wrapper{ padding:16px 10px; }
+  .cd-title{ font-size:18px; }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   FIX_SUBFILAS_DARK — texto oscuro sobre fondo claro
+   ═══════════════════════════════════════════════════════════════ */
+.cd-table tr.row-transferencia td,
+.cd-table tr.row-transferencia td:first-child {
+  color: #475569;
+  font-weight: 600;
+}
+.cd-table tr.row-transferencia td .td-sub,
+.cd-table tr.row-transferencia td.td-sub {
+  color: #475569;
+  font-weight: 600;
+}
+.cd-table tr.row-transferencia td.td-sub-2 {
+  color: #334155;
+  font-weight: 700;
+  font-style: normal;
+}
+.cd-table tr.row-transferencia:hover td,
+.cd-table tr.row-transferencia:hover td:first-child {
+  color: #1e293b;
+}
+
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="cd-wrapper">
+
+  <!-- ===================== HEADER ===================== -->
+  <div class="cd-header">
+    <div>
+      <div class="cd-title">📊 Cuadre Diario</div>
+      <div class="cd-sub">
+        <span>Gestor: <strong>{{ usuario_actual.get_full_name|default:usuario_actual.username }}</strong></span>
+        {% if comercial_seleccionado and comercial_seleccionado.id != usuario_actual.id %}
+          <span>→ viendo a: <strong>{{ comercial_seleccionado.get_full_name|default:comercial_seleccionado.username }}</strong></span>
+        {% endif %}
+        <span>· Fecha: <strong>{{ fecha|date:"d/m/Y" }}</strong></span>
+        {% if cuadre.cerrado %}
+          <span class="cd-badge cerrado">✓ Cerrado</span>
+        {% else %}
+          <span class="cd-badge encurso">● En curso</span>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== FILTROS ===================== -->
+  {% if es_banco or es_superadmin or es_comercial %}
+  <form method="get" class="cd-filters" id="cdFilters">
+    {% if es_superadmin %}
+      <div class="fgrp">
+        <label>Banco</label>
+        <select name="banco_id" onchange="this.form.submit()">
+          <option value="">-- Banco --</option>
+          {% for b in bancos %}
+            <option value="{{ b.id }}" {% if banco_seleccionado and banco_seleccionado.id == b.id %}selected{% endif %}>
+              {{ b.get_full_name|default:b.username }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+    {% endif %}
+    {% if es_banco or es_superadmin %}
+    <div class="fgrp">
+      <label>Comercial</label>
+      <select name="comercial_id" onchange="this.form.submit()">
+        <option value="">-- Yo mismo --</option>
+        {% for c in comerciales %}
+          <option value="{{ c.id }}" {% if comercial_seleccionado and comercial_seleccionado.id == c.id %}selected{% endif %}>
+            {{ c.get_full_name|default:c.username }}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+    {% endif %}
+    <div class="fgrp">
+      <label>Fecha</label>
+      <input type="date" name="fecha" value="{{ fecha|date:'Y-m-d' }}" onchange="this.form.submit()">
+    </div>
+  </form>
+  {% endif %}
+
+  <!-- ===================== TABLA PRINCIPAL ===================== -->
+  {% if control %}
+    <div class="cd-section"><span>Cuadre por forma de pago</span></div>
+
+    <div class="cd-table-wrap">
+      <div class="cd-table-scroll">
+        <table class="cd-table">
+          <thead>
+            <tr>
+              <th>Concepto</th>
+              {% for fp_nombre, _ in control.fondo_inicial.items %}
+                <th>{{ fp_nombre }}</th>
+              {% endfor %}
+            </tr>
+          </thead>
+          <tbody>
+
+            <!-- FONDO INICIAL -->
+            <tr class="row-fondo-inicial">
+              <td>Fondo Inicial</td>
+              {% for fp_nombre, valor in control.fondo_inicial.items %}
+                <td>{% if valor %}{{ valor|floatformat:2|intcomma }}{% endif %}</td>
+              {% endfor %}
+            </tr>
+
+            <!-- VENTAS -->
+            <tr class="row-toggleable" data-target="subfila-ventas">
+              <td><span class="toggle-icon">▶</span> Ventas</td>
+              {% for fp_nombre, valor in control.ventas.items %}
+                <td>{% if valor %}{{ valor|floatformat:2|intcomma }}{% endif %}</td>
+              {% endfor %}
+            </tr>
+
+            {% for fp_id, lista in control.ventas_por_sorteo.items %}
+              {% for item in lista %}
+                <tr class="row-transferencia subfila-ventas" style="display:none;">
+                  <td class="td-sub">↳ {{ item.sorteo.nombre }} · ${{ item.monto|floatformat:2 }}</td>
+                  {% for _fp, _ in control.fondo_inicial.items %}<td></td>{% endfor %}
+                </tr>
+              {% endfor %}
+            {% endfor %}
+
+            <!-- COMISIÓN -->
+            <tr class="row-comision">
+              <td>Comisión</td>
+              {% for fp_nombre, valor in control.comision.items %}
+                <td>− {{ valor|floatformat:2|intcomma }}</td>
+              {% endfor %}
+            </tr>
+
+            <!-- PREMIOS -->
+            <tr class="row-premios row-toggleable" data-target="subfila-premios">
+              <td><span class="toggle-icon">▶</span> Premios</td>
+              {% for fp_nombre, valor in control.premios.items %}
+                <td>− {{ valor|floatformat:2|intcomma }}</td>
+              {% endfor %}
+            </tr>
+
+            {% for fp_id, lista in control.premios_por_sorteo.items %}
+              {% for item in lista %}
+                <tr class="row-transferencia subfila-premios row-toggleable-sorteo"
+                    data-sorteo-target="subpremios-{{ fp_id }}-{{ item.sorteo.id }}"
+                    style="display:none;">
+                  <td class="td-sub">
+                    <span class="toggle-icon-sorteo">▶</span>
+                    ↳ <strong>{{ item.sorteo.nombre }}</strong> · ${{ item.monto|floatformat:2 }}
+                    {% if item.clientes %}<span class="badge-count-sub">{{ item.clientes|length }}</span>{% endif %}
+                  </td>
+                  {% for _fp, _ in control.fondo_inicial.items %}<td></td>{% endfor %}
+                </tr>
+                {% for c in item.clientes %}
+                  <tr class="row-transferencia subfila-premios-cliente subpremios-{{ fp_id }}-{{ item.sorteo.id }}"
+                      style="display:none;">
+                    <td class="td-sub td-sub-2">↳↳ {{ c.cliente.username }} · ${{ c.monto|floatformat:2 }}</td>
+                    {% for _fp, _ in control.fondo_inicial.items %}<td></td>{% endfor %}
+                  </tr>
+                {% endfor %}
+              {% endfor %}
+            {% endfor %}
+
+            <!-- RECIBÍ DEL BANCO -->
+            <tr class="row-recibi">
+              <td>
+                {% if es_superadmin and banco_seleccionado and not comercial_seleccionado %}Recibí del banco
+                {% elif es_superadmin and not banco_seleccionado %}Recibí de los bancos
+                {% elif es_banco and comercial_seleccionado %}Recibí del comercial
+                {% elif es_banco %}Recibí de los comerciales
+                {% else %}Recibí del banco{% endif %}
+                {% if es_banco or es_superadmin %}<button type="button" class="cd-btn-add" data-tipo="recibi">+</button>{% endif %}
+              </td>
+              {% for fp_nombre, valor in control.recibido_banco.items %}
+                <td>{% if valor %}+ {{ valor|floatformat:2|intcomma }}{% endif %}</td>
+              {% endfor %}
+            </tr>
+
+            {% if es_banco or es_superadmin %}
+              {% for fp_nombre, lista in cuadre.recibi_lista.items %}
+                {% for monto in lista %}
+                  <tr class="row-transferencia">
+                    <td class="td-sub">
+                      ↳ {{ fp_nombre }} · ${{ monto|floatformat:2 }}
+                      <button type="button" class="cd-btn-edit" data-tipo="recibi" data-fp="{{ fp_nombre }}" data-idx="{{ forloop.counter0 }}" data-monto="{{ monto }}">✏️</button>
+                      <button type="button" class="cd-btn-del" data-tipo="recibi" data-fp="{{ fp_nombre }}" data-idx="{{ forloop.counter0 }}">🗑️</button>
+                    </td>
+                    {% for _fp, _ in control.fondo_inicial.items %}<td></td>{% endfor %}
+                  </tr>
+                {% endfor %}
+              {% endfor %}
+            {% endif %}
+
+            <!-- ENVIÉ AL BANCO -->
+            <tr class="row-envie">
+              <td>
+                {% if es_superadmin and banco_seleccionado and not comercial_seleccionado %}Envié al banco
+                {% elif es_superadmin and not banco_seleccionado %}Envié a los bancos
+                {% elif es_banco and comercial_seleccionado %}Envié al comercial
+                {% elif es_banco %}Envié a los comerciales
+                {% else %}Envié al banco{% endif %}
+                {% if es_banco or es_superadmin %}<button type="button" class="cd-btn-add" data-tipo="envie">+</button>{% endif %}
+              </td>
+              {% for fp_nombre, valor in control.enviado_banco.items %}
+                <td>− {{ valor|floatformat:2|intcomma }}</td>
+              {% endfor %}
+            </tr>
+
+            {% if es_banco or es_superadmin %}
+              {% for fp_nombre, lista in cuadre.envie_lista.items %}
+                {% for monto in lista %}
+                  <tr class="row-transferencia">
+                    <td class="td-sub">
+                      ↳ {{ fp_nombre }} · ${{ monto|floatformat:2 }}
+                      <button type="button" class="cd-btn-edit" data-tipo="envie" data-fp="{{ fp_nombre }}" data-idx="{{ forloop.counter0 }}" data-monto="{{ monto }}">✏️</button>
+                      <button type="button" class="cd-btn-del" data-tipo="envie" data-fp="{{ fp_nombre }}" data-idx="{{ forloop.counter0 }}">🗑️</button>
+                    </td>
+                    {% for _fp, _ in control.fondo_inicial.items %}<td></td>{% endfor %}
+                  </tr>
+                {% endfor %}
+              {% endfor %}
+            {% endif %}
+
+            <!-- AJUSTE -->
+            <tr class="row-ajuste">
+              <td>
+                Ajuste
+                {% if es_banco or es_superadmin %}<button type="button" class="cd-btn-add" data-tipo="ajuste">+</button>{% endif %}
+              </td>
+              {% for fp_nombre, valor in control.ajuste.items %}
+                <td>{% if valor %}{% if valor > 0 %}+{% endif %}{{ valor|floatformat:2|intcomma }}{% endif %}</td>
+              {% endfor %}
+            </tr>
+
+            {% if es_banco or es_superadmin %}
+              {% for fp_nombre, lista in cuadre.ajuste_lista.items %}
+                {% for monto in lista %}
+                  <tr class="row-transferencia">
+                    <td class="td-sub">
+                      ↳ {{ fp_nombre }} · ${{ monto|floatformat:2 }}
+                      <button type="button" class="cd-btn-edit" data-tipo="ajuste" data-fp="{{ fp_nombre }}" data-idx="{{ forloop.counter0 }}" data-monto="{{ monto }}">✏️</button>
+                      <button type="button" class="cd-btn-del" data-tipo="ajuste" data-fp="{{ fp_nombre }}" data-idx="{{ forloop.counter0 }}">🗑️</button>
+                    </td>
+                    {% for _fp, _ in control.fondo_inicial.items %}<td></td>{% endfor %}
+                  </tr>
+                {% endfor %}
+              {% endfor %}
+            {% endif %}
+
+            <!-- LIMPIO -->
+            <tr class="row-neto">
+              <td>Limpio</td>
+              {% for fp_nombre, valor in control.limpio.items %}
+                <td>{% if valor %}{{ valor|floatformat:2|intcomma }}{% endif %}</td>
+              {% endfor %}
+            </tr>
+
+            <!-- FONDO FINAL -->
+            <tr class="row-total">
+              <td>FONDO FINAL</td>
+              {% for fp_nombre, valor in control.fondo_final.items %}
+                <td><strong>{% if valor %}{{ valor|floatformat:2|intcomma }}{% endif %}</strong></td>
+              {% endfor %}
+            </tr>
+
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ===================== RESUMEN KPIs ===================== -->
+    <div class="cd-section" style="margin-top:32px;">Resumen del día</div>
+    <div class="cd-resumen">
+      <div class="cd-resumen-grid">
+        <div class="cd-resumen-item">
+          <div class="lbl">Total jugadas</div>
+          <div class="val">{{ resumen.total_jugadas }}</div>
+        </div>
+        <div class="cd-resumen-item">
+          <div class="lbl">Total recogido</div>
+          <div class="val positive">{{ resumen.total_recogido|floatformat:2|intcomma }}</div>
+        </div>
+        <div class="cd-resumen-item">
+          <div class="lbl">Premios pagados</div>
+          <div class="val {% if resumen.premios > 0 %}negative{% endif %}">
+            {{ resumen.premios|floatformat:2|intcomma }}
+          </div>
+        </div>
+        <div class="cd-resumen-item">
+          <div class="lbl">Comisión</div>
+          <div class="val warning">
+            {% if comision_info.modalidad == 'general' %}{{ comision_info.porcentaje_general }}% —{% endif %}
+            {{ comision_info.comision_total|floatformat:2|intcomma }}
+          </div>
+        </div>
+      </div>
+    </div>
+
+  {% else %}
+    <div class="cd-empty">
+      <span class="ico">📭</span>
+      No hay datos para este día.
+    </div>
+  {% endif %}
+
+</div>
+
+<!-- ===================== MODAL ===================== -->
+<div id="cd-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:12px;padding:24px;max-width:400px;width:90%;">
+    <h3 id="cd-modal-titulo" style="margin:0 0 16px;font-weight:800;">Agregar transferencia</h3>
+    <div style="margin-bottom:12px;">
+      <label style="font-weight:700;font-size:12px;display:block;margin-bottom:4px;">Forma de pago</label>
+      <select id="cd-modal-fp" style="width:100%;padding:8px;border-radius:8px;border:1px solid #bfdbfe;">
+        {% for fp_nombre, _ in control.fondo_inicial.items %}
+          <option value="{{ fp_nombre }}">{{ fp_nombre }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div style="margin-bottom:16px;">
+      <label style="font-weight:700;font-size:12px;display:block;margin-bottom:4px;">Monto</label>
+      <input type="number" id="cd-modal-monto" step="0.01" min="0" style="width:100%;padding:8px;border-radius:8px;border:1px solid #bfdbfe;" placeholder="0">
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;">
+      <button type="button" id="cd-modal-cancel" style="padding:8px 16px;border-radius:8px;border:1px solid #cbd5e1;background:#f1f5f9;font-weight:700;cursor:pointer;">Cancelar</button>
+      <button type="button" id="cd-modal-ok" style="padding:8px 16px;border-radius:8px;border:none;background:#1e40af;color:#fff;font-weight:700;cursor:pointer;">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const CUADRE_ID = {{ cuadre.id|default:'null' }};
+  const URLS = {
+    agregar: '/roles/api/cuadre/' + CUADRE_ID + '/transferencia/agregar/',
+    editar:  '/roles/api/cuadre/' + CUADRE_ID + '/transferencia/INDEX/editar/',
+    eliminar:'/roles/api/cuadre/' + CUADRE_ID + '/transferencia/INDEX/eliminar/',
+  };
+  const CSRF = document.querySelector('[name="csrfmiddlewaretoken"]')?.value ||
+              document.cookie.split('; ').find(r => r.startsWith('csrftoken='))?.split('=')[1];
+
+  const modal = document.getElementById('cd-modal');
+  const modalTitulo = document.getElementById('cd-modal-titulo');
+  const modalFp = document.getElementById('cd-modal-fp');
+  const modalMonto = document.getElementById('cd-modal-monto');
+  let editMode = null;
+
+  function abrirModal(tipo, fp, idx, monto) {
+    editMode = (idx !== undefined) ? {tipo, fp, idx} : null;
+    modalTitulo.textContent = editMode ? 'Editar transferencia' : 'Agregar transferencia';
+    modalFp.value = fp || Object.keys({ {% for k, v in control.fondo_inicial.items %}'{{ k|escapejs }}':1,{% endfor %} })[0];
+    modalMonto.value = monto !== undefined ? monto : '';
+    modal.style.display = 'flex';
+    modalMonto.focus();
+  }
+  function cerrarModal() {
+    modal.style.display = 'none';
+    editMode = null;
+    modalMonto.value = '';
+  }
+
+  async function postJson(url, body) {
+    const r = await fetch(url, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json', 'X-CSRFToken': CSRF},
+      body: JSON.stringify(body),
+    });
+    return r.json();
+  }
+
+  document.addEventListener('click', async function(e) {
+    const t = e.target;
+
+    if (t.classList.contains('cd-btn-add')) {
+      e.preventDefault();
+      window.__lastAddTipo = t.dataset.tipo;
+      abrirModal(t.dataset.tipo);
+      return;
+    }
+    if (t.classList.contains('cd-btn-edit')) {
+      e.preventDefault();
+      const {tipo, fp, idx, monto} = t.dataset;
+      abrirModal(tipo, fp, parseInt(idx), monto);
+      return;
+    }
+    if (t.classList.contains('cd-btn-del')) {
+      e.preventDefault();
+      if (!confirm('¿Eliminar esta transferencia?')) return;
+      const {tipo, fp, idx} = t.dataset;
+      const url = URLS.eliminar.replace('INDEX', idx);
+      const res = await postJson(url, {tipo, forma_pago: fp});
+      if (res.success) location.reload();
+      else alert('Error: ' + res.error);
+      return;
+    }
+    if (t.id === 'cd-modal-cancel') { cerrarModal(); return; }
+    if (t.id === 'cd-modal-ok') {
+      const tipo = editMode ? editMode.tipo : window.__lastAddTipo;
+      const fp = modalFp.value;
+      const monto = parseFloat(modalMonto.value);
+      if (!tipo || !fp || isNaN(monto) || monto <= 0) { alert('Datos inválidos'); return; }
+      let res;
+      if (editMode) {
+        const url = URLS.editar.replace('INDEX', editMode.idx);
+        res = await postJson(url, {tipo, forma_pago: fp, monto});
+      } else {
+        res = await postJson(URLS.agregar, {tipo, forma_pago: fp, monto});
+      }
+      if (res.success) location.reload();
+      else alert('Error: ' + res.error);
+      return;
+    }
+  });
+
+  document.addEventListener('mousedown', function(e) {
+    if (e.target.classList.contains('cd-btn-add')) {
+      window.__lastAddTipo = e.target.dataset.tipo;
+    }
+  });
+
+  // Toggles
+  document.addEventListener('click', function(e) {
+    const rowSorteo = e.target.closest('.row-toggleable-sorteo');
+    if (rowSorteo) {
+      if (e.target.closest('button')) return;
+      const targetSub = rowSorteo.dataset.sorteoTarget;
+      if (!targetSub) return;
+      const abrir = !rowSorteo.classList.contains('open');
+      rowSorteo.classList.toggle('open', abrir);
+      document.querySelectorAll('.' + targetSub).forEach(function(sf){
+        sf.style.display = abrir ? 'table-row' : 'none';
+      });
+      return;
+    }
+    const row = e.target.closest('.row-toggleable');
+    if (!row) return;
+    if (e.target.closest('button')) return;
+    const target = row.dataset.target;
+    if (!target) return;
+    const abrirPadre = !row.classList.contains('open');
+    row.classList.toggle('open', abrirPadre);
+    document.querySelectorAll('tr.' + target).forEach(function(sf){
+      sf.style.display = abrirPadre ? 'table-row' : 'none';
+    });
+    if (!abrirPadre) {
+      document.querySelectorAll('.row-toggleable-sorteo.open').forEach(function(rs){
+        rs.classList.remove('open');
+        const sub = rs.dataset.sorteoTarget;
+        if (sub) document.querySelectorAll('.' + sub).forEach(function(sf){ sf.style.display = 'none'; });
+      });
+    }
+  });
+})();
+</script>
+
+<script>
+(function(){
+  function pintarNumero(td){
+    if (!td) return;
+    if (td.querySelector('script, input, select, button')) return;
+    var txt = (td.textContent || '').trim();
+    if (!txt) return;
+    var limpio = txt.replace(/[$\u00A0\s,+−–—]/g, '');
+    if (!/^-?\d+(\.\d+)?$/.test(limpio)) return;
+    var num = parseFloat(limpio);
+    if (isNaN(num)) return;
+    td.classList.remove('num-positivo', 'num-negativo', 'num-cero');
+    if (num > 0) td.classList.add('num-positivo');
+    else if (num < 0) td.classList.add('num-negativo');
+    else td.classList.add('num-cero');
+  }
+  function aplicar(){
+    document.querySelectorAll('.cd-table td').forEach(pintarNumero);
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', aplicar);
+  } else {
+    aplicar();
+  }
+})();
+</script>
+
+{% endblock %}

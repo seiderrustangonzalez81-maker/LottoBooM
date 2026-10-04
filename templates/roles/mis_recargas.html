@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block page_title %}📥 Mis Recargas{% endblock %}
+{% block page_subtitle %}Historial de todas tus solicitudes de recarga{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap">
+        <h4 class="mb-0"><i class="fas fa-history me-2"></i>Mis Recargas</h4>
+        <a href="{% url 'roles:solicitar' 'recarga' %}" class="btn btn-primary btn-sm">
+            <i class="fas fa-plus-circle"></i> Nueva Recarga
+        </a>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <!-- ============================================================ -->
+            <!-- FILTRO POR ESTADO                                             -->
+            <!-- ============================================================ -->
+            <div class="mb-3">
+                <form method="get" class="row g-2 align-items-end">
+                    <div class="col-md-3">
+                        <label for="estado" class="form-label fw-bold small">Filtrar por estado</label>
+                        <select name="estado" id="estado" class="form-select form-select-sm" onchange="this.form.submit()">
+                            <option value="">Todos</option>
+                            <option value="pendiente" {% if estado_seleccionado == 'pendiente' %}selected{% endif %}>Pendiente</option>
+                            <option value="aceptada" {% if estado_seleccionado == 'aceptada' %}selected{% endif %}>Aceptada</option>
+                            <option value="pagada" {% if estado_seleccionado == 'pagada' %}selected{% endif %}>Pagada</option>
+                            <option value="rechazada" {% if estado_seleccionado == 'rechazada' %}selected{% endif %}>Rechazada</option>
+                            <option value="cancelada" {% if estado_seleccionado == 'cancelada' %}selected{% endif %}>Cancelada</option>
+                        </select>
+                    </div>
+                    <div class="col-md-9 text-md-end">
+                        <span class="badge bg-secondary">{{ page_obj.paginator.count }} solicitudes</span>
+                    </div>
+                </form>
+            </div>
+
+            <!-- ============================================================ -->
+            <!-- TABLA DE RECARGAS                                            -->
+            <!-- ============================================================ -->
+            {% if page_obj %}
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Gestor</th>
+                                <th>Forma de pago</th>
+                                <th>Vía de pago</th>
+                                <th>Monto</th>
+                                <th>Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for solicitud in page_obj %}
+                            <tr>
+                                <td>
+                                    <span title="{{ solicitud.fecha_solicitud|date:'d/m/Y H:i:s' }}">
+                                        {{ solicitud.fecha_solicitud|date:"d/m/Y H:i" }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <i class="fas fa-user-circle me-1"></i>
+                                    {{ solicitud.gestor.username }}
+                                </td>
+                                <td>{{ solicitud.forma_pago.nombre }}</td>
+                                <td>
+                                    {% if solicitud.via_pago %}
+                                        <span class="badge bg-light text-dark border">
+                                            {{ solicitud.via_pago.nombre }}
+                                        </span>
+                                    {% else %}
+                                        <span class="text-muted small">Sin asignar</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <strong>${{ solicitud.monto|floatformat:2 }}</strong>
+                                </td>
+                                <td>
+                                    {% if solicitud.estado == 'pendiente' %}
+                                        <span class="badge bg-warning text-dark">
+                                            <i class="fas fa-clock me-1"></i> Pendiente
+                                        </span>
+                                    {% elif solicitud.estado == 'aceptada' %}
+                                        <span class="badge bg-info">
+                                            <i class="fas fa-check-circle me-1"></i> Aceptada
+                                        </span>
+                                    {% elif solicitud.estado == 'pagada' %}
+                                        <span class="badge bg-success">
+                                            <i class="fas fa-check-double me-1"></i> Pagada
+                                        </span>
+                                    {% elif solicitud.estado == 'rechazada' %}
+                                        <span class="badge bg-danger">
+                                            <i class="fas fa-times-circle me-1"></i> Rechazada
+                                        </span>
+                                    {% elif solicitud.estado == 'cancelada' %}
+                                        <span class="badge bg-secondary">
+                                            <i class="fas fa-ban me-1"></i> Cancelada
+                                        </span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- ============================================================ -->
+                <!-- PAGINACIÓN                                                   -->
+                <!-- ============================================================ -->
+                {% if page_obj.has_other_pages %}
+                    <nav aria-label="Paginación de recargas">
+                        <ul class="pagination justify-content-center">
+                            {% if page_obj.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page=1{% if estado_seleccionado %}&estado={{ estado_seleccionado }}{% endif %}">
+                                        <i class="fas fa-angle-double-left"></i>
+                                    </a>
+                                </li>
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if estado_seleccionado %}&estado={{ estado_seleccionado }}{% endif %}">
+                                        <i class="fas fa-angle-left"></i>
+                                    </a>
+                                </li>
+                            {% endif %}
+
+                            <li class="page-item active">
+                                <span class="page-link">
+                                    {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}
+                                </span>
+                            </li>
+
+                            {% if page_obj.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if estado_seleccionado %}&estado={{ estado_seleccionado }}{% endif %}">
+                                        <i class="fas fa-angle-right"></i>
+                                    </a>
+                                </li>
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if estado_seleccionado %}&estado={{ estado_seleccionado }}{% endif %}">
+                                        <i class="fas fa-angle-double-right"></i>
+                                    </a>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                {% endif %}
+
+            {% else %}
+                <div class="alert alert-info text-center py-4">
+                    <i class="fas fa-inbox fa-2x mb-2 d-block"></i>
+                    <h6 class="mb-0">No tienes solicitudes de recarga.</h6>
+                    <p class="small text-muted">Cuando solicites una recarga, aparecerá aquí.</p>
+                    <a href="{% url 'roles:solicitar' 'recarga' %}" class="btn btn-primary btn-sm mt-2">
+                        <i class="fas fa-plus-circle"></i> Solicitar Recarga
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

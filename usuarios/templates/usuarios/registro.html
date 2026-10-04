@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block page_title %}Registro | LottoBooM{% endblock %}
+{% block page_subtitle %}Crea tu cuenta y comienza a ganar{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="card border-0 shadow-lg rounded-4 overflow-hidden" style="background: #ffffff;">
+            <div class="card-header bg-gradient-success text-white text-center border-0 py-4" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">
+                <h4 class="mb-0 fw-bold">📝 Crear Cuenta</h4>
+                <small class="text-white-50">Únete a LottoBooM y comienza a ganar</small>
+            </div>
+            <div class="card-body p-5">
+
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show rounded-3" role="alert">
+                            <i class="fas fa-{% if 'error' in message.tags %}exclamation-circle{% elif 'success' in message.tags %}check-circle{% else %}info-circle{% endif %}"></i>
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+
+                {% if referente %}
+                    <div class="alert alert-info border-0 rounded-3 d-flex align-items-start gap-3">
+                        <i class="fas fa-gift fs-3 mt-1"></i>
+                        <div>
+                            <strong>🎉 ¡Bienvenido!</strong> Has sido referido por <strong>{{ referente.username }}</strong>.<br>
+                            <small>Recibirás un bono adicional de <strong>$25</strong> al registrarte.</small>
+                        </div>
+                    </div>
+                {% endif %}
+
+                <form method="post" novalidate id="registroForm">
+                    {% csrf_token %}
+
+                    <!-- Usuario -->
+                    <div class="mb-3">
+                        <label for="{{ form.username.id_for_label }}" class="form-label fw-semibold">
+                            <i class="fas fa-user text-muted"></i> Usuario
+                        </label>
+                        {{ form.username }}
+                        {% if form.username.errors %}
+                            <div class="text-danger small">{{ form.username.errors.0 }}</div>
+                        {% endif %}
+                        <div class="form-text">{{ form.username.help_text }}</div>
+                    </div>
+
+                    <!-- Correo -->
+                    <div class="mb-3">
+                        <label for="{{ form.email.id_for_label }}" class="form-label fw-semibold">
+                            <i class="fas fa-envelope text-muted"></i> Correo electrónico
+                        </label>
+                        {{ form.email }}
+                        {% if form.email.errors %}
+                            <div class="text-danger small">{{ form.email.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Teléfono (único campo) -->
+                    <div class="mb-3">
+                        <label for="{{ form.telefono.id_for_label }}" class="form-label fw-semibold">
+                            <i class="fas fa-phone text-muted"></i> Teléfono
+                        </label>
+                        {{ form.telefono }}
+                        {% if form.telefono.errors %}
+                            <div class="text-danger small">{{ form.telefono.errors.0 }}</div>
+                        {% endif %}
+                        <div class="form-text">{{ form.telefono.help_text }}</div>
+                    </div>
+
+                    <!-- Contraseña -->
+                    <div class="mb-3">
+                        <label for="{{ form.password1.id_for_label }}" class="form-label fw-semibold">
+                            <i class="fas fa-lock text-muted"></i> Contraseña
+                        </label>
+                        <div class="input-group">
+                            {{ form.password1 }}
+                            <button type="button" class="btn btn-outline-secondary" onclick="togglePassword('{{ form.password1.id_for_label }}', 'eyeIcon1')">
+                                <i class="fas fa-eye" id="eyeIcon1"></i>
+                            </button>
+                        </div>
+                        {% if form.password1.errors %}
+                            <div class="text-danger small">{{ form.password1.errors.0 }}</div>
+                        {% endif %}
+                        <div class="form-text">{{ form.password1.help_text }}</div>
+                    </div>
+
+                    <!-- Confirmar contraseña -->
+                    <div class="mb-3">
+                        <label for="{{ form.password2.id_for_label }}" class="form-label fw-semibold">
+                            <i class="fas fa-check-circle text-muted"></i> Confirmar contraseña
+                        </label>
+                        <div class="input-group">
+                            {{ form.password2 }}
+                            <button type="button" class="btn btn-outline-secondary" onclick="togglePassword('{{ form.password2.id_for_label }}', 'eyeIcon2')">
+                                <i class="fas fa-eye" id="eyeIcon2"></i>
+                            </button>
+                        </div>
+                        {% if form.password2.errors %}
+                            <div class="text-danger small">{{ form.password2.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <button type="submit" class="btn btn-success btn-lg w-100 fw-bold rounded-pill py-3 mt-2" id="submitBtn">
+                        <i class="fas fa-user-plus"></i> Crear cuenta
+                    </button>
+                </form>
+
+                <hr class="my-4">
+                <div class="text-center">
+                    <p class="mb-0">¿Ya tienes cuenta? <a href="{% url 'usuarios:login' %}" class="text-decoration-none fw-semibold">Iniciar Sesión</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function togglePassword(fieldId, iconId) {
+    const field = document.getElementById(fieldId);
+    const icon = document.getElementById(iconId);
+    if (!field || !icon) return;
+    if (field.type === 'password') {
+        field.type = 'text';
+        icon.classList.remove('fa-eye');
+        icon.classList.add('fa-eye-slash');
+    } else {
+        field.type = 'password';
+        icon.classList.remove('fa-eye-slash');
+        icon.classList.add('fa-eye');
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('registroForm');
+    const submitBtn = document.getElementById('submitBtn');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creando cuenta...';
+        });
+    }
+});
+</script>
+{% endblock %}

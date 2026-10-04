@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block page_title %}Gestión de Dosis de Pago{% endblock %}
+{% block page_subtitle %}Dosis configuradas por sorteo, forma de juego y forma de pago{% endblock %}
+
+{% block content %}
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-white">
+        <h5 class="fw-bold mb-0">💊 Dosis de Pago</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-sm table-hover">
+                <thead>
+                    <tr>
+                        <th>Comercial</th>
+                        <th>Sorteo</th>
+                        <th>Forma de Juego</th>
+                        <th>Forma de Pago</th>
+                        <th>Monto x Peso</th>
+                        <th>Activo</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for d in dosis_list %}
+                    <tr>
+                        <td>{{ d.comercial.username|default:"Global" }}</td>
+                        <td>{{ d.sorteo.nombre }}</td>
+                        <td>{{ d.forma_juego.nombre }}</td>
+                        <td>{{ d.forma_pago.nombre|default:"-" }}</td>
+                        <td><strong>{{ d.monto_por_peso }}x</strong></td>
+                        <td>{% if d.activo %}<span class="badge bg-success">Activo</span>{% else %}<span class="badge bg-secondary">Inactivo</span>{% endif %}</td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="6" class="text-center text-muted">No hay dosis configuradas.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

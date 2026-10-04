@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block page_title %}📝 Solicitar cambios en suscripción{% endblock %}
+{% block page_subtitle %}Solicita más recursos o más comerciales{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-edit me-2"></i>Solicitar cambios</h5>
+                </div>
+                <div class="card-body">
+                    <!-- Resumen actual -->
+                    <div class="alert alert-info">
+                        <div class="row">
+                            <div class="col-6">
+                                <strong>Recursos actuales:</strong> {{ recursos_actuales.count }}
+                            </div>
+                            <div class="col-6">
+                                <strong>Comerciales:</strong> {{ comerciales_actuales }} / {{ comerciales_permitidos }}
+                            </div>
+                            <div class="col-6">
+                                <strong>Costo mensual:</strong> ${{ costo_mensual|floatformat:2 }}
+                            </div>
+                            <div class="col-6">
+                                <strong>Recursos disponibles:</strong> {{ recursos_disponibles.count }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <form method="post">
+                        {% csrf_token %}
+
+                        <!-- Tipo de solicitud -->
+                        <div class="mb-3">
+                            <label for="tipo" class="form-label">¿Qué deseas solicitar?</label>
+                            <select name="tipo" id="tipo" class="form-select" required>
+                                <option value="">Selecciona...</option>
+                                <option value="recursos">Solicitar más recursos</option>
+                                <option value="comerciales">Solicitar más comerciales</option>
+                                <option value="ambos">Solicitar ambos</option>
+                            </select>
+                        </div>
+
+                        <!-- Recursos disponibles -->
+                        <div id="recursos-block" style="display:none;">
+                            <div class="mb-3">
+                                <label class="form-label">Selecciona los recursos a agregar</label>
+                                <select name="recursos_solicitados" class="form-select" multiple style="height:150px;">
+                                    {% for recurso in recursos_disponibles %}
+                                        <option value="{{ recurso.id }}">
+                                            {{ recurso.get_tipo_display }} -
+                                            {% if recurso.sorteo %}{{ recurso.sorteo.nombre }}
+                                            {% elif recurso.forma_juego %}{{ recurso.forma_juego.nombre }}
+                                            {% elif recurso.forma_pago %}{{ recurso.forma_pago.nombre }}{% endif %}
+                                        </option>
+                                    {% empty %}
+                                        <option disabled>No hay recursos disponibles</option>
+                                    {% endfor %}
+                                </select>
+                                <small class="text-muted">Mantén Ctrl/Cmd para seleccionar múltiples.</small>
+                            </div>
+                        </div>
+
+                        <!-- Comerciales -->
+                        <div id="comerciales-block" style="display:none;">
+                            <div class="mb-3">
+                                <label for="cantidad_comerciales" class="form-label">Nuevo límite de comerciales</label>
+                                <input type="number" name="cantidad_comerciales" id="cantidad_comerciales"
+                                       class="form-control" min="{{ comerciales_actuales }}"
+                                       value="{{ comerciales_permitidos }}" required>
+                                <small class="text-muted">Debe ser mayor que el límite actual ({{ comerciales_permitidos }}).</small>
+                            </div>
+                        </div>
+
+                        <div class="alert alert-warning">
+                            <i class="fas fa-info-circle me-2"></i>
+                            <strong>Nota:</strong> El costo mensual se recalculará automáticamente después de la aprobación.
+                            <br>Fórmula: <code>(recursos × comerciales) × 5</code>
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-paper-plane me-1"></i> Enviar solicitud
+                            </button>
+                            <a href="{% url 'roles:panel_suscripcion_banco' %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left me-1"></i> Cancelar
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.getElementById('tipo').addEventListener('change', function() {
+        const val = this.value;
+        document.getElementById('recursos-block').style.display = (val === 'recursos' || val === 'ambos') ? 'block' : 'none';
+        document.getElementById('comerciales-block').style.display = (val === 'comerciales' || val === 'ambos') ? 'block' : 'none';
+    });
+</script>
+{% endblock %}

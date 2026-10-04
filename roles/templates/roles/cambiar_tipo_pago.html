@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block page_title %}Cambiar Tipo de Pago{% endblock %}
+{% block page_subtitle %}Solicitar cambio de tipo de pago{% endblock %}
+
+{% block content %}
+<div class="container-fluid" style="max-width: 500px;">
+    <div class="card border-0 shadow-sm rounded-4">
+        <div class="card-header bg-gradient-warning text-white border-0 py-3" style="background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);">
+            <h5 class="mb-0 fw-bold"><i class="fas fa-exchange-alt me-2"></i> Cambiar Tipo de Pago</h5>
+        </div>
+        <div class="card-body p-4">
+            <p>Tipo actual: <strong>{{ suscripcion.get_tipo_pago_display }}</strong></p>
+            <form method="post">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label class="form-label">Nuevo tipo de pago</label>
+                    <select name="tipo_pago" class="form-select" required>
+                        {% for key, label in tipos_pago %}
+                            <option value="{{ key }}" {% if suscripcion.tipo_pago == key %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-warning w-100 rounded-pill py-2"><i class="fas fa-save"></i> Solicitar Cambio</button>
+            </form>
+            <div class="mt-3"><a href="{% url 'roles:panel_suscripcion_banco' %}" class="btn btn-outline-secondary rounded-pill w-100"><i class="fas fa-arrow-left"></i> Volver</a></div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,386 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block page_title %}📊 Mis Límites y Dosis{% endblock %}
+{% block page_subtitle %}Consulta los límites vigentes según tu gestor{% endblock %}
+
+{% block extra_css %}
+<style>
+  .ml-wrap { max-width: 1200px; margin: 0 auto; padding: 16px; }
+
+  .ml-filters {
+    background: rgba(255,255,255,0.7);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 20px;
+    border: 1px solid rgba(255,255,255,0.5);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.03);
+  }
+  .ml-filters h5 { margin: 0 0 14px; font-weight: 700; color: #1a1a2e; }
+  .ml-filters .row { row-gap: 12px; }
+  .ml-filters label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #4a4a6a;
+    margin-bottom: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .ml-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .ml-summary-card {
+    background: linear-gradient(135deg, rgba(108,60,225,0.08), rgba(139,92,246,0.04));
+    border: 1px solid rgba(108,60,225,0.12);
+    border-radius: 14px;
+    padding: 14px 18px;
+  }
+  .ml-summary-card .lbl {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #6C3CE1;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+  .ml-summary-card .val {
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: #1a1a2e;
+    font-family: 'Orbitron', monospace;
+  }
+
+  .ml-tabla-wrap {
+    background: #fff;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.03);
+    border: 1px solid rgba(0,0,0,0.04);
+  }
+  .ml-tabla {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+  }
+  .ml-tabla thead {
+    background: #f8f9fc;
+    border-bottom: 2px solid #e9ecef;
+  }
+  .ml-tabla thead th {
+    padding: 12px 14px;
+    text-align: left;
+    font-weight: 700;
+    color: #4a4a6a;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+  }
+  .ml-tabla tbody td {
+    padding: 11px 14px;
+    border-bottom: 1px solid #f0f1f5;
+    color: #2a2a3e;
+  }
+  .ml-tabla tbody tr:hover { background: #fafbff; }
+
+  /* Fila llena — destacada */
+  .ml-tabla tbody tr.ml-lleno {
+    background: linear-gradient(90deg, rgba(239,68,68,0.06), rgba(239,68,68,0.02));
+    border-left: 3px solid #ef4444;
+  }
+  .ml-tabla tbody tr.ml-lleno:hover {
+    background: linear-gradient(90deg, rgba(239,68,68,0.1), rgba(239,68,68,0.04));
+  }
+  .ml-tabla tbody tr.ml-lleno .ml-numero {
+    color: #b91c1c;
+    font-weight: 900;
+  }
+  .ml-badge-lleno {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 999px;
+    background: #ef4444;
+    color: #fff;
+    font-size: 0.6rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.7px;
+    animation: ml-pulse 1.8s ease-in-out infinite;
+  }
+  @keyframes ml-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+  }
+
+  .ml-numero {
+    font-family: 'Orbitron', monospace;
+    font-weight: 800;
+    font-size: 0.95rem;
+    letter-spacing: 0.5px;
+  }
+  .ml-money {
+    font-family: 'Orbitron', monospace;
+    font-weight: 700;
+  }
+  .ml-money.disponible-alto  { color: #059669; }
+  .ml-money.disponible-medio { color: #d97706; }
+  .ml-money.disponible-bajo  { color: #ea580c; }
+  .ml-money.disponible-cero  { color: #dc2626; }
+
+  .ml-progress {
+    display: inline-block;
+    width: 80px;
+    height: 6px;
+    background: #f0f1f5;
+    border-radius: 3px;
+    overflow: hidden;
+    vertical-align: middle;
+    margin-right: 8px;
+  }
+  .ml-progress > span {
+    display: block;
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.3s;
+  }
+  .ml-progress.alto  > span { background: #10b981; }
+  .ml-progress.medio > span { background: #f59e0b; }
+  .ml-progress.bajo  > span { background: #f97316; }
+  .ml-progress.cero  > span { background: #ef4444; }
+
+  .ml-empty {
+    text-align: center;
+    padding: 60px 20px;
+    color: #8b91a8;
+  }
+  .ml-empty .ico { font-size: 3rem; display: block; margin-bottom: 12px; }
+  .ml-empty h5 { color: #1a1a2e; font-weight: 700; margin-bottom: 6px; }
+
+  .ml-loading {
+    text-align: center;
+    padding: 40px;
+    color: #6C3CE1;
+  }
+  .ml-loading .spinner-border { color: #6C3CE1; }
+
+  @media (max-width: 768px) {
+    .ml-tabla { font-size: 0.78rem; }
+    .ml-tabla thead th,
+    .ml-tabla tbody td { padding: 9px 8px; }
+    .ml-progress { display: none; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="ml-wrap">
+
+  <div class="ml-filters">
+    <h5>🔍 Filtros de consulta</h5>
+    <p class="text-muted small mb-3">Selecciona los 4 filtros para consultar los límites vigentes.</p>
+
+    <div class="row">
+      <div class="col-md-3">
+        <label>Gestor</label>
+        <select id="ml-gestor" class="form-select">
+          <option value="">— Selecciona —</option>
+          {% for g in gestores %}
+            <option value="{{ g.id }}">{{ g.username }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-3">
+        <label>Sorteo</label>
+        <select id="ml-sorteo" class="form-select">
+          <option value="">— Selecciona —</option>
+          {% for s in sorteos %}
+            <option value="{{ s.id }}">{{ s.nombre }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-3">
+        <label>Forma de juego</label>
+        <select id="ml-forma-juego" class="form-select">
+          <option value="">— Selecciona —</option>
+          {% for fj in formas_juego %}
+            <option value="{{ fj.id }}">{{ fj.nombre|capfirst }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-3">
+        <label>Forma de pago</label>
+        <select id="ml-forma-pago" class="form-select">
+          <option value="">— Selecciona —</option>
+          {% for fp in formas_pago %}
+            <option value="{{ fp.id }}">{{ fp.nombre }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <div id="ml-content">
+    <div class="ml-empty">
+      <span class="ico">📊</span>
+      <h5>Consulta tus límites</h5>
+      <p>Selecciona los filtros de arriba para ver los límites, sobre límites y dosis vigentes.</p>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function(){
+  'use strict';
+
+  const API = "{% url 'usuarios:api_mis_limites_data' %}";
+  const filtros = {
+    gestor:      document.getElementById('ml-gestor'),
+    sorteo:      document.getElementById('ml-sorteo'),
+    forma_juego: document.getElementById('ml-forma-juego'),
+    forma_pago:  document.getElementById('ml-forma-pago'),
+  };
+  const container = document.getElementById('ml-content');
+
+  function getVal(el){ return el ? el.value : ''; }
+
+  function fmtMoney(v){
+    return '$' + Number(v || 0).toFixed(2);
+  }
+
+  function nivelClase(pct){
+    if (pct <= 0) return 'cero';
+    if (pct < 25) return 'bajo';
+    if (pct < 60) return 'medio';
+    return 'alto';
+  }
+
+  function mostrarCargando(){
+    container.innerHTML = `
+      <div class="ml-loading">
+        <div class="spinner-border" role="status"></div>
+        <p class="mt-3 mb-0">Cargando límites…</p>
+      </div>`;
+  }
+
+  function mostrarVacio(msg){
+    container.innerHTML = `
+      <div class="ml-empty">
+        <span class="ico">📭</span>
+        <h5>Sin datos</h5>
+        <p>${msg}</p>
+      </div>`;
+  }
+
+  function render(data){
+    const numeros = data.numeros || [];
+
+    // Resumen
+    const resumenHTML = `
+      <div class="ml-summary">
+        <div class="ml-summary-card">
+          <div class="lbl">Gestor</div>
+          <div class="val" style="font-family:inherit;font-size:0.95rem;">${data.gestor}</div>
+        </div>
+        <div class="ml-summary-card">
+          <div class="lbl">Dosis</div>
+          <div class="val">1 × ${fmtMoney(data.dosis)}</div>
+        </div>
+        <div class="ml-summary-card">
+          <div class="lbl">Límite + Sobrelímite</div>
+          <div class="val">${fmtMoney(data.pool_total)}</div>
+        </div>
+        <div class="ml-summary-card">
+          <div class="lbl">Números con apuestas</div>
+          <div class="val">${data.total_numeros}</div>
+        </div>
+      </div>
+    `;
+
+    if (numeros.length === 0) {
+      container.innerHTML = resumenHTML + `
+        <div class="ml-empty">
+          <span class="ico">🎯</span>
+          <h5>Sin apuestas registradas</h5>
+          <p>Aún no hay apuestas para ${data.sorteo} · ${data.forma_juego} · ${data.forma_pago}.</p>
+        </div>`;
+      return;
+    }
+
+    const filas = numeros.map(n => {
+      const nivel = nivelClase(n.porcentaje);
+      const trClass = n.lleno ? 'ml-lleno' : '';
+      const badge = n.lleno ? '<span class="ml-badge-lleno">Lleno</span>' : '';
+      const pct = Math.min(100, Math.max(0, n.porcentaje));
+      return `
+        <tr class="${trClass}">
+          <td><span class="ml-numero">${n.numero}</span> ${badge}</td>
+          <td><span class="ml-money">${fmtMoney(n.apostado)}</span></td>
+          <td>
+            <div class="ml-progress ${nivel}"><span style="width:${pct}%"></span></div>
+            <span class="ml-money disponible-${nivel === 'alto' ? 'alto' : nivel === 'medio' ? 'medio' : nivel === 'bajo' ? 'bajo' : 'cero'}">${fmtMoney(n.disponible)}</span>
+          </td>
+        </tr>`;
+    }).join('');
+
+    container.innerHTML = resumenHTML + `
+      <div class="ml-tabla-wrap">
+        <table class="ml-tabla">
+          <thead>
+            <tr>
+              <th>Número</th>
+              <th>Apostado</th>
+              <th>Disponible</th>
+            </tr>
+          </thead>
+          <tbody>${filas}</tbody>
+        </table>
+      </div>
+    `;
+  }
+
+  function consultar(){
+    const g = getVal(filtros.gestor);
+    const s = getVal(filtros.sorteo);
+    const fj = getVal(filtros.forma_juego);
+    const fp = getVal(filtros.forma_pago);
+
+    if (!g || !s || !fj || !fp) {
+      mostrarVacio('Selecciona los 4 filtros para consultar.');
+      return;
+    }
+
+    mostrarCargando();
+
+    const params = new URLSearchParams({gestor: g, sorteo: s, forma_juego: fj, forma_pago: fp});
+
+    fetch(`${API}?${params.toString()}`, { credentials: 'same-origin' })
+      .then(r => r.json())
+      .then(d => {
+        if (!d.success) {
+          mostrarVacio(d.error || 'Error desconocido');
+          return;
+        }
+        render(d);
+      })
+      .catch(err => {
+        mostrarVacio('Error de conexión. Intenta de nuevo.');
+        console.error(err);
+      });
+  }
+
+  Object.values(filtros).forEach(el => {
+    if (el) el.addEventListener('change', consultar);
+  });
+
+})();
+</script>
+{% endblock %}

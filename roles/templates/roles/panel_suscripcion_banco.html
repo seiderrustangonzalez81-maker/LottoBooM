@@ -1,0 +1,228 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block page_title %}📅 Panel de Suscripción{% endblock %}
+{% block page_subtitle %}Gestiona tu suscripción como banco{% endblock %}
+
+{% block extra_css %}
+<style>
+    .stat-box {
+        background: white;
+        border-radius: 12px;
+        padding: 1rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        text-align: center;
+        border-left: 4px solid #4361ee;
+        height: 100%;
+    }
+    .stat-box .number {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: #1a1a2e;
+    }
+    .stat-box .label {
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        color: #6c757d;
+        letter-spacing: 0.5px;
+    }
+    .stat-box .number.success { color: #059669; }
+    .stat-box .number.warning { color: #d97706; }
+    .stat-box .number.danger { color: #dc2626; }
+    .stat-box .number.primary { color: #4361ee; }
+
+    .recurso-tag {
+        display: inline-block;
+        background: #f1f5f9;
+        padding: 0.2rem 0.6rem;
+        border-radius: 30px;
+        font-size: 0.75rem;
+        margin: 0.15rem;
+        border: 1px solid #e9ecef;
+    }
+    .recurso-tag .badge {
+        font-size: 0.55rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h4><i class="fas fa-calendar-check me-2 text-primary"></i>Panel de Suscripción</h4>
+        <span class="badge {% if suscripcion.esta_activo %}bg-success{% else %}bg-danger{% endif %}">
+            {{ suscripcion.esta_activo|yesno:"Activa,Inactiva" }}
+        </span>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- 1. ESTADÍSTICAS RÁPIDAS -->
+    <!-- ============================================================ -->
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-md-3">
+            <div class="stat-box">
+                <div class="number primary">{{ dias_restantes }}</div>
+                <div class="label">Días restantes</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="stat-box" style="border-left-color: #8b5cf6;">
+                <div class="number warning">${{ costo_mensual|floatformat:2 }}</div>
+                <div class="label">Costo mensual estimado</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="stat-box" style="border-left-color: #059669;">
+                <div class="number success">{{ comerciales_activos }}</div>
+                <div class="label">Comerciales activos</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="stat-box" style="border-left-color: #f59e0b;">
+                <div class="number primary">{{ recursos.count }}</div>
+                <div class="label">Recursos asignados</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- 2. DETALLE DE LA SUSCRIPCIÓN -->
+    <!-- ============================================================ -->
+    <div class="row g-4">
+        <!-- Columna izquierda: Recursos -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0"><i class="fas fa-cubes me-2"></i>Recursos asignados</h6>
+                    <span class="badge bg-primary">{{ recursos.count }}</span>
+                </div>
+                <div class="card-body">
+                    {% if recursos %}
+                        <div class="mb-3">
+                            <strong>Sorteos:</strong>
+                            {% for r in recursos_por_tipo.sorteo %}
+                                <span class="recurso-tag">{{ r.sorteo.nombre }}</span>
+                            {% empty %}
+                                <span class="text-muted small">Sin sorteos</span>
+                            {% endfor %}
+                        </div>
+                        <div class="mb-3">
+                            <strong>Formas de juego:</strong>
+                            {% for r in recursos_por_tipo.forma_juego %}
+                                <span class="recurso-tag">{{ r.forma_juego.nombre }}</span>
+                            {% empty %}
+                                <span class="text-muted small">Sin formas de juego</span>
+                            {% endfor %}
+                        </div>
+                        <div class="mb-0">
+                            <strong>Formas de pago:</strong>
+                            {% for r in recursos_por_tipo.forma_pago %}
+                                <span class="recurso-tag">{{ r.forma_pago.nombre }}</span>
+                            {% empty %}
+                                <span class="text-muted small">Sin formas de pago</span>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="alert alert-info text-center py-2 mb-0">
+                            <i class="fas fa-info-circle me-2"></i>No tienes recursos asignados.
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Columna derecha: Comerciales y costo -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0"><i class="fas fa-user-tie me-2"></i>Comerciales</h6>
+                    <span class="badge bg-info">{{ comerciales_activos }} / {{ comerciales_permitidos }}</span>
+                </div>
+                <div class="card-body">
+                    {% if comerciales %}
+                        <ul class="list-unstyled mb-3">
+                            {% for sub in comerciales %}
+                                <li class="d-flex justify-content-between align-items-center py-1 border-bottom">
+                                    <span><i class="fas fa-user-circle me-2"></i>{{ sub.subordinado.username }}</span>
+                                    <span class="badge bg-secondary">Comercial</span>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p class="text-muted small mb-3">No tienes comerciales activos.</p>
+                    {% endif %}
+
+                    <div class="alert alert-light border">
+                        <div class="d-flex justify-content-between">
+                            <span><strong>Límite de comerciales:</strong></span>
+                            <span>{{ comerciales_permitidos }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span><strong>Disponibles para ascender:</strong></span>
+                            <span class="{% if disponibles > 0 %}text-success{% else %}text-danger{% endif %}">
+                                {{ disponibles|default:0 }}
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Detalle del costo -->
+                    <div class="alert alert-primary">
+                        <h6 class="mb-1"><i class="fas fa-calculator me-2"></i>Fórmula de costo mensual</h6>
+                        <small>
+                            <span class="fw-bold">{{ recursos.count }}</span> recursos ×
+                            <span class="fw-bold">{{ comerciales_activos }}</span> comerciales ×
+                            <span class="fw-bold">$5</span> =
+                            <span class="fw-bold fs-5">${{ costo_mensual|floatformat:2 }}</span>
+                        </small>
+                    </div>
+
+                    <!-- Botón para solicitar cambios -->
+                    <a href="{% url 'roles:solicitar_cambios_suscripcion' %}" class="btn btn-warning w-100">
+                        <i class="fas fa-edit me-2"></i>Solicitar cambios en la suscripción
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- 3. INFORMACIÓN ADICIONAL -->
+    <!-- ============================================================ -->
+    <div class="card mt-4">
+        <div class="card-header">
+            <h6 class="mb-0"><i class="fas fa-info-circle me-2"></i>Información de la suscripción</h6>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-4">
+                    <p><strong>Fecha de ascenso:</strong> {{ suscripcion.fecha_ascenso|date:"d/m/Y H:i" }}</p>
+                </div>
+                <div class="col-md-4">
+                    <p><strong>Fecha de vencimiento:</strong> {{ suscripcion.fecha_vencimiento|date:"d/m/Y H:i" }}</p>
+                </div>
+                <div class="col-md-4">
+                    <p><strong>Tipo de pago:</strong> {{ suscripcion.get_tipo_pago_display }}</p>
+                </div>
+                <div class="col-md-4">
+                    <p><strong>Cuota fija:</strong> ${{ suscripcion.cuota_fija|floatformat:2 }}</p>
+                </div>
+                <div class="col-md-4">
+                    <p><strong>Porcentaje de ganancia:</strong> {{ suscripcion.porcentaje_ganancia|floatformat:2 }}%</p>
+                </div>
+                <div class="col-md-4">
+                    <p><strong>Último pago:</strong> {{ suscripcion.ultimo_pago|date:"d/m/Y H:i"|default:"Nunca" }}</p>
+                </div>
+            </div>
+
+            {% if suscripcion.solicitud_pendiente %}
+                <div class="alert alert-warning mt-2">
+                    <i class="fas fa-clock me-2"></i>
+                    Tienes una solicitud pendiente de aprobación por el superadmin.
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+</div>
+{% endblock %}

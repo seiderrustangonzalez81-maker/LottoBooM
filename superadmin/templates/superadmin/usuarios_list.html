@@ -1,0 +1,186 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block page_title %}Gestión de Usuarios{% endblock %}
+{% block page_subtitle %}Administra los usuarios del sistema{% endblock %}
+
+{% block extra_css %}
+<style>
+    .table th { font-size: 0.75rem; }
+    .table td { font-size: 0.85rem; vertical-align: middle; }
+    .badge-rol { padding: 0.25rem 0.75rem; border-radius: 30px; font-size: 0.7rem; }
+    .badge-cliente { background: #e0e7ff; color: #4338ca; }
+    .badge-comercial { background: #d1fae5; color: #065f46; }
+    .badge-banco { background: #fef3c7; color: #92400e; }
+    .badge-superadmin { background: #fce4ec; color: #b71c1c; }
+    .badge-auditor { background: #e0e7ff; color: #4338ca; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-0">
+    <!-- Encabezado -->
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap" style="gap: 0.5rem;">
+        <div>
+            <h4 class="fw-bold mb-0"><i class="fas fa-users text-primary"></i> Gestión de Usuarios</h4>
+            <p class="text-muted small mb-0">Total: {{ usuarios.paginator.count }} usuarios</p>
+        </div>
+        <div class="d-flex gap-2 flex-wrap">
+            <a href="{% url 'superadmin:usuarios_list' %}" class="btn btn-sm btn-outline-secondary">
+                <i class="fas fa-list"></i> Todos
+            </a>
+            <a href="?ascendibles=1" class="btn btn-sm btn-outline-warning">
+                <i class="fas fa-arrow-up"></i> Ascendibles
+            </a>
+            <a href="{% url 'superadmin:recargar_usuario' %}" class="btn btn-sm btn-success">
+                <i class="fas fa-plus-circle"></i> Recargar
+            </a>
+        </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="card shadow-sm mb-3">
+        <div class="card-body py-2">
+            <form method="get" class="row g-2 align-items-center">
+                <div class="col-md-4">
+                    <input type="text" name="q" class="form-control form-control-sm" placeholder="🔍 Buscar..." value="{{ query }}">
+                </div>
+                <div class="col-md-3">
+                    <select onchange="this.form.submit()" name="rol" class="form-select form-select-sm">
+                        <option value="">Todos los roles</option>
+                        {% for key, value in roles_opciones %}
+                            <option value="{{ key }}" {% if rol_filter == key %}selected{% endif %}>
+                                {{ value }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    </div>
+                <div class="col-md-3 text-end">
+                    {% if solo_ascendibles %}
+                        <span class="badge bg-warning text-dark">Mostrando solo ascendibles</span>
+                    {% endif %}
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Tabla de usuarios -->
+    <div class="card shadow-sm">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Usuario</th>
+                            <th>Email</th>
+                            <th>Rol</th>
+                            <th>Saldo</th>
+                            <th>Estado</th>
+                            <th class="text-center">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for usuario in usuarios %}
+                        <tr>
+                            <td>
+                                <strong>{{ usuario.username }}</strong>
+                                <br><small class="text-muted">ID: {{ usuario.id }}</small>
+                            </td>
+                            <td>{{ usuario.email|default:"-" }}</td>
+                            <td>
+                                {% if usuario.rol_actual == 'cliente' %}
+                                    <span class="badge-rol badge-cliente">Cliente</span>
+                                {% elif usuario.rol_actual == 'comercial' %}
+                                    <span class="badge-rol badge-comercial">Comercial</span>
+                                {% elif usuario.rol_actual == 'banco' %}
+                                    <span class="badge-rol badge-banco">Banco</span>
+                                {% elif usuario.rol_actual == 'superadmin' %}
+                                    <span class="badge-rol badge-superadmin">Superadmin</span>
+                                {% elif usuario.rol_actual == 'auditor' %}
+                                    <span class="badge-rol badge-auditor">Auditor</span>
+                                {% else %}
+                                    <span class="badge-rol bg-secondary text-white">{{ usuario.rol_actual|default:"Sin rol" }}</span>
+                                {% endif %}
+                            </td>
+                            <td>${{ usuario.saldo|floatformat:2 }}</td>
+                            <td>
+                                {% if usuario.is_active %}
+                                    <span class="badge bg-success">Activo</span>
+                                {% else %}
+                                    <span class="badge bg-danger">Inactivo</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-center">
+                                <div class="d-flex justify-content-center gap-1 flex-wrap">
+                                    <!-- 🔥 BOTÓN ASCENDER (solo si es ascendible) -->
+                                    {% if usuario.es_ascendible %}
+                                        <form method="post" action="{% url 'superadmin:usuario_ascender' usuario.id %}" style="display:inline;">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-sm btn-warning"
+                                                    onclick="return confirm('¿Estás seguro de ascender a {{ usuario.username }} a Superadministrador?')"
+                                                    title="Ascender a Superadmin">
+                                                <i class="fas fa-arrow-up"></i>
+                                            </button>
+                                        </form>
+                                    {% endif %}
+
+                                    <!-- Botón Editar -->
+                                    <a href="{% url 'superadmin:usuario_editar' usuario.id %}" class="btn btn-sm btn-primary" title="Editar">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+
+                                    <!-- Botón Consumir Bono (solo si es cliente y tiene bono) -->
+                                    <a href="{% url 'superadmin:consumir_bono_referido' usuario.id %}" class="btn btn-sm btn-info" title="Consumir bono referido">
+                                        <i class="fas fa-gift"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center py-4 text-muted">
+                                <i class="fas fa-users fa-2x d-block mb-2"></i>
+                                No hay usuarios que coincidan con los filtros.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="card-footer bg-white">
+            {% if usuarios.has_other_pages %}
+                <nav aria-label="Paginación">
+                    <ul class="pagination pagination-sm justify-content-center mb-0">
+                        {% if usuarios.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ usuarios.previous_page_number }}{% if query %}&q={{ query }}{% endif %}{% if rol_filter %}&rol={{ rol_filter }}{% endif %}{% if solo_ascendibles %}&ascendibles=1{% endif %}">
+                                    Anterior
+                                </a>
+                            </li>
+                        {% endif %}
+
+                        {% for num in usuarios.paginator.page_range %}
+                            <li class="page-item {% if usuarios.number == num %}active{% endif %}">
+                                <a class="page-link" href="?page={{ num }}{% if query %}&q={{ query }}{% endif %}{% if rol_filter %}&rol={{ rol_filter }}{% endif %}{% if solo_ascendibles %}&ascendibles=1{% endif %}">
+                                    {{ num }}
+                                </a>
+                            </li>
+                        {% endfor %}
+
+                        {% if usuarios.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ usuarios.next_page_number }}{% if query %}&q={{ query }}{% endif %}{% if rol_filter %}&rol={{ rol_filter }}{% endif %}{% if solo_ascendibles %}&ascendibles=1{% endif %}">
+                                    Siguiente
+                                </a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

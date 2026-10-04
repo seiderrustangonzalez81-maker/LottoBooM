@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Recargar Usuario</h2>
+    <form method="post">
+        {% csrf_token %}
+        <div class="mb-3">
+            <label for="usuario" class="form-label">Usuario</label>
+            <select name="usuario" id="usuario" class="form-select" required>
+                <option value="">Seleccionar usuario...</option>
+                {% for u in usuarios %}
+                    <option value="{{ u.id }}">{{ u.username }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="mb-3">
+            <label for="forma_pago" class="form-label">Forma de pago</label>
+            <select name="forma_pago" id="forma_pago" class="form-select" required>
+                <option value="">Seleccionar...</option>
+                {% for fp in formas_pago %}
+                    <option value="{{ fp.id }}">{{ fp.nombre }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="mb-3">
+            <label for="monto" class="form-label">Monto ($)</label>
+            <input type="number" name="monto" id="monto" class="form-control" step="0.01" min="0.01" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Recargar</button>
+        <a href="{% url 'superadmin:dashboard' %}" class="btn btn-secondary">Cancelar</a>
+    </form>
+</div>
+{% endblock %}

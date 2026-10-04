@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block page_title %}Promociones{% endblock %}
+{% block page_subtitle %}Aprovecha nuestras ofertas y bonos especiales{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-0">
+    <div class="welcome-section" style="background:#ffffff; border-radius:24px; padding:28px 32px; margin-bottom:28px; box-shadow:0 2px 12px rgba(0,0,0,0.04); border:1px solid #eef2f6;">
+        <h1 style="font-size:1.6rem; font-weight:700; color:#1a1a2e; margin:0;">
+            <i class="fas fa-gift" style="color:#6C3CE1;"></i> Promociones
+        </h1>
+        <p style="color:#6b7280; margin:8px 0 0; font-size:0.95rem;">
+            Descubre todas las promociones y bonos disponibles para ti.
+        </p>
+    </div>
+
+    <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(300px, 1fr)); gap:20px;">
+        {% for promo in promociones %}
+        <div style="background:#ffffff; border-radius:16px; padding:24px; border:1px solid #eef2f6; box-shadow:0 2px 8px rgba(0,0,0,0.02); transition:0.2s;">
+            <div style="font-size:2.5rem; margin-bottom:8px;">{{ promo.titulo|slice:":2" }}</div>
+            <h4 style="font-weight:600; color:#1a1a2e; margin:0 0 6px; font-size:1.1rem;">{{ promo.titulo }}</h4>
+            <p style="color:#4b5563; margin:0; font-size:0.9rem; line-height:1.6;">{{ promo.descripcion }}</p>
+        </div>
+        {% empty %}
+        <div style="background:#ffffff; border-radius:16px; padding:40px; text-align:center; color:#6b7280; border:1px solid #eef2f6; grid-column:1/-1;">
+            <span style="font-size:3rem; display:block; margin-bottom:12px;">🎁</span>
+            <p>No hay promociones disponibles en este momento.</p>
+            <p style="font-size:0.85rem; margin-top:8px;">¡Vuelve pronto para descubrir nuestras ofertas!</p>
+        </div>
+        {% endfor %}
+    </div>
+
+    <div style="margin-top:28px; background:#f8f9fc; border-radius:16px; padding:24px; text-align:center; border:1px solid #eef2f6;">
+        <p style="color:#6b7280; margin:0;">
+            ¿Quieres recibir notificaciones de nuevas promociones? 
+            <a href="{% url 'usuarios:registro' %}" style="color:#6C3CE1; font-weight:600; text-decoration:none;">Regístrate ahora</a>
+        </p>
+    </div>
+</div>
+{% endblock %}

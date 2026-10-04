@@ -1,0 +1,372 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block page_title %}👥 Mis Referidos{% endblock %}
+{% block page_subtitle %}Gestiona tus referidos y bonos de recomendación{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+    <!-- ============================================================ -->
+    <!-- ENLACE DE REFERIDO                                            -->
+    <!-- ============================================================ -->
+    <div class="card border-0 shadow-sm mb-4" style="background: linear-gradient(135deg, #f0f7ff, #ffffff); border-radius: 16px;">
+        <div class="card-body p-4">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h5 class="fw-bold text-primary mb-2">
+                        <i class="fas fa-share-alt me-2"></i>Tu enlace de referido
+                    </h5>
+                    <p class="text-muted small mb-3">
+                        Comparte este enlace con tus amigos y gana <strong>$25</strong> por cada amigo que se registre y cumpla los requisitos.
+                    </p>
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="linkReferido" value="{{ link_referido }}" readonly style="background: #fff; font-size: 0.9rem; border-radius: 8px 0 0 8px;" aria-label="Enlace de referido">
+                        <button class="btn btn-primary" id="btnCopiarLink" style="border-radius: 0 8px 8px 0;" aria-label="Copiar enlace al portapapeles">
+                            <i class="fas fa-copy me-1"></i> <span id="btnCopiarTexto">Copiar</span>
+                        </button>
+                    </div>
+                    <div class="mt-2">
+                        <small class="text-muted">
+                            <i class="fas fa-tag me-1"></i> Código: <code class="bg-light px-2 py-1 rounded" style="font-size: 0.8rem;">{{ codigo_referido }}</code>
+                        </small>
+                    </div>
+                </div>
+                <div class="col-md-4 text-center d-none d-md-block">
+                    <i class="fas fa-user-plus" style="font-size: 4rem; color: #6C3CE1; opacity: 0.2;"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- ESTADÍSTICAS                                                  -->
+    <!-- ============================================================ -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3 col-6">
+            <div class="card border-0 shadow-sm h-100 text-center p-3" style="border-radius: 16px;">
+                <div class="card-body">
+                    <h3 class="display-5 fw-bold text-primary">{{ total_referidos }}</h3>
+                    <p class="text-muted small mb-0">Total Referidos</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-6">
+            <div class="card border-0 shadow-sm h-100 text-center p-3" style="border-radius: 16px;">
+                <div class="card-body">
+                    <h3 class="display-5 fw-bold text-warning">{{ bonos_pendientes }}</h3>
+                    <p class="text-muted small mb-0">Bonos Pendientes</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-6">
+            <div class="card border-0 shadow-sm h-100 text-center p-3" style="border-radius: 16px;">
+                <div class="card-body">
+                    <h3 class="display-5 fw-bold text-success">{{ bonos_activos }}</h3>
+                    <p class="text-muted small mb-0">Bonos Activos</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-6">
+            <div class="card border-0 shadow-sm h-100 text-center p-3" style="border-radius: 16px;">
+                <div class="card-body">
+                    <h3 class="display-5 fw-bold text-info">
+                        ${{ total_bonos|floatformat:2 }}
+                    </h3>
+                    <p class="text-muted small mb-0">Total en Bonos</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- LISTA DE REFERIDOS Y BONOS                                    -->
+    <!-- ============================================================ -->
+    <div class="row g-4">
+
+        <!-- COLUMNA: Referidos -->
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm h-100" style="border-radius: 16px;">
+                <div class="card-header bg-white border-bottom-0 pt-4">
+                    <h5 class="fw-bold mb-0">
+                        <i class="fas fa-user-plus me-2 text-primary"></i>Usuarios Referidos
+                        <span class="badge bg-primary bg-opacity-10 text-primary ms-2">{{ referidos|length }}</span>
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if referidos %}
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Usuario</th>
+                                        <th>Registro</th>
+                                        <th>Estado</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for ref in referidos %}
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2" style="width:36px;height:36px;font-size:14px;flex-shrink:0;">
+                                                    {{ ref.username|first|upper }}
+                                                </div>
+                                                <span class="fw-medium">{{ ref.username }}</span>
+                                            </div>
+                                        </td>
+                                        <td class="text-muted small">{{ ref.date_joined|date:"d/m/Y" }}</td>
+                                        <td>
+                                            {% if ref.is_active %}
+                                                <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-10">Activo</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-10">Inactivo</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-user-slash fa-3x text-muted mb-3"></i>
+                            <p class="text-muted">Aún no tienes usuarios referidos.</p>
+                            <p class="small text-muted">Comparte tu enlace de referido para invitar a otros usuarios.</p>
+                            <button class="btn btn-outline-primary btn-sm mt-2" id="btnCompartirEnlace">
+                                <i class="fas fa-share-alt"></i> Compartir enlace ahora
+                            </button>
+                        </div>
+                    {% endif %}
+                </div>
+                {% if referidos %}
+                <div class="card-footer bg-transparent border-top-0 text-center pb-3">
+                    <small class="text-muted">Total: <strong>{{ referidos|length }}</strong> usuarios referidos</small>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- COLUMNA: Bonos de Recomendación -->
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm h-100" style="border-radius: 16px;">
+                <div class="card-header bg-white border-bottom-0 pt-4">
+                    <h5 class="fw-bold mb-0">
+                        <i class="fas fa-gift me-2 text-success"></i>Bonos de Recomendación
+                        <span class="badge bg-success bg-opacity-10 text-success ms-2">{{ bonos_referidos|length }}</span>
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if bonos_referidos %}
+                        <div class="list-group list-group-flush">
+                            {% for bono in bonos_referidos %}
+                            <div class="list-group-item px-0 py-3 border-bottom">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div class="flex-grow-1">
+                                        <div class="d-flex align-items-center mb-1">
+                                            <h6 class="fw-bold mb-0 me-2">
+                                                {% if bono.usuario_referido %}
+                                                    {{ bono.usuario_referido.username }}
+                                                {% else %}
+                                                    Referido
+                                                {% endif %}
+                                            </h6>
+                                            <span class="badge
+                                                {% if bono.estado == 'activo' %}bg-success
+                                                {% elif bono.estado == 'pendiente' %}bg-warning text-dark
+                                                {% elif bono.estado == 'agotado' %}bg-secondary
+                                                {% else %}bg-danger{% endif %}">
+                                                {{ bono.get_estado_display }}
+                                            </span>
+                                        </div>
+                                        <div class="row small text-muted g-1">
+                                            <div class="col-auto">
+                                                <i class="fas fa-coins me-1"></i>Monto: <strong>${{ bono.monto }}</strong>
+                                            </div>
+                                            <div class="col-auto">
+                                                <i class="fas fa-wallet me-1"></i>Saldo: <strong>${{ bono.saldo_restante }}</strong>
+                                            </div>
+                                            <div class="col-12">
+                                                <i class="fas fa-tasks me-1"></i>Requisitos:
+                                                {% if bono.apuestas_requeridas > 0 or bono.monto_apostado_requerido > 0 %}
+                                                    {{ bono.apuestas_requeridas }} apuestas / ${{ bono.monto_apostado_requerido }} apostado
+                                                {% else %}
+                                                    Sin requisitos específicos
+                                                {% endif %}
+                                            </div>
+                                            {% if bono.metadata and bono.metadata.motivo %}
+                                            <div class="col-12 text-muted" style="font-size: 0.7rem;">
+                                                <i class="fas fa-info-circle me-1"></i>{{ bono.metadata.motivo }}
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-gift fa-3x text-muted mb-3"></i>
+                            <p class="text-muted">Aún no tienes bonos de recomendación.</p>
+                            <p class="small text-muted">Los bonos se generan automáticamente cuando un referido cumple los requisitos.</p>
+                        </div>
+                    {% endif %}
+                </div>
+                {% if bonos_referidos %}
+                <div class="card-footer bg-transparent border-top-0 text-center pb-3">
+                    <small class="text-muted">
+                        Total en bonos: <strong>${{ total_bonos|floatformat:2 }}</strong>
+                        | Activos: <strong>{{ bonos_activos }}</strong>
+                        | Pendientes: <strong>{{ bonos_pendientes }}</strong>
+                    </small>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- ¿CÓMO FUNCIONA? (SECCIÓN INFORMATIVA)                        -->
+    <!-- ============================================================ -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm" style="border-radius: 16px; background: #f8faff;">
+                <div class="card-body p-4">
+                    <h6 class="fw-bold mb-3"><i class="fas fa-question-circle me-2 text-primary"></i>¿Cómo funciona el sistema de referidos?</h6>
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <div class="d-flex align-items-start">
+                                <span class="badge bg-primary rounded-circle me-2 mt-1" style="width:28px;height:28px;line-height:28px;">1</span>
+                                <div>
+                                    <strong>Comparte tu enlace</strong>
+                                    <p class="text-muted small mb-0">Usa el enlace de referido para invitar a tus amigos.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="d-flex align-items-start">
+                                <span class="badge bg-primary rounded-circle me-2 mt-1" style="width:28px;height:28px;line-height:28px;">2</span>
+                                <div>
+                                    <strong>Amigo se registra</strong>
+                                    <p class="text-muted small mb-0">Tu amigo se registra usando tu código de referido.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="d-flex align-items-start">
+                                <span class="badge bg-primary rounded-circle me-2 mt-1" style="width:28px;height:28px;line-height:28px;">3</span>
+                                <div>
+                                    <strong>Recibe tu bono</strong>
+                                    <p class="text-muted small mb-0">Cuando cumpla los requisitos, recibirás un bono de <strong>$25</strong>.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- ============================================================ -->
+<!-- SCRIPT MEJORADO PARA COPIAR EL ENLACE                         -->
+<!-- ============================================================ -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const linkInput = document.getElementById('linkReferido');
+    const btnCopiar = document.getElementById('btnCopiarLink');
+    const btnTexto = document.getElementById('btnCopiarTexto');
+
+    // Función para mostrar toast (autónoma)
+    function mostrarToast(mensaje, tipo) {
+        tipo = tipo || 'info';
+        const container = document.getElementById('toastContainer');
+        if (!container) {
+            alert(mensaje);
+            return;
+        }
+        const toastId = 'toast-' + Date.now();
+        const bg = tipo === 'warning' ? 'warning' : tipo === 'danger' ? 'danger' : tipo === 'success' ? 'success' : 'primary';
+        const icon = tipo === 'warning' ? 'exclamation-triangle' : tipo === 'danger' ? 'x-circle' : tipo === 'success' ? 'check-circle' : 'info-circle';
+        const html = `
+            <div id="${toastId}" class="toast align-items-center text-white bg-${bg} border-0" role="alert" style="margin-bottom:8px;">
+                <div class="d-flex">
+                    <div class="toast-body"><i class="fas fa-${icon} me-2"></i> ${mensaje}</div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                </div>
+            </div>
+        `;
+        container.insertAdjacentHTML('beforeend', html);
+        const el = document.getElementById(toastId);
+        const toast = new bootstrap.Toast(el, { delay: 4000 });
+        toast.show();
+        el.addEventListener('hidden.bs.toast', () => el.remove());
+    }
+
+    // Función principal para copiar (moderna con fallback)
+    function copiarLink() {
+        if (!linkInput) return;
+        const texto = linkInput.value;
+
+        // Usar API moderna si está disponible
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(texto)
+                .then(() => {
+                    mostrarToast('✅ Enlace copiado al portapapeles', 'success');
+                    // Feedback visual en botón
+                    btnTexto.textContent = '¡Copiado!';
+                    setTimeout(() => btnTexto.textContent = 'Copiar', 2000);
+                })
+                .catch(() => {
+                    // Fallback a método antiguo
+                    copiarConExecCommand(texto);
+                });
+        } else {
+            copiarConExecCommand(texto);
+        }
+    }
+
+    function copiarConExecCommand(texto) {
+        try {
+            // Crear input temporal
+            const tempInput = document.createElement('input');
+            tempInput.style.position = 'fixed';
+            tempInput.style.opacity = '0';
+            tempInput.value = texto;
+            document.body.appendChild(tempInput);
+            tempInput.select();
+            document.execCommand('copy');
+            document.body.removeChild(tempInput);
+            mostrarToast('✅ Enlace copiado al portapapeles', 'success');
+            btnTexto.textContent = '¡Copiado!';
+            setTimeout(() => btnTexto.textContent = 'Copiar', 2000);
+        } catch (e) {
+            mostrarToast('❌ Error al copiar. Selecciona el enlace manualmente.', 'danger');
+        }
+    }
+
+    // Asignar eventos
+    if (btnCopiar) {
+        btnCopiar.addEventListener('click', copiarLink);
+    }
+
+    // También el botón "Compartir enlace ahora" (si existe)
+    const btnCompartir = document.getElementById('btnCompartirEnlace');
+    if (btnCompartir) {
+        btnCompartir.addEventListener('click', copiarLink);
+    }
+
+    // Copiar con Ctrl+C en el input
+    if (linkInput) {
+        linkInput.addEventListener('keydown', function(e) {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'c') {
+                // Permitir copia nativa, no interferir
+            }
+        });
+    }
+});
+</script>
+
+{% endblock %}

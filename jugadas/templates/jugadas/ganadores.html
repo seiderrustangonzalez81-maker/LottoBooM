@@ -1,0 +1,240 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block page_title %}Ganadores{% endblock %}
+{% block page_subtitle %}Lista de ganadores y premios{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Resumen -->
+    <div class="col-lg-12">
+        <div class="row g-3 mb-4">
+            <div class="col-md-3">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body text-center">
+                        <h5 class="text-muted">Total Premios</h5>
+                        <h2 class="fw-bold text-success">${{ total_general|floatformat:2 }}</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body text-center">
+                        <h5 class="text-muted">Ganadores</h5>
+                        <h2 class="fw-bold text-primary">{{ total_premios }}</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body text-center">
+                        <h5 class="text-muted">Comerciales</h5>
+                        <h2 class="fw-bold text-warning">{{ subtotales_comercial|length }}</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body text-center">
+                        <h5 class="text-muted">Bancos</h5>
+                        <h2 class="fw-bold text-info">{{ subtotales_banco|length }}</h2>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="col-lg-12">
+        <div class="card border-0 shadow-sm mb-3">
+            <div class="card-body">
+                <div class="row g-2">
+                    <div class="col-md-4">
+                        <select class="form-select form-select-sm" id="filterSorteo">
+                            <option value="todos">Todos los sorteos</option>
+                            {% for sorteo in sorteos %}
+                            <option value="{{ sorteo.id }}">{{ sorteo.nombre }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <select class="form-select form-select-sm" id="filterEstado">
+                            <option value="todos">Todos los estados</option>
+                            <option value="pagado">Pagados</option>
+                            <option value="pendiente">Pendientes</option>
+                            <option value="reclamado">Reclamados</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <button class="btn btn-primary btn-sm w-100" onclick="filtrarPremios()">
+                            <i class="fas fa-search"></i> Filtrar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Subtotales por Comercial -->
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-0">
+                <h6 class="fw-bold mb-0"><i class="fas fa-user-tie"></i> Premios por Comercial</h6>
+            </div>
+            <div class="card-body">
+                {% if subtotales_comercial %}
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Comercial</th>
+                                <th class="text-end">Cantidad</th>
+                                <th class="text-end">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for comercial in subtotales_comercial %}
+                            <tr>
+                                <td>{{ comercial.username }}</td>
+                                <td class="text-end">{{ comercial.cantidad }}</td>
+                                <td class="text-end fw-bold text-success">${{ comercial.total|floatformat:2 }}</td>
+                            </tr>
+                            {% endfor %}
+                            <tr class="table-dark">
+                                <td><strong>Total</strong></td>
+                                <td class="text-end">{{ total_premios }}</td>
+                                <td class="text-end fw-bold text-success">${{ total_general|floatformat:2 }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted text-center">No hay premios por comercial</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Subtotales por Banco -->
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-0">
+                <h6 class="fw-bold mb-0"><i class="fas fa-university"></i> Premios por Banco</h6>
+            </div>
+            <div class="card-body">
+                {% if subtotales_banco %}
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Banco</th>
+                                <th class="text-end">Cantidad</th>
+                                <th class="text-end">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for banco in subtotales_banco %}
+                            <tr>
+                                <td>{{ banco.username }}</td>
+                                <td class="text-end">{{ banco.cantidad }}</td>
+                                <td class="text-end fw-bold text-success">${{ banco.total|floatformat:2 }}</td>
+                            </tr>
+                            {% endfor %}
+                            <tr class="table-dark">
+                                <td><strong>Total</strong></td>
+                                <td class="text-end">{{ total_premios }}</td>
+                                <td class="text-end fw-bold text-success">${{ total_general|floatformat:2 }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted text-center">No hay premios por banco</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Lista de premios -->
+    <div class="col-lg-12 mt-3">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-0">
+                <h6 class="fw-bold mb-0"><i class="fas fa-trophy"></i> Lista de Premios</h6>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover" id="tablaPremios">
+                        <thead class="table-light">
+                            <tr>
+                                <th>#</th>
+                                <th>Usuario</th>
+                                <th>Comercial</th>
+                                <th>Banco</th>
+                                <th>Sorteo</th>
+                                <th>Número</th>
+                                <th>Premio</th>
+                                <th>Estado</th>
+                                <th>Fecha</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for premio in premios %}
+                            <tr class="{% if premio.estado == 'pagado' %}table-success{% else %}table-warning{% endif %}"
+                                data-sorteo="{{ premio.sorteo.id }}"
+                                data-estado="{{ premio.estado }}">
+                                <td>{{ forloop.counter }}</td>
+                                <td><strong>{{ premio.usuario.username }}</strong></td>
+                                <td>{{ premio.comercial.username|default:"-" }}</td>
+                                <td>{{ premio.banco.username|default:"-" }}</td>
+                                <td>{{ premio.sorteo.nombre }}</td>
+                                <td><code>{{ premio.numero_apostado }}</code></td>
+                                <td class="fw-bold text-success">${{ premio.monto_premio|floatformat:2 }}</td>
+                                <td>
+                                    <span class="badge {% if premio.estado == 'pagado' %}bg-success{% else %}bg-warning{% endif %}">
+                                        {{ premio.get_estado_display }}
+                                    </span>
+                                </td>
+                                <td>{{ premio.fecha_generacion|date:"d/m/Y" }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="9" class="text-center py-4 text-muted">
+                                    <span style="font-size: 3rem;">🏆</span>
+                                    <p class="mt-2">No hay premios registrados</p>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function filtrarPremios() {
+    const sorteo = document.getElementById('filterSorteo').value;
+    const estado = document.getElementById('filterEstado').value;
+    const items = document.querySelectorAll('#tablaPremios tbody tr');
+
+    let visible = 0;
+    items.forEach(function(item) {
+        if (item.querySelector('td').colSpan > 1) return;
+
+        const itemSorteo = item.dataset.sorteo;
+        const itemEstado = item.dataset.estado;
+
+        let show = true;
+        if (sorteo !== 'todos' && itemSorteo !== sorteo) show = false;
+        if (estado !== 'todos' && itemEstado !== estado) show = false;
+
+        item.style.display = show ? '' : 'none';
+        if (show) visible++;
+    });
+}
+
+document.getElementById('filterSorteo').addEventListener('change', filtrarPremios);
+document.getElementById('filterEstado').addEventListener('change', filtrarPremios);
+</script>
+{% endblock %}

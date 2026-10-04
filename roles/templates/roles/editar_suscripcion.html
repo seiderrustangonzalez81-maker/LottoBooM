@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block page_title %}Editar Suscripción{% endblock %}
+{% block page_subtitle %}Modificar suscripción de {{ suscripcion.banco.username }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid" style="max-width: 600px;">
+    <div class="card border-0 shadow-sm rounded-4">
+        <div class="card-header bg-gradient-primary text-white border-0 py-3" style="background: linear-gradient(135deg, #6C3CE1 0%, #8B5CF6 100%);">
+            <h5 class="mb-0 fw-bold"><i class="fas fa-edit me-2"></i> Editar Suscripción</h5>
+        </div>
+        <div class="card-body p-4">
+            <form method="post">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label class="form-label">Tipo de Pago</label>
+                    <select name="tipo_pago" class="form-select">
+                        {% for key, label in tipos_pago %}
+                            <option value="{{ key }}" {% if suscripcion.tipo_pago == key %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Cuota Fija ($)</label>
+                    <input type="number" name="cuota_fija" class="form-control" step="0.01" value="{{ suscripcion.cuota_fija|floatformat:2 }}">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">% Ganancia</label>
+                    <input type="number" name="porcentaje_ganancia" class="form-control" step="0.1" value="{{ suscripcion.porcentaje_ganancia|floatformat:1 }}">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Periodo (días)</label>
+                    <input type="number" name="periodo_dias" class="form-control" value="{{ suscripcion.periodo.days }}">
+                </div>
+                <div class="mb-3 form-check">
+                    <input type="checkbox" name="activo" class="form-check-input" {% if suscripcion.activo %}checked{% endif %}>
+                    <label class="form-check-label">Activo</label>
+                </div>
+                <button type="submit" class="btn btn-primary w-100 rounded-pill py-2"><i class="fas fa-save"></i> Guardar</button>
+            </form>
+            <div class="mt-3"><a href="{% url 'roles:panel_bancos' %}" class="btn btn-outline-secondary rounded-pill w-100"><i class="fas fa-arrow-left"></i> Volver</a></div>
+        </div>
+    </div>
+</div>
+{% endblock %}

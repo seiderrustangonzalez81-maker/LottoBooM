@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block page_title %}Gestión de Comerciales{% endblock %}
+{% block page_subtitle %}Administra los comerciales asociados a tu banco{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="card border-0 shadow-sm rounded-4">
+        <div class="card-header bg-gradient-primary text-white border-0 py-3" style="background: linear-gradient(135deg, #6C3CE1 0%, #8B5CF6 100%);">
+            <h5 class="mb-0 fw-bold"><i class="fas fa-users me-2"></i> Gestionar Comerciales</h5>
+        </div>
+        <div class="card-body p-4">
+
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show rounded-3" role="alert">
+                        <i class="fas fa-{% if 'error' in message.tags %}exclamation-circle{% elif 'success' in message.tags %}check-circle{% else %}info-circle{% endif %}"></i>
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+                <div>
+                    <span class="text-muted">Total: <strong>{{ total_comerciales }}</strong> | Activos: <strong>{{ comerciales_activos }}</strong></span>
+                </div>
+                <div class="d-flex gap-2">
+                    <a href="{% url 'roles:panel_bancos' %}" class="btn btn-outline-secondary rounded-pill px-4">
+                        <i class="fas fa-arrow-left"></i> Volver al Panel
+                    </a>
+                </div>
+            </div>
+
+            <form method="get" class="mb-4">
+                <div class="input-group">
+                    <input type="text" name="q" class="form-control" placeholder="Buscar comercial por nombre..." value="{{ q|default:'' }}">
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-search"></i> Buscar</button>
+                    {% if q %}
+                        <a href="{% url 'banco:gestion_comerciales' %}" class="btn btn-outline-secondary"><i class="fas fa-times"></i> Limpiar</a>
+                    {% endif %}
+                </div>
+            </form>
+
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>#</th>
+                            <th><i class="fas fa-user me-1"></i> Usuario</th>
+                            <th><i class="fas fa-envelope me-1"></i> Email</th>
+                            <th><i class="fas fa-phone me-1"></i> Teléfono</th>
+                            <th><i class="fas fa-calendar me-1"></i> Registro</th>
+                            <th><i class="fas fa-clock me-1"></i> Último acceso</th>
+                            <th>Estado</th>
+                            <th class="text-center">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if comerciales %}
+                            {% for sub in comerciales %}
+                                {% with comercial=sub.subordinado %}
+                                    <tr>
+                                        <td>{{ forloop.counter }}</td>
+                                        <td>
+                                            <strong>{{ comercial.username }}</strong>
+                                            {% if comercial.is_superuser %}
+                                                <span class="badge bg-danger ms-1">Admin</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ comercial.email|default:"-" }}</td>
+                                        <td>{{ comercial.perfil.telefono|default:"-" }}</td>
+                                        <td>{{ comercial.date_joined|date:"d/m/Y H:i" }}</td>
+                                        <td>{{ comercial.last_login|date:"d/m/Y H:i"|default:"-" }}</td>
+                                        <td>
+                                            {% if sub.activo %}
+                                                <span class="badge bg-success">Activo</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">Inactivo</span>
+                                            {% endif %}
+                                        </td>
+                                        <td class="text-center">
+                                            <div class="btn-group" role="group">
+                                                <a href="{% url 'banco:resumen_comercial' comercial.id %}" class="btn btn-sm btn-outline-primary" title="Ver resumen">
+                                                    <i class="fas fa-chart-bar"></i>
+                                                </a>
+                                                <a href="{% url 'roles:asignar_recursos_banco' %}?comercial={{ comercial.id }}" class="btn btn-sm btn-outline-success" title="Asignar recursos">
+                                                    <i class="fas fa-tasks"></i>
+                                                </a>
+                                                <a href="#" class="btn btn-sm btn-outline-warning" title="Editar">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                {% endwith %}
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="8" class="text-center py-4 text-muted">
+                                    <i class="fas fa-users-slash fs-2 d-block mb-2"></i>
+                                    {% if q %}
+                                        No se encontraron comerciales que coincidan con "{{ q }}".
+                                    {% else %}
+                                        No hay comerciales asociados a este banco.
+                                        <br>
+                                        <small>Puedes ascender usuarios desde el <a href="{% url 'roles:ascender_usuario' %}">panel de superadmin</a>.</small>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+
+            {% if comerciales.has_other_pages %}
+                <nav aria-label="Paginación" class="mt-3">
+                    <ul class="pagination justify-content-center">
+                        {% if comerciales.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ comerciales.previous_page_number }}{% if q %}&q={{ q }}{% endif %}">Anterior</a>
+                            </li>
+                        {% endif %}
+                        {% for num in comerciales.paginator.page_range %}
+                            <li class="page-item {% if num == comerciales.number %}active{% endif %}">
+                                <a class="page-link" href="?page={{ num }}{% if q %}&q={{ q }}{% endif %}">{{ num }}</a>
+                            </li>
+                        {% endfor %}
+                        {% if comerciales.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ comerciales.next_page_number }}{% if q %}&q={{ q }}{% endif %}">Siguiente</a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

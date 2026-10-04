@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block page_title %}✅ Confirmar Pago de Recarga{% endblock %}
+{% block page_subtitle %}Registra el pago de la recarga aceptada{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-check-circle me-2"></i>Confirmar Pago de Recarga</h5>
+                </div>
+                <div class="card-body">
+                    <!-- ============================================================ -->
+                    <!-- DETALLE DE LA SOLICITUD                                       -->
+                    <!-- ============================================================ -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <p><strong><i class="fas fa-user me-1"></i> Cliente:</strong> {{ solicitud.cliente.username }}</p>
+                            <p><strong><i class="fas fa-money-bill-wave me-1"></i> Monto solicitado:</strong> <span class="fw-bold">${{ solicitud.monto|floatformat:2 }}</span></p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong><i class="fas fa-credit-card me-1"></i> Forma de pago:</strong> {{ solicitud.forma_pago.nombre }}</p>
+                            <p><strong><i class="fas fa-exchange-alt me-1"></i> Vía de pago:</strong> {{ solicitud.via_pago.nombre|default:"No asignada" }}</p>
+                        </div>
+                    </div>
+
+                    {% if solicitud.estado == 'aceptada' %}
+                        <!-- ============================================================ -->
+                        <!-- FORMULARIO DE CONFIRMACIÓN                                   -->
+                        <!-- ============================================================ -->
+                        <form method="post">
+                            {% csrf_token %}
+                            <div class="mb-3">
+                                <label for="monto_abonado" class="form-label fw-bold">Monto a abonar (USD) *</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">$</span>
+                                    <input type="number"
+                                           step="0.01"
+                                           min="0.01"
+                                           max="{{ solicitud.monto }}"
+                                           name="monto_abonado"
+                                           id="monto_abonado"
+                                           class="form-control"
+                                           value="{{ solicitud.monto }}"
+                                           required>
+                                </div>
+                                <small class="text-muted">
+                                    Puedes abonar un monto parcial (máximo ${{ solicitud.monto|floatformat:2 }}).
+                                    El saldo restante quedará pendiente.
+                                </small>
+                            </div>
+
+                            <div class="alert alert-success">
+                                <i class="fas fa-info-circle me-2"></i>
+                                Al confirmar, se <strong>sumará el monto</strong> al fondo del cliente y la solicitud se marcará como <strong>pagada</strong>.
+                            </div>
+
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                <button type="submit" class="btn btn-success btn-lg">
+                                    <i class="fas fa-check-circle me-2"></i> Confirmar Pago
+                                </button>
+                                <a href="{% url 'roles:gestionar_solicitudes' 'recarga' %}" class="btn btn-outline-secondary">
+                                    <i class="fas fa-arrow-left me-1"></i> Volver
+                                </a>
+                            </div>
+                        </form>
+
+                    {% else %}
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            Esta solicitud no está en estado <strong>aceptada</strong> (estado actual: {{ solicitud.get_estado_display }}).
+                        </div>
+                        <a href="{% url 'roles:gestionar_solicitudes' 'recarga' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-1"></i> Volver
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Validar que el monto no exceda el solicitado
+    document.querySelector('form').addEventListener('submit', function(e) {
+        const monto = document.getElementById('monto_abonado');
+        const max = parseFloat(monto.getAttribute('max'));
+        if (monto.value && parseFloat(monto.value) > max) {
+            e.preventDefault();
+            alert('El monto abonado no puede exceder el monto solicitado ($' + max.toFixed(2) + ').');
+            monto.focus();
+            return false;
+        }
+    });
+</script>
+{% endblock %}

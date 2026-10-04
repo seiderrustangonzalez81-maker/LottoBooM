@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block page_title %}Reporte de Comisiones{% endblock %}
+{% block page_subtitle %}Comisiones generadas por comerciales{% endblock %}
+
+{% block content %}
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-white">
+        <h5 class="fw-bold mb-0">💰 Comisiones por Comercial</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-sm table-hover">
+                <thead>
+                    <tr>
+                        <th>Comercial</th>
+                        <th>Total Ventas</th>
+                        <th>Total Premios</th>
+                        <th>Ganancia</th>
+                        <th>Comisión (5%)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in data %}
+                    <tr>
+                        <td><strong>{{ item.comercial.username }}</strong></td>
+                        <td>${{ item.total_ventas|floatformat:2 }}</td>
+                        <td>${{ item.total_premios|floatformat:2 }}</td>
+                        <td>${{ item.ganancia|floatformat:2 }}</td>
+                        <td><span class="badge bg-primary">${{ item.comision|floatformat:2 }}</span></td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="5" class="text-center text-muted">No hay comerciales.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

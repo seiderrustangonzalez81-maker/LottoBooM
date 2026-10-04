@@ -1,0 +1,772 @@
+[
+  {
+    "model": "sorteos.sorteo",
+    "pk": 1,
+    "fields": {
+      "nombre": "Anguila 8 AM",
+      "activo": true,
+      "minutos_cierre": 10,
+      "horarios": {"invierno": {"lunes": "07:00", "martes": "07:00", "miercoles": "07:00", "jueves": "07:00", "viernes": "07:00", "sabado": "07:00", "domingo": "07:00"}, "verano": {"lunes": "08:00", "martes": "08:00", "miercoles": "08:00", "jueves": "08:00", "viernes": "08:00", "sabado": "08:00", "domingo": "08:00"}},
+      "origen": "dominicano",
+      "creado_en": "2026-08-26T18:00:00Z",
+      "actualizado_en": "2026-08-26T18:00:00Z",
+      "formas_juego": ["corrido1", "corrido2", "fijo", "posicion", "tripleta"]
+    }
+  },
+  {
+    "model": "sorteos.sorteo",
+    "pk": 2,
+    "fields": {
+      "nombre": "Anguila 9 AM",
+      "activo": true,
+      "minutos_cierre": 10,
+      "horarios": {"invierno": {"lunes": "08:00", "martes": "08:00", "miercoles": "08:00", "jueves": "08:00", "viernes": "08:00", "sabado": "08:00", "domingo": "08:00"}, "verano": {"lunes": "09:00", "martes": "09:00", "miercoles": "09:00", "jueves": "09:00", "viernes": "09:00", "sabado": "09:00", "domingo": "09:00"}},
+      "origen": "dominicano",
+      "creado_en": "2026-08-26T18:00:00Z",
+      "actualizado_en": "2026-08-26T18:00:00Z",
+      "formas_juego": ["corrido1", "corrido2", "fijo", "posicion", "tripleta"]
+    }
+  },
+  {
+    "model": "sorteos.sorteo",
+    "pk": 3,
+    "fields": {
+      "nombre": "Haití 1",
+      "activo": true,
+      "minutos_cierre": 10,
+      "horarios": {"invierno": {"lunes": "08:30", "martes": "08:30", "miercoles": "08:30", "jueves": "08:30", "viernes": "08:30", "sabado": "08:30", "domingo": "08:30"}, "verano": {"lunes": "09:30", "martes": "09:30", "miercoles": "09:30", "jueves": "09:30", "viernes": "09:30", "sabado": "09:30", "domingo": "09:30"}},
+      "origen": "haitiano",
+      "creado_en": "2026-08-26T18:00:00Z",
+      "actualizado_en": "2026-08-26T18:00:00Z",
+      "formas_juego": ["corrido1", "corrido2", "fijo", "posicion", "tripleta"]
+    }
+  },
+  {
+    "model": "sorteos.sorteo",
+    "pk": 4,
+    "fields": {
+      "nombre": "Anguila 10 AM",
+      "activo": true,
+      "minutos_cierre": 10,
+      "horarios": {"invierno": {"lunes": "09:00", "martes": "09:00", "miercoles": "09:00", "jueves": "09:00", "viernes": "09:00", "sabado": "09:00", "domingo": "09:00"}, "verano": {"lunes": "10:00", "martes": "10:00", "miercoles": "10:00", "jueves": "10:00", "viernes": "10:00", "sabado": "10:00", "domingo": "10:00"}},
+      "origen": "dominicano",
+      "creado_en": "2026-08-26T18:00:00Z",
+      "actualizado_en": "2026-08-26T18:00:00Z",
+      "formas_juego": ["corrido1", "corrido2", "fijo", "posicion", "tripleta"]
+    }
+  },
+  {
+    "model": "sorteos.sorteo",
+    "pk": 5,
+    "fields": {
+      "nombre": "Tennessee 10:20 AM",
+      "activo": true,
+      "minutos_cierre": 10,
+      "horarios": {"invierno": {"lunes": "10:20", "martes": "10:20", "miercoles": "10:20", "jueves": "10:20", "viernes": "10:20", "sabado": "10:20", "domingo": null}, "verano": {"lunes": "10:20", "martes": "10:20", "miercoles": "10:20", "jueves": "10:20", "viernes": "10:20", "sabado": "10:20", "domingo": null}},
+      "origen": "americano",
+      "creado_en": "2026-08-26T18:00:00Z",
+      "actualizado_en": "2026-08-26T18:00:00Z",
+      "formas_juego": ["centena corrida1", "centena corrida2", "corrido1", "corrido2", "fijo", "pf", "pick2vspf", "pick3", "pick4", "posicion", "tripleta", "vspf", "vspick2"]
+    }
+  },
+  {
+    "model": "sorteos.sorteo",
+    "pk": 6,
+    "fields": {
+      "nombre": "Haití 2",
+      "activo": true,
+      "minutos_cierre": 10,
+      "horarios": {"invierno": {"lunes": "09:30", "martes": "09:30", "miercoles": "09:30", "jueves": "09:30", "viernes": "09:30", "sabado": "09:30", "domingo": "09:30"}, "verano": {"lunes": "10:30", "martes": "10:30", "miercoles": "10:30", "jueves": "10:30", "viernes": "10:30", "sabado": "10:30", "domingo": "10:30"}},
+      "origen": "haitiano",
+      "creado_en": "2026-08-26T18:00:00Z",
+      "actualizado_en": "2026-08-26T18:00:00Z",
+      "formas_juego": ["corrido1", "corrido2", "fijo", "posicion", "tripleta"]
+    }
+  },
+  {
+    "model": "sorteos.sorteo",
+    "pk": 7,
+    "fields": {
+      "nombre": "Anguila 11 AM",
+      "activo": true,
+      "minutos_cierre": 10,
+      "horarios": {"invierno": {"lunes": "10:00", "martes": "10:00", "miercoles": "10:00", "jueves": "10:00", "viernes": "10:00", "sabado": "10:00", "domingo": "10:00"}, "verano": {"lunes": "11:00", "martes": "11:00", "miercoles": "11:00", "jueves": "11:00", "viernes": "11:00", "sabado": "11:00", "domingo": "11:00"}},
+      "origen": "dominicano",
+      "creado_en": "2026-08-26T18:00:00Z",
+      "actualizado_en": "2026-08-26T18:00:00Z",
+      "formas_juego": ["corrido1", "corrido2", "fijo", "posicion", "tripleta"]
+    }
+  },
+  {
+    "model": "sorteos.sorteo",
+    "pk": 8,
+    "fields": {
+      "nombre": "Texas 11 AM",
+      "activo": true,
+      "minutos_cierre": 10,
+      "horarios": {"invierno": {"lunes": "11:00", "martes": "11:00", "miercoles": "11:00", "jueves": "11:00", "viernes": "11:00", "sabado": "11:00", "domingo": null}, "verano": {"lunes": "11:00", "martes": "11:00", "miercoles": "11:00", "jueves": "11:00", "viernes": "11:00", "sabado": "11:00", "domingo": null}},
+      "origen": "americano",
+      "creado_en": "2026-08-26T18:00:00Z",
+      "actualizado_en": "2026-08-26T18:00:00Z",
+      "formas_juego": ["centena corrida1", "centena corrida2", "corrido1", "corrido2", "fijo", "pf", "pick2vspf", "pick3", "pick4", "posicion", "tripleta", "vspf", "vspick2"]
+    }
+  },
+  {
+    "model": "sorteos.sorteo",
+    "pk": 9,
+    "fields": {
+      "nombre": "Haití 3",
+      "activo": true,
+      "minutos_cierre": 10,
+      "horarios": {"invierno": {"lunes": "10:30", "martes": "10:30", "miercoles": "10:30", "jueves": "10:30", "viernes": "10:30", "sabado": "10:30", "domingo": "10:30"}, "verano": {"lunes": "11:30", "martes": "11:30", "miercoles": "11:30", "jueves": "11:30", "viernes": "11:30", "sabado": "11:30", "domingo": "11:30"}},
+      "origen": "haitiano",
+      "creado_en": "2026-08-26T18:00:00Z",
+      "actualizado_en": "2026-08-26T18:00:00Z",
+      "formas_juego": ["corrido1", "corrido2", "fijo", "posicion", "tripleta"]
+    }
+  },
+    {
+    "model": "sorteos.sorteo",
+    "pk": 10,
+    "fields": {
+      "nombre": "Lotedom",
+      "activo": true,
+      "minutos_cierre": 10,
+      "horarios": {"invierno": {"lunes": "11:00", "martes": "11:00", "miercoles": "11:00", "jueves": "11:00", "viernes": "11:00", "sabado": "11:00", "domingo": "11:00"}, "verano": {"lunes": "12:00", "martes": "12:00", "miercoles": "12:00", "jueves": "12:00", "viernes": "12:00", "sabado": "12:00", "domingo": "12:00"}},
+      "origen": "dominicano",
+      "creado_en": "2026-08-26T18:00:00Z",
+      "actualizado_en": "2026-08-26T18:00:00Z",
+      "formas_juego": ["fijo", "corrido1", "corrido2", "tripleta", "posicion"]
+    }
+  },
+  {
+    "model": "sorteos.sorteo",
+    "pk": 11,
+    "fields": {
+      "nombre": "Quemaito",
+      "activo": true,
+      "minutos_cierre": 10,
+      "horarios": {"invierno": {"lunes": "10:50", "martes": "10:50", "miercoles": "10:50", "jueves": "10:50", "viernes": "10:50", "sabado": "10:50", "domingo": "10:50"}, "verano": {"lunes": "11:50", "martes": "11:50", "miercoles": "11:50", "jueves": "11:50", "viernes": "11:50", "sabado": "11:50", "domingo": "11:50"}},
+      "origen": "dominicano",
+      "creado_en": "2026-08-26T18:00:00Z",
+      "actualizado_en": "2026-08-26T18:00:00Z",
+      "formas_juego": ["fijo"]
+    }
+  },
+  {
+    "model": "sorteos.sorteo",
+    "pk": 12,
+    "fields": {
+      "nombre": "Anguila 12 PM",
+      "activo": true,
+      "minutos_cierre": 10,
+      "horarios": {"invierno": {"lunes": "11:00", "martes": "11:00", "miercoles": "11:00", "jueves": "11:00", "viernes": "11:00", "sabado": "11:00", "domingo": "11:00"}, "verano": {"lunes": "12:00", "martes": "12:00", "miercoles": "12:00", "jueves": "12:00", "viernes": "12:00", "sabado": "12:00", "domingo": "12:00"}},
+      "origen": "dominicano",
+      "creado_en": "2026-08-26T18:00:00Z",
+      "actualizado_en": "2026-08-26T18:00:00Z",
+      "formas_juego": ["corrido1", "corrido2", "fijo", "posicion", "tripleta"]
+    }
+  },
+  {
+    "model": "sorteos.sorteo",
+    "pk": 13,
+    "fields": {
+      "nombre": "Primera",
+      "activo": true,
+      "minutos_cierre": 10,
+      "horarios": {"invierno": {"lunes": "11:00", "martes": "11:00", "miercoles": "11:00", "jueves": "11:00", "viernes": "11:00", "sabado": "11:00", "domingo": "11:00"}, "verano": {"lunes": "12:00", "martes": "12:00", "miercoles": "12:00", "jueves": "12:00", "viernes": "12:00", "sabado": "12:00", "domingo": "12:00"}},
+      "origen": "dominicano",
+      "creado_en": "2026-08-26T18:00:00Z",
+      "actualizado_en": "2026-08-26T18:00:00Z",
+      "formas_juego": ["corrido1", "corrido2", "fijo", "posicion", "tripleta"]
+    }
+  },
+  {
+    "model": "sorteos.sorteo",
+    "pk": 14,
+    "fields": {
+      "nombre": "Quinielón",
+      "activo": true,
+      "minutos_cierre": 10,
+      "horarios": {"invierno": {"lunes": "11:00", "martes": "11:00", "miercoles": "11:00", "jueves": "11:00", "viernes": "11:00", "sabado": "11:00", "domingo": "11:00"}, "verano": {"lunes": "12:00", "martes": "12:00", "miercoles": "12:00", "jueves": "12:00", "viernes": "12:00", "sabado": "12:00", "domingo": "12:00"}},
+      "origen": "dominicano",
+      "creado_en": "2026-08-26T18:00:00Z",
+      "actualizado_en": "2026-08-26T18:00:00Z",
+      "formas_juego": ["fijo"]
+    }
+  },
+  {
+    "model": "sorteos.sorteo",
+    "pk": 15,
+    "fields": {
+      "nombre": "Suerte 12:30 PM",
+      "activo": true,
+      "minutos_cierre": 10,
+      "horarios": {"invierno": {"lunes": "11:30", "martes": "11:30", "miercoles": "11:30", "jueves": "11:30", "viernes": "11:30", "sabado": "11:30", "domingo": "11:30"}, "verano": {"lunes": "12:30", "martes": "12:30", "miercoles": "12:30", "jueves": "12:30", "viernes": "12:30", "sabado": "12:30", "domingo": "12:30"}},
+      "origen": "dominicano",
+      "creado_en": "2026-08-26T18:00:00Z",
+      "actualizado_en": "2026-08-26T18:00:00Z",
+      "formas_juego": ["corrido1", "corrido2", "fijo", "posicion", "tripleta"]
+    }
+  },
+  {
+    "model": "sorteos.sorteo",
+    "pk": 16,
+    "fields": {
+      "nombre": "King Lottery 12:30 PM",
+      "activo": true,
+      "minutos_cierre": 10,
+      "horarios": {"invierno": {"lunes": "11:30", "martes": "11:30", "miercoles": "11:30", "jueves": "11:30", "viernes": "11:30", "sabado": "11:30", "domingo": "11:30"}, "verano": {"lunes": "12:30", "martes": "12:30", "miercoles": "12:30", "jueves": "12:30", "viernes": "12:30", "sabado": "12:30", "domingo": "12:30"}},
+      "origen": "dominicano",
+      "creado_en": "2026-08-26T18:00:00Z",
+      "actualizado_en": "2026-08-26T18:00:00Z",
+      "formas_juego": ["centena corrida1", "centena corrida2", "corrido1", "corrido2", "fijo", "pf", "pick2vspf", "pick3", "pick4", "posicion", "tripleta", "vspf", "vspick2"]
+    }
+  },
+  {
+    "model": "sorteos.sorteo",
+    "pk": 17,
+    "fields": {
+      "nombre": "Georgia 12:30 PM",
+      "activo": true,
+      "minutos_cierre": 10,
+      "horarios": {"invierno": {"lunes": "12:30", "martes": "12:30", "miercoles": "12:30", "jueves": "12:30", "viernes": "12:30", "sabado": "12:30", "domingo": "12:30"}, "verano": {"lunes": "12:30", "martes": "12:30", "miercoles": "12:30", "jueves": "12:30", "viernes": "12:30", "sabado": "12:30", "domingo": "12:30"}},
+      "origen": "americano",
+      "creado_en": "2026-08-26T18:00:00Z",
+      "actualizado_en": "2026-08-26T18:00:00Z",
+      "formas_juego": ["centena corrida1", "centena corrida2", "corrido1", "corrido2", "fijo", "pf", "pick2vspf", "pick3", "pick4", "posicion", "tripleta", "vspf", "vspick2"]
+    }
+  },
+  {
+    "model": "sorteos.sorteo",
+    "pk": 18,
+    "fields": {
+      "nombre": "Real 12:50 PM",
+      "activo": true,
+      "minutos_cierre": 10,
+      "horarios": {"invierno": {"lunes": "11:50", "martes": "11:50", "miercoles": "11:50", "jueves": "11:50", "viernes": "11:50", "sabado": "11:50", "domingo": "11:50"}, "verano": {"lunes": "12:50", "martes": "12:50", "miercoles": "12:50", "jueves": "12:50", "viernes": "12:50", "sabado": "12:50", "domingo": "12:50"}},
+      "origen": "dominicano",
+      "creado_en": "2026-08-26T18:00:00Z",
+      "actualizado_en": "2026-08-26T18:00:00Z",
+      "formas_juego": ["corrido1", "corrido2", "fijo", "posicion", "tripleta"]
+    }
+  },
+  {
+    "model": "sorteos.sorteo",
+    "pk": 19,
+    "fields": {
+      "nombre": "New York Real 12:50 PM",
+      "activo": true,
+      "minutos_cierre": 10,
+      "horarios": {"invierno": {"lunes": "12:50", "martes": "12:50", "miercoles": "12:50", "jueves": "12:50", "viernes": "12:50", "sabado": "12:50", "domingo": "12:50"}, "verano": {"lunes": "12:50", "martes": "12:50", "miercoles": "12:50", "jueves": "12:50", "viernes": "12:50", "sabado": "12:50", "domingo": "12:50"}},
+      "origen": "americano",
+      "creado_en": "2026-08-26T18:00:00Z",
+      "actualizado_en": "2026-08-26T18:00:00Z",
+      "formas_juego": ["corrido1", "corrido2", "fijo", "posicion", "tripleta"]
+    }
+  },
+  {
+    "model": "sorteos.sorteo",
+    "pk": 20,
+    "fields": {
+      "nombre": "New Jersey 12:50 PM",
+      "activo": true,
+      "minutos_cierre": 10,
+      "horarios": {"invierno": {"lunes": "12:50", "martes": "12:50", "miercoles": "12:50", "jueves": "12:50", "viernes": "12:50", "sabado": "12:50", "domingo": "12:50"}, "verano": {"lunes": "12:50", "martes": "12:50", "miercoles": "12:50", "jueves": "12:50", "viernes": "12:50", "sabado": "12:50", "domingo": "12:50"}},
+      "origen": "americano",
+      "creado_en": "2026-08-26T18:00:00Z",
+      "actualizado_en": "2026-08-26T18:00:00Z",
+      "formas_juego": ["centena corrida1", "centena corrida2", "corrido1", "corrido2", "fijo", "pf", "pick2vspf", "pick3", "pick4", "posicion", "tripleta", "vspf", "vspick2"]
+    }
+  },
+  {
+    "model": "sorteos.sorteo",
+    "pk": 21,
+    "fields": {
+      "nombre": "Anguila 1 PM",
+      "activo": true,
+      "minutos_cierre": 10,
+      "horarios": {"invierno": {"lunes": "12:00", "martes": "12:00", "miercoles": "12:00", "jueves": "12:00", "viernes": "12:00", "sabado": "12:00", "domingo": "12:00"}, "verano": {"lunes": "13:00", "martes": "13:00", "miercoles": "13:00", "jueves": "13:00", "viernes": "13:00", "sabado": "13:00", "domingo": "13:00"}},
+      "origen": "dominicano",
+      "creado_en": "2026-08-26T18:00:00Z",
+      "actualizado_en": "2026-08-26T18:00:00Z",
+      "formas_juego": ["corrido1", "corrido2", "fijo", "posicion", "tripleta"]
+    }
+  },
+  {
+    "model": "sorteos.sorteo",
+    "pk": 22,
+    "fields": {
+      "nombre": "Tennessee 1:20 PM",
+      "activo": true,
+      "minutos_cierre": 10,
+      "horarios": {"invierno": {"lunes": "13:20", "martes": "13:20", "miercoles": "13:20", "jueves": "13:20", "viernes": "13:20", "sabado": "13:20", "domingo": null}, "verano": {"lunes": "13:20", "martes": "13:20", "miercoles": "13:20", "jueves": "13:20", "viernes": "13:20", "sabado": "13:20", "domingo": null}},
+      "origen": "americano",
+      "creado_en": "2026-08-26T18:00:00Z",
+      "actualizado_en": "2026-08-26T18:00:00Z",
+      "formas_juego": ["centena corrida1", "centena corrida2", "corrido1", "corrido2", "fijo", "pf", "pick2vspf", "pick3", "pick4", "posicion", "tripleta", "vspf", "vspick2"]
+    }
+  },
+  {
+    "model": "sorteos.sorteo",
+    "pk": 23,
+    "fields": {
+      "nombre": "Texas 1:20 PM",
+      "activo": true,
+      "minutos_cierre": 10,
+      "horarios": {"invierno": {"lunes": "13:20", "martes": "13:20", "miercoles": "13:20", "jueves": "13:20", "viernes": "13:20", "sabado": "13:20", "domingo": null}, "verano": {"lunes": "13:20", "martes": "13:20", "miercoles": "13:20", "jueves": "13:20", "viernes": "13:20", "sabado": "13:20", "domingo": null}},
+      "origen": "americano",
+      "creado_en": "2026-08-26T18:00:00Z",
+      "actualizado_en": "2026-08-26T18:00:00Z",
+      "formas_juego": ["centena corrida1", "centena corrida2", "corrido1", "corrido2", "fijo", "pf", "pick2vspf", "pick3", "pick4", "posicion", "tripleta", "vspf", "vspick2"]
+    }
+  },
+  {
+    "model": "sorteos.sorteo",
+    "pk": 24,
+    "fields": {
+      "nombre": "Florida 1:35 PM",
+      "activo": true,
+      "minutos_cierre": 10,
+      "horarios": {"invierno": {"lunes": "13:35", "martes": "13:35", "miercoles": "13:35", "jueves": "13:35", "viernes": "13:35", "sabado": "13:35", "domingo": "13:35"}, "verano": {"lunes": "13:35", "martes": "13:35", "miercoles": "13:35", "jueves": "13:35", "viernes": "13:35", "sabado": "13:35", "domingo": "13:35"}},
+      "origen": "americano",
+      "creado_en": "2026-08-26T18:00:00Z",
+      "actualizado_en": "2026-08-26T18:00:00Z",
+      "formas_juego": ["centena corrida1", "centena corrida2", "corrido1", "corrido2", "fijo", "pf", "pick2", "pick2vspf", "pick3", "pick4", "pick5", "posicion", "tripleta", "vspf", "vspick2"]
+    }
+  },
+  {
+    "model": "sorteos.sorteo",
+    "pk": 25,
+    "fields": {
+      "nombre": "Anguila 2 PM",
+      "activo": true,
+      "minutos_cierre": 10,
+      "horarios": {"invierno": {"lunes": "13:00", "martes": "13:00", "miercoles": "13:00", "jueves": "13:00", "viernes": "13:00", "sabado": "13:00", "domingo": "13:00"}, "verano": {"lunes": "14:00", "martes": "14:00", "miercoles": "14:00", "jueves": "14:00", "viernes": "14:00", "sabado": "14:00", "domingo": "14:00"}},
+      "origen": "dominicano",
+      "creado_en": "2026-08-26T18:00:00Z",
+      "actualizado_en": "2026-08-26T18:00:00Z",
+      "formas_juego": ["corrido1", "corrido2", "fijo", "posicion", "tripleta"]
+    }
+  },
+  {
+    "model": "sorteos.sorteo",
+    "pk": 26,
+    "fields": {
+      "nombre": "Gana Más 2:30 PM",
+      "activo": true,
+      "minutos_cierre": 10,
+      "horarios": {"invierno": {"lunes": "13:30", "martes": "13:30", "miercoles": "13:30", "jueves": "13:30", "viernes": "13:30", "sabado": "13:30", "domingo": "13:30"}, "verano": {"lunes": "14:30", "martes": "14:30", "miercoles": "14:30", "jueves": "14:30", "viernes": "14:30", "sabado": "14:30", "domingo": "14:30"}},
+      "origen": "dominicano",
+      "creado_en": "2026-08-26T18:00:00Z",
+      "actualizado_en": "2026-08-26T18:00:00Z",
+      "formas_juego": ["corrido1", "corrido2", "fijo", "posicion", "tripleta"]
+    }
+  },
+  {
+    "model": "sorteos.sorteo",
+    "pk": 27,
+    "fields": {
+      "nombre": "New York 2:30 PM",
+      "activo": true,
+      "minutos_cierre": 10,
+      "horarios": {"invierno": {"lunes": "14:30", "martes": "14:30", "miercoles": "14:30", "jueves": "14:30", "viernes": "14:30", "sabado": "14:30", "domingo": "14:30"}, "verano": {"lunes": "14:30", "martes": "14:30", "miercoles": "14:30", "jueves": "14:30", "viernes": "14:30", "sabado": "14:30", "domingo": "14:30"}},
+      "origen": "americano",
+      "creado_en": "2026-08-26T18:00:00Z",
+      "actualizado_en": "2026-08-26T18:00:00Z",
+      "formas_juego": ["centena corrida1", "centena corrida2", "corrido1", "corrido2", "fijo", "pf", "pick2vspf", "pick3", "pick4", "posicion", "tripleta", "vspf", "vspick2"]
+    }
+  },
+  {
+    "model": "sorteos.sorteo",
+    "pk": 28,
+    "fields": {
+      "nombre": "Anguila 3 PM",
+      "activo": true,
+      "minutos_cierre": 10,
+      "horarios": {"invierno": {"lunes": "14:00", "martes": "14:00", "miercoles": "14:00", "jueves": "14:00", "viernes": "14:00", "sabado": "14:00", "domingo": "14:00"}, "verano": {"lunes": "15:00", "martes": "15:00", "miercoles": "15:00", "jueves": "15:00", "viernes": "15:00", "sabado": "15:00", "domingo": "15:00"}},
+      "origen": "dominicano",
+      "creado_en": "2026-08-26T18:00:00Z",
+      "actualizado_en": "2026-08-26T18:00:00Z",
+      "formas_juego": ["corrido1", "corrido2", "fijo", "posicion", "tripleta"]
+    }
+  },
+  {
+    "model": "sorteos.sorteo",
+    "pk": 29,
+    "fields": {
+      "nombre": "Anguila 4 PM",
+      "activo": true,
+      "minutos_cierre": 10,
+      "horarios": {"invierno": {"lunes": "15:00", "martes": "15:00", "miercoles": "15:00", "jueves": "15:00", "viernes": "15:00", "sabado": "15:00", "domingo": "15:00"}, "verano": {"lunes": "16:00", "martes": "16:00", "miercoles": "16:00", "jueves": "16:00", "viernes": "16:00", "sabado": "16:00", "domingo": "16:00"}},
+      "origen": "dominicano",
+      "creado_en": "2026-08-26T18:00:00Z",
+      "actualizado_en": "2026-08-26T18:00:00Z",
+      "formas_juego": ["corrido1", "corrido2", "fijo", "posicion", "tripleta"]
+    }
+  },
+  {
+    "model": "sorteos.sorteo",
+    "pk": 30,
+    "fields": {
+      "nombre": "Anguila 5 PM",
+      "activo": true,
+      "minutos_cierre": 10,
+      "horarios": {"invierno": {"lunes": "16:00", "martes": "16:00", "miercoles": "16:00", "jueves": "16:00", "viernes": "16:00", "sabado": "16:00", "domingo": "16:00"}, "verano": {"lunes": "17:00", "martes": "17:00", "miercoles": "17:00", "jueves": "17:00", "viernes": "17:00", "sabado": "17:00", "domingo": "17:00"}},
+      "origen": "dominicano",
+      "creado_en": "2026-08-26T18:00:00Z",
+      "actualizado_en": "2026-08-26T18:00:00Z",
+      "formas_juego": ["corrido1", "corrido2", "fijo", "posicion", "tripleta"]
+    }
+  },
+  {
+    "model": "sorteos.sorteo",
+    "pk": 31,
+    "fields": {
+      "nombre": "Haití 4",
+      "activo": true,
+      "minutos_cierre": 10,
+      "horarios": {"invierno": {"lunes": "16:30", "martes": "16:30", "miercoles": "16:30", "jueves": "16:30", "viernes": "16:30", "sabado": "16:30", "domingo": "16:30"}, "verano": {"lunes": "17:30", "martes": "17:30", "miercoles": "17:30", "jueves": "17:30", "viernes": "17:30", "sabado": "17:30", "domingo": "17:30"}},
+      "origen": "haitiano",
+      "creado_en": "2026-08-26T18:00:00Z",
+      "actualizado_en": "2026-08-26T18:00:00Z",
+      "formas_juego": ["corrido1", "corrido2", "fijo", "posicion", "tripleta"]
+    }
+  },
+  {
+    "model": "sorteos.sorteo",
+    "pk": 32,
+    "fields": {
+      "nombre": "Suerte 6 PM",
+      "activo": true,
+      "minutos_cierre": 10,
+      "horarios": {"invierno": {"lunes": "17:00", "martes": "17:00", "miercoles": "17:00", "jueves": "17:00", "viernes": "17:00", "sabado": "17:00", "domingo": "17:00"}, "verano": {"lunes": "18:00", "martes": "18:00", "miercoles": "18:00", "jueves": "18:00", "viernes": "18:00", "sabado": "18:00", "domingo": "18:00"}},
+      "origen": "dominicano",
+      "creado_en": "2026-08-26T18:00:00Z",
+      "actualizado_en": "2026-08-26T18:00:00Z",
+      "formas_juego": ["corrido1", "corrido2", "fijo", "posicion", "tripleta"]
+    }
+  },
+  {
+    "model": "sorteos.sorteo",
+    "pk": 33,
+    "fields": {
+      "nombre": "Anguila 6 PM",
+      "activo": true,
+      "minutos_cierre": 10,
+      "horarios": {"invierno": {"lunes": "17:00", "martes": "17:00", "miercoles": "17:00", "jueves": "17:00", "viernes": "17:00", "sabado": "17:00", "domingo": "17:00"}, "verano": {"lunes": "18:00", "martes": "18:00", "miercoles": "18:00", "jueves": "18:00", "viernes": "18:00", "sabado": "18:00", "domingo": "18:00"}},
+      "origen": "dominicano",
+      "creado_en": "2026-08-26T18:00:00Z",
+      "actualizado_en": "2026-08-26T18:00:00Z",
+      "formas_juego": ["corrido1", "corrido2", "fijo", "posicion", "tripleta"]
+    }
+  },
+  {
+    "model": "sorteos.sorteo",
+    "pk": 34,
+    "fields": {
+      "nombre": "Haití 5",
+      "activo": true,
+      "minutos_cierre": 10,
+      "horarios": {"invierno": {"lunes": "17:30", "martes": "17:30", "miercoles": "17:30", "jueves": "17:30", "viernes": "17:30", "sabado": "17:30", "domingo": "17:30"}, "verano": {"lunes": "18:30", "martes": "18:30", "miercoles": "18:30", "jueves": "18:30", "viernes": "18:30", "sabado": "18:30", "domingo": "18:30"}},
+      "origen": "haitiano",
+      "creado_en": "2026-08-26T18:00:00Z",
+      "actualizado_en": "2026-08-26T18:00:00Z",
+      "formas_juego": ["corrido1", "corrido2", "fijo", "posicion", "tripleta"]
+    }
+  },
+  {
+    "model": "sorteos.sorteo",
+    "pk": 35,
+    "fields": {
+      "nombre": "Anguila 7 PM",
+      "activo": true,
+      "minutos_cierre": 10,
+      "horarios": {"invierno": {"lunes": "18:00", "martes": "18:00", "miercoles": "18:00", "jueves": "18:00", "viernes": "18:00", "sabado": "18:00", "domingo": "18:00"}, "verano": {"lunes": "19:00", "martes": "19:00", "miercoles": "19:00", "jueves": "19:00", "viernes": "19:00", "sabado": "19:00", "domingo": "19:00"}},
+      "origen": "dominicano",
+      "creado_en": "2026-08-26T18:00:00Z",
+      "actualizado_en": "2026-08-26T18:00:00Z",
+      "formas_juego": ["corrido1", "corrido2", "fijo", "posicion", "tripleta"]
+    }
+  },
+  {
+    "model": "sorteos.sorteo",
+    "pk": 36,
+    "fields": {
+      "nombre": "Primera 7 PM",
+      "activo": true,
+      "minutos_cierre": 10,
+      "horarios": {"invierno": {"lunes": "18:00", "martes": "18:00", "miercoles": "18:00", "jueves": "18:00", "viernes": "18:00", "sabado": "18:00", "domingo": "18:00"}, "verano": {"lunes": "19:00", "martes": "19:00", "miercoles": "19:00", "jueves": "19:00", "viernes": "19:00", "sabado": "19:00", "domingo": "19:00"}},
+      "origen": "dominicano",
+      "creado_en": "2026-08-26T18:00:00Z",
+      "actualizado_en": "2026-08-26T18:00:00Z",
+      "formas_juego": ["corrido1", "corrido2", "fijo", "posicion", "tripleta"]
+    }
+  },
+  {
+    "model": "sorteos.sorteo",
+    "pk": 37,
+    "fields": {
+      "nombre": "Georgia 7 PM",
+      "activo": true,
+      "minutos_cierre": 10,
+      "horarios": {"invierno": {"lunes": "19:00", "martes": "19:00", "miercoles": "19:00", "jueves": "19:00", "viernes": "19:00", "sabado": "19:00", "domingo": "19:00"}, "verano": {"lunes": "19:00", "martes": "19:00", "miercoles": "19:00", "jueves": "19:00", "viernes": "19:00", "sabado": "19:00", "domingo": "19:00"}},
+      "origen": "americano",
+      "creado_en": "2026-08-26T18:00:00Z",
+      "actualizado_en": "2026-08-26T18:00:00Z",
+      "formas_juego": ["centena corrida1", "centena corrida2", "corrido1", "corrido2", "fijo", "pf", "pick2vspf", "pick3", "pick4", "pick5", "posicion", "tripleta", "vspf", "vspick2"]
+    }
+  },
+  {
+    "model": "sorteos.sorteo",
+    "pk": 38,
+    "fields": {
+      "nombre": "Texas 7 PM",
+      "activo": true,
+      "minutos_cierre": 10,
+      "horarios": {"invierno": {"lunes": "19:00", "martes": "19:00", "miercoles": "19:00", "jueves": "19:00", "viernes": "19:00", "sabado": "19:00", "domingo": null}, "verano": {"lunes": "19:00", "martes": "19:00", "miercoles": "19:00", "jueves": "19:00", "viernes": "19:00", "sabado": "19:00", "domingo": null}},
+      "origen": "americano",
+      "creado_en": "2026-08-26T18:00:00Z",
+      "actualizado_en": "2026-08-26T18:00:00Z",
+      "formas_juego": ["centena corrida1", "centena corrida2", "corrido1", "corrido2", "fijo", "pf", "pick2vspf", "pick3", "pick4", "posicion", "tripleta", "vspf", "vspick2"]
+    }
+  },
+  {
+    "model": "sorteos.sorteo",
+    "pk": 39,
+    "fields": {
+      "nombre": "Tennessee 7:20 PM",
+      "activo": true,
+      "minutos_cierre": 10,
+      "horarios": {"invierno": {"lunes": "19:20", "martes": "19:20", "miercoles": "19:20", "jueves": "19:20", "viernes": "19:20", "sabado": "19:20", "domingo": "19:20"}, "verano": {"lunes": "19:20", "martes": "19:20", "miercoles": "19:20", "jueves": "19:20", "viernes": "19:20", "sabado": "19:20", "domingo": "19:20"}},
+      "origen": "americano",
+      "creado_en": "2026-08-26T18:00:00Z",
+      "actualizado_en": "2026-08-26T18:00:00Z",
+      "formas_juego": ["centena corrida1", "centena corrida2", "corrido1", "corrido2", "fijo", "pf", "pick2vspf", "pick3", "pick4", "posicion", "tripleta", "vspf", "vspick2"]
+    }
+  },
+  {
+    "model": "sorteos.sorteo",
+    "pk": 40,
+    "fields": {
+      "nombre": "King Lottery 7:30 PM",
+      "activo": true,
+      "minutos_cierre": 10,
+      "horarios": {"invierno": {"lunes": "18:30", "martes": "18:30", "miercoles": "18:30", "jueves": "18:30", "viernes": "18:30", "sabado": "18:30", "domingo": "18:30"}, "verano": {"lunes": "19:30", "martes": "19:30", "miercoles": "19:30", "jueves": "19:30", "viernes": "19:30", "sabado": "19:30", "domingo": "19:30"}},
+      "origen": "dominicano",
+      "creado_en": "2026-08-26T18:00:00Z",
+      "actualizado_en": "2026-08-26T18:00:00Z",
+      "formas_juego": ["centena corrida1", "centena corrida2", "corrido1", "corrido2", "fijo", "pf", "pick2vspf", "pick3", "pick4", "posicion", "tripleta", "vspf", "vspick2"]
+    }
+  },
+  {
+    "model": "sorteos.sorteo",
+    "pk": 41,
+    "fields": {
+      "nombre": "Haití 6",
+      "activo": true,
+      "minutos_cierre": 10,
+      "horarios": {"invierno": {"lunes": "18:30", "martes": "18:30", "miercoles": "18:30", "jueves": "18:30", "viernes": "18:30", "sabado": "18:30", "domingo": "18:30"}, "verano": {"lunes": "19:30", "martes": "19:30", "miercoles": "19:30", "jueves": "19:30", "viernes": "19:30", "sabado": "19:30", "domingo": "19:30"}},
+      "origen": "haitiano",
+      "creado_en": "2026-08-26T18:00:00Z",
+      "actualizado_en": "2026-08-26T18:00:00Z",
+      "formas_juego": ["corrido1", "corrido2", "fijo", "posicion", "tripleta"]
+    }
+  },
+  {
+    "model": "sorteos.sorteo",
+    "pk": 42,
+    "fields": {
+      "nombre": "Loteka 7:50 PM",
+      "activo": true,
+      "minutos_cierre": 10,
+      "horarios": {"invierno": {"lunes": "18:50", "martes": "18:50", "miercoles": "18:50", "jueves": "18:50", "viernes": "18:50", "sabado": "18:50", "domingo": "18:50"}, "verano": {"lunes": "19:50", "martes": "19:50", "miercoles": "19:50", "jueves": "19:50", "viernes": "19:50", "sabado": "19:50", "domingo": "19:50"}},
+      "origen": "dominicano",
+      "creado_en": "2026-08-26T18:00:00Z",
+      "actualizado_en": "2026-08-26T18:00:00Z",
+      "formas_juego": ["corrido1", "corrido2", "fijo", "posicion", "tripleta"]
+    }
+  },
+  {
+    "model": "sorteos.sorteo",
+    "pk": 43,
+    "fields": {
+      "nombre": "Tok 3",
+      "activo": true,
+      "minutos_cierre": 10,
+      "horarios": {"invierno": {"lunes": "18:50", "martes": "18:50", "miercoles": "18:50", "jueves": "18:50", "viernes": "18:50", "sabado": "18:50", "domingo": "18:50"}, "verano": {"lunes": "19:50", "martes": "19:50", "miercoles": "19:50", "jueves": "19:50", "viernes": "19:50", "sabado": "19:50", "domingo": "19:50"}},
+      "origen": "dominicano",
+      "creado_en": "2026-08-26T18:00:00Z",
+      "actualizado_en": "2026-08-26T18:00:00Z",
+      "formas_juego": ["centena corrida1", "centena corrida2", "corrido1", "corrido2", "fijo", "pf", "pick2vspf", "pick3", "pick4", "posicion", "tripleta", "vspf", "vspick2"]
+    }
+  },
+  {
+    "model": "sorteos.sorteo",
+    "pk": 44,
+    "fields": {
+      "nombre": "Anguila 8 PM",
+      "activo": true,
+      "minutos_cierre": 10,
+      "horarios": {"invierno": {"lunes": "19:00", "martes": "19:00", "miercoles": "19:00", "jueves": "19:00", "viernes": "19:00", "sabado": "19:00", "domingo": "19:00"}, "verano": {"lunes": "20:00", "martes": "20:00", "miercoles": "20:00", "jueves": "20:00", "viernes": "20:00", "sabado": "20:00", "domingo": "20:00"}},
+      "origen": "dominicano",
+      "creado_en": "2026-08-26T18:00:00Z",
+      "actualizado_en": "2026-08-26T18:00:00Z",
+      "formas_juego": ["corrido1", "corrido2", "fijo", "posicion", "tripleta"]
+    }
+  },
+  {
+    "model": "sorteos.sorteo",
+    "pk": 45,
+    "fields": {
+      "nombre": "Nacional",
+      "activo": true,
+      "minutos_cierre": 10,
+      "horarios": {"invierno": {"lunes": "19:50", "martes": "19:50", "miercoles": "19:50", "jueves": "19:50", "viernes": "19:50", "sabado": "19:50", "domingo": "17:00"}, "verano": {"lunes": "20:50", "martes": "20:50", "miercoles": "20:50", "jueves": "20:50", "viernes": "20:50", "sabado": "20:50", "domingo": "18:00"}},
+      "origen": "dominicano",
+      "creado_en": "2026-08-26T18:00:00Z",
+      "actualizado_en": "2026-08-26T18:00:00Z",
+      "formas_juego": ["centena corrida1", "centena corrida2", "corrido1", "corrido2", "fijo", "pick2vspf", "pick4", "posicion", "tripleta"]
+    }
+  },
+  {
+    "model": "sorteos.sorteo",
+    "pk": 46,
+    "fields": {
+      "nombre": "Leidsa 8:55 PM",
+      "activo": true,
+      "minutos_cierre": 10,
+      "horarios": {"invierno": {"lunes": "19:55", "martes": "19:55", "miercoles": "19:55", "jueves": "19:55", "viernes": "19:55", "sabado": "19:55", "domingo": "14:55"}, "verano": {"lunes": "20:55", "martes": "20:55", "miercoles": "20:55", "jueves": "20:55", "viernes": "20:55", "sabado": "20:55", "domingo": "15:55"}},
+      "origen": "dominicano",
+      "creado_en": "2026-08-26T18:00:00Z",
+      "actualizado_en": "2026-08-26T18:00:00Z",
+      "formas_juego": ["corrido1", "corrido2", "fijo", "posicion", "tripleta"]
+    }
+  },
+  {
+    "model": "sorteos.sorteo",
+    "pk": 47,
+    "fields": {
+      "nombre": "Pega 3+",
+      "activo": true,
+      "minutos_cierre": 10,
+      "horarios": {"invierno": {"lunes": "19:55", "martes": "19:55", "miercoles": "19:55", "jueves": "19:55", "viernes": "19:55", "sabado": "19:55", "domingo": "14:55"}, "verano": {"lunes": "20:55", "martes": "20:55", "miercoles": "20:55", "jueves": "20:55", "viernes": "20:55", "sabado": "20:55", "domingo": "15:55"}},
+      "origen": "dominicano",
+      "creado_en": "2026-08-26T18:00:00Z",
+      "actualizado_en": "2026-08-26T18:00:00Z",
+      "formas_juego": ["fijo", "pf", "pick3", "vspf", "vspick2"]
+    }
+  },
+  {
+    "model": "sorteos.sorteo",
+    "pk": 48,
+    "fields": {
+      "nombre": "Anguila 9 PM",
+      "activo": true,
+      "minutos_cierre": 10,
+      "horarios": {"invierno": {"lunes": "20:00", "martes": "20:00", "miercoles": "20:00", "jueves": "20:00", "viernes": "20:00", "sabado": "20:00", "domingo": "20:00"}, "verano": {"lunes": "21:00", "martes": "21:00", "miercoles": "21:00", "jueves": "21:00", "viernes": "21:00", "sabado": "21:00", "domingo": "21:00"}},
+      "origen": "dominicano",
+      "creado_en": "2026-08-26T18:00:00Z",
+      "actualizado_en": "2026-08-26T18:00:00Z",
+      "formas_juego": ["corrido1", "corrido2", "fijo", "posicion", "tripleta"]
+    }
+  },
+  {
+    "model": "sorteos.sorteo",
+    "pk": 49,
+    "fields": {
+      "nombre": "Florida 9:50 PM",
+      "activo": true,
+      "minutos_cierre": 10,
+      "horarios": {"invierno": {"lunes": "21:50", "martes": "21:50", "miercoles": "21:50", "jueves": "21:50", "viernes": "21:50", "sabado": "21:50", "domingo": "21:50"}, "verano": {"lunes": "21:50", "martes": "21:50", "miercoles": "21:50", "jueves": "21:50", "viernes": "21:50", "sabado": "21:50", "domingo": "21:50"}},
+      "origen": "americano",
+      "creado_en": "2026-08-26T18:00:00Z",
+      "actualizado_en": "2026-08-26T18:00:00Z",
+      "formas_juego": ["centena corrida1", "centena corrida2", "corrido1", "corrido2", "fijo", "pf", "pick2vspf", "pick3", "pick4", "pick5", "posicion", "tripleta", "vspf", "vspick2"]
+    }
+  },
+  {
+    "model": "sorteos.sorteo",
+    "pk": 50,
+    "fields": {
+      "nombre": "Anguila 10 PM",
+      "activo": true,
+      "minutos_cierre": 10,
+      "horarios": {"invierno": {"lunes": "21:00", "martes": "21:00", "miercoles": "21:00", "jueves": "21:00", "viernes": "21:00", "sabado": "21:00", "domingo": "21:00"}, "verano": {"lunes": "22:00", "martes": "22:00", "miercoles": "22:00", "jueves": "22:00", "viernes": "22:00", "sabado": "22:00", "domingo": "22:00"}},
+      "origen": "dominicano",
+      "creado_en": "2026-08-26T18:00:00Z",
+      "actualizado_en": "2026-08-26T18:00:00Z",
+      "formas_juego": ["corrido1", "corrido2", "fijo", "posicion", "tripleta"]
+    }
+  },
+  {
+    "model": "sorteos.sorteo",
+    "pk": 51,
+    "fields": {
+      "nombre": "New York 10:30 PM",
+      "activo": true,
+      "minutos_cierre": 10,
+      "horarios": {"invierno": {"lunes": "22:30", "martes": "22:30", "miercoles": "22:30", "jueves": "22:30", "viernes": "22:30", "sabado": "22:30", "domingo": "22:30"}, "verano": {"lunes": "22:30", "martes": "22:30", "miercoles": "22:30", "jueves": "22:30", "viernes": "22:30", "sabado": "22:30", "domingo": "22:30"}},
+      "origen": "americano",
+      "creado_en": "2026-08-26T18:00:00Z",
+      "actualizado_en": "2026-08-26T18:00:00Z",
+      "formas_juego": ["centena corrida1", "centena corrida2", "corrido1", "corrido2", "fijo", "pf", "pick2vspf", "pick3", "pick4", "posicion", "tripleta", "vspf", "vspick2"]
+    }
+  },
+  {
+    "model": "sorteos.sorteo",
+    "pk": 52,
+    "fields": {
+      "nombre": "New Jersey 10:50 PM",
+      "activo": true,
+      "minutos_cierre": 10,
+      "horarios": {"invierno": {"lunes": "22:50", "martes": "22:50", "miercoles": "22:50", "jueves": "22:50", "viernes": "22:50", "sabado": "22:50", "domingo": "22:50"}, "verano": {"lunes": "22:50", "martes": "22:50", "miercoles": "22:50", "jueves": "22:50", "viernes": "22:50", "sabado": "22:50", "domingo": "22:50"}},
+      "origen": "americano",
+      "creado_en": "2026-08-26T18:00:00Z",
+      "actualizado_en": "2026-08-26T18:00:00Z",
+      "formas_juego": ["centena corrida1", "centena corrida2", "corrido1", "corrido2", "fijo", "pf", "pick2vspf", "pick3", "pick4", "posicion", "tripleta", "vspf", "vspick2"]
+    }
+  },
+  {
+    "model": "sorteos.sorteo",
+    "pk": 53,
+    "fields": {
+      "nombre": "Texas 11 PM",
+      "activo": true,
+      "minutos_cierre": 10,
+      "horarios": {"invierno": {"lunes": "23:00", "martes": "23:00", "miercoles": "23:00", "jueves": "23:00", "viernes": "23:00", "sabado": "23:00", "domingo": null}, "verano": {"lunes": "23:00", "martes": "23:00", "miercoles": "23:00", "jueves": "23:00", "viernes": "23:00", "sabado": "23:00", "domingo": null}},
+      "origen": "americano",
+      "creado_en": "2026-08-26T18:00:00Z",
+      "actualizado_en": "2026-08-26T18:00:00Z",
+      "formas_juego": ["centena corrida1", "centena corrida2", "corrido1", "corrido2", "fijo", "pf", "pick2vspf", "pick3", "pick4", "posicion", "tripleta", "vspf", "vspick2"]
+    }
+  },
+    {
+    "model": "sorteos.sorteo",
+    "pk": 54,
+    "fields": {
+      "nombre": "Georgia 11:40 PM",
+      "activo": true,
+      "minutos_cierre": 10,
+      "horarios": {"invierno": {"lunes": "23:30", "martes": "23:30", "miercoles": "23:30", "jueves": "23:30", "viernes": "23:30", "sabado": "23:30", "domingo": "23:30"}, "verano": {"lunes": "23:30", "martes": "23:30", "miercoles": "23:30", "jueves": "23:30", "viernes": "23:30", "sabado": "23:30", "domingo": "23:30"}},
+      "origen": "americano",
+      "creado_en": "2026-08-26T18:00:00Z",
+      "actualizado_en": "2026-08-26T18:00:00Z",
+      "formas_juego": ["centena corrida1", "centena corrida2", "corrido1", "corrido2", "fijo", "pf", "pick3", "pick4", "posicion", "tripleta", "vspf"]
+    }
+  },
+  {
+    "model": "sorteos.sorteo",
+    "pk": 55,
+    "fields": {
+      "nombre": "Real Noche",
+      "activo": true,
+      "minutos_cierre": 10,
+      "horarios": {"invierno": {"lunes": "19:50", "martes": "19:50", "miercoles": "19:50", "jueves": "19:50", "viernes": "19:55", "sabado": "19:55", "domingo": "14:55"}, "verano": {"lunes": "20:55", "martes": "20:55", "miercoles": "20:55", "jueves": "20:55", "viernes": "20:55", "sabado": "20:55", "domingo": "15:55"}},
+      "origen": "dominicano",
+      "creado_en": "2026-08-26T18:00:00Z",
+      "actualizado_en": "2026-08-26T18:00:00Z",
+      "formas_juego": ["corrido1", "corrido2", "fijo", "posicion", "tripleta"]
+    }
+  }
+]
