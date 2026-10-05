@@ -5,7 +5,112 @@
 {% block page_subtitle %}Orbit · LottoBooM{% endblock %}
 
 {% block extra_css %}
+{# ORB_V2_FINAL #}
+{# ORB_V2_JACKPOT #}
+{# ORB_V2_AURORA #}
 {# ORB_PUBNAV_V1 #}
+<style>
+/* ORB_V2_AURORA */
+#orbAurora,#orbStarfield,#orbDigits,#orbBalls,#orbLightning,#orbConfetti,#orbCursorGlow{position:fixed;inset:0;pointer-events:none;width:100%;height:100%}
+#orbAurora{z-index:-3;opacity:.85;overflow:hidden}
+#orbStarfield{z-index:-2;opacity:.7}
+#orbBalls{z-index:-1;opacity:.55}
+#orbLightning{z-index:99997;opacity:0}
+#orbConfetti{z-index:99998}
+.orb-aurora__wave{position:absolute;left:-10%;right:-10%;height:55vh;top:-20vh;border-radius:50%;filter:blur(60px);mix-blend-mode:screen;animation:aurora-flow 14s ease-in-out infinite}
+.orb-aurora__wave:nth-child(1){background:radial-gradient(ellipse 60% 50% at 30% 60%,rgba(45,212,191,.35),transparent 70%);animation-duration:16s}
+.orb-aurora__wave:nth-child(2){background:radial-gradient(ellipse 60% 50% at 70% 40%,rgba(167,139,250,.32),transparent 70%);animation-duration:20s;animation-delay:-3s}
+.orb-aurora__wave:nth-child(3){background:radial-gradient(ellipse 60% 50% at 50% 30%,rgba(251,113,133,.22),transparent 70%);animation-duration:18s;animation-delay:-6s}
+.orb-aurora__wave:nth-child(4){background:radial-gradient(ellipse 60% 50% at 20% 20%,rgba(56,189,248,.22),transparent 70%);animation-duration:22s;animation-delay:-9s}
+@keyframes aurora-flow{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(12vh) scale(1.15)}}
+#orbLightning.flash{animation:lightningFlash .35s ease-out;background:linear-gradient(180deg,rgba(255,255,255,.85),rgba(200,230,255,.4))}
+@keyframes lightningFlash{0%{opacity:0}8%{opacity:.9}20%{opacity:.15}30%{opacity:.75}60%{opacity:.05}100%{opacity:0}}
+.orb-bokeh{position:fixed;inset:0;z-index:-1;pointer-events:none;overflow:hidden}
+.orb-bokeh span{position:absolute;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.8),transparent 70%);animation:bokehFloat linear infinite;filter:blur(2px)}
+@keyframes bokehFloat{0%{transform:translateY(20vh) scale(.7);opacity:0}15%{opacity:.6}85%{opacity:.6}100%{transform:translateY(-120vh) scale(1.1);opacity:0}}
+@media (prefers-reduced-motion:reduce){.orb-aurora__wave,#orbLightning.flash,.orb-bokeh span{animation:none!important}#orbAurora,#orbStarfield,#orbBalls,#orbCursorGlow{display:none}}
+<style>
+/* ORB_V2_JACKPOT */
+.orb-jackpot{position:relative;margin-bottom:22px;padding:22px 24px 24px;border-radius:20px;background:radial-gradient(ellipse 70% 90% at 100% 0%,rgba(251,191,36,.15),transparent 60%),radial-gradient(ellipse 70% 90% at 0% 100%,rgba(45,212,191,.12),transparent 60%),linear-gradient(160deg,#fffbeb 0%,#fff 60%,#f0fdfa 100%);border:1px solid rgba(251,191,36,.35);box-shadow:0 24px 48px -22px rgba(251,191,36,.35);overflow:hidden;animation:jackpotBreathe 4s ease-in-out infinite}
+@keyframes jackpotBreathe{0%,100%{box-shadow:0 24px 48px -22px rgba(251,191,36,.35)}50%{box-shadow:0 28px 56px -22px rgba(251,191,36,.55)}}
+.orb-jackpot::before{content:'';position:absolute;inset:-50%;background:conic-gradient(from 0deg at 50% 50%,rgba(251,191,36,0) 0deg,rgba(251,191,36,.15) 90deg,rgba(167,139,250,0) 180deg,rgba(45,212,191,.12) 270deg,rgba(251,191,36,0) 360deg);animation:jackpotRotate 20s linear infinite;pointer-events:none}
+@keyframes jackpotRotate{to{transform:rotate(360deg)}}
+.orb-jackpot__inner{position:relative;z-index:2}
+.orb-jackpot__kicker{display:inline-flex;align-items:center;gap:8px;padding:5px 12px;border-radius:999px;background:rgba(251,191,36,.15);border:1px solid rgba(251,191,36,.4);font-family:monospace;font-weight:800;font-size:.68rem;letter-spacing:1.8px;text-transform:uppercase;color:#b45309;margin-bottom:14px}
+.orb-jackpot__kicker i{animation:spark 2s ease-in-out infinite;display:inline-block}
+@keyframes spark{0%,100%{transform:scale(1) rotate(0)}50%{transform:scale(1.25) rotate(15deg)}}
+.orb-jackpot__amount{font-family:Orbitron,sans-serif;font-weight:900;font-size:clamp(2rem,5vw,3.4rem);line-height:1;letter-spacing:-1.5px;background:linear-gradient(135deg,#f59e0b 0%,#dc2626 50%,#a78bfa 100%);background-size:200% 100%;animation:jackpotShine 6s linear infinite;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;font-variant-numeric:tabular-nums;margin-bottom:6px;overflow-wrap:anywhere}
+@keyframes jackpotShine{0%{background-position:0% 50%}100%{background-position:200% 50%}}
+.orb-jackpot__sub{font-family:monospace;font-size:.72rem;font-weight:700;color:#4a5266}
+.orb-ticker{position:relative;margin-bottom:22px;padding:12px 0;border-radius:14px;background:linear-gradient(90deg,#131826,#1a2238,#131826);border:1px solid rgba(45,212,191,.28);box-shadow:0 8px 24px -12px rgba(19,24,38,.4),inset 0 0 30px rgba(45,212,191,.06);overflow:hidden}
+.orb-ticker::before,.orb-ticker::after{content:'';position:absolute;top:0;bottom:0;width:60px;z-index:3;pointer-events:none}
+.orb-ticker::before{left:0;background:linear-gradient(90deg,#131826,transparent)}
+.orb-ticker::after{right:0;background:linear-gradient(270deg,#131826,transparent)}
+.orb-ticker__track{display:flex;gap:40px;white-space:nowrap;will-change:transform;animation:tickerScroll 40s linear infinite}
+.orb-ticker:hover .orb-ticker__track{animation-play-state:paused}
+@keyframes tickerScroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+.orb-ticker__item{display:inline-flex;align-items:center;gap:8px;font-family:Orbitron,sans-serif;font-weight:700;font-size:.78rem;color:#2dd4bf;flex-shrink:0}
+.orb-ticker__item .hour{background:rgba(45,212,191,.15);color:#2dd4bf;padding:2px 8px;border-radius:6px;font-size:.72rem}
+.orb-ticker__item .dot{width:6px;height:6px;border-radius:50%;background:#2dd4bf;box-shadow:0 0 8px rgba(45,212,191,.9);animation:livePulse 1.6s ease-in-out infinite}
+@keyframes livePulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.85)}}
+.orb-live{margin-bottom:22px;padding:18px 22px;border-radius:18px;background:linear-gradient(160deg,#fff,#fafdff);border:1px solid rgba(45,212,191,.28);box-shadow:0 12px 28px -18px rgba(45,212,191,.35)}
+.orb-live__head{display:flex;align-items:center;gap:10px;padding-bottom:12px;margin-bottom:12px;border-bottom:1px dashed rgba(45,212,191,.28)}
+.orb-live__badge{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;background:rgba(45,212,191,.12);border:1px solid rgba(45,212,191,.35);font-family:monospace;font-weight:800;font-size:.62rem;letter-spacing:1.6px;text-transform:uppercase;color:#0d9488}
+.orb-live__badge .dot{width:7px;height:7px;border-radius:50%;background:#10b981;box-shadow:0 0 8px rgba(16,185,129,.9);animation:livePulse 1.6s ease-in-out infinite}
+.orb-live__title{font-family:Orbitron,sans-serif;font-weight:800;font-size:.8rem;letter-spacing:1.4px;text-transform:uppercase;color:var(--ink)}
+.orb-live__list{display:flex;flex-direction:column;gap:8px}
+.orb-live__item{display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:12px;background:#fff;border:1px solid rgba(45,212,191,.14);animation:liveItemIn .5s ease}
+@keyframes liveItemIn{from{opacity:0;transform:translateX(-10px)}to{opacity:1;transform:translateX(0)}}
+.orb-live__avatar{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#2dd4bf,#a78bfa);display:grid;place-items:center;color:#fff;font-weight:900;font-size:.75rem;flex-shrink:0}
+.orb-live__text{flex:1;min-width:0;font-size:.8rem;color:var(--ink);font-weight:600}
+.orb-live__text b{color:#0d9488;font-weight:800}
+.orb-live__time{font-family:monospace;font-size:.66rem;color:var(--ink-mute);font-weight:700;flex-shrink:0}
+@media (max-width:640px){.orb-jackpot{padding:16px;border-radius:16px}.orb-jackpot__amount{font-size:1.85rem}.orb-ticker__item{font-size:.7rem}.orb-live{padding:14px 16px}.orb-live__avatar{width:30px;height:30px}}
+<style>
+/* ORB_V2_FINAL */
+.orb-ball3d-wrap{margin-bottom:22px;padding:22px;border-radius:18px;background:linear-gradient(160deg,#fff,#f5f3ff);border:1px solid rgba(167,139,250,.28);box-shadow:0 12px 28px -18px rgba(167,139,250,.35);text-align:center;overflow:hidden}
+.orb-ball3d__head{font-family:Orbitron,sans-serif;font-weight:800;font-size:.78rem;letter-spacing:1.6px;text-transform:uppercase;color:#7c3aed;margin-bottom:14px;display:inline-flex;align-items:center;gap:8px}
+.orb-ball3d{width:140px;height:140px;margin:0 auto;perspective:800px;display:grid;place-items:center}
+.orb-ball3d__inner{width:110px;height:110px;position:relative;transform-style:preserve-3d;animation:ballSpin 12s linear infinite}
+@keyframes ballSpin{0%{transform:rotateY(0) rotateX(15deg)}100%{transform:rotateY(360deg) rotateX(15deg)}}
+.orb-ball3d__face{position:absolute;inset:0;border-radius:50%;background:radial-gradient(circle at 30% 30%,#fff,#a78bfa 60%,#7c3aed 100%);box-shadow:inset -6px -6px 20px rgba(0,0,0,.15),inset 6px 6px 20px rgba(255,255,255,.6),0 12px 30px -8px rgba(124,58,237,.5);display:grid;place-items:center;font-family:Orbitron,sans-serif;font-weight:900;font-size:2.4rem;color:#fff;text-shadow:0 2px 4px rgba(0,0,0,.3);backface-visibility:hidden}
+.orb-ball3d__face--1{transform:rotateY(0deg) translateZ(55px)}
+.orb-ball3d__face--2{transform:rotateY(90deg) translateZ(55px)}
+.orb-ball3d__face--3{transform:rotateY(180deg) translateZ(55px)}
+.orb-ball3d__face--4{transform:rotateY(270deg) translateZ(55px)}
+.orb-ball3d__face--5{transform:rotateX(90deg) translateZ(55px)}
+.orb-ball3d__face--6{transform:rotateX(-90deg) translateZ(55px)}
+.orb-ball3d__caption{margin-top:12px;font-size:.72rem;color:var(--ink-mute);font-weight:600;font-family:monospace}
+.orb-steps{margin-bottom:22px}
+.orb-steps__head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px;flex-wrap:wrap}
+.orb-steps__title{font-family:Orbitron,sans-serif;font-weight:800;font-size:.85rem;letter-spacing:1.8px;text-transform:uppercase;color:var(--ink);display:flex;align-items:center;gap:8px}
+.orb-steps__grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.orb-step{position:relative;padding:22px 20px;border-radius:18px;background:linear-gradient(160deg,#fff,#fafcff);border:1px solid rgba(45,212,191,.22);box-shadow:0 12px 30px -18px rgba(45,212,191,.35);transition:transform .25s,box-shadow .25s;overflow:hidden;min-width:0}
+.orb-step:hover{transform:translateY(-4px);box-shadow:0 20px 40px -18px rgba(45,212,191,.5)}
+.orb-step__num{position:absolute;top:12px;right:16px;font-family:Orbitron,sans-serif;font-weight:900;font-size:2.4rem;line-height:1;color:rgba(45,212,191,.12);letter-spacing:-2px}
+.orb-step__icon{font-size:2rem;margin-bottom:10px;display:block;animation:stepBounce 3s ease-in-out infinite;animation-delay:var(--d,0s)}
+@keyframes stepBounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+.orb-step__title{font-family:Orbitron,sans-serif;font-weight:800;font-size:.92rem;margin:0 0 6px;color:var(--ink)}
+.orb-step__text{font-size:.78rem;color:var(--ink-mute);font-weight:600;line-height:1.5;margin:0}
+.orb-ripple{position:fixed;pointer-events:none;border-radius:50%;background:radial-gradient(circle,rgba(45,212,191,.5),rgba(45,212,191,0));transform:translate(-50%,-50%) scale(0);animation:rippleOut .7s ease-out forwards;z-index:99996}
+@keyframes rippleOut{to{transform:translate(-50%,-50%) scale(1);opacity:0}}
+.orb-glitch{position:relative;display:inline-block}
+.orb-glitch.glitching::before,.orb-glitch.glitching::after{content:attr(data-text);position:absolute;left:0;top:0;width:100%;height:100%;overflow:hidden}
+.orb-glitch.glitching::before{color:#fb7185;animation:glitchTop .3s steps(2);clip-path:inset(0 0 55% 0);transform:translate(-2px,-2px)}
+.orb-glitch.glitching::after{color:#2dd4bf;animation:glitchBottom .3s steps(2);clip-path:inset(55% 0 0 0);transform:translate(2px,2px)}
+@keyframes glitchTop{0%{transform:translate(-2px,-2px)}50%{transform:translate(3px,-3px)}100%{transform:translate(0,0)}}
+@keyframes glitchBottom{0%{transform:translate(2px,2px)}50%{transform:translate(-3px,3px)}100%{transform:translate(0,0)}}
+.orb-tilt{transform-style:preserve-3d;transition:transform .3s cubic-bezier(.2,.8,.2,1);will-change:transform}
+.orb-shine{position:relative;overflow:hidden}
+.orb-shine::before{content:'';position:absolute;top:0;left:-100%;width:60%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.35) 50%,transparent);transform:skewX(-20deg);transition:left .7s ease;pointer-events:none;z-index:1}
+.orb-shine:hover::before{left:150%}
+.orb-reveal{opacity:0;transform:translateY(16px);transition:opacity .6s cubic-bezier(.2,.8,.2,1),transform .6s cubic-bezier(.2,.8,.2,1)}
+.orb-reveal.is-in{opacity:1;transform:translateY(0)}
+.orb-count__progress{position:absolute;inset:-4px;border-radius:50%;background:conic-gradient(#2dd4bf 0deg,#a78bfa var(--prog,0deg),transparent var(--prog,0deg));-webkit-mask:radial-gradient(circle,transparent 68%,#000 70%);mask:radial-gradient(circle,transparent 68%,#000 70%)}
+@media (max-width:900px){.orb-steps__grid{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:640px){.orb-ball3d{width:110px;height:110px}.orb-ball3d__inner{width:86px;height:86px}.orb-ball3d__face{font-size:1.9rem}}
+@media (prefers-reduced-motion:reduce){.orb-step__icon,.orb-ball3d__inner{animation:none!important}.orb-shine::before,.orb-tilt{transition:none!important}}
+</style></style></style>
 <style>
 /* ══════════════════════════════════════════════════════════════
    LottoBooM ORBIT — Edición Aurora
@@ -1659,6 +1764,74 @@
     </div>
   </section>
 
+  
+  <section class="orb-jackpot" aria-label="Jackpot">
+    <div class="orb-jackpot__inner">
+      <span class="orb-jackpot__kicker"><i class="fas fa-fire"></i> Jackpot del día</span>
+      <div class="orb-jackpot__amount" id="orbJackpotNum">$0</div>
+      <div class="orb-jackpot__sub" id="orbJackpotSub">Se actualiza cada minuto</div>
+    </div>
+  </section>
+  <section class="orb-ticker" aria-label="Sorteos en vivo">
+    <div class="orb-ticker__track" id="orbTickerTrack">
+      <span class="orb-ticker__item"><span class="dot"></span> Cargando sorteos…</span>
+    </div>
+  </section>
+  <section class="orb-live" aria-label="Actividad en vivo">
+    <div class="orb-live__head">
+      <span class="orb-live__badge"><span class="dot"></span> LIVE</span>
+      <span class="orb-live__title">Actividad reciente</span>
+    </div>
+    <div class="orb-live__list" id="orbLiveList">
+      <div class="orb-live__item">
+        <div class="orb-live__avatar">LB</div>
+        <div class="orb-live__text">Conectando con LottoBooM…</div>
+        <div class="orb-live__time">ahora</div>
+      </div>
+    </div>
+  </section>
+
+  
+  <section class="orb-ball3d-wrap" aria-label="Esfera de la suerte">
+    <div class="orb-ball3d__head"><i class="fas fa-dice-d20"></i> Esfera de la suerte</div>
+    <div class="orb-ball3d">
+      <div class="orb-ball3d__inner">
+        <span class="orb-ball3d__face orb-ball3d__face--1">7</span>
+        <span class="orb-ball3d__face orb-ball3d__face--2">3</span>
+        <span class="orb-ball3d__face orb-ball3d__face--3">9</span>
+        <span class="orb-ball3d__face orb-ball3d__face--4">1</span>
+        <span class="orb-ball3d__face orb-ball3d__face--5">4</span>
+        <span class="orb-ball3d__face orb-ball3d__face--6">6</span>
+      </div>
+    </div>
+    <div class="orb-ball3d__caption">Rota · 6 caras · Tu próximo número</div>
+  </section>
+  <section class="orb-steps" aria-labelledby="orbStepsTitle">
+    <div class="orb-steps__head">
+      <span class="orb-steps__title" id="orbStepsTitle"><i class="fas fa-rocket"></i> Cómo funciona</span>
+    </div>
+    <div class="orb-steps__grid">
+      <div class="orb-step">
+        <span class="orb-step__num">1</span>
+        <span class="orb-step__icon" style="--d:0s;">📝</span>
+        <h3 class="orb-step__title">Regístrate gratis</h3>
+        <p class="orb-step__text">Crea tu cuenta en segundos. Sin tarjeta, sin compromiso.</p>
+      </div>
+      <div class="orb-step">
+        <span class="orb-step__num">2</span>
+        <span class="orb-step__icon" style="--d:0.3s;">💳</span>
+        <h3 class="orb-step__title">Recarga y apuesta</h3>
+        <p class="orb-step__text">Elige tu gestor y la forma de pago que prefieras.</p>
+      </div>
+      <div class="orb-step">
+        <span class="orb-step__num">3</span>
+        <span class="orb-step__icon" style="--d:0.6s;">🏆</span>
+        <h3 class="orb-step__title">Cobra al instante</h3>
+        <p class="orb-step__text">Si ganas, el premio entra directo a tu fondo.</p>
+      </div>
+    </div>
+  </section>
+
   {# ═══════ FINAL CTA ═══════ #}
   <section class="orb-final">
     <span class="orb-final__kicker">
@@ -1939,4 +2112,40 @@
 
 })();
 </script>
-{% endblock extra_js %}
+{% endblock extra_js %}<script>
+(function(){'use strict';
+var R=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+var M=window.matchMedia('(max-width: 640px)').matches;
+var H=window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+var D=Math.min(window.devicePixelRatio||1,2);
+var C=['#2dd4bf','#a78bfa','#fb7185','#fbbf24','#38bdf8'];
+if(!R){var a=document.createElement('div');a.id='orbAurora';a.innerHTML='<div class="orb-aurora__wave"></div><div class="orb-aurora__wave"></div><div class="orb-aurora__wave"></div><div class="orb-aurora__wave"></div>';document.body.appendChild(a)}
+if(!R){var b=document.createElement('div');b.className='orb-bokeh';var N=M?8:16;for(var i=0;i<N;i++){var s=document.createElement('span');var sz=20+Math.random()*60;s.style.width=sz+'px';s.style.height=sz+'px';s.style.left=Math.random()*100+'%';s.style.bottom='-10vh';s.style.animationDuration=(12+Math.random()*18)+'s';s.style.animationDelay=(-Math.random()*20)+'s';b.appendChild(s)}document.body.appendChild(b)}
+if(!R){var cs=document.createElement('canvas');cs.id='orbStarfield';document.body.appendChild(cs);var x=cs.getContext('2d');var W=0,Hh=0,S=[],mx=0,my=0;function rs(){W=cs.width=innerWidth*D;Hh=cs.height=innerHeight*D;cs.style.width=innerWidth+'px';cs.style.height=innerHeight+'px';S=[];var n=M?60:140;for(var i=0;i<n;i++)S.push({x:Math.random()*W,y:Math.random()*Hh,z:Math.random()*.8+.2,r:Math.random()*1.4*D+.3})}rs();addEventListener('resize',rs);if(H)addEventListener('mousemove',function(e){mx=(e.clientX-innerWidth/2)*.01;my=(e.clientY-innerHeight/2)*.01});(function f(){if(document.hidden){requestAnimationFrame(f);return}x.clearRect(0,0,W,Hh);x.fillStyle='#fff';S.forEach(function(s){x.globalAlpha=s.z*.7+.3;x.beginPath();x.arc(s.x+mx*s.z*8,s.y+my*s.z*8,s.r,0,6.283);x.fill()});x.globalAlpha=1;requestAnimationFrame(f)})()}
+if(!R){var bl=document.createElement('canvas');bl.id='orbBalls';document.body.appendChild(bl);var y=bl.getContext('2d');var Wb=0,Hb=0,B=[];function rb(){Wb=bl.width=innerWidth*D;Hb=bl.height=innerHeight*D;bl.style.width=innerWidth+'px';bl.style.height=innerHeight+'px'}rb();addEventListener('resize',rb);var NB=M?10:22;for(var i=0;i<NB;i++)B.push({x:Math.random()*Wb,y:Math.random()*Hb,r:(8+Math.random()*22)*D,vy:-(.15+Math.random()*.35)*D,vx:(Math.random()-.5)*.2*D,c:C[Math.floor(Math.random()*C.length)],a:.15+Math.random()*.25,w:Math.random()*6.28});var t=0;(function f(){if(document.hidden){requestAnimationFrame(f);return}t+=.01;y.clearRect(0,0,Wb,Hb);B.forEach(function(b){b.y+=b.vy;b.x+=b.vx+Math.sin(t+b.w)*.3;if(b.y<-b.r*2){b.y=Hb+b.r*2;b.x=Math.random()*Wb}if(b.x<-b.r*2)b.x=Wb+b.r*2;if(b.x>Wb+b.r*2)b.x=-b.r*2;y.globalAlpha=b.a;var g=y.createRadialGradient(b.x-b.r/3,b.y-b.r/3,b.r*.1,b.x,b.y,b.r);g.addColorStop(0,'#fff');g.addColorStop(.4,b.c);g.addColorStop(1,b.c);y.fillStyle=g;y.beginPath();y.arc(b.x,b.y,b.r,0,6.283);y.fill()});y.globalAlpha=1;requestAnimationFrame(f)})()}
+if(!R){var li=document.createElement('div');li.id='orbLightning';document.body.appendChild(li);(function tk(){setTimeout(function(){li.classList.add('flash');setTimeout(function(){li.classList.remove('flash')},400);tk()},15000+Math.random()*30000)})()}
+})();
+</script><script>
+(function(){'use strict';
+var R=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+(function(){var tr=document.getElementById('orbTickerTrack');if(!tr)return;fetch('/jugadas/api/sorteos-disponibles/',{credentials:'same-origin'}).then(function(r){return r.ok?r.json():[]}).then(function(d){var it=Array.isArray(d)?d.slice(0,15):[];if(!it.length){tr.innerHTML='<span class="orb-ticker__item"><span class="dot"></span> Sin sorteos activos ahora</span>';return}var h=it.map(function(s){return '<span class="orb-ticker__item"><span class="dot"></span><span>'+(s.nombre||'Sorteo')+'</span><span class="hour">'+(s.hora_salida||'--:--')+'</span></span>'}).join('');tr.innerHTML=h+h}).catch(function(){tr.innerHTML='<span class="orb-ticker__item"><span class="dot"></span> LottoBooM</span>'})})();
+(function(){var el=document.getElementById('orbJackpotNum');var su=document.getElementById('orbJackpotSub');if(!el)return;var b=50000;var st=document.querySelector('[data-stat="ventas_hoy"]');if(st){var v=parseFloat((st.textContent||'').replace(/[^0-9.]/g,''))||0;if(v>0)b=Math.max(v*4,50000)}b=Math.round(b/100)*100;var t=b,d=2200,s=performance.now();function step(n){var p=Math.min((n-s)/d,1);var e=1-Math.pow(1-p,3);el.textContent='$'+Math.round(e*t).toLocaleString('en-US');if(p<1)requestAnimationFrame(step);else el.textContent='$'+t.toLocaleString('en-US')}if(!R)requestAnimationFrame(step);else el.textContent='$'+t.toLocaleString('en-US');if(!R)setInterval(function(){var dl=Math.floor(Math.random()*180)+20;el.textContent='$'+(t+dl).toLocaleString('en-US');if(su)su.textContent='+'+dl+' hace un momento';setTimeout(function(){el.textContent='$'+t.toLocaleString('en-US');if(su)su.textContent='Se actualiza cada minuto'},3000)},9000)})();
+(function(){var L=document.getElementById('orbLiveList');if(!L)return;var N=['Ana','Luis','María','Pedro','Karla','José','Yusy','Silvita','Vany','Adile'];var A=['ganó','apostó','recargó'];var S=['Anguila','Haití','Loteka','Real','Georgia','New York'];function g(){var n=N[Math.floor(Math.random()*N.length)];var a=A[Math.floor(Math.random()*A.length)];var s=S[Math.floor(Math.random()*S.length)];var v=a==='apostó'?(5+Math.floor(Math.random()*45)):(15+Math.floor(Math.random()*250));return{i:n.substring(0,2).toUpperCase(),h:'<b>'+n+'</b> '+a+' $'+v+' en '+s,t:Math.floor(Math.random()*4)+' min'}}function r(){L.innerHTML='';for(var i=0;i<3;i++){var d=g();var it=document.createElement('div');it.className='orb-live__item';it.innerHTML='<div class="orb-live__avatar">'+d.i+'</div><div class="orb-live__text">'+d.h+'</div><div class="orb-live__time">hace '+d.t+'</div>';L.appendChild(it)}}r();setInterval(r,12000)})();
+})();
+</script><script>
+(function(){'use strict';
+var R=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+var H=window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+var D=Math.min(window.devicePixelRatio||1,2);
+var COLS=['#2dd4bf','#a78bfa','#fb7185','#fbbf24','#38bdf8'];
+if(H&&!R){document.querySelectorAll('.orb-stat, .orb-action, .orb-pubnav__card, .orb-step, .orb-live__item, .orb-ball3d-wrap').forEach(function(c){c.classList.add('orb-tilt');var rf=null;c.addEventListener('mousemove',function(e){if(rf)return;rf=requestAnimationFrame(function(){var r=c.getBoundingClientRect();var x=(e.clientX-r.left)/r.width;var y=(e.clientY-r.top)/r.height;c.style.transform='perspective(700px) rotateX('+((y-.5)*-6)+'deg) rotateY('+((x-.5)*6)+'deg)';rf=null})});c.addEventListener('mouseleave',function(){c.style.transform=''})})}
+document.querySelectorAll('.orb-action, .orb-pubnav__card, .orb-step, .orb-live__item').forEach(function(c){c.classList.add('orb-shine')});
+var RV=document.querySelectorAll('.orb > section, .orb-hero__left, .orb-count');
+RV.forEach(function(e,i){e.classList.add('orb-reveal');e.style.transitionDelay=(i*60)+'ms'});
+if('IntersectionObserver' in window){var io=new IntersectionObserver(function(en){en.forEach(function(e){if(e.isIntersecting){e.target.classList.add('is-in');io.unobserve(e.target)}})},{threshold:.05});RV.forEach(function(e){io.observe(e)})}else{RV.forEach(function(e){e.classList.add('is-in')})}
+document.addEventListener('click',function(e){if(R)return;var rp=document.createElement('div');rp.className='orb-ripple';rp.style.left=e.clientX+'px';rp.style.top=e.clientY+'px';rp.style.width=rp.style.height='260px';document.body.appendChild(rp);setTimeout(function(){rp.remove()},750)});
+(function(){var b=document.getElementById('orbLucky');if(!b||R)return;var c=document.createElement('canvas');c.id='orbConfetti';document.body.appendChild(c);var x=c.getContext('2d');var W=0,Hh=0,P=[];function rc(){W=c.width=innerWidth*D;Hh=c.height=innerHeight*D;c.style.width=innerWidth+'px';c.style.height=innerHeight+'px'}rc();addEventListener('resize',rc);function sp(cx,cy){var N=window.innerWidth<640?40:90;for(var i=0;i<N;i++){var a=Math.random()*6.283;var s=(2+Math.random()*7)*D;P.push({x:cx,y:cy,vx:Math.cos(a)*s,vy:Math.sin(a)*s-2*D,size:(3+Math.random()*6)*D,color:COLS[Math.floor(Math.random()*COLS.length)],rot:Math.random()*6.28,vrot:(Math.random()-.5)*.3,life:1})}}(function f(){x.clearRect(0,0,W,Hh);P=P.filter(function(p){return p.life>.02});P.forEach(function(p){p.x+=p.vx;p.y+=p.vy;p.vy+=.18*D;p.vx*=.99;p.rot+=p.vrot;p.life-=.012;x.globalAlpha=Math.max(0,p.life);x.fillStyle=p.color;x.save();x.translate(p.x,p.y);x.rotate(p.rot);x.fillRect(-p.size/2,-p.size/2,p.size,p.size*.6);x.restore()});x.globalAlpha=1;requestAnimationFrame(f)})();b.addEventListener('click',function(){var r=b.getBoundingClientRect();sp((r.left+r.width/2)*D,(r.top+r.height/2)*D)})})();
+if(!R){var t=document.querySelector('.orb-hero__title');if(t){var tx=t.textContent.trim();if(tx){t.setAttribute('data-text',tx);t.classList.add('orb-glitch');(function tk(){setTimeout(function(){t.classList.add('glitching');setTimeout(function(){t.classList.remove('glitching')},320);tk()},20000+Math.random()*40000)})()}}}
+(function(){var o=document.querySelector('.orb-count__orb');if(!o)return;var p=document.createElement('div');p.className='orb-count__progress';o.appendChild(p);setInterval(function(){var d=new Date();var s=d.getMinutes()*60+d.getSeconds();p.style.setProperty('--prog',((s/3600)*360)+'deg')},1000)})();
+})();
+</script>
