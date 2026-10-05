@@ -94,7 +94,7 @@ def home(request):
         context['titulo'] = '🎰 LottoBooM'
         context['subtitulo'] = 'La mejor plataforma de lotería. Regístrate y empieza a ganar.'
 
-    return render(request, 'publico/home.html', context)
+    return render(request, 'publico/home_v2.html', context)
 
 
 # ═══════════════════════════════════════════════════════════════
