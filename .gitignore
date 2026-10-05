@@ -96,3 +96,4 @@ Thumbs.db
 .env
 .env.*
 *.local
+backup_db_*.sqlite3
