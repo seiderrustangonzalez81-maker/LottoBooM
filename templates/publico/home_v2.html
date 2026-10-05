@@ -1,10 +1,177 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block page_title %}Inicio{% endblock %}
+{% block page_title %}Inicio
+<style id="nx-themes">
+/* ═══════════════════════════════════════════════════════════════
+   NX_THEMES_V1 — 12 paletas de color
+   Se aplican al div.nx con data-nx-theme="<id>"
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Selector flotante */
+.nx-theme-picker {
+  position: fixed; right: 16px; bottom: 16px;
+  z-index: 99998;
+  display: flex; flex-direction: column; align-items: flex-end; gap: 8px;
+}
+.nx-theme-btn {
+  width: 52px; height: 52px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--mint), var(--violet), var(--coral));
+  background-size: 300% 300%;
+  animation: nx-holo 6s ease infinite;
+  border: 2px solid rgba(255,255,255,0.3);
+  cursor: pointer; font-size: 1.4rem;
+  display: grid; place-items: center;
+  box-shadow: 0 8px 24px rgba(167,139,250,0.5), 0 0 40px rgba(45,212,191,0.3);
+  transition: transform 0.2s;
+  color: #fff;
+}
+.nx-theme-btn:hover { transform: scale(1.1) rotate(15deg); }
+.nx-theme-panel {
+  display: none;
+  background: rgba(10,10,21,0.95);
+  border: 1px solid rgba(255,255,255,0.12);
+  backdrop-filter: blur(20px);
+  border-radius: 20px;
+  padding: 14px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+  max-width: 280px;
+}
+.nx-theme-panel.show { display: block; animation: nx-panelIn 0.3s ease; }
+@keyframes nx-panelIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.nx-theme-panel__title {
+  font-family: 'Orbitron', sans-serif; font-weight: 800;
+  font-size: 0.68rem; letter-spacing: 2px; text-transform: uppercase;
+  color: #fff; margin-bottom: 10px; padding-bottom: 8px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.nx-theme-grid {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;
+}
+.nx-theme-opt {
+  width: 52px; height: 52px; border-radius: 12px;
+  border: 2px solid rgba(255,255,255,0.1);
+  cursor: pointer; padding: 0; overflow: hidden;
+  position: relative; transition: all 0.2s;
+}
+.nx-theme-opt:hover { transform: scale(1.08); border-color: rgba(255,255,255,0.4); }
+.nx-theme-opt.active {
+  border-color: #fff;
+  box-shadow: 0 0 20px rgba(255,255,255,0.4), inset 0 0 0 2px #fff;
+}
+.nx-theme-opt.active::after {
+  content: '✓'; position: absolute; inset: 0;
+  display: grid; place-items: center;
+  background: rgba(0,0,0,0.4); color: #fff;
+  font-weight: 900; font-size: 1.1rem;
+}
+.nx-theme-opt__label {
+  position: absolute; bottom: 2px; left: 0; right: 0;
+  font-size: 0.5rem; font-weight: 800; text-align: center;
+  color: #fff; text-shadow: 0 1px 3px rgba(0,0,0,0.9);
+  pointer-events: none; text-transform: uppercase; letter-spacing: 0.5px;
+}
+
+/* ═══ 12 TEMAS ═══ */
+
+/* 1. NEXUS (default) */
+.nx[data-nx-theme="nexus"] {
+  --mint: #2dd4bf; --violet: #a78bfa; --coral: #fb7185;
+  --amber: #fbbf24; --sky: #38bdf8; --lime: #a3e635;
+  --bg: #0a0a15;
+}
+
+/* 2. CYBER (cyan/magenta) */
+.nx[data-nx-theme="cyber"] {
+  --mint: #00ffff; --violet: #ff00ff; --coral: #ff0066;
+  --amber: #ffff00; --sky: #00ccff; --lime: #00ff99;
+  --bg: #050510;
+}
+
+/* 3. SUNSET (naranja/rosa) */
+.nx[data-nx-theme="sunset"] {
+  --mint: #fbbf24; --violet: #f472b6; --coral: #ef4444;
+  --amber: #f97316; --sky: #fb923c; --lime: #fde047;
+  --bg: #1a0a1a;
+}
+
+/* 4. OCEAN (azul/turquesa) */
+.nx[data-nx-theme="ocean"] {
+  --mint: #22d3ee; --violet: #3b82f6; --coral: #06b6d4;
+  --amber: #0ea5e9; --sky: #60a5fa; --lime: #14b8a6;
+  --bg: #021018;
+}
+
+/* 5. FOREST (verde) */
+.nx[data-nx-theme="forest"] {
+  --mint: #22c55e; --violet: #84cc16; --coral: #10b981;
+  --amber: #eab308; --sky: #06b6d4; --lime: #a3e635;
+  --bg: #051410;
+}
+
+/* 6. ROYAL (púrpura/dorado) */
+.nx[data-nx-theme="royal"] {
+  --mint: #a855f7; --violet: #d946ef; --coral: #f43f5e;
+  --amber: #fbbf24; --sky: #8b5cf6; --lime: #eab308;
+  --bg: #0f0520;
+}
+
+/* 7. ROSE (rosa/rojo) */
+.nx[data-nx-theme="rose"] {
+  --mint: #f472b6; --violet: #ec4899; --coral: #f43f5e;
+  --amber: #fb923c; --sky: #d946ef; --lime: #fb7185;
+  --bg: #1a0510;
+}
+
+/* 8. AMBER (dorado) */
+.nx[data-nx-theme="amber"] {
+  --mint: #f59e0b; --violet: #f97316; --coral: #ef4444;
+  --amber: #fbbf24; --sky: #facc15; --lime: #eab308;
+  --bg: #1a1005;
+}
+
+/* 9. ICE (azul/hielo) */
+.nx[data-nx-theme="ice"] {
+  --mint: #67e8f9; --violet: #c7d2fe; --coral: #93c5fd;
+  --amber: #bae6fd; --sky: #7dd3fc; --lime: #a5f3fc;
+  --bg: #0a1020;
+}
+
+/* 10. MATRIX (verde neón) */
+.nx[data-nx-theme="matrix"] {
+  --mint: #00ff41; --violet: #00cc33; --coral: #00ff66;
+  --amber: #66ff99; --sky: #00aa22; --lime: #99ffbb;
+  --bg: #000a00;
+}
+
+/* 11. VAPOR (rosa/cyan) */
+.nx[data-nx-theme="vapor"] {
+  --mint: #f0abfc; --violet: #67e8f9; --coral: #f9a8d4;
+  --amber: #fda4af; --sky: #a5b4fc; --lime: #c4b5fd;
+  --bg: #1a0a1f;
+}
+
+/* 12. MONO (blanco/negro) */
+.nx[data-nx-theme="mono"] {
+  --mint: #e5e5e5; --violet: #a3a3a3; --coral: #d4d4d4;
+  --amber: #f5f5f5; --sky: #737373; --lime: #cccccc;
+  --bg: #000;
+}
+
+/* Transiciones suaves al cambiar de tema */
+.nx, .nx *, .nx *::before, .nx *::after {
+  transition: background-color 0.5s ease, border-color 0.5s ease,
+              color 0.5s ease, box-shadow 0.5s ease;
+}
+</style>
+{% endblock %}
 {% block page_subtitle %}NEXUS · LottoBooM{% endblock %}
 
 {% block extra_css %}
+{# NX_THEMES_FIXED_V2 #}
 <style>
 /* ═══════════════════════════════════════════════════════════════
    NEXUS — Rediseño 2026 · Dark Bento
@@ -1152,6 +1319,99 @@
   }
 })();
 </script>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════
+   NX_THEMES_JS_V1 — Selector de temas (12 opciones)
+   ═══════════════════════════════════════════════════════════════ */
+(function(){
+  'use strict';
+  var KEY = 'nx_theme_v1';
+
+  var TEMAS = [
+    { id: 'nexus',   label: 'Nexus',   c1: '#2dd4bf', c2: '#a78bfa', c3: '#fb7185' },
+    { id: 'cyber',   label: 'Cyber',   c1: '#00ffff', c2: '#ff00ff', c3: '#ff0066' },
+    { id: 'sunset',  label: 'Sunset',  c1: '#fbbf24', c2: '#f472b6', c3: '#ef4444' },
+    { id: 'ocean',   label: 'Ocean',   c1: '#22d3ee', c2: '#3b82f6', c3: '#06b6d4' },
+    { id: 'forest',  label: 'Forest',  c1: '#22c55e', c2: '#84cc16', c3: '#10b981' },
+    { id: 'royal',   label: 'Royal',   c1: '#a855f7', c2: '#d946ef', c3: '#f43f5e' },
+    { id: 'rose',    label: 'Rose',    c1: '#f472b6', c2: '#ec4899', c3: '#f43f5e' },
+    { id: 'amber',   label: 'Amber',   c1: '#f59e0b', c2: '#f97316', c3: '#ef4444' },
+    { id: 'ice',     label: 'Ice',     c1: '#67e8f9', c2: '#c7d2fe', c3: '#93c5fd' },
+    { id: 'matrix',  label: 'Matrix',  c1: '#00ff41', c2: '#00cc33', c3: '#00ff66' },
+    { id: 'vapor',   label: 'Vapor',   c1: '#f0abfc', c2: '#67e8f9', c3: '#f9a8d4' },
+    { id: 'mono',    label: 'Mono',    c1: '#e5e5e5', c2: '#a3a3a3', c3: '#d4d4d4' }
+  ];
+
+  function getNx(){ return document.querySelector('.nx'); }
+
+  function aplicar(id){
+    var nx = getNx();
+    if (!nx) return;
+    nx.setAttribute('data-nx-theme', id);
+    try { localStorage.setItem(KEY, id); } catch(_) {}
+    document.querySelectorAll('.nx-theme-opt').forEach(function(b){
+      b.classList.toggle('active', b.dataset.theme === id);
+    });
+  }
+
+  function construir(){
+    var nx = getNx();
+    if (!nx || document.getElementById('nxThemePicker')) return;
+
+    var wrap = document.createElement('div');
+    wrap.className = 'nx-theme-picker';
+    wrap.id = 'nxThemePicker';
+
+    var panel = document.createElement('div');
+    panel.className = 'nx-theme-panel';
+
+    var html = '<div class="nx-theme-panel__title">🎨 Elige tema</div><div class="nx-theme-grid">';
+    TEMAS.forEach(function(t){
+      html += '<button type="button" class="nx-theme-opt" data-theme="' + t.id + '" title="' + t.label + '" style="background: linear-gradient(135deg, ' + t.c1 + ' 0%, ' + t.c2 + ' 50%, ' + t.c3 + ' 100%)"><span class="nx-theme-opt__label">' + t.label + '</span></button>';
+    });
+    html += '</div>';
+    panel.innerHTML = html;
+
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'nx-theme-btn';
+    btn.innerHTML = '🎨';
+    btn.title = 'Cambiar tema';
+    btn.setAttribute('aria-label', 'Cambiar tema');
+
+    wrap.appendChild(panel);
+    wrap.appendChild(btn);
+    document.body.appendChild(wrap);
+
+    btn.addEventListener('click', function(e){
+      e.stopPropagation();
+      panel.classList.toggle('show');
+    });
+
+    document.addEventListener('click', function(e){
+      if (!wrap.contains(e.target)) panel.classList.remove('show');
+    });
+
+    panel.querySelectorAll('.nx-theme-opt').forEach(function(b){
+      b.addEventListener('click', function(){
+        aplicar(this.dataset.theme);
+      });
+    });
+
+    // Tema guardado o default
+    var saved = null;
+    try { saved = localStorage.getItem(KEY); } catch(_) {}
+    aplicar(saved || 'nexus');
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', construir);
+  } else {
+    construir();
+  }
+})();
+</script>
 {% endblock extra_js %}
 <script>
 /* NX_LIFE_V2_JS */
@@ -1214,3 +1474,5 @@
   }, 12000 + Math.random() * 20000);
 })();
 </script>
+
+
