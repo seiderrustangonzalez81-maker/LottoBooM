@@ -2545,6 +2545,16 @@ def api_verificar_saldo(request):
                 filtro_postpago = Q(cliente=seleccionado, gestor_id=int(gestor_id_raw))
             else:
                 filtro_postpago = Q(cliente=seleccionado)
+        elif user.id == seleccionado.id:
+            # FIX_SELFVIEW_V2: el cliente se ve a sí mismo → TODOS sus fondos
+            fondos_qs = Fondo.objects.filter(
+                usuario=seleccionado, activo=True
+            ).select_related('forma_pago')
+            filtro_bono = Q(usuario=seleccionado)
+            if gestor_id_raw.isdigit():
+                filtro_postpago = Q(cliente=seleccionado, gestor_id=int(gestor_id_raw))
+            else:
+                filtro_postpago = Q(cliente=seleccionado)
         else:
             fondos_qs = Fondo.objects.filter(
                 Q(usuario=user, asignado_por=seleccionado) |
@@ -2630,7 +2640,8 @@ def api_forma_pago_cliente(request):
         user = request.user
         es_superadmin = user.is_superuser or user.roles.filter(tipo='superadmin', activo=True).exists()
 
-        if es_superadmin:
+        if es_superadmin or user.id == seleccionado.id:
+            # FIX_SELFVIEW_V1: self-view o superadmin → todos sus fondos
             fondos_qs = Fondo.objects.filter(
                 usuario=seleccionado, activo=True
             ).select_related('forma_pago', 'asignado_por')
@@ -2644,9 +2655,13 @@ def api_forma_pago_cliente(request):
         formas_pago = []
         visto = set()
         for f in fondos_qs:
-            if not f.forma_pago or f.forma_pago.id in visto:
+            if not f.forma_pago:
                 continue
-            visto.add(f.forma_pago.id)
+            # FIX_SELFVIEW_V1: dedupe por (FP, gestor) para no perder gestores
+            key = (f.forma_pago.id, f.asignado_por_id)
+            if key in visto:
+                continue
+            visto.add(key)
             formas_pago.append({
                 'id': f.forma_pago.id,
                 'nombre': f.forma_pago.nombre,
