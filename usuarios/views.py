@@ -1390,6 +1390,12 @@ def mis_movimientos(request):
     fd = (request.GET.get('fecha_desde') or '').strip()
     if fd: qs = qs.filter(creado_en__date__gte=fd)
     fh = (request.GET.get('fecha_hasta') or '').strip()
+
+    # FIX_FILTRO_HOY_V1: fecha por defecto = hoy
+    if not f_fecha_desde and not f_fecha_hasta:
+        from django.utils import timezone as _tz_hoy
+        f_fecha_desde = _tz_hoy.localdate().strftime('%Y-%m-%d')
+        f_fecha_hasta = _tz_hoy.localdate().strftime('%Y-%m-%d')
     if fh: qs = qs.filter(creado_en__date__lte=fh)
     agg = qs.aggregate(
         creditos=Sum(Case(
