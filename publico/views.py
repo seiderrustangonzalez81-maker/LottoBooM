@@ -18,7 +18,8 @@ def _calcular_estadisticas():
     Devuelve todas las estadísticas para el home.
     Tolera ausencia de modelos (Jugada) sin romper.
     """
-    hoy = timezone.now().date()
+    # FIX_TZ_CONTADORES_V1: usar fecha local (Cuba), no UTC
+    hoy = timezone.localdate()
     ahora = timezone.now()
 
     # ── Usuarios ──
@@ -29,14 +30,19 @@ def _calcular_estadisticas():
     visitas_hoy = VisitaDiaria.objects.filter(fecha=hoy).count()
 
     # ── Sorteos ──
+    # FIX_SORTEOS_PENDIENTES_V1: usar get_hora_salida (respeta horarios JSON)
     try:
         total_sorteos = Sorteo.objects.filter(activo=True).count()
-        # Sorteos pendientes = activos cuya hora de salida aún no pasó hoy
-        # (ajustar el campo según tu modelo real)
-        sorteos_pendientes = Sorteo.objects.filter(
-            activo=True,
-            hora_salida__gte=ahora
-        ).count()
+        from sorteos.utils import get_hora_salida
+        hora_actual = timezone.localtime(ahora).time()
+        sorteos_pendientes = 0
+        for s in Sorteo.objects.filter(activo=True):
+            try:
+                hs = get_hora_salida(s, hoy)
+                if hs and hs > hora_actual:
+                    sorteos_pendientes += 1
+            except Exception:
+                pass
     except Exception:
         total_sorteos = 0
         sorteos_pendientes = 0

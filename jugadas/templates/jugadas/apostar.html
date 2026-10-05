@@ -2685,8 +2685,10 @@ function renderTabsSorteo(sid){
     const def = TABLE_DEFS[k];
     const st = s.tablasActivas[k];
     const nValidos = st.rows.reduce((acc, r)=>{
+      // FIX_POSNUMS_V1: usar la nueva forma del row (num, monto)
       if (def.kind === 'posiciones'){
-        return acc + r.posNums.filter(x => x && String(x).length).length;
+        var nums = String(r.num || '').trim().split(/\s+/).filter(function(x){ return x.length === 2; });
+        return acc + nums.length;
       }
       if (def.kind === 'vs_groups'){
         // FIX_VS_GRUPOS_V2: expandir para contador real
@@ -5486,9 +5488,9 @@ function _sorteoTieneJugadas(sid){
     st.rows.forEach(function(row){
       if (tiene) return;
       if (def.kind === 'posiciones'){
-        for (var p = 0; p < 3; p++){
-          if ((row.posNums[p] || '').trim() && parseFloat(row.posMontos[p]) > 0) tiene = true;
-        }
+        // FIX_POSNUMS_V1: nueva forma del row
+        var numsPos = String(row.num || '').trim().split(/\s+/).filter(function(x){ return x.length === 2; });
+        if (numsPos.length && parseFloat(row.monto) > 0) tiene = true;
       } else if (def.kind === 'vs_groups'){
         if (row.numA && row.numB && parseFloat(row.monto) > 0) tiene = true;
       } else {

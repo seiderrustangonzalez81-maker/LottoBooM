@@ -1388,14 +1388,13 @@ def mis_movimientos(request):
     fp_id = (request.GET.get('forma_pago') or '').strip()
     if fp_id.isdigit(): qs = qs.filter(forma_pago_id=fp_id)
     fd = (request.GET.get('fecha_desde') or '').strip()
-    if fd: qs = qs.filter(creado_en__date__gte=fd)
     fh = (request.GET.get('fecha_hasta') or '').strip()
-
-    # FIX_FILTRO_HOY_V1: fecha por defecto = hoy
-    if not f_fecha_desde and not f_fecha_hasta:
+    # FIX_DEFAULT_HOY_OK_V1: default hoy si no hay filtros de fecha
+    if not fd and not fh:
         from django.utils import timezone as _tz_hoy
-        f_fecha_desde = _tz_hoy.localdate().strftime('%Y-%m-%d')
-        f_fecha_hasta = _tz_hoy.localdate().strftime('%Y-%m-%d')
+        fd = _tz_hoy.localdate().strftime('%Y-%m-%d')
+        fh = _tz_hoy.localdate().strftime('%Y-%m-%d')
+    if fd: qs = qs.filter(creado_en__date__gte=fd)
     if fh: qs = qs.filter(creado_en__date__lte=fh)
     agg = qs.aggregate(
         creditos=Sum(Case(
