@@ -60,7 +60,7 @@ def api_sorteos_disponibles(request):
             sorteos.append({
                 'id': s.id,
                 'nombre': s.nombre,
-                'hora_salida': hora_salida.strftime('%H:%M') if hora_salida else '',
+                'hora_salida': hora_salida.strftime('%I:%M %p').lstrip('0') if hora_salida else '',
                 'minutos_restantes': getattr(s, 'minutos_restantes', 0)
             })
 

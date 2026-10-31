@@ -70,7 +70,7 @@ html,body{background:var(--ma-bg);color:var(--ma-ink);font-family:var(--f-sans);
 .ma-icon-btn:hover{border-color:var(--ma-primary);color:var(--ma-primary);
   transform:translateY(-2px);box-shadow:0 6px 16px -6px var(--ma-primary);}
 
-.ma-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px;}
+
 .ma-stat{position:relative;padding:16px 18px;border-radius:var(--ma-r);
   background:var(--ma-surface);border:1px solid var(--ma-line);
   box-shadow:var(--ma-sh-sm);display:flex;align-items:center;gap:12px;transition:.22s;overflow:hidden;}
@@ -93,7 +93,7 @@ html,body{background:var(--ma-bg);color:var(--ma-ink);font-family:var(--f-sans);
   box-shadow:var(--ma-sh-sm);position:relative;overflow:hidden;}
 .ma-filters::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;
   background:linear-gradient(90deg,var(--ma-cyan),var(--ma-primary),var(--ma-violet));}
-.ma-filters-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;}
+
 .ma-fgrp{display:flex;flex-direction:column;gap:5px;min-width:0;}
 .ma-fgrp label{font-size:.62rem;font-weight:700;color:var(--ma-ink-3);text-transform:uppercase;letter-spacing:1.1px;}
 .ma-fgrp select,.ma-fgrp input{padding:9px 12px;border-radius:var(--ma-r-sm);border:1px solid var(--ma-line-2);
@@ -242,7 +242,7 @@ body.ma-dark .ma-grupo .premio{color:#a3e635;}
 .ma-toast.info{border-color:rgba(79,70,229,.4);background:var(--ma-primary-soft);}
 
 @media (max-width:900px){
-  .ma-stats{grid-template-columns:repeat(2,1fr);}
+  
   .ma-fj{grid-template-columns:1fr;gap:8px;}
   .ma-fj-total{text-align:left;}
 }
@@ -252,7 +252,7 @@ body.ma-dark .ma-grupo .premio{color:#a3e635;}
   .ma-header-text h2{font-size:1.08rem;}
   .ma-stat{padding:12px 14px;}
   .ma-stat .val{font-size:1.05rem;}
-  .ma-filters-grid{grid-template-columns:1fr 1fr;}
+  
   .ma-tabs{width:100%;justify-content:center;}
   .ma-boleta-actions{width:100%;justify-content:flex-start;}
   .ma-boleta-row-3{grid-template-columns:1fr;}
@@ -260,7 +260,7 @@ body.ma-dark .ma-grupo .premio{color:#a3e635;}
   .ma-toast.visible{transform:translateY(0);}
 }
 @media (max-width:420px){
-  .ma-filters-grid{grid-template-columns:1fr;}
+  
 }
 
 /* Botón compartir todas */
@@ -280,10 +280,296 @@ body.ma-dark .ma-grupo .premio{color:#a3e635;}
 .ma-compartir-todas:hover { transform: translate(-1px,-1px); box-shadow: 4px 4px 0 #064e3b; }
 .ma-compartir-todas:active { transform: translate(1px,1px); box-shadow: 1px 1px 0 #064e3b; }
 .ma-compartir-todas i { color: #fff !important; }
+/* ═══════════════════════════════════════════════════════════
+   MEJORAS MÓVILES — apostar.html
+   Solo aplican en pantallas ≤ 900px. No tocan el desktop.
+   ═══════════════════════════════════════════════════════════ */
+
+/* ---------- Tablet / móvil grande (≤ 900px) ---------- */
+@media (max-width: 900px){
+  .ma-wrap{padding:14px 14px 50px;}
+
+  .ma-header{padding:14px 16px;}
+  .ma-header-icon{width:38px;height:38px;font-size:1.15rem;border-radius:10px;}
+  .ma-header-text h2{font-size:1.15rem;}
+  .ma-header-text p{font-size:.74rem;}
+
+  
+  .ma-stat{padding:12px;gap:10px;}
+  .ma-stat .ic{width:34px;height:34px;font-size:.92rem;border-radius:9px;}
+  .ma-stat .val{font-size:1.15rem;}
+  .ma-stat .lbl{font-size:.58rem;letter-spacing:.8px;}
+
+  .ma-filters{padding:14px;}
+  
+
+  /* Acciones de boleta: scroll horizontal si no caben */
+  .ma-boleta-actions{
+    display:flex;flex-wrap:nowrap;overflow-x:auto;
+    -webkit-overflow-scrolling:touch;
+    gap:6px;padding-bottom:2px;scrollbar-width:none;
+  }
+  .ma-boleta-actions::-webkit-scrollbar{display:none;}
+  .ma-act-btn{flex:0 0 auto;}
+
+  /* Totales: 3 columnas con separadores verticales */
+  .ma-boleta-row-3{
+    grid-template-columns:repeat(3,1fr);
+    gap:0;padding:8px 4px;
+    background:var(--ma-surface-2);
+    border-radius:10px;
+  }
+  .ma-boleta-row-3 .tot{
+    padding:0 8px;
+    border-right:1px solid var(--ma-line);
+    min-width:0;text-align:center;
+  }
+  .ma-boleta-row-3 .tot:last-child{border-right:none;}
+  .ma-boleta-row-3 .tot span{font-size:.55rem;letter-spacing:.6px;}
+  .ma-boleta-row-3 .tot strong{font-size:.92rem;}
+
+  /* Forma de juego: nombre+total arriba, números abajo (full width) */
+  .ma-fj{
+    grid-template-columns:1fr auto;
+    gap:6px 10px;
+    padding:10px 4px;
+    align-items:start;
+  }
+  .ma-fj-nombre{grid-column:1 / 2;grid-row:1;}
+  .ma-fj-total{
+    grid-column:2 / 3;grid-row:1;
+    text-align:right;font-size:.95rem;
+    align-self:center;min-width:auto;
+  }
+  .ma-fj-nums{grid-column:1 / -1;grid-row:2;}
+}
+
+/* ---------- Móvil (≤ 640px) ---------- */
+@media (max-width: 640px){
+  .ma-wrap{padding:10px 10px 40px;}
+
+  /* HEADER apilado: info arriba, botones abajo en grid */
+  .ma-header{padding:12px 14px;border-radius:16px;}
+  .ma-header-inner{flex-direction:column;align-items:stretch;gap:10px;}
+  .ma-header-left{gap:10px;}
+  .ma-header-icon{width:36px;height:36px;font-size:1.05rem;}
+  .ma-header-text h2{font-size:1.05rem;letter-spacing:-.3px;}
+  .ma-header-text p{font-size:.7rem;}
+
+  .ma-header-right{
+    display:grid;
+    grid-template-columns:1fr 42px 42px;
+    gap:8px;align-items:center;width:100%;
+  }
+  .ma-role-chip{
+    grid-column:1 / -1;justify-self:start;
+    font-size:.6rem;padding:4px 10px;letter-spacing:.6px;
+  }
+  .ma-compartir-todas{
+    grid-column:1 / 2;
+    justify-content:center;
+    padding:10px 12px;font-size:.8rem;
+    box-shadow:2px 2px 0 #064e3b;
+  }
+  .ma-icon-btn{width:42px;height:42px;font-size:.95rem;}
+
+  /* STATS 2x2 más compactas */
+  
+  .ma-stat{padding:10px 12px;gap:9px;border-radius:12px;}
+  .ma-stat::before{width:3px;}
+  .ma-stat .ic{width:32px;height:32px;font-size:.85rem;border-radius:8px;}
+  .ma-stat .val{font-size:1rem;letter-spacing:-.3px;}
+  .ma-stat .lbl{font-size:.54rem;letter-spacing:.7px;}
+
+  /* FILTROS */
+  .ma-filters{padding:12px;border-radius:14px;}
+  .ma-filters::before{height:2px;}
+  
+  .ma-fgrp label{font-size:.55rem;letter-spacing:.7px;}
+  .ma-fgrp select,.ma-fgrp input{padding:8px 10px;font-size:.78rem;border-radius:8px;}
+  .ma-filters-actions{margin-top:12px;}
+  .btn-clear{padding:9px 14px;font-size:.78rem;}
+
+  /* TABS: scroll horizontal elegante */
+  .ma-tabs{
+    width:100%;border-radius:12px;padding:4px;
+    overflow-x:auto;flex-wrap:nowrap;
+    -webkit-overflow-scrolling:touch;
+    scrollbar-width:none;justify-content:flex-start;
+  }
+  .ma-tabs::-webkit-scrollbar{display:none;}
+  .ma-tab{padding:8px 14px;font-size:.78rem;flex:0 0 auto;}
+  .ma-tab .badge-cnt{font-size:.6rem;padding:1px 7px;}
+
+  /* BOLETA */
+  .ma-boleta{border-radius:14px;margin-bottom:12px;}
+  .ma-boleta-head{padding:12px 14px 10px;}
+  .ma-boleta-body{padding:10px 14px 12px;}
+
+  .ma-boleta-row-1{margin-bottom:8px;gap:8px;}
+  .ma-boleta-ref{font-size:.88rem;gap:8px;}
+  .ma-boleta-ref .ref-icon{width:28px;height:28px;font-size:.75rem;border-radius:8px;}
+  .ma-estado{font-size:.55rem;padding:3px 9px;}
+
+  .ma-boleta-row-2{gap:8px 12px;font-size:.72rem;}
+  .ma-boleta-row-2 .meta i{font-size:.68rem;}
+
+  /* Sorteo block */
+  .ma-sorteo-block{padding:9px 10px;border-radius:10px;margin-bottom:8px;}
+  .ma-sorteo-block-head{padding-bottom:7px;margin-bottom:7px;font-size:.76rem;}
+  .ma-sorteo-block-head .sorteo-total{font-size:.72rem;padding:2px 9px;}
+
+  /* Forma de juego más compacta */
+  .ma-fj{padding:9px 2px;gap:6px 8px;}
+  .ma-fj-nombre{font-size:.74rem;}
+  .ma-fj-total{font-size:.9rem;}
+
+  /* Chips de números */
+  .ma-grupo{padding:3px 8px;gap:6px;}
+  .ma-grupo-monto{font-size:.66rem;padding:1px 7px;}
+  .ma-grupo .premio{font-size:.6rem;padding:1px 6px;}
+  .ma-grupo-nums-inline{gap:3px;}
+  .ma-grupo-nums-inline code{font-size:.68rem;padding:2px 6px;border-radius:4px;}
+
+  /* Toast */
+  .ma-toast{left:10px;right:10px;top:70px;padding:12px 14px;font-size:.82rem;}
+
+  /* Vacío */
+  .ma-empty{padding:40px 16px;}
+  .ma-empty .ico{font-size:2.4rem;margin-bottom:10px;}
+  .ma-empty h4{font-size:.96rem;}
+  .ma-empty p{font-size:.82rem;}
+}
+
+/* ---------- Móvil pequeño (≤ 420px) ---------- */
+@media (max-width: 420px){
+  .ma-stat{padding:9px 10px;gap:7px;}
+  .ma-stat .ic{width:28px;height:28px;font-size:.78rem;}
+  .ma-stat .val{font-size:.92rem;}
+
+  
+
+  .ma-header-right{grid-template-columns:1fr 40px 40px;}
+  .ma-icon-btn{width:40px;height:40px;}
+
+  .ma-act-btn{padding:6px 10px;font-size:.68rem;}
+  .ma-act-btn i{font-size:.68rem;}
+
+  .ma-boleta-ref{font-size:.82rem;}
+  .ma-boleta-ref .ref-text{font-size:.82rem;}
+}
+
+/* ---------- Pantallas muy estrechas (≤ 360px) ---------- */
+@media (max-width: 360px){
+  .ma-wrap{padding:8px 8px 30px;}
+  .ma-header{padding:10px 12px;}
+  .ma-header-icon{width:32px;height:32px;font-size:.92rem;}
+  .ma-header-text h2{font-size:.96rem;}
+  .ma-header-text p{display:none;}
+  .ma-stat .lbl{font-size:.5rem;}
+  .ma-stat .val{font-size:.86rem;}
+  .ma-boleta-row-3 .tot strong{font-size:.8rem;}
+  .ma-grupo-nums-inline code{font-size:.62rem;padding:1px 5px;}
+}
+
+/* Tap sin flash azul en móvil */
+.ma-act-btn, .ma-tab, .ma-icon-btn, .btn-apply, .btn-clear, .ma-compartir-todas{
+  -webkit-tap-highlight-color:transparent;
+}
+
+/* Ajuste móvil para el buscador */
+@media (max-width: 768px) {
+    
+}
+
+
+
+/* Ajuste móvil definitivo */
+@media (max-width: 768px) {
+    
+    
+}
+@media (max-width: 480px) {
+    
+    
+}
+
+
+/* FIX_GRID_MAESTRO_V7: Grid a prueba de balas */
+.ma-stats {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)) !important;
+    gap: 10px !important;
+    margin-bottom: 16px !important;
+}
+.ma-filters-grid {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)) !important;
+    gap: 10px !important;
+}
+/* El buscador siempre ocupa toda la fila */
+.ma-filters-grid > div:last-child {
+    grid-column: 1 / -1 !important;
+}
+
+/* En pantallas muy pequeñas, forzar 1 columna si es necesario, pero de forma limpia */
+@media (max-width: 400px) {
+    .ma-stats { grid-template-columns: 1fr 1fr !important; }
+    .ma-filters-grid { grid-template-columns: 1fr !important; }
+}
+
+
+/* FIX_MIS_APUESTAS_2COLS_V3 (2026-10-20): Forzar 2 columnas en móviles */
+@media (max-width: 768px) {
+    /* Forzar 2 columnas exactas para los filtros */
+    .ma-filters-grid { 
+        display: grid !important; 
+        grid-template-columns: 1fr 1fr !important; 
+        gap: 10px !important; 
+    }
+    /* El último elemento (el buscador) ocupa toda la fila */
+    .ma-filters-grid > div:last-child { 
+        grid-column: 1 / -1 !important; 
+    }
+    
+    /* Forzar 2 columnas exactas para las estadísticas de arriba */
+    .ma-stats {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
+        gap: 10px !important;
+    }
+}
+
+
+  /* FIX_NUMEROS_GANADOR_V3: sin fondo cyan en números, solo ganadores con borde verde */
+  .ma-grupo-nums-inline code{
+    background:transparent !important;
+    color:var(--ma-ink) !important;
+    padding:0 4px !important;
+    border:none !important;
+    font-weight:700;
+  }
+  .ma-grupo-nums-inline code.num-ganador{
+    background:transparent !important;
+    border:2px solid #16a34a !important;
+    color:#15803d !important;
+    padding:1px 6px !important;
+    border-radius:4px !important;
+    font-weight:900 !important;
+  }
+  body.ma-dark .ma-grupo-nums-inline code{
+    color:#e5e7eb !important;
+  }
+  body.ma-dark .ma-grupo-nums-inline code.num-ganador{
+    border-color:#22c55e !important;
+    color:#4ade80 !important;
+  }
 </style>
 {% endblock %}
 
 {% block content %}
+{% include 'partials/_cartel_premio_oblicuo.html' %}
+
 <div class="ma-toast" id="maToast"><span class="ic">ℹ️</span><span class="msg">—</span></div>
 
 <div class="ma-wrap">
@@ -371,7 +657,7 @@ body.ma-dark .ma-grupo .premio{color:#a3e635;}
       {% if es_superadmin %}
         <div class="ma-fgrp"><label>🏦 Banco</label>
           <select name="banco" onchange="this.form.submit()">
-            <option value="">Todos los bancos</option>
+            <option value="">Seleccionar banco</option>
             {% for b in bancos_opciones %}
               <option value="{{ b.id }}" {% if filtro_banco == b.id|stringformat:"s" %}selected{% endif %}>{{ b.username }}</option>
             {% endfor %}
@@ -381,7 +667,7 @@ body.ma-dark .ma-grupo .premio{color:#a3e635;}
       {% if es_superadmin or es_banco %}
         <div class="ma-fgrp"><label>💼 Comercial</label>
           <select name="comercial" onchange="this.form.submit()">
-            <option value="">Todos los comerciales</option>
+            <option value="">Seleccionar comercial</option>
             {% for c in comerciales_opciones %}
               <option value="{{ c.id }}" {% if filtro_comercial == c.id|stringformat:"s" %}selected{% endif %}>{{ c.username }}</option>
             {% endfor %}
@@ -391,7 +677,7 @@ body.ma-dark .ma-grupo .premio{color:#a3e635;}
       {% if es_autorizador %}
         <div class="ma-fgrp"><label>👤 Cliente</label>
           <select name="cliente" onchange="this.form.submit()">
-            <option value="">Todos los clientes</option>
+            <option value="">Seleccionar cliente</option>
             {% for c in clientes_opciones %}
               <option value="{{ c.id }}" {% if filtro_cliente == c.id|stringformat:"s" %}selected{% endif %}>{{ c.username }}</option>
             {% endfor %}
@@ -401,7 +687,7 @@ body.ma-dark .ma-grupo .premio{color:#a3e635;}
       {% if es_cliente %}
         <div class="ma-fgrp"><label>🏢 Gestor</label>
           <select name="gestor" onchange="this.form.submit()">
-            <option value="">Todos los gestores</option>
+            <option value="">Seleccionar gestor</option>
             {% for g in gestores_opciones %}
               <option value="{{ g.id }}" {% if filtro_gestor == g.id|stringformat:"s" %}selected{% endif %}>{{ g.username }}</option>
             {% endfor %}
@@ -410,7 +696,7 @@ body.ma-dark .ma-grupo .premio{color:#a3e635;}
       {% endif %}
       <div class="ma-fgrp"><label>🎰 Sorteo</label>
         <select name="sorteo" onchange="this.form.submit()">
-          <option value="">Todos los sorteos</option>
+          <option value="">Seleccionar sorteo</option>
           {% for s in sorteos_filtro %}
             <option value="{{ s.id }}" {% if filtro_sorteo == s.id|stringformat:"s" %}selected{% endif %}>{{ s.nombre }}</option>
           {% endfor %}
@@ -418,7 +704,7 @@ body.ma-dark .ma-grupo .premio{color:#a3e635;}
       </div>
       <div class="ma-fgrp"><label>🎲 Forma de juego</label>
         <select name="forma_juego" onchange="this.form.submit()">
-          <option value="">Todas las formas</option>
+          <option value="">Seleccionar forma</option>
           {% for fj in formas_juego_filtro %}
             <option value="{{ fj.nombre }}" {% if filtro_forma == fj.nombre %}selected{% endif %}>{{ fj.nombre|capfirst }}</option>
           {% endfor %}
@@ -432,10 +718,10 @@ body.ma-dark .ma-grupo .premio{color:#a3e635;}
       </div>
       <div class="ma-fgrp"><label>🚦 Estado</label>
         <select name="estado" onchange="this.form.submit()">
-          <option value="">Todos los estados</option>
+          <option value="">Seleccionar estado</option>
           <option value="pendiente" {% if filtro_estado == 'pendiente' %}selected{% endif %}>Pendiente</option>
-          <option value="ganadora"  {% if filtro_estado == 'ganadora' %}selected{% endif %}>Ganadora</option>
-          <option value="perdedora" {% if filtro_estado == 'perdedora' %}selected{% endif %}>Perdedora</option>
+          <option value="ganadora"  {% if filtro_estado == 'ganadora' %}selected{% endif %}>Premiada</option>
+          <option value="perdedora" {% if filtro_estado == 'perdedora' %}selected{% endif %}>No ganadora</option>
           <option value="cancelada" {% if filtro_estado == 'cancelada' %}selected{% endif %}>Cancelada</option>
         </select>
       </div>
@@ -567,7 +853,7 @@ body.ma-dark .ma-grupo .premio{color:#a3e635;}
                             <span class="premio">🏆 ${{ g.premios|stringformat:"0.2f" }}</span>
                           {% endif %}
                           <span class="ma-grupo-nums-inline">
-                            {% for n in g.numeros %}<code>{{ n }}</code>{% endfor %}
+                            {% for n in g.numeros %}<code{% if g.premios > 0 %} class="num-ganador"{% endif %}>{{ n }}</code>{% endfor %}
                           </span>
                         </div>
                       {% endfor %}
@@ -667,7 +953,7 @@ body.ma-dark .ma-grupo .premio{color:#a3e635;}
                           <span class="ma-grupo-monto">${{ g.monto|stringformat:"0.2f" }}</span>
                           {% if g.premios > 0 %}<span class="premio">🏆 ${{ g.premios|stringformat:"0.2f" }}</span>{% endif %}
                           <span class="ma-grupo-nums-inline">
-                            {% for n in g.numeros %}<code>{{ n }}</code>{% endfor %}
+                            {% for n in g.numeros %}<code{% if g.premios > 0 %} class="num-ganador"{% endif %}>{{ n }}</code>{% endfor %}
                           </span>
                         </div>
                       {% endfor %}
@@ -714,6 +1000,9 @@ body.ma-dark .ma-grupo .premio{color:#a3e635;}
     </div>
   </div>
 </div>
+
+
+
 {% endblock %}
 
 {% block extra_js %}
@@ -904,7 +1193,7 @@ document.addEventListener('DOMContentLoaded', function(){
 });
 
   // WHATSAPP
-  
+
 /* ═══════════════════════════════════════════════════════════════
    Compartir múltiples boletas por WhatsApp con división inteligente
    ═══════════════════════════════════════════════════════════════ */
@@ -1073,3 +1362,6 @@ function buildBoletaWhatsappText(boletaEl){
 })();
 </script>
 {% endblock extra_js %}
+
+
+

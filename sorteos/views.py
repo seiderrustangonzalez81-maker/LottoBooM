@@ -7,10 +7,11 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.http import JsonResponse, HttpResponse
 from django.contrib import messages
 from django.contrib.admin.views.decorators import staff_member_required
+from django.contrib.auth.decorators import login_required  # FIX_IMPORT_LOGIN
 
 from .models import Sorteo
 from .forms import SorteoForm
-from .utils import calcular_estado_sorteo, get_hora_salida, obtener_hora_desde_horarios
+from .utils import segundos_hasta_proximo as _seg_hasta_prox, calcular_estado_sorteo, get_hora_salida, obtener_hora_desde_horarios
 from jugadas.models import FormaJuego
 
 
@@ -101,6 +102,14 @@ def lista_sorteos(request):
         s.hora_salida = hora_salida
         s.formas_filtradas = _formas_de_sorteo(s)
 
+        # FIX_PROXIMO_EN_LISTA_V1: si ya salió, calcular segundos al próximo día
+        s.segundos_proximo = 0
+        if info['estado'] == 'salido':
+            try:
+                s.segundos_proximo = _seg_hasta_prox(s, ahora) or 0
+            except Exception:
+                s.segundos_proximo = 0
+
         if info['estado'] == 'abierto':
             abiertos.append(s)
         elif info['estado'] == 'cerrado':
@@ -170,7 +179,7 @@ def api_sorteos_data(request):
             'nombre': s.nombre,
             'estado': info['estado'],
             'segundos_restantes': info['segundos_restantes'],
-            'hora_salida': hora_salida.strftime('%H:%M'),
+            'hora_salida': hora_salida.strftime('%I:%M %p').lstrip('0'),
             'origen': s.origen,
         })
     return JsonResponse(data)
@@ -195,8 +204,8 @@ def api_sorteos_list(request):
             'formas_juego_nombres': [fj.nombre for fj in _formas_de_sorteo(s)],
             'estado': info['estado'],
             'segundos_restantes': info['segundos_restantes'],
-            'hora_salida': hora_salida.strftime('%H:%M'),
-            'hora_cierre': info['hora_cierre'].strftime('%H:%M') if info['hora_cierre'] else None,
+            'hora_salida': hora_salida.strftime('%I:%M %p').lstrip('0'),
+            'hora_cierre': info['hora_cierre'].strftime('%I:%M %p').lstrip('0') if info['hora_cierre'] else None,
         })
     return JsonResponse({'sorteos': result})
 
@@ -231,7 +240,7 @@ def api_sorteo_detail(request, sorteo_id):
                                for fj in _formas_de_sorteo(sorteo)],
         'estado': estado,
         'segundos_restantes': segundos,
-        'hora_salida': hora_salida.strftime('%H:%M') if hora_salida else None,
+        'hora_salida': hora_salida.strftime('%I:%M %p').lstrip('0') if hora_salida else None,
         'hora_cierre': hora_cierre.strftime('%H:%M') if hora_cierre else None,
     })
 
@@ -251,7 +260,7 @@ def api_sorteos_by_origin(request, origen):
             'id': s.id, 'nombre': s.nombre, 'origen': s.origen,
             'estado': info['estado'],
             'segundos_restantes': info['segundos_restantes'],
-            'hora_salida': hora_salida.strftime('%H:%M'),
+            'hora_salida': hora_salida.strftime('%I:%M %p').lstrip('0'),
         })
     return JsonResponse({'sorteos': result})
 
@@ -272,7 +281,7 @@ def api_sorteos_by_status(request, estado):
             info = _calcular_estado(s, hora_salida, ahora)
             est = info['estado']
             seg = info['segundos_restantes']
-            hs = hora_salida.strftime('%H:%M')
+            hs = hora_salida.strftime('%I:%M %p').lstrip('0')
         if est == estado:
             result.append({
                 'id': s.id, 'nombre': s.nombre, 'origen': s.origen,
@@ -295,8 +304,8 @@ def api_sorteos_abiertos(request):
                 'id': s.id, 'nombre': s.nombre, 'origen': s.origen,
                 'formas_juego': s.formas_juego or [],
                 'segundos_restantes': info['segundos_restantes'],
-                'hora_salida': hora_salida.strftime('%H:%M'),
-                'hora_cierre': info['hora_cierre'].strftime('%H:%M') if info['hora_cierre'] else None,
+                'hora_salida': hora_salida.strftime('%I:%M %p').lstrip('0'),
+                'hora_cierre': info['hora_cierre'].strftime('%I:%M %p').lstrip('0') if info['hora_cierre'] else None,
             })
     result.sort(key=lambda x: x['segundos_restantes'])
     return JsonResponse({'sorteos': result})
@@ -323,7 +332,7 @@ def api_proximos_sorteos(request, horas=4):
                 'formas_juego': s.formas_juego or [],
                 'estado': 'abierto' if ahora < cierre else 'cerrado',
                 'segundos_restantes': seg,
-                'hora_salida': hora_salida.strftime('%H:%M'),
+                'hora_salida': hora_salida.strftime('%I:%M %p').lstrip('0'),
             })
     result.sort(key=lambda x: x['segundos_restantes'])
     return JsonResponse({'sorteos': result})
@@ -369,3 +378,73 @@ def sorteo_eliminar(request, sorteo_id):
 @staff_member_required
 def resultado_crear(request):
     return HttpResponse("Vista de creación de resultados (pendiente de implementar)")
+
+
+@login_required
+def api_sorteos_compartir(request):
+    """FIX_COMPARTIR_SORTEOS_V1 (2026-10-16): devuelve texto para WhatsApp
+    con los sorteos abiertos en este momento, su hora de cierre y de salida."""
+    from datetime import time as _t
+
+    # FIX_TZ_CUBA_V1 (2026-10-16): usar hora Cuba explicitamente,
+    # igual que lista_sorteos. Antes usaba timezone.localtime() que devuelve
+    # la hora del servidor (UTC) y daba todos los sorteos como cerrados.
+    ahora = datetime.now(CUBA_TZ)
+    hoy = ahora.date()
+    lista = []
+
+    for s in Sorteo.objects.filter(activo=True):
+        try:
+            hora_salida = _hora_salida_hoy(s, hoy)
+            if not hora_salida:
+                continue
+            info = _calcular_estado(s, hora_salida, ahora)
+            if info.get('estado') != 'abierto':
+                continue
+            hc = info.get('hora_cierre')
+            lista.append({'nombre': s.nombre, 'hc': hc, 'hs': hora_salida})
+        except Exception:
+            continue
+
+    lista.sort(key=lambda x: x['hc'] or _t(23, 59))
+    
+    # FIX_DEDUP_COMPARTIR_V1: Evitar nombres duplicados en el mensaje
+    _vistos = set()
+    lista_dedup = []
+    for it in lista:
+        key = (it['nombre'], it['hc'], it['hs'])
+        if key not in _vistos:
+            _vistos.add(key)
+            lista_dedup.append(it)
+    lista = lista_dedup
+
+    # FIX_SORTEOS_TEMPORADA_V1: dia de semana + fecha + temporada
+    DIAS_ES = {
+        0: 'Lunes', 1: 'Martes', 2: 'Miercoles', 3: 'Jueves',
+        4: 'Viernes', 5: 'Sabado', 6: 'Domingo',
+    }
+    dia_semana = DIAS_ES.get(hoy.weekday(), hoy.strftime('%A'))
+    temporada = 'Verano' if 4 <= hoy.month <= 10 else 'Invierno'
+
+    lines = []
+    lines.append("*LOTTOBOOM*")
+    lines.append("*SORTEOS ABIERTOS*")
+    lines.append(f"📅 *{dia_semana}, {hoy.strftime('%d/%m/%Y')}* ·")
+    lines.append(f"Temporada: *{temporada}*")
+    lines.append("━━━━━━━━━━━━━━━━━━━━")
+    lines.append("")
+    if not lista:
+        lines.append("❌ No hay sorteos abiertos en este momento.")
+    else:
+        for it in lista:
+            hc_s = it['hc'].strftime('%I:%M %p').lstrip('0') if it['hc'] else '—'
+            hs_s = it['hs'].strftime('%I:%M %p').lstrip('0') if it['hs'] else '—'
+            lines.append(f"🎯 *{it['nombre']}*")
+            lines.append(f"⏰ Cierra: {hc_s}  ·  ")
+            lines.append(f"🎲 Sorteo: {hs_s}")
+            lines.append("")
+    lines.append("━━━━━━━━━━━━━━━━━━━━")
+    lines.append("🔗 https://lottoboom.pythonanywhere.com")
+    lines.append("🍀 ¡Juega ya en LottoBooM! 🍀")
+
+    return JsonResponse({'success': True, 'resumen': "\n".join(lines)})

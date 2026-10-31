@@ -1,0 +1,166 @@
+{% extends "base.html" %}
+{% load roles_extras %}
+{% block title %}Vías de pago de mi gestor{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-3 mb-5">
+  <div class="row justify-content-center">
+    <div class="col-12 col-lg-10">
+
+      <div class="card shadow-sm mb-4" style="border-radius:14px;">
+        <div class="card-header bg-primary text-white" style="border-radius:14px 14px 0 0;">
+          <h4 class="mb-0"><i class="fas fa-credit-card"></i> Vías de pago de mi gestor</h4>
+        </div>
+        <div class="card-body">
+          <p class="text-muted small mb-0">
+            Estas son las vías de pago por las que puedes recargar tu cuenta.
+            Comunícate con tu gestor para confirmar cada operación.
+          </p>
+        </div>
+      </div>
+
+      {% if sin_gestor %}
+        <div class="alert alert-warning">
+          <i class="fas fa-info-circle"></i>
+          Aún no tienes un gestor asignado. Contacta al soporte para que te asignen uno.
+        </div>
+      {% endif %}
+
+      {% for grupo in grupos %}
+        <div class="card shadow-sm mb-4" style="border-radius:14px;">
+          <div class="card-header bg-light" style="border-radius:14px 14px 0 0;">
+            <h5 class="mb-0">
+              <i class="fas fa-user-tie"></i>
+              Gestor: <strong>{{ grupo.gestor.username }}</strong>
+              <span class="badge bg-secondary float-end">{{ grupo.total }} vía{{ grupo.total|pluralize }}</span>
+            </h5>
+          </div>
+          <div class="card-body">
+
+            {% if not grupo.vias_por_forma %}
+              <p class="text-muted">Este gestor aún no ha configurado vías de pago.</p>
+            {% endif %}
+
+            {% for group in grupo.vias_por_forma %}
+              <h6 class="mt-3 mb-2 text-primary">
+                <i class="fas fa-money-bill-wave"></i> {{ group.forma_pago.nombre }}
+              </h6>
+              <div class="table-responsive">
+                <table class="table table-sm table-hover align-middle">
+                  <thead class="table-light">
+                    <tr>
+                      <th>Alias</th>
+                      <th>Tipo</th>
+                      <th>Número / Cuenta</th>
+                      <th>Teléfono</th>
+                      <th>Dirección</th>
+                      <th>Copiar</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for via in group.vias %}
+                      <tr>
+                        <td><strong>{{ via.nombre }}</strong></td>
+                        <td><small class="text-muted">{{ via.get_tipo_display }}</small></td>
+                        <td>
+                          {% if via.numero_tarjeta %}{{ via.numero_tarjeta }}
+                          {% elif via.numero %}{{ via.numero }}
+                          {% else %}—{% endif %}
+                        </td>
+                        <td>{% if via.telefono %}{{ via.telefono }}{% else %}—{% endif %}</td>
+                        <td><small>{{ via.get_direccion_display }}</small></td>
+                        <td>
+                          {# FIX_D1_COPIAR_V1 #}
+                          {% if via.numero_tarjeta %}
+                            <button type="button" class="btn btn-sm btn-outline-primary btn-copiar"
+                                    data-copiar="{{ via.numero_tarjeta }}"
+                                    title="Copiar número de tarjeta">
+                              <i class="fas fa-copy"></i> Copiar
+                            </button>
+                          {% elif via.numero %}
+                            <button type="button" class="btn btn-sm btn-outline-primary btn-copiar"
+                                    data-copiar="{{ via.numero }}"
+                                    title="Copiar número de cuenta">
+                              <i class="fas fa-copy"></i> Copiar
+                            </button>
+                          {% elif via.telefono %}
+                            <button type="button" class="btn btn-sm btn-outline-primary btn-copiar"
+                                    data-copiar="{{ via.telefono }}"
+                                    title="Copiar teléfono">
+                              <i class="fas fa-copy"></i> Copiar
+                            </button>
+                          {% else %}—{% endif %}
+                        </td>
+                      </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            {% endfor %}
+
+          </div>
+        </div>
+      {% endfor %}
+
+      {# FIX_D1_CTA_SOLICITAR_V1: CTA para solicitar confirmación de recarga #}
+      <div class="alert alert-info mt-4" style="border-radius:12px;">
+        <i class="fas fa-info-circle"></i>
+        <strong>¿Ya hiciste la recarga?</strong>
+        Después de enviar el dinero por una de estas vías, solicita que la confirmen para acreditar tu saldo.
+        <div class="mt-2">
+          <a href="{% url 'roles:solicitar' 'recarga' %}" class="btn btn-primary btn-sm">
+            <i class="fas fa-paper-plane me-1"></i> Ya recargué, solicitar confirmación
+          </a>
+        </div>
+      </div>
+
+      <div class="text-center mt-3">
+        <a href="{% url 'publico:home' %}" class="btn btn-outline-secondary">
+          <i class="fas fa-arrow-left"></i> Volver
+        </a>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+{# FIX_D1_COPIAR_V1: copiar datos al portapapeles #}
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+  document.querySelectorAll('.btn-copiar').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var texto = this.dataset.copiar || '';
+      if (!texto) return;
+      var self = this;
+      var origHtml = self.innerHTML;
+      function mostrarExito(){
+        self.innerHTML = '<i class="fas fa-check"></i> Copiado';
+        self.classList.remove('btn-outline-primary');
+        self.classList.add('btn-success');
+        setTimeout(function(){
+          self.innerHTML = origHtml;
+          self.classList.remove('btn-success');
+          self.classList.add('btn-outline-primary');
+        }, 1500);
+      }
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(texto).then(mostrarExito).catch(function(){
+          // Fallback
+          var ta = document.createElement('textarea');
+          ta.value = texto; document.body.appendChild(ta);
+          ta.select();
+          try { document.execCommand('copy'); mostrarExito(); } catch(e){}
+          document.body.removeChild(ta);
+        });
+      } else {
+        var ta = document.createElement('textarea');
+        ta.value = texto; document.body.appendChild(ta);
+        ta.select();
+        try { document.execCommand('copy'); mostrarExito(); } catch(e){}
+        document.body.removeChild(ta);
+      }
+    });
+  });
+});
+</script>
+{% endblock %}

@@ -98,3 +98,4 @@ Thumbs.db
 *.local
 backup_db_*.sqlite3
 *.swp
+backups_favicon/

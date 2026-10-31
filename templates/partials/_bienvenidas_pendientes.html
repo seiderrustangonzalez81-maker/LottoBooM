@@ -1,0 +1,167 @@
+{# FIX_A1A3_BIENVENIDAS_V1 — carteles de bienvenida del gestor para el cliente #}
+{% if es_cliente %}
+<div class="bienv-stack" id="bienvStack"></div>
+
+<style>
+.bienv-stack {
+  position: fixed;
+  top: 80px;
+  right: 20px;
+  z-index: 9997;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 360px;
+}
+.bienv-cartel {
+  pointer-events: auto;
+  position: relative;
+  padding: 18px 22px 18px;
+  background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+  color: #fff;
+  border-radius: 14px;
+  transform: rotate(-2deg);
+  box-shadow: 0 12px 32px rgba(79,70,229,.45), 0 4px 12px rgba(0,0,0,.2);
+  border: 3px solid #fbbf24;
+  animation: bienv-pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  font-family: 'Inter', system-ui, sans-serif;
+  text-shadow: 0 2px 4px rgba(0,0,0,.3);
+}
+.bienv-cartel:nth-child(2) { transform: rotate(2deg); }
+.bienv-cartel:nth-child(3) { transform: rotate(-3deg); }
+@keyframes bienv-pop {
+  0% { transform: rotate(-2deg) scale(0.4); opacity: 0; }
+  60% { transform: rotate(-3deg) scale(1.06); opacity: 1; }
+  100% { transform: rotate(-2deg) scale(1); opacity: 1; }
+}
+.bienv-cerrar {
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #fff;
+  color: #7c3aed;
+  border: 2px solid #7c3aed;
+  font-size: 20px;
+  font-weight: 900;
+  cursor: pointer;
+  padding: 0;
+  box-shadow: 0 2px 6px rgba(0,0,0,.3);
+  line-height: 22px;
+  transition: all .15s;
+}
+.bienv-cerrar:hover { background: #7c3aed; color: #fff; transform: scale(1.1); }
+.bienv-emoji { font-size: 1.8rem; text-align: center; margin-bottom: 6px; }
+.bienv-mensaje {
+  font-size: .9rem;
+  font-weight: 600;
+  line-height: 1.45;
+  word-wrap: break-word;
+  white-space: pre-wrap;
+}
+.bienv-gestor {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255,255,255,.3);
+  font-size: .72rem;
+  font-weight: 700;
+  opacity: .9;
+  text-align: right;
+}
+@media (max-width: 640px) {
+  .bienv-stack {
+    top: auto;
+    bottom: 80px;
+    right: 10px;
+    left: 10px;
+    max-width: none;
+  }
+  .bienv-cartel { transform: rotate(0); padding: 14px 16px; }
+  .bienv-cartel:nth-child(2) { transform: rotate(0); }
+  .bienv-cartel:nth-child(3) { transform: rotate(0); }
+  .bienv-mensaje { font-size: .82rem; }
+}
+</style>
+
+<script>
+(function(){
+  'use strict';
+  var API_URL = "{% url 'roles:api_mensajes_pendientes' %}";
+  var stack = document.getElementById('bienvStack');
+  if (!stack) return;
+
+  // Fecha de hoy en Cuba
+  function fechaCuba(){
+    try {
+      return new Date().toLocaleDateString('en-CA', {timeZone: 'America/Havana'});
+    } catch(_) {
+      return new Date().toISOString().slice(0, 10);
+    }
+  }
+  var HOY = fechaCuba();
+
+  function getKey(tipo, gestorId){
+    return 'bienv_v1_' + tipo + '_' + gestorId;
+  }
+  function yaVisto(tipo, gestorId){
+    try { return localStorage.getItem(getKey(tipo, gestorId)) === HOY; } catch(_){ return false; }
+  }
+  function marcarVisto(tipo, gestorId){
+    try { localStorage.setItem(getKey(tipo, gestorId), HOY); } catch(_){}
+  }
+
+  function mostrarCartel(msg){
+    var el = document.createElement('div');
+    el.className = 'bienv-cartel';
+    el.dataset.gestorId = msg.gestor_id;
+    el.dataset.tipo = msg.tipo;
+    var emoji = msg.tipo === 'bienvenida_apuesta' ? '🎲' : '🌅';
+    var safe = String(msg.mensaje || '')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+    el.innerHTML =
+      '<button type="button" class="bienv-cerrar" aria-label="Cerrar">&times;</button>' +
+      '<div class="bienv-emoji">' + emoji + '</div>' +
+      '<div class="bienv-mensaje">' + safe + '</div>' +
+      '<div class="bienv-gestor">— ' + (msg.gestor_nombre || '') + '</div>';
+    stack.appendChild(el);
+
+    var btn = el.querySelector('.bienv-cerrar');
+    btn.addEventListener('click', function(){
+      marcarVisto(msg.tipo, msg.gestor_id);
+      el.style.transition = 'all .3s';
+      el.style.transform = 'rotate(-2deg) translateX(140%)';
+      el.style.opacity = '0';
+      setTimeout(function(){ el.remove(); }, 320);
+    });
+  }
+
+  function cargar(tipo){
+    fetch(API_URL + '?tipo=' + encodeURIComponent(tipo), {
+      credentials: 'same-origin',
+      headers: {'Accept': 'application/json'}
+    })
+    .then(function(r){ return r.ok ? r.json() : null; })
+    .then(function(d){
+      if (!d || !d.success || !Array.isArray(d.mensajes)) return;
+      d.mensajes.forEach(function(m){
+        if (yaVisto(m.tipo, m.gestor_id)) return;
+        mostrarCartel(m);
+      });
+    })
+    .catch(function(){});
+  }
+
+  // A1: al entrar a apostar → primera visita del día
+  cargar('primera_visita');
+
+  // A3: exponer función para que apostar.html la llame tras la 1ª apuesta del día
+  window._cargarBienvenidaApuesta = function(){
+    cargar('bienvenida_apuesta');
+  };
+})();
+</script>
+{% endif %}

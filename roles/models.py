@@ -186,6 +186,20 @@ class Fondo(models.Model):
 
 
 class MovimientoFondo(models.Model):
+
+    @property
+    def monto_display(self):
+        from decimal import Decimal
+        val = self.monto or Decimal('0.00')
+        # Forzar que los egresos siempre se muestren negativos
+        if self.tipo in ('apuesta', 'retiro', 'pago_deuda', 'comision') and val > 0:
+            val = -val
+        
+        # Retornar formateado con el signo antes del $
+        if val < 0:
+            return f"-${abs(val):.2f}"
+        return f"+${val:.2f}"
+
     TIPOS = [
         ('recarga', 'Recarga'),
         ('retiro', 'Retiro'),
@@ -299,6 +313,8 @@ class Bono(models.Model):
         ('bienvenida', 'Bienvenida'),
         ('referencia', 'Referencia'),
         ('recomendacion', 'Recomendación por referido'),
+        ('recomendacion_gestor', 'Recomendación por referido (gestor)'),
+        ('recomendacion_cliente', 'Recomendación por referido (cliente)'),
         ('asignado', 'Asignado por gestor'),
         ('recarga', 'Bono por recarga'),
     ]
@@ -313,7 +329,7 @@ class Bono(models.Model):
     )
     usuario_referente = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='bonos_referidos_otorgados')
     usuario_referido = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='bonos_por_referido')
-    tipo = models.CharField(max_length=20, choices=TIPO_CHOICES, default='asignado')
+    tipo = models.CharField(max_length=30, choices=TIPO_CHOICES, default='asignado')  # FIX_REFERIDOS_V1: 30 por 'recomendacion_cliente'
     monto = models.DecimalField(max_digits=10, decimal_places=2, default=0, help_text="Monto original del bono")
     saldo_restante = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     estado = models.CharField(
@@ -373,13 +389,15 @@ class Bono(models.Model):
         from django.utils import timezone
         from datetime import timedelta
         self.estado = 'activo'
-        # Reglas: registro y recomendacion_cliente vencen a 15 días
-        # recomendacion_gestor NUNCA vence
+        # FIX_REFERIDOS_V1 (2026-10-14):
+        # - registro / recomendacion / recomendacion_cliente: vencen a 15 dias
+        # - recomendacion_gestor: nunca vence (el gestor referente cobra siempre)
+        # - resto: nunca vence
         if dias_vigencia is None:
-            if self.tipo in ('registro', 'recomendacion_cliente', 'recomendacion'):
+            if self.tipo in ('registro', 'recomendacion', 'recomendacion_cliente'):
                 dias_vigencia = 15
             else:
-                dias_vigencia = None  # nunca vence
+                dias_vigencia = None
         if dias_vigencia is not None:
             self.fecha_vencimiento = timezone.now() + timedelta(days=dias_vigencia)
         self.save(update_fields=['estado', 'fecha_vencimiento', 'actualizado_en'])
@@ -484,10 +502,36 @@ class Notificacion(models.Model):
         return f"{self.usuario.username} - {self.tipo} - {self.mensaje[:50]}"
 
     def marcar_como_leida(self):
-        if not self.leido:
-            self.leido = True
+        # FIX_FONDO_SNAPSHOT_V2: congelar SIEMPRE, sin early return
+        self.leido = True
+        if not self.leido_en:
             self.leido_en = timezone.now()
-            self.save(update_fields=['leido', 'leido_en'])
+
+        debe_congelar = (
+            self.tipo == 'pago'
+            and self.datos
+            and 'cliente_id' in self.datos
+            and 'solicitud_id' in self.datos
+            and 'fondo_snapshot' not in self.datos
+        )
+
+        if debe_congelar:
+            try:
+                from django.contrib.auth import get_user_model
+                from roles.utils import obtener_fondo_cliente
+                User = get_user_model()
+                cliente = User.objects.filter(id=self.datos['cliente_id']).first()
+                if cliente:
+                    datos = dict(self.datos)
+                    datos['fondo_snapshot'] = obtener_fondo_cliente(cliente)
+                    datos['fondo_congelado_en'] = timezone.now().isoformat()
+                    self.datos = datos
+                    self.save(update_fields=['leido', 'leido_en', 'datos'])
+                    return
+            except Exception:
+                pass
+
+        self.save(update_fields=['leido', 'leido_en'])
 
 
 # ============================================================
@@ -567,6 +611,12 @@ class CuadreDiario(models.Model):
     comision_desglose_snapshot = models.JSONField(
         null=True, blank=True,
         help_text="Desglose por forma de pago al momento de creación"
+    )
+
+    # FIX_DESCUENTO_BONO_V1: descuento por bonos aplicados (se resta de la comisión)
+    descuento_bono = models.DecimalField(
+        max_digits=12, decimal_places=2, default=Decimal('0.00'),
+        help_text="Descuento acumulado por bonos de registro aplicados en el día"
     )
 
     class Meta:
@@ -1024,7 +1074,17 @@ class SuscripcionBanco(models.Model):
         return RecursoAsignado.objects.filter(banco=self.banco, activo=True)
 
     def comerciales_activos(self):
-        return Subordinacion.objects.filter(jefe=self.banco, activo=True).count()
+        # FIX_COMERCIALES_ACTIVOS_V1: contar solo subordinados con rol comercial activo
+        subordinados_ids = list(Subordinacion.objects.filter(
+            jefe=self.banco, activo=True
+        ).values_list('subordinado_id', flat=True))
+        if not subordinados_ids:
+            return 0
+        return Rol.objects.filter(
+            usuario_id__in=subordinados_ids,
+            tipo='comercial',
+            activo=True,
+        ).count()
 
     def costo_mensual(self):
         recursos = self.recursos_activos().count()
@@ -1935,3 +1995,64 @@ class UserActivity(models.Model):
 
     def __str__(self):
         return f"{self.user.username} · {self.last_activity:%Y-%m-%d %H:%M:%S}"
+
+
+# ═══════════════════════════════════════════════════════════════
+# A1+A3 · Mensajes de bienvenida configurables por gestor
+# ═══════════════════════════════════════════════════════════════
+class MensajeBienvenida(models.Model):
+    """A1+A3: mensajes configurables por gestor para sus clientes.
+    - primera_visita: aparece al entrar a Apostar (1 vez al día)
+    - bienvenida_apuesta: aparece tras la 1ª apuesta del día
+    """
+    TIPO_CHOICES = [
+        ('primera_visita', 'Primera visita del día a Apostar'),
+        ('bienvenida_apuesta', 'Bienvenida al apostar'),
+    ]
+    gestor = models.ForeignKey(
+        User, on_delete=models.CASCADE,
+        related_name='mensajes_bienvenida',
+        verbose_name='Gestor',
+    )
+    tipo = models.CharField(
+        max_length=20, choices=TIPO_CHOICES,
+        verbose_name='Tipo de mensaje',
+    )
+    mensaje = models.TextField(
+        verbose_name='Mensaje',
+        help_text='Texto que verá el cliente.',
+        blank=True,
+    )
+    fecha_desde = models.DateField(
+        null=True, blank=True,
+        verbose_name='Válido desde',
+    )
+    fecha_hasta = models.DateField(
+        null=True, blank=True,
+        verbose_name='Válido hasta',
+    )
+    activo = models.BooleanField(default=False, verbose_name='Activo')
+
+    creado_en = models.DateTimeField(auto_now_add=True)
+    actualizado_en = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'Mensaje de bienvenida'
+        verbose_name_plural = 'Mensajes de bienvenida'
+        unique_together = (('gestor', 'tipo'),)
+        ordering = ['-actualizado_en']
+
+    def __str__(self):
+        return f"{self.gestor.username} · {self.get_tipo_display()}"
+
+    def vigente_hoy(self):
+        """¿El mensaje está vigente hoy (fecha Cuba)?"""
+        from django.utils import timezone
+        hoy = timezone.localdate()
+        if not self.activo:
+            return False
+        if self.fecha_desde and hoy < self.fecha_desde:
+            return False
+        if self.fecha_hasta and hoy > self.fecha_hasta:
+            return False
+        return True

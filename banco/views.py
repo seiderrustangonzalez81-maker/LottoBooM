@@ -172,6 +172,12 @@ def recargar_usuario(request):
             messages.error(request, f"Monto inválido: {str(e)}")
             return redirect('banco:recargar_usuario')
 
+        # FIX_ANTI_DUP_60S_BANCO (2026-10-18): Evitar doble clic o recargas duplicadas en menos de 60s
+        from roles.utils import verificar_recarga_duplicada
+        if verificar_recarga_duplicada(user, usuario, forma_pago, monto, segundos=60):
+            messages.error(request, "⚠️ El sistema reconoció una entrada doble de recarga y solo procesó una. Debes esperar 1 minuto para realizar otra recarga idéntica.")
+            return redirect(request.path)
+
         try:
             fondo, created = Fondo.objects.get_or_create(
                 usuario=usuario,

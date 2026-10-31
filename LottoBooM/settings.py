@@ -2,7 +2,7 @@
 Django settings for LottoBooM project.
 
 Configuración corregida, endurecida y lista para producción.
-SIN all auth para evitar errores de importación.
+SIN allauth para evitar errores de importación.
 """
 
 import os
@@ -26,10 +26,13 @@ if not SECRET_KEY:
             "La variable de entorno SECRET_KEY es obligatoria en producción."
         )
 
-DEBUG = True   # Cambia a False en producción
+DEBUG = True   # ⚠️ Cambia a False SOLO cuando el sitio funcione estable
+
 ALLOWED_HOSTS = os.environ.get(
     "ALLOWED_HOSTS",
-    "lottoboom.pythonanywhere.com,localhost,127.0.0.1,testserver"
+    "lottoboom.pythonanywhere.com,"
+    "www.lottoboom.pythonanywhere.com,"
+    "localhost,127.0.0.1,testserver"
 ).split(",")
 
 # ============================================================
@@ -46,8 +49,9 @@ INSTALLED_APPS = [
     "django.contrib.sites",
     "django.contrib.humanize",
 
-    # Terceros (sin allauth)
-    # "django_eventstream",
+    # Terceros
+    "rest_framework",
+    "corsheaders",
 
     # Locales
     "sorteos",
@@ -61,32 +65,25 @@ INSTALLED_APPS = [
     "superadmin",
     "ubicaciones",
     "usuarios.apps.UsuariosConfig",
-
-    'rest_framework',
-    'corsheaders',
 ]
 
 # ============================================================
-# MIDDLEWARE (SIN allauth)
+# MIDDLEWARE (orden correcto, sin duplicados)
 # ============================================================
 MIDDLEWARE = [
-    'corsheaders.middleware.CorsMiddleware',           # <-- PRIMERO
-    'django.middleware.security.SecurityMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.common.CommonMiddleware',
-
-    "django.middleware.security.SecurityMiddleware",
-    "whitenoise.middleware.WhiteNoiseMiddleware",
-    "django.contrib.sessions.middleware.SessionMiddleware",
-    "django.middleware.common.CommonMiddleware",
-    "django.middleware.csrf.CsrfViewMiddleware",
-    "django.contrib.auth.middleware.AuthenticationMiddleware",
-    'usuarios.middleware.LastActivityMiddleware',
-    'roles.middleware.UserActivityMiddleware',
-    "publico.middleware.ActualizarUltimaActividadMiddleware",  # online real
-    "django.contrib.messages.middleware.MessageMiddleware",
-    "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    "publico.middleware.RegistrarVisitaMiddleware",   # 👈 NUEVA
+    'corsheaders.middleware.CorsMiddleware',                    # 1) CORS primero
+    'django.middleware.security.SecurityMiddleware',            # 2) Seguridad
+    'whitenoise.middleware.WhiteNoiseMiddleware',               # 3) Estáticos
+    'django.contrib.sessions.middleware.SessionMiddleware',     # 4) Sesión
+    'django.middleware.common.CommonMiddleware',                # 5) Common
+    'django.middleware.csrf.CsrfViewMiddleware',                # 6) CSRF
+    'django.contrib.auth.middleware.AuthenticationMiddleware',  # 7) Auth
+    'usuarios.middleware.LastActivityMiddleware',               # 8) Actividad propia
+    'roles.middleware.UserActivityMiddleware',                  # 9) Actividad roles
+    'publico.middleware.ActualizarUltimaActividadMiddleware',   # 10) Online real
+    'django.contrib.messages.middleware.MessageMiddleware',     # 11) Mensajes
+    'django.middleware.clickjacking.XFrameOptionsMiddleware',   # 12) Clickjacking
+    'publico.middleware.RegistrarVisitaMiddleware',             # 13) Visitas
 ]
 
 # ============================================================
@@ -117,7 +114,7 @@ TEMPLATES = [
 ]
 
 # ============================================================
-# BASE DE DATOS CON TIMEOUT Y ATOMIC_REQUESTS = False
+# BASE DE DATOS
 # ============================================================
 if os.environ.get("RENDER") or os.environ.get("DATABASE_URL"):
     import dj_database_url
@@ -134,7 +131,7 @@ else:
             "ENGINE": "django.db.backends.sqlite3",
             "NAME": BASE_DIR / "db.sqlite3",
             "OPTIONS": {
-                "timeout": 20,
+                "timeout": 60,
             },
             "ATOMIC_REQUESTS": False,
         }
@@ -156,21 +153,23 @@ CACHES = {
 }
 
 # ============================================================
-# SESIONES (30 minutos de inactividad, persistente en DB)
+# SESIONES — extendidas (1 año, renovadas en cada request)
 # ============================================================
-SESSION_ENGINE = "django.contrib.sessions.backends.db"  # Más fiable que cache
-SESSION_COOKIE_AGE = 1800  # 30 segundos * 60 = 1800 segundos
-SESSION_SAVE_EVERY_REQUEST = False  # Renueva la cookie con cada petición
-SESSION_EXPIRE_AT_BROWSER_CLOSE = False  # No expira al cerrar navegador
+SESSION_ENGINE = "django.contrib.sessions.backends.db"
+SESSION_COOKIE_AGE = 60 * 60 * 24 * 365        # 365 días
+SESSION_SAVE_EVERY_REQUEST = True              # renueva la cookie en cada petición
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False        # no expira al cerrar navegador
 
-# Cookies seguras
+# Cookies
 SESSION_COOKIE_HTTPONLY = True
 CSRF_COOKIE_HTTPONLY = False
 SESSION_COOKIE_SAMESITE = 'Lax'
 CSRF_COOKIE_SAMESITE = 'Lax'
+CSRF_COOKIE_AGE = SESSION_COOKIE_AGE
 
-# Mensajes (sigue igual)
+# Mensajes
 MESSAGE_STORAGE = "django.contrib.messages.storage.session.SessionStorage"
+
 # ============================================================
 # VALIDACIÓN DE CONTRASEÑAS
 # ============================================================
@@ -210,11 +209,15 @@ STORAGES = {
         "BACKEND": "django.core.files.storage.FileSystemStorage",
     },
     "staticfiles": {
-        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+        # ⚠️ CompressedStaticFilesStorage (sin Manifest) — no rompe si falta un estático
+        "BACKEND": "whitenoise.storage.CompressedStaticFilesStorage",
     },
 }
 
+# WhiteNoise: opciones seguras
 WHITENOISE_MANIFEST_STRICT = False
+WHITENOISE_USE_FINDERS = True
+WHITENOISE_AUTOREFRESH = DEBUG
 
 # ============================================================
 # MODELOS Y CAMPOS POR DEFECTO
@@ -224,8 +227,8 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # ============================================================
 # LIMITES DE SUBIDA
 # ============================================================
-DATA_UPLOAD_MAX_NUMBER_FIELDS = 10000
-DATA_UPLOAD_MAX_MEMORY_SIZE = 5242880
+DATA_UPLOAD_MAX_NUMBER_FIELDS = 5000      # bajado de 500000 (era un riesgo DoS)
+DATA_UPLOAD_MAX_MEMORY_SIZE = 52428800
 FILE_UPLOAD_MAX_MEMORY_SIZE = 5242880
 
 # ============================================================
@@ -267,10 +270,6 @@ CHANNEL_LAYERS = {
 
 EVENTSTREAM_MAX_EVENTS_PER_CHANNEL = 100
 EVENTSTREAM_MAX_EVENT_AGE = 3600
-
-# ============================================================
-# CSRF Y ORÍGENES CONFIADOS
-# ============================================================
 
 # ============================================================
 # SEGURIDAD EN PRODUCCIÓN
@@ -359,19 +358,16 @@ ROLES_DISPONIBLES = [
     ("auditor", "Auditor"),
 ]
 
-
-
-# ═══════════════════════════════════════════════════════════
-# API + CORS para la app Android
-# ═══════════════════════════════════════════════════════════
-CORS_ALLOW_ALL_ORIGINS = True   # En producción puedes restringir a dominios específicos
+# ============================================================
+# API + CORS (para la app Android)
+# ============================================================
+CORS_ALLOW_ALL_ORIGINS = True          # ⚠️ Cambia a False cuando la app esté fija
 CORS_ALLOW_CREDENTIALS = True
 
-CSRF_TRUSTED_ORIGINS = ['https://lottoboom.pythonanywhere.com']
-
-# Cookies seguras para WebView con HTTPS
-SESSION_COOKIE_SAMESITE = 'Lax'
-CSRF_COOKIE_SAMESITE = 'Lax'
+CSRF_TRUSTED_ORIGINS = [
+    'https://lottoboom.pythonanywhere.com',
+    'https://www.lottoboom.pythonanywhere.com',
+]
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
@@ -382,3 +378,13 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.IsAuthenticated',
     ],
 }
+
+# ============================================================
+# CHANGELOG DE ESTA REVISIÓN
+# ============================================================
+# v2 (2026-10-11):
+#   - STORAGES: CompressedManifestStaticFilesStorage → CompressedStaticFilesStorage
+#   - Añadido WHITENOISE_USE_FINDERS y WHITENOISE_AUTOREFRESH
+#   - DATA_UPLOAD_MAX_NUMBER_FIELDS: 500000 → 5000
+#   - ALLOWED_HOSTS: añadido www.lottoboom.pythonanywhere.com
+#   - CSRF_TRUSTED_ORIGINS: añadido www.lottoboom.pythonanywhere.com

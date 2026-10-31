@@ -515,13 +515,9 @@ ground:#4338ca;
                     {% for fp, monto in item.fondos.items %}
                       <div class="lc-fondo-row">
                         <span class="lc-fondo-fp">{{ fp }}</span>
-                        <span class="lc-fondo-monto">${{ monto|floatformat:2 }}</span>
+                        <span class="lc-fondo-monto"{% if monto < 0 %} style="color:#dc2626;font-weight:900;"{% endif %}>${{ monto|floatformat:2 }}</span>
                       </div>
                     {% endfor %}
-                    <div class="lc-fondo-total">
-                      <span>TOTAL</span>
-                      <span class="monto cliente-saldo" data-saldo="1">${{ item.total_fondos|floatformat:2 }}</span>
-                    </div>
                   </div>
                 {% else %}
                   <span class="lc-no-fondos">Sin fondos activos</span>

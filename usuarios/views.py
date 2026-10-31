@@ -10,7 +10,8 @@ from django.contrib.auth import authenticate, login, logout as auth_logout
 from django.contrib.auth.models import User
 from django.contrib import messages
 from django.db import transaction
-from django.db.models import Sum, Q, Case, When, DecimalField
+from django.db.models import Sum, Q, Count, Case, When, DecimalField       # ← AÑADIDO: Count
+from django.db.models.functions import TruncDate                          # ← AÑADIDO: línea nueva
 from django.http import JsonResponse
 from django.utils import timezone
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
@@ -32,8 +33,6 @@ from .utils import (
 from roles.utils import crear_notificacion
 
 logger = logging.getLogger(__name__)
-
-
 # ============================================================
 # HELPERS: FECHAS
 # ============================================================
@@ -311,14 +310,18 @@ def login_view(request):
     else:
         form = LoginForm()
 
-    return render(request, 'usuarios/login.html', {'form': form})
+    response = render(request, 'usuarios/login.html', {'form': form})
+    # FIX_LOGIN_NOCACHE_V1: evitar que el navegador cachee el form con el token CSRF viejo
+    response['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+    response['Pragma'] = 'no-cache'
+    response['Expires'] = '0'
+    return response
 
 
 def logout_view(request):
     auth_logout(request)
     messages.success(request, "✅ Has cerrado sesión exitosamente")
     return redirect('publico:home')
-
 
 # ============================================================
 # PERFIL Y EDICIÓN
@@ -527,6 +530,43 @@ def perfil_cliente(request):
     except Exception:
         heatmap_dias = []
 
+    # ══════════════════════════════════════════════════════════════
+    # PERFIL_V2: datos para "Tus Datos", "Seguridad", "Tus Postpagos"
+    # ══════════════════════════════════════════════════════════════
+    try:
+        from roles.models import Postpago
+        postpagos_pendientes = (
+            Postpago.objects
+            .filter(cliente=user, activo=True, saldo__lt=0)
+            .aggregate(t=Sum('saldo'))['t'] or Decimal('0.00')
+        )
+        postpagos_pendientes = abs(postpagos_pendientes)
+    except Exception:
+        postpagos_pendientes = Decimal('0.00')
+
+    try:
+        premios_qs = Premio.objects.filter(jugada__usuario=user)
+        premios_count = premios_qs.count()
+        premios_total = premios_qs.aggregate(t=Sum('monto_premio'))['t'] or Decimal('0.00')
+        jugadas_con_resultado = Jugada.objects.filter(
+            usuario=user,
+            estado__in=['ganadora', 'perdedora'],
+        ).count() or 1
+        tasa_acierto = round((premios_count / jugadas_con_resultado) * 100, 1)
+    except Exception:
+        premios_count = 0
+        premios_total = Decimal('0.00')
+        tasa_acierto = 0
+
+    ultimo_cambio_password = None
+    try:
+        ultimo_cambio_password = user.last_login
+    except Exception:
+        pass
+
+    # ══════════════════════════════════════════════════════════════
+    # CONTEXT
+    # ══════════════════════════════════════════════════════════════
     context = {
         'codigo_referido': codigo_referido,
         'link_referido': link_referido,
@@ -564,16 +604,26 @@ def perfil_cliente(request):
         'sparkline_bonos': sparkline_bonos,
         'sparkline_jugadas': sparkline_jugadas,
         'sparkline_clientes': sparkline_clientes,
+
         # Perfil completado
         'perfil_completado': perfil_completado,
         'perfil_completado_offset': perfil_completado_offset,
+
         # Rings de los stats
         'ring_saldo': ring_saldo,
         'ring_bonos': ring_bonos,
         'ring_jugadas': ring_jugadas,
         'ring_clientes': ring_clientes,
+
         # Heatmap semanal
         'heatmap_dias': heatmap_dias,
+
+        # PERFIL_V2 — Datos nuevos
+        'postpagos_pendientes': postpagos_pendientes,
+        'premios_count': premios_count,
+        'premios_total': premios_total,
+        'tasa_acierto': tasa_acierto,
+        'ultimo_cambio_password': ultimo_cambio_password,
     }
     return render(request, 'usuarios/perfil_cliente.html', context)
 
@@ -1379,6 +1429,16 @@ def api_mis_limites_data(request):
 
 @login_required
 def mis_movimientos(request):
+    # FIX_MIS_MOVIMIENTOS_REDIRECT_V1: gestores van directo al historial con filtros
+    _u = request.user
+    _es_gestor = (
+        _u.is_superuser
+        or _u.roles.filter(tipo__in=['superadmin', 'banco', 'comercial', 'auditor'], activo=True).exists()
+    )
+    if _es_gestor:
+        from django.shortcuts import redirect as _redir
+        return _redir('roles:historial_movimientos')
+
     from django.core.paginator import Paginator
     qs = MovimientoFondo.objects.filter(
         Q(receptor=request.user) | Q(emisor=request.user)
@@ -1414,9 +1474,12 @@ def mis_movimientos(request):
     page_obj = paginator.get_page(request.GET.get('page'))
 
     # _enriquecer_hist: refs + agrupación por día
-    from roles.utils import resolver_referencia_movimiento, agrupar_movimientos_por_dia
+    from roles.utils import (resolver_referencia_movimiento,
+                             resolver_sorteo_movimiento,
+                             agrupar_movimientos_por_dia)
     for _m in page_obj:
         _m.ref_label, _m.ref_url = resolver_referencia_movimiento(_m)
+        _m.sorteo_nombre = resolver_sorteo_movimiento(_m)
     grupos_dia = agrupar_movimientos_por_dia(list(page_obj))
     return render(request, 'usuarios/mis_movimientos.html', {
         'grupos_dia': grupos_dia,

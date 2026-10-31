@@ -87,6 +87,7 @@ urlpatterns = [
     # VÍAS DE PAGO
     # ============================================================
     path('mis-vias-pago/', views.mis_vias_pago, name='mis_vias_pago'),
+    path('vias-pago-gestor/', views.vias_pago_de_mi_gestor, name='vias_pago_de_mi_gestor'),  # FIX_VIAS_CLIENTE_V1
     path('agregar-via-pago/', views.agregar_via_pago, name='agregar_via_pago'),
     path('editar-via-pago/<int:via_id>/', views.editar_via_pago, name='editar_via_pago'),
     path('eliminar-via-pago/<int:via_id>/', views.eliminar_via_pago, name='eliminar_via_pago'),
@@ -147,4 +148,11 @@ urlpatterns = [
     path('mis-prestamos/', views.mis_prestamos_view, name='mis_prestamos'),
     path('prestamos/crear/', views.crear_prestamo_view, name='crear_prestamo'),
     path('prestamos/<int:prestamo_id>/responder/', views.responder_prestamo_view, name='responder_prestamo'),
+
+
+    path('mi-rentabilidad/',       views.mi_rentabilidad,       name='mi_rentabilidad'),
+    path('ranking-apostadores/',   views.ranking_apostadores,   name='ranking_apostadores'),
+    # ═══ A1+A3: Mensajes de bienvenida ═══
+    path('mensajes-bienvenida/', views.configurar_mensajes, name='configurar_mensajes'),
+    path('api/mensajes-bienvenida-pendientes/', views.api_mensajes_pendientes, name='api_mensajes_pendientes'),
 ]

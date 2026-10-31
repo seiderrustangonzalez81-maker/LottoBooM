@@ -505,6 +505,14 @@ def recargar_usuario(request):
                 forma_pago=forma_pago,
                 defaults={'monto': 0, 'activo': True, 'asignado_por': request.user}
             )
+            
+        # FIX_ANTI_DUP_60S (2026-10-18): Evitar doble clic o recargas duplicadas en menos de 60s
+        from roles.utils import verificar_recarga_duplicada
+        _emisor = request.user
+        if verificar_recarga_duplicada(_emisor, usuario, forma_pago, monto, segundos=60):
+            messages.error(request, "⚠️ El sistema reconoció una entrada doble de recarga y solo procesó una. Debes esperar 1 minuto para realizar otra recarga idéntica.")
+            return redirect(request.path)
+
             fondo.monto += monto
             fondo.save()
 

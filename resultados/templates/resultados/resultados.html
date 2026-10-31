@@ -63,6 +63,100 @@
     .num-chip { font-size: 0.75rem; padding: 2px 6px; }
     .num-chip .num-lbl { font-size: 0.5rem; padding: 1px 3px; }
   }
+
+
+    .filtros .row, .filtros .grid, form .row { 
+        display: grid !important; 
+        grid-template-columns: 1fr 1fr !important; 
+        gap: 10px !important; 
+    }
+    .filtros .col-md-4, .filtros .col-md-3, .filtros .col-lg-2, .filtros .col { 
+        width: 100% !important; 
+        max-width: 100% !important; 
+        margin-bottom: 0 !important;
+    }
+    /* El botón de buscar/filtrar ocupa toda la fila */
+    .filtros .col-12, .filtros button[type="submit"] { 
+        grid-column: 1 / -1 !important; 
+    }
+
+    /* 2. Tabla con scroll horizontal y texto sin cortes */
+    .table-responsive { 
+        width: 100% !important; 
+        overflow-x: auto !important; 
+        -webkit-overflow-scrolling: touch !important; 
+        border: 1px solid #e5e7eb; 
+        border-radius: 8px;
+    }
+    table.table, table {
+        min-width: 800px !important; /* Fuerza el ancho para que aparezca el scroll */
+        width: 100% !important;
+        margin-bottom: 0 !important;
+    }
+    th, td { 
+        white-space: nowrap !important; /* Evita que el texto se rompa o apile */
+        vertical-align: middle !important; 
+        font-size: 0.78rem !important; 
+        padding: 8px 12px !important; 
+    }
+    th {
+        text-align: center !important;
+        background: #f8f9fa;
+    }
+    td {
+        text-align: center !important;
+    }
+    /* Alinear el nombre del sorteo a la izquierda para mejor lectura */
+    th:nth-child(2), td:nth-child(2) {
+        text-align: left !important;
+    }
+}
+
+
+/* FIX_RESULTADOS_TABLA_V2: 2 columnas en filtros y scroll en tabla */
+@media (max-width: 768px) {
+    /* 1. Forzar el formulario de filtros a Grid de 2 columnas */
+    form[method="get"].row {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
+        gap: 10px !important;
+    }
+    /* Forzar a las columnas de Bootstrap a ocupar el 100% de su celda grid */
+    form[method="get"].row > div {
+        width: 100% !important;
+        max-width: 100% !important;
+        flex: none !important;
+        margin-bottom: 0 !important;
+    }
+    /* Si hay un botón de buscar o la última columna, que ocupe toda la fila */
+    form[method="get"].row > div:last-child {
+        grid-column: 1 / -1 !important;
+    }
+
+    /* 2. Tabla con scroll horizontal y textos sin romperse */
+    .table-responsive {
+        display: block !important;
+        width: 100% !important;
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+    .table-responsive table {
+        min-width: 900px !important; /* Fuerza el scroll en móvil */
+        width: 100% !important;
+    }
+    .table-responsive th, 
+    .table-responsive td {
+        white-space: nowrap !important; /* Evita que el texto se apile */
+        vertical-align: middle !important;
+        text-align: center !important;
+    }
+    /* Alinear el nombre del sorteo a la izquierda para que se lea mejor */
+    .table-responsive th:nth-child(2), 
+    .table-responsive td:nth-child(2) {
+        text-align: left !important;
+    }
+}
+
 </style>
 
 <div class="container-fluid py-4">
@@ -311,4 +405,46 @@ document.addEventListener('DOMContentLoaded', function() {
 
 {% block extra_css %}
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
+<style>
+/* FIX_RESULTADOS_DEFINITIVO_V3: Solución forzada para móviles */
+@media (max-width: 768px) {
+    /* 1. Filtros en 2 columnas exactas */
+    form.row {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
+        gap: 10px !important;
+    }
+    /* Anular el ancho y flex de Bootstrap en las columnas */
+    form.row > div {
+        width: auto !important;
+        max-width: none !important;
+        flex: 1 1 auto !important;
+        margin-bottom: 0 !important;
+        padding: 0 !important;
+    }
+
+    /* 2. Tabla con scroll horizontal real */
+    .table-responsive {
+        display: block !important;
+        width: 100% !important;
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+        border: 1px solid #ddd;
+    }
+    .table-responsive > .table {
+        min-width: 900px !important; /* Fuerza a que la tabla sea ancha */
+        width: max-content !important; /* Evita que se aplaste */
+        margin-bottom: 0 !important;
+    }
+    /* 3. Textos en una sola línea */
+    .table-responsive th, 
+    .table-responsive td {
+        white-space: nowrap !important; /* No permite saltos de línea */
+        vertical-align: middle !important;
+        padding: 10px 15px !important;
+    }
+}
+</style>
+
 {% endblock %}

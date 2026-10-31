@@ -91,10 +91,117 @@
 .rx-wa-btn:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(16,185,129,.4);}
 .rx-fj-icon{display:inline-flex;align-items:center;gap:4px;font-weight:700;color:#475569;font-size:.78rem;}
 
+
+/* FIX_MIS_PREMIOS_MOBILE_V1 (2026-10-20): Regla maestra para móviles */
+.px-kpis { 
+    display: grid !important; 
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)) !important; 
+    gap: 10px !important; 
+}
+.px-filters .grid { 
+    display: grid !important; 
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)) !important; 
+    gap: 10px !important; 
+}
+/* El botón de buscar/filtrar ocupa toda la fila al final */
+.px-filters .grid > div:last-child { 
+    grid-column: 1 / -1 !important; 
+}
+
+/* Hacer que la tabla se pueda deslizar de lado a lado en móviles */
+.table-responsive, .px-tabla-wrapper, .px-tabla { 
+    display: block !important; 
+    width: 100% !important; 
+    overflow-x: auto !important; 
+    -webkit-overflow-scrolling: touch !important; 
+}
+.px-tabla th, .px-tabla td {
+    white-space: nowrap !important; /* Evita que el texto se rompa en dos líneas */
+}
+
+/* Forzar 2 columnas exactas para las tarjetas en pantallas pequeñas */
+@media (max-width: 600px) {
+    .px-kpis { grid-template-columns: 1fr 1fr !important; }
+    .px-filters .grid { grid-template-columns: 1fr !important; }
+}
+
+
+/* FIX_MIS_PREMIOS_2COLS_V2 (2026-10-20): Forzar 2 columnas en móviles */
+@media (max-width: 768px) {
+    .px-filters .grid { 
+        display: grid !important; 
+        grid-template-columns: 1fr 1fr !important; /* Fuerza 2 columnas exactas */
+        gap: 10px !important; 
+    }
+    /* El último elemento (el botón) ocupa toda la fila */
+    .px-filters .grid > div:last-child { 
+        grid-column: 1 / -1 !important; 
+    }
+    .px-kpis {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
+        gap: 10px !important;
+    }
+}
+
+
+/* FIX_MIS_PREMIOS_SCROLL_H_V3 — scroll horizontal real (2026-10-26) */
+/* La tabla debe volver a ser display:table, el WRAPPER scrollea */
+.px-tabla {
+  display: table !important;
+  width: max-content !important;
+  min-width: 720px !important;
+  border-collapse: collapse !important;
+  overflow-x: visible !important;
+}
+.px-tabla th, .px-tabla td {
+  white-space: nowrap !important;
+}
+/* El wrapper (div inline con overflow-x:auto) es quien scrollea */
+.px-tabla ~ *,
+div:has(> .px-tabla) {
+  overflow-x: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+  scrollbar-width: thin !important;
+  scrollbar-color: #10b981 #e5e7eb !important;
+  padding-bottom: 6px !important;
+}
+/* Barra visible y bonita */
+div:has(> .px-tabla)::-webkit-scrollbar {
+  height: 8px !important;
+}
+div:has(> .px-tabla)::-webkit-scrollbar-track {
+  background: #e5e7eb !important;
+  border-radius: 4px !important;
+}
+div:has(> .px-tabla)::-webkit-scrollbar-thumb {
+  background: #10b981 !important;
+  border-radius: 4px !important;
+}
+div:has(> .px-tabla)::-webkit-scrollbar-thumb:hover {
+  background: #047857 !important;
+}
+
+/* Aplicar solo en móvil/tablet */
+@media (max-width: 900px) {
+  .px-tabla {
+    min-width: 680px !important;
+  }
+}
+@media (max-width: 640px) {
+  .px-tabla {
+    font-size: 0.78rem !important;
+  }
+  .px-tabla thead th,
+  .px-tabla tbody td {
+    padding: 8px 10px !important;
+  }
+}
 </style>
 {% endblock %}
 
 {% block content %}
+{% include 'partials/_cartel_premio_oblicuo.html' %}
 <div class="px-wrap">
 
   <div class="px-head">
@@ -112,6 +219,14 @@
         {% else %}Tú y los clientes que comparten tu gestor{% endif %}
       </div>
     </div>
+    <button type="button" id="btnCompartirTodosPremios"
+            style="display:inline-flex;align-items:center;gap:8px;padding:10px 18px;
+                   background:linear-gradient(145deg,#25d366,#128c7e);color:#fff;
+                   border:2px solid #075e54;border-radius:12px;font-weight:800;
+                   font-size:.85rem;cursor:pointer;font-family:inherit;
+                   box-shadow:3px 3px 0 #064e3b;letter-spacing:.3px;">
+      <i class="fab fa-whatsapp"></i> Compartir todos
+    </button>
   </div>
 
   {# KPIs por periodo #}
@@ -338,6 +453,56 @@
 </div>
 
 <script>
+
+
+function compartirTodosPremios(){
+  var params = new URLSearchParams(window.location.search);
+  var btn = document.getElementById('btnCompartirTodosPremios');
+  var originalHtml = btn ? btn.innerHTML : '';
+  if (btn){ btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Preparando...'; }
+
+  fetch('/resultados/api/premios-todos/?' + params.toString())
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if (btn){ btn.disabled = false; btn.innerHTML = originalHtml; }
+      if (!d.success){ alert(d.error || 'No hay premios.'); return; }
+
+      var msgs = d.mensajes || [];
+      if (msgs.length === 0){ alert('No hay premios.'); return; }
+
+      window.open('https://wa.me/?text=' + encodeURIComponent(msgs[0]), '_blank');
+
+      if (msgs.length > 1){
+        var resto = msgs.slice(1).join('\n\n─────────────\n\n');
+        if (navigator.clipboard && navigator.clipboard.writeText){
+          navigator.clipboard.writeText(resto).then(function(){
+            alert('✅ Mensaje 1/' + msgs.length + ' abierto en WhatsApp.\n\nLos bloques 2 al ' + msgs.length + ' fueron copiados al portapapeles.');
+          }).catch(function(){
+            alert('⚠️ Abierto bloque 1. Los siguientes bloques deben compartirse manualmente.');
+          });
+        } else {
+          alert('⚠️ Abierto bloque 1 de ' + msgs.length + '.');
+        }
+      }
+    })
+    .catch(function(e){
+      if (btn){ btn.disabled = false; btn.innerHTML = originalHtml; }
+      alert('Error: ' + e.message);
+    });
+}
+
+
+document.addEventListener('DOMContentLoaded', function(){
+  var btn = document.getElementById('btnCompartirTodosPremios');
+  if (btn && !btn.dataset.bound){
+    btn.dataset.bound = '1';
+    btn.addEventListener('click', function(e){
+      e.preventDefault();
+      compartirTodosPremios();
+    });
+  }
+});
+
 function compartirPremios(sorteoId, fecha){
   const url = '/resultados/api/premios-sorteo/?sorteo_id=' + sorteoId + '&fecha=' + fecha;
   fetch(url).then(function(r){ return r.json(); }).then(function(d){

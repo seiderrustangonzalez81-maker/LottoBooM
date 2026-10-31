@@ -1,0 +1,467 @@
+cliente,premio_id,jugada_id,numero,monto_apostado,multiplicador,monto_premio,sorteo,fecha_sorteo,forma_pago,estado_premio
+yusyyusy,1142,6730,67,5.00,30,150.00,Real 12:50 PM,2026-09-28,Tarjeta,pendiente
+yusyyusy,1115,14016,72,50.00,30,1500.00,Anguila 5 PM,2026-09-30,Tarjeta,pendiente
+yusyyusy,1114,14514,71,25.00,30,750.00,Anguila 7 PM,2026-09-30,Tarjeta,pendiente
+yusyyusy,1111,14669,04,10.00,30,300.00,King Lottery 7:30 PM,2026-09-30,Tarjeta,pendiente
+yusyyusy,1110,14964,14,200.00,30,6000.00,Florida 9:50 PM,2026-09-30,Tarjeta,pendiente
+yusyyusy,1101,18054,15,100.00,30,3000.00,Florida 9:50 PM,2026-10-01,Tarjeta,pendiente
+yusyyusy,1091,18238,01,20.00,30,600.00,Anguila 1 PM,2026-10-02,Tarjeta,pendiente
+yusyyusy,1090,18600,01,20.00,30,600.00,Anguila 1 PM,2026-10-02,Tarjeta,pendiente
+yusyyusy,1087,19019,17,50.00,30,1500.00,Anguila 12 PM,2026-10-03,Tarjeta,pendiente
+yusyyusy,1075,21250,29,50.00,30,1500.00,Suerte 6 PM,2026-10-04,Tarjeta,pendiente
+yusyyusy,1072,23000,78,25.00,30,750.00,Anguila 9 PM,2026-10-05,Tarjeta,pendiente
+yusyyusy,1071,23037,17,10.00,30,300.00,Florida 9:50 PM,2026-10-05,Tarjeta,pendiente
+yusyyusy,1042,26266,59,58.00,30,1740.00,Anguila 10 AM,2026-10-07,Tarjeta,pendiente
+yusyyusy,1034,30041,10,20.00,30,600.00,Real Noche,2026-10-07,Tarjeta,pendiente
+yusyyusy,1031,32816,98,10.00,30,300.00,New York 2:30 PM,2026-10-08,Tarjeta,pendiente
+yusyyusy,1030,32819,74,30.00,30,900.00,New York 2:30 PM,2026-10-08,Tarjeta,pendiente
+yusyyusy,1020,33145,74,300.00,30,9000.00,Gana Más 2:30 PM,2026-10-09,Tarjeta,pendiente
+yusyyusy,1017,33955,40,25.00,30,750.00,Anguila 9 AM,2026-10-10,Tarjeta,pendiente
+yusyyusy,1016,33962,11,10.00,30,300.00,Anguila 10 AM,2026-10-10,Tarjeta,pendiente
+yusyyusy,1015,34154,47,50.00,30,1500.00,Florida 1:35 PM,2026-10-10,Tarjeta,pendiente
+yusyyusy,1014,34236,47,50.00,30,1500.00,Florida 1:35 PM,2026-10-10,Tarjeta,pendiente
+yusyyusy,1009,34228,81,100.00,30,3000.00,Loteka 1:30 PM,2026-10-10,Tarjeta,pendiente
+yusyyusy,1008,34996,36,100.00,30,3000.00,Anguila 7 PM,2026-10-10,Tarjeta,pendiente
+yusyyusy,1007,34994,36,100.00,30,3000.00,Georgia 7 PM,2026-10-10,Tarjeta,pendiente
+yusyyusy,1006,35119,47,300.00,30,9000.00,Nacional,2026-10-10,Tarjeta,pendiente
+yusyyusy,1000,38482,76,20.00,30,600.00,Anguila 10 AM,2026-10-11,Tarjeta,pendiente
+yusyyusy,999,36270,07,20.00,30,600.00,Suerte 12:30 PM,2026-10-11,Tarjeta,pendiente
+yusyyusy,989,37849,77,10.00,30,300.00,Florida 9:50 PM,2026-10-11,Tarjeta,pendiente
+yusyyusy,987,38371,19,25.00,30,750.00,New York 10:30 PM,2026-10-11,Tarjeta,pendiente
+yusyyusy,986,38379,19,25.00,30,750.00,New York 10:30 PM,2026-10-11,Tarjeta,pendiente
+yusyyusy,981,37021,10,50.00,30,1500.00,Leidsa 8:55 PM,2026-10-11,Tarjeta,pendiente
+yusyyusy,979,40255,40,25.00,30,750.00,New York 2:30 PM,2026-10-12,Tarjeta,pendiente
+yusyyusy,968,42544,33,100.00,30,3000.00,New York 10:30 PM,2026-10-12,Tarjeta,pendiente
+yusyyusy,966,42500,12,100.00,30,3000.00,Nacional,2026-10-12,Tarjeta,pendiente
+yusyyusy,949,43877,40,100.00,30,3000.00,New York 2:30 PM,2026-10-13,Tarjeta,pendiente
+yusyyusy,941,46786,42,25.00,30,750.00,Florida 9:50 PM,2026-10-13,Tarjeta,pendiente
+yusyyusy,940,46822,42,50.00,30,1500.00,Florida 9:50 PM,2026-10-13,Tarjeta,pendiente
+yusyyusy,939,45850,01,50.00,30,1500.00,Anguila 9 PM,2026-10-13,Tarjeta,pendiente
+yusyyusy,938,46966,60,25.00,30,750.00,Georgia 11:34 PM,2026-10-13,Tarjeta,pendiente
+yusyyusy,936,47286,08,25.00,30,750.00,Anguila 12 PM,2026-10-14,Tarjeta,pendiente
+yusyyusy,932,48093,96,100.00,30,3000.00,Florida 1:35 PM,2026-10-14,Tarjeta,pendiente
+yusyyusy,931,47428,06,25.00,30,750.00,Suerte 12:30 PM,2026-10-14,Tarjeta,pendiente
+yusyyusy,928,47864,47,250.00,30,7500.00,Gana Más 2:30 PM,2026-10-14,Tarjeta,pendiente
+yusyyusy,926,48160,09,100.00,30,3000.00,Gana Más 2:30 PM,2026-10-14,Tarjeta,pendiente
+yusyyusy,904,53309,85,100.00,30,3000.00,Anguila 1 PM,2026-10-15,Tarjeta,pendiente
+yusyyusy,854,58157,01,25.00,30,750.00,Real 12:50 PM,2026-10-16,Tarjeta,pendiente
+yusyyusy,802,70277,91,75.00,30,2250.00,New York 2:30 PM,2026-10-19,Tarjeta,pendiente
+yusyyusy,801,70281,91,100.00,30,3000.00,New York 2:30 PM,2026-10-19,Tarjeta,pendiente
+yusyyusy,796,70360,01,25.00,30,750.00,Anguila 9 PM,2026-10-19,Tarjeta,pendiente
+yusyyusy,795,70749,12,50.00,30,1500.00,Anguila 10 AM,2026-10-20,Tarjeta,pendiente
+yusyyusy,787,73730,74,300.00,30,9000.00,Gana Más 2:30 PM,2026-10-21,Tarjeta,pendiente
+yusyyusy,776,76417,41,100.00,30,3000.00,Georgia 11:34 PM,2026-10-21,Tarjeta,pendiente
+yusyyusy,768,77955,28,25.00,30,750.00,Florida 1:35 PM,2026-10-22,Tarjeta,pendiente
+yusyyusy,765,77969,70,50.00,30,1500.00,New York 2:30 PM,2026-10-22,Tarjeta,pendiente
+yusyyusy,745,92755,55,50.00,30,1500.00,New York 10:30 PM,2026-10-24,(sin FP),pendiente
+yusyyusy,735,94174,40,100.00,30,3000.00,New York 10:30 PM,2026-10-25,Tarjeta,pendiente
+yusyyusy,712,96727,70,50.00,30,1500.00,Nacional,2026-10-26,Tarjeta,pendiente
+Yudy,1153,3270,92,380.00,30,11400.00,Florida 9:50 PM,2026-09-26,Tarjeta,pendiente
+Yudy,1084,19564,03,105.00,30,3150.00,Georgia 7 PM,2026-10-03,Tarjeta,pendiente
+Yudy,1081,20326,89,135.00,30,4050.00,Georgia 12:30 PM,2026-10-04,Tarjeta,pendiente
+Yudy,1033,33081,71,600.00,30,18000.00,Georgia 11:34 PM,2026-10-08,Tarjeta,pendiente
+Yudy,1027,32329,27,527.00,30,15810.00,Georgia 12:30 PM,2026-10-08,Tarjeta,pendiente
+Yudy,736,94163,57,220.00,30,6600.00,New York 10:30 PM,2026-10-25,Tarjeta,pendiente
+Yoel,1147,5965,31,30.00,30,900.00,Anguila 8 AM,2026-09-28,Tarjeta,pendiente
+Yoel,1143,6956,91,30.00,30,900.00,Florida 1:35 PM,2026-09-28,Tarjeta,pendiente
+Yoel,1140,7105,91,30.00,30,900.00,New York 2:30 PM,2026-09-28,Tarjeta,pendiente
+Yoel,1139,7106,41,30.00,30,900.00,New York 2:30 PM,2026-09-28,Tarjeta,pendiente
+Yoel,1138,7178,41,10.00,30,300.00,New York 2:30 PM,2026-09-28,Tarjeta,pendiente
+Yoel,1133,8009,07,30.00,30,900.00,Anguila 4 PM,2026-09-28,Tarjeta,pendiente
+Yoel,1132,8044,31,30.00,30,900.00,Anguila 5 PM,2026-09-28,Tarjeta,pendiente
+Yoel,1129,9244,07,30.00,30,900.00,New York 10:30 PM,2026-09-28,Tarjeta,pendiente
+Yoel,1122,12655,14,40.00,30,1200.00,Anguila 8 AM,2026-09-30,Tarjeta,pendiente
+Yoel,1121,12753,10,50.00,30,1500.00,Anguila 10 AM,2026-09-30,Tarjeta,pendiente
+Yoel,1117,13354,14,40.00,30,1200.00,Anguila 2 PM,2026-09-30,Tarjeta,pendiente
+Yoel,1116,13355,03,40.00,30,1200.00,Anguila 2 PM,2026-09-30,Tarjeta,pendiente
+Yoel,1112,14715,37,50.00,30,1500.00,Georgia 7 PM,2026-09-30,Tarjeta,pendiente
+Yoel,1106,16000,14,50.00,30,1500.00,Florida 9:50 PM,2026-09-30,Tarjeta,pendiente
+Yoel,1104,15958,31,50.00,30,1500.00,Anguila 9 PM,2026-09-30,Tarjeta,pendiente
+Yoel,1060,24392,71,50.00,30,1500.00,Florida 9:50 PM,2026-10-06,Tarjeta,pendiente
+Yoel,1057,24651,14,50.00,30,1500.00,New York 10:30 PM,2026-10-06,Tarjeta,pendiente
+Yoel,1054,26162,14,50.00,30,1500.00,Georgia 11:34 PM,2026-10-06,Tarjeta,pendiente
+Yoel,1053,26192,14,30.00,30,900.00,Georgia 11:34 PM,2026-10-06,Tarjeta,pendiente
+Yoel,1045,31387,15,40.00,30,1200.00,New York 10:30 PM,2026-10-07,Tarjeta,pendiente
+Yoel,1001,36173,37,50.00,30,1500.00,Anguila 9 AM,2026-10-11,Tarjeta,pendiente
+Yoel,997,36826,53,100.00,30,3000.00,Florida 1:35 PM,2026-10-11,Tarjeta,pendiente
+Yoel,978,38923,37,50.00,30,1500.00,Georgia 12:30 PM,2026-10-12,Tarjeta,pendiente
+Yoel,967,41648,59,20.00,30,600.00,Georgia 7 PM,2026-10-12,Tarjeta,pendiente
+Yoel,958,42791,37,50.00,30,1500.00,Anguila 10 AM,2026-10-13,Tarjeta,pendiente
+Yoel,911,51285,80,30.00,30,900.00,Anguila 11 AM,2026-10-15,Tarjeta,pendiente
+Yoel,910,51305,80,40.00,30,1200.00,Anguila 11 AM,2026-10-15,Tarjeta,pendiente
+Yoel,905,52912,07,50.00,30,1500.00,Anguila 12 PM,2026-10-15,Tarjeta,pendiente
+Yoel,901,53567,88,50.00,30,1500.00,Florida 1:35 PM,2026-10-15,Tarjeta,pendiente
+Yoel,889,54716,71,50.00,30,1500.00,Anguila 6 PM,2026-10-15,Tarjeta,pendiente
+Yoel,798,70228,86,50.00,30,1500.00,Suerte 6 PM,2026-10-19,Tarjeta,pendiente
+Yoel,788,72326,13,50.00,30,1500.00,Anguila 8 AM,2026-10-21,Tarjeta,pendiente
+Yoel,775,76481,02,50.00,30,1500.00,Georgia 12:30 PM,2026-10-22,Tarjeta,pendiente
+Yoel,740,92337,06,30.00,30,900.00,Anguila 4 PM,2026-10-24,Tarjeta,pendiente
+Yoel,737,93629,31,70.00,30,2100.00,Anguila 11 AM,2026-10-25,Tarjeta,pendiente
+Yoel,734,93469,55,50.00,30,1500.00,Anguila 7 PM,2026-10-25,Tarjeta,pendiente
+Yoel,714,97414,71,70.00,30,2100.00,Anguila 8 PM,2026-10-26,Tarjeta,pendiente
+Vany,1096,17015,15,60.00,30,1800.00,Anguila 1 PM,2026-10-01,Tarjeta,pendiente
+Vany,1086,19148,29,100.00,30,3000.00,Anguila 1 PM,2026-10-03,Tarjeta,pendiente
+Vany,1085,19608,74,150.00,30,4500.00,Anguila 9 PM,2026-10-03,Tarjeta,pendiente
+Vany,1076,21192,91,150.00,30,4500.00,Gana Más 2:30 PM,2026-10-04,Tarjeta,pendiente
+Vany,1074,21310,29,50.00,30,1500.00,Suerte 6 PM,2026-10-04,Tarjeta,pendiente
+Vany,1070,21914,46,80.00,30,2400.00,Anguila 10 AM,2026-10-05,Tarjeta,pendiente
+Vany,1069,22018,19,150.00,30,4500.00,Primera,2026-10-05,Tarjeta,pendiente
+Vany,1066,22689,25,100.00,30,3000.00,Primera 7 PM,2026-10-05,Tarjeta,pendiente
+Vany,957,42827,34,100.00,30,3000.00,Anguila 10 AM,2026-10-13,Tarjeta,pendiente
+Vany,870,62913,44,80.00,30,2400.00,Nacional,2026-10-16,Tarjeta,pendiente
+Vany,726,94593,87,100.00,30,3000.00,Anguila 10 AM,2026-10-26,Tarjeta,pendiente
+yasnay,1162,790,90,5.00,30,150.00,Anguila 8 AM,2026-09-25,Tarjeta,pendiente
+yasnay,1161,851,51,5.00,30,150.00,Anguila 9 AM,2026-09-25,Tarjeta,pendiente
+yasnay,1160,870,07,30.00,30,900.00,Anguila 10 AM,2026-09-25,Tarjeta,pendiente
+yasnay,1159,901,51,5.00,30,150.00,Anguila 10 AM,2026-09-25,Tarjeta,pendiente
+yasnay,1154,3080,66,5.00,30,150.00,Anguila 4 PM,2026-09-26,Tarjeta,pendiente
+yasnay,1134,8231,59,5.00,30,150.00,Anguila 7 PM,2026-09-28,Tarjeta,pendiente
+yasnay,1100,16784,19,5.00,30,150.00,Anguila 8 AM,2026-10-01,Tarjeta,pendiente
+yasnay,1099,16804,50,5.00,30,150.00,Anguila 8 AM,2026-10-01,Tarjeta,pendiente
+yasnay,1059,24788,39,5.00,30,150.00,Anguila 4 PM,2026-10-06,Tarjeta,pendiente
+yasnay,1058,24895,27,5.00,30,150.00,Anguila 7 PM,2026-10-06,Tarjeta,pendiente
+yasnay,1052,26235,44,5.00,30,150.00,Georgia 11:34 PM,2026-10-06,Tarjeta,pendiente
+yasnay,1004,35430,44,5.00,30,150.00,New York 10:30 PM,2026-10-10,Tarjeta,pendiente
+yasnay,1003,35652,66,5.00,30,150.00,Georgia 11:34 PM,2026-10-10,Tarjeta,pendiente
+yasnay,998,36331,07,30.00,30,900.00,Suerte 12:30 PM,2026-10-11,Tarjeta,pendiente
+yasnay,995,37065,30,2.00,30,60.00,Anguila 4 PM,2026-10-11,Tarjeta,pendiente
+yasnay,990,37744,77,5.00,30,150.00,Florida 9:50 PM,2026-10-11,Tarjeta,pendiente
+yasnay,985,38000,48,5.00,30,150.00,Georgia 11:34 PM,2026-10-11,Tarjeta,pendiente
+yasnay,984,37777,14,5.00,30,150.00,Anguila 10 PM,2026-10-11,Tarjeta,pendiente
+yasnay,983,37786,31,5.00,30,150.00,Anguila 10 PM,2026-10-11,Tarjeta,pendiente
+yasnay,982,37986,06,5.00,30,150.00,New Jersey 10:50 PM,2026-10-11,Tarjeta,pendiente
+yasnay,980,38458,29,5.00,30,150.00,Haití 1,2026-10-12,Tarjeta,pendiente
+yasnay,977,39382,84,40.00,30,1200.00,Florida 1:35 PM,2026-10-12,Tarjeta,pendiente
+yasnay,973,40316,30,7.00,30,210.00,Anguila 3 PM,2026-10-12,Tarjeta,pendiente
+yasnay,964,42699,23,5.00,30,150.00,Georgia 11:34 PM,2026-10-12,Tarjeta,pendiente
+yasnay,963,42700,23,5.00,30,150.00,Georgia 11:34 PM,2026-10-12,Tarjeta,pendiente
+yasnay,962,42719,52,5.00,30,150.00,Georgia 11:34 PM,2026-10-12,Tarjeta,pendiente
+yasnay,952,43200,81,30.00,30,900.00,Real 12:50 PM,2026-10-13,Tarjeta,pendiente
+yasnay,947,43463,09,20.00,30,600.00,Anguila 2 PM,2026-10-13,Tarjeta,pendiente
+yasnay,946,44178,61,30.00,30,900.00,Anguila 4 PM,2026-10-13,Tarjeta,pendiente
+yasnay,945,45529,06,5.00,30,150.00,Anguila 8 PM,2026-10-13,Tarjeta,pendiente
+yasnay,930,47918,16,5.00,30,150.00,New York 2:30 PM,2026-10-14,Tarjeta,pendiente
+yasnay,927,47868,09,30.00,30,900.00,Gana Más 2:30 PM,2026-10-14,Tarjeta,pendiente
+yasnay,923,49977,86,10.00,30,300.00,New York 10:30 PM,2026-10-14,Tarjeta,pendiente
+yasnay,918,49505,07,30.00,30,900.00,Florida 9:50 PM,2026-10-14,Tarjeta,pendiente
+yasnay,917,49515,31,6.00,30,180.00,Florida 9:50 PM,2026-10-14,Tarjeta,pendiente
+yasnay,906,51313,07,100.00,30,3000.00,Anguila 12 PM,2026-10-15,Tarjeta,pendiente
+yasnay,892,54582,71,5.00,30,150.00,Anguila 6 PM,2026-10-15,Tarjeta,pendiente
+yasnay,876,56081,06,10.00,30,300.00,Georgia 11:34 PM,2026-10-15,Tarjeta,pendiente
+yasnay,846,61766,84,40.00,30,1200.00,Anguila 5 PM,2026-10-16,Tarjeta,pendiente
+yasnay,845,61773,67,6.00,30,180.00,Anguila 5 PM,2026-10-16,Tarjeta,pendiente
+yasnay,769,78944,12,10.00,30,300.00,Anguila 5 PM,2026-10-22,Tarjeta,pendiente
+yasnay,767,79016,81,10.00,30,300.00,Haití 4,2026-10-22,Tarjeta,pendiente
+yasnay,766,79017,91,10.00,30,300.00,Haití 4,2026-10-22,Tarjeta,pendiente
+yasnay,764,79137,69,10.00,30,300.00,Anguila 7 PM,2026-10-22,Tarjeta,pendiente
+yasnay,749,86953,96,6.00,30,180.00,Anguila 3 PM,2026-10-23,Tarjeta,pendiente
+yasnay,744,92481,17,30.00,30,900.00,Nacional,2026-10-24,Tarjeta,pendiente
+yasnay,743,92019,23,6.00,30,180.00,Anguila 3 PM,2026-10-24,Tarjeta,pendiente
+yasnay,742,92289,21,30.00,30,900.00,Anguila 4 PM,2026-10-24,Tarjeta,pendiente
+yasnay,741,92298,06,6.00,30,180.00,Anguila 4 PM,2026-10-24,Tarjeta,pendiente
+yasnay,739,93148,47,5.00,30,150.00,Anguila 10 AM,2026-10-25,Tarjeta,pendiente
+yasnay,738,93161,31,5.00,30,150.00,Anguila 11 AM,2026-10-25,Tarjeta,pendiente
+yasnay,731,92886,17,40.00,30,1200.00,Georgia 11:34 PM,2026-10-25,Tarjeta,pendiente
+yasnay,730,94429,35,10.00,30,300.00,Georgia 11:34 PM,2026-10-25,Tarjeta,pendiente
+yasnay,729,97844,54,7.00,30,210.00,Georgia 11:34 PM,2026-10-26,Tarjeta,pendiente
+yasnay,727,97667,50,7.00,30,210.00,New York 10:30 PM,2026-10-26,Tarjeta,pendiente
+yasnay,725,94620,67,6.00,30,180.00,Anguila 10 AM,2026-10-26,Tarjeta,pendiente
+yasnay,724,94768,17,100.00,30,3000.00,Anguila 11 AM,2026-10-26,Tarjeta,pendiente
+yasnay,723,94792,09,10.00,30,300.00,Anguila 11 AM,2026-10-26,Tarjeta,pendiente
+yasnay,722,95321,13,10.00,30,300.00,Haití 3,2026-10-26,Tarjeta,pendiente
+yasnay,718,96396,07,40.00,30,1200.00,Anguila 2 PM,2026-10-26,Tarjeta,pendiente
+yasnay,717,96403,86,6.00,30,180.00,Anguila 2 PM,2026-10-26,Tarjeta,pendiente
+yasnay,716,96644,71,6.00,30,180.00,New York 2:30 PM,2026-10-26,Tarjeta,pendiente
+yasnay,715,96993,20,10.00,30,300.00,Anguila 5 PM,2026-10-26,Tarjeta,pendiente
+yasnay,713,97357,07,30.00,30,900.00,Haití 5,2026-10-26,Tarjeta,pendiente
+yasnay,711,97997,20,6.00,30,180.00,Anguila 10 AM,2026-10-27,Tarjeta,pendiente
+yasnay,710,99366,67,5.00,30,150.00,Florida 9:50 PM,2026-10-27,Tarjeta,pendiente
+yasnay,709,99053,05,90.00,30,2700.00,Tennessee 7:20 PM,2026-10-27,Tarjeta,pendiente
+yasnay,708,99098,15,5.00,30,150.00,Tennessee 7:20 PM,2026-10-27,Tarjeta,pendiente
+yasnay,707,98324,15,6.00,30,180.00,Anguila 12 PM,2026-10-27,Tarjeta,pendiente
+yasnay,706,98345,53,6.00,30,180.00,Anguila 12 PM,2026-10-27,Tarjeta,pendiente
+yasnay,705,98915,15,6.00,30,180.00,New York 2:30 PM,2026-10-27,Tarjeta,pendiente
+yasnay,704,98934,54,6.00,30,180.00,New York 2:30 PM,2026-10-27,Tarjeta,pendiente
+yasnay,703,99048,96,6.00,30,180.00,Anguila 3 PM,2026-10-27,Tarjeta,pendiente
+Kasama,1158,922,90,20.00,30,600.00,Florida 9:50 PM,2026-09-25,Tarjeta,pendiente
+Kasama,1148,5742,91,20.00,30,600.00,Florida 9:50 PM,2026-09-27,Tarjeta,pendiente
+Kasama,1141,6908,41,20.00,30,600.00,New York 2:30 PM,2026-09-28,Tarjeta,pendiente
+Kasama,1130,9222,48,200.00,30,6000.00,New York 10:30 PM,2026-09-28,Tarjeta,pendiente
+Kasama,1127,10845,07,20.00,30,600.00,Suerte 12:30 PM,2026-09-29,Tarjeta,pendiente
+Kasama,1105,14309,12,10.00,30,300.00,Tennessee 7:20 PM,2026-09-30,Tarjeta,pendiente
+Kasama,1103,15411,69,20.00,30,600.00,Real Noche,2026-09-30,Tarjeta,pendiente
+Kasama,1102,15678,69,20.00,30,600.00,Real Noche,2026-09-30,Tarjeta,pendiente
+Kasama,1097,17080,98,20.00,30,600.00,Suerte 12:30 PM,2026-10-01,Tarjeta,pendiente
+Kasama,1095,17483,15,20.00,30,600.00,Anguila 1 PM,2026-10-01,Tarjeta,pendiente
+Kasama,1092,18711,01,40.00,30,1200.00,Real 12:50 PM,2026-10-02,Tarjeta,pendiente
+Kasama,1089,18792,05,20.00,30,600.00,Suerte 6 PM,2026-10-02,Tarjeta,pendiente
+Kasama,1088,18836,06,20.00,30,600.00,Primera,2026-10-03,Tarjeta,pendiente
+Kasama,1077,21179,20,20.00,30,600.00,New York 2:30 PM,2026-10-04,Tarjeta,pendiente
+Kasama,1068,22291,05,20.00,30,600.00,Gana Más 2:30 PM,2026-10-05,Tarjeta,pendiente
+Kasama,1029,32890,27,100.00,30,3000.00,Nacional,2026-10-08,Tarjeta,pendiente
+Kasama,1005,34476,19,20.00,30,600.00,Leidsa 8:55 PM,2026-10-10,Tarjeta,pendiente
+Kasama,996,36815,78,40.00,30,1200.00,New York 2:30 PM,2026-10-11,Tarjeta,pendiente
+Kasama,988,37585,19,20.00,30,600.00,New York 10:30 PM,2026-10-11,Tarjeta,pendiente
+Adile,1157,1884,20,5.00,30,150.00,Florida 1:35 PM,2026-09-26,Tarjeta,pendiente
+Adile,1155,2082,99,15.00,30,450.00,New York 2:30 PM,2026-09-26,Tarjeta,pendiente
+Adile,1137,7263,41,6.00,30,180.00,New York 2:30 PM,2026-09-28,Tarjeta,pendiente
+Adile,1131,9052,99,6.00,30,180.00,Florida 9:50 PM,2026-09-28,Tarjeta,pendiente
+Adile,1120,12976,60,6.00,30,180.00,Georgia 12:30 PM,2026-09-30,Tarjeta,pendiente
+Adile,1107,15948,14,30.00,30,900.00,Florida 9:50 PM,2026-09-30,Tarjeta,pendiente
+Adile,1098,17415,69,3.00,30,90.00,Georgia 12:30 PM,2026-10-01,Tarjeta,pendiente
+Adile,1094,17587,53,8.00,30,240.00,Florida 1:35 PM,2026-10-01,Tarjeta,pendiente
+Adile,1049,27524,12,8.00,30,240.00,Georgia 12:30 PM,2026-10-07,Tarjeta,pendiente
+Adile,1048,29325,16,10.00,30,300.00,Gana Más 2:30 PM,2026-10-07,Tarjeta,pendiente
+Adile,1032,33108,59,2.00,30,60.00,New York 10:30 PM,2026-10-08,Tarjeta,pendiente
+Adile,1028,32408,61,6.00,30,180.00,Primera,2026-10-08,Tarjeta,pendiente
+Adile,1025,32631,27,6.00,30,180.00,Georgia 12:30 PM,2026-10-08,Tarjeta,pendiente
+Adile,1024,32638,04,6.00,30,180.00,Georgia 12:30 PM,2026-10-08,Tarjeta,pendiente
+Adile,1023,32706,19,30.00,30,900.00,Florida 1:35 PM,2026-10-08,Tarjeta,pendiente
+Adile,1021,33359,79,6.00,30,180.00,New York 2:30 PM,2026-10-09,Tarjeta,pendiente
+Adile,1019,33277,74,6.00,30,180.00,Gana Más 2:30 PM,2026-10-09,Tarjeta,pendiente
+Adile,1018,33280,00,6.00,30,180.00,Gana Más 2:30 PM,2026-10-09,Tarjeta,pendiente
+Adile,1013,34327,35,5.00,30,150.00,Florida 1:35 PM,2026-10-10,Tarjeta,pendiente
+Adile,942,46836,27,6.00,30,180.00,New York 10:30 PM,2026-10-13,Tarjeta,pendiente
+Adile,908,52761,60,8.00,30,240.00,Georgia 12:30 PM,2026-10-15,Tarjeta,pendiente
+Adile,907,52801,60,8.00,30,240.00,Georgia 12:30 PM,2026-10-15,Tarjeta,pendiente
+Adile,895,54779,03,15.00,30,450.00,New York 2:30 PM,2026-10-15,Tarjeta,pendiente
+Adile,882,49144,03,8.00,30,240.00,Florida 9:50 PM,2026-10-15,Tarjeta,pendiente
+Adile,881,49178,03,15.00,30,450.00,Florida 9:50 PM,2026-10-15,Tarjeta,pendiente
+Adile,879,55520,03,30.00,30,900.00,Florida 9:50 PM,2026-10-15,Tarjeta,pendiente
+Adile,878,55543,03,100.00,30,3000.00,Florida 9:50 PM,2026-10-15,Tarjeta,pendiente
+Adile,875,56412,38,10.00,30,300.00,Anguila 10 AM,2026-10-16,Tarjeta,pendiente
+Adile,873,62747,44,8.00,30,240.00,Nacional,2026-10-16,Tarjeta,pendiente
+Adile,864,56379,45,8.00,30,240.00,Georgia 11:34 PM,2026-10-16,Tarjeta,pendiente
+Adile,855,58295,91,15.00,30,450.00,Georgia 12:30 PM,2026-10-16,Tarjeta,pendiente
+Adile,851,59572,32,8.00,30,240.00,Florida 1:35 PM,2026-10-16,Tarjeta,pendiente
+Adile,844,62722,86,8.00,30,240.00,Georgia 7 PM,2026-10-16,Tarjeta,pendiente
+Adile,835,64473,05,30.00,30,900.00,Florida 1:35 PM,2026-10-17,Tarjeta,pendiente
+Adile,834,64547,55,6.00,30,180.00,Florida 1:35 PM,2026-10-17,Tarjeta,pendiente
+Adile,828,65800,07,10.00,30,300.00,Georgia 7 PM,2026-10-17,Tarjeta,pendiente
+Adile,827,65826,07,10.00,30,300.00,Georgia 7 PM,2026-10-17,Tarjeta,pendiente
+Adile,824,67517,87,8.00,30,240.00,Georgia 12:30 PM,2026-10-18,Tarjeta,pendiente
+Adile,813,68577,89,15.00,30,450.00,Florida 9:50 PM,2026-10-18,Tarjeta,pendiente
+Adile,812,68585,74,15.00,30,450.00,Florida 9:50 PM,2026-10-18,Tarjeta,pendiente
+Adile,808,69495,24,5.00,30,150.00,Florida 1:35 PM,2026-10-19,Tarjeta,pendiente
+Adile,807,69497,68,5.00,30,150.00,Florida 1:35 PM,2026-10-19,Tarjeta,pendiente
+Adile,804,69863,67,8.00,30,240.00,New York 2:30 PM,2026-10-19,Tarjeta,pendiente
+Adile,803,69871,91,8.00,30,240.00,New York 2:30 PM,2026-10-19,Tarjeta,pendiente
+Adile,799,70143,89,8.00,30,240.00,Georgia 7 PM,2026-10-19,Tarjeta,pendiente
+Adile,794,70772,11,8.00,30,240.00,Georgia 12:30 PM,2026-10-20,Tarjeta,pendiente
+Adile,793,70809,47,6.00,30,180.00,Georgia 12:30 PM,2026-10-20,Tarjeta,pendiente
+Adile,791,71147,00,8.00,30,240.00,Florida 1:35 PM,2026-10-20,Tarjeta,pendiente
+Adile,754,84455,55,6.00,30,180.00,Florida 1:35 PM,2026-10-23,Tarjeta,pendiente
+Adile,698,101058,63,2.00,30,60.00,Florida 1:35 PM,2026-10-29,Tarjeta,pendiente
+Yanetsy,925,48269,29,5.00,30,150.00,Anguila 6 PM,2026-10-14,Tarjeta,pendiente
+Yanetsy,924,48284,33,5.00,30,150.00,Anguila 6 PM,2026-10-14,Tarjeta,pendiente
+Yanetsy,913,51127,60,8.00,30,240.00,Anguila 11 AM,2026-10-15,Tarjeta,pendiente
+Yanetsy,912,51147,80,8.00,30,240.00,Anguila 11 AM,2026-10-15,Tarjeta,pendiente
+Yanetsy,903,53371,88,5.00,30,150.00,Florida 1:35 PM,2026-10-15,Tarjeta,pendiente
+Yanetsy,902,53467,88,5.00,30,150.00,Florida 1:35 PM,2026-10-15,Tarjeta,pendiente
+Yanetsy,897,53907,03,7.00,30,210.00,New York 2:30 PM,2026-10-15,Tarjeta,pendiente
+Yanetsy,896,53928,62,7.00,30,210.00,New York 2:30 PM,2026-10-15,Tarjeta,pendiente
+Yanetsy,894,54013,39,15.00,30,450.00,Anguila 4 PM,2026-10-15,Tarjeta,pendiente
+Yanetsy,893,54017,22,10.00,30,300.00,Anguila 4 PM,2026-10-15,Tarjeta,pendiente
+Yanetsy,891,54669,08,8.00,30,240.00,Anguila 6 PM,2026-10-15,Tarjeta,pendiente
+Yanetsy,890,54678,71,8.00,30,240.00,Anguila 6 PM,2026-10-15,Tarjeta,pendiente
+Yanetsy,888,54836,52,8.00,30,240.00,Anguila 8 PM,2026-10-15,Tarjeta,pendiente
+Yanetsy,887,55076,13,2.00,30,60.00,Real Noche,2026-10-15,Tarjeta,pendiente
+Yanetsy,886,54959,41,2.00,30,60.00,Nacional,2026-10-15,Tarjeta,pendiente
+Yanetsy,885,55469,48,5.00,30,150.00,Anguila 9 PM,2026-10-15,Tarjeta,pendiente
+Yanetsy,884,54987,50,2.00,30,60.00,Leidsa 8:55 PM,2026-10-15,Tarjeta,pendiente
+Yanetsy,883,55000,77,2.00,30,60.00,Leidsa 8:55 PM,2026-10-15,Tarjeta,pendiente
+Yanetsy,874,61829,06,5.00,30,150.00,Anguila 7 PM,2026-10-16,Tarjeta,pendiente
+Yanetsy,872,62768,52,5.00,30,150.00,Nacional,2026-10-16,Tarjeta,pendiente
+Yanetsy,871,62769,52,5.00,30,150.00,Nacional,2026-10-16,Tarjeta,pendiente
+Yanetsy,869,62922,83,5.00,30,150.00,Leidsa 8:55 PM,2026-10-16,Tarjeta,pendiente
+Yanetsy,868,62923,83,5.00,30,150.00,Leidsa 8:55 PM,2026-10-16,Tarjeta,pendiente
+Yanetsy,867,62983,77,5.00,30,150.00,Leidsa 8:55 PM,2026-10-16,Tarjeta,pendiente
+Yanetsy,866,62853,56,5.00,30,150.00,Anguila 9 PM,2026-10-16,Tarjeta,pendiente
+Yanetsy,865,62896,87,5.00,30,150.00,Anguila 9 PM,2026-10-16,Tarjeta,pendiente
+Yanetsy,863,63332,10,5.00,30,150.00,Georgia 11:34 PM,2026-10-16,Tarjeta,pendiente
+Yanetsy,862,63404,45,5.00,30,150.00,Georgia 11:34 PM,2026-10-16,Tarjeta,pendiente
+Yanetsy,861,63175,92,5.00,30,150.00,New York 10:30 PM,2026-10-16,Tarjeta,pendiente
+Yanetsy,860,63222,36,5.00,30,150.00,New York 10:30 PM,2026-10-16,Tarjeta,pendiente
+Yanetsy,859,56487,06,3.00,30,90.00,Haití 3,2026-10-16,Tarjeta,pendiente
+Yanetsy,857,56557,94,5.00,30,150.00,Primera,2026-10-16,Tarjeta,pendiente
+Yanetsy,856,56601,97,3.00,30,90.00,Georgia 12:30 PM,2026-10-16,Tarjeta,pendiente
+Yanetsy,853,58384,59,5.00,30,150.00,Florida 1:35 PM,2026-10-16,Tarjeta,pendiente
+Yanetsy,852,58389,32,5.00,30,150.00,Florida 1:35 PM,2026-10-16,Tarjeta,pendiente
+Yanetsy,850,59749,97,5.00,30,150.00,New York 2:30 PM,2026-10-16,Tarjeta,pendiente
+Yanetsy,849,59757,75,5.00,30,150.00,New York 2:30 PM,2026-10-16,Tarjeta,pendiente
+Yanetsy,848,60648,10,5.00,30,150.00,Anguila 3 PM,2026-10-16,Tarjeta,pendiente
+Yanetsy,847,60683,08,5.00,30,150.00,Anguila 3 PM,2026-10-16,Tarjeta,pendiente
+Yanetsy,843,66987,30,5.00,30,150.00,New York 10:30 PM,2026-10-17,Tarjeta,pendiente
+Yanetsy,842,65873,01,5.00,30,150.00,Nacional,2026-10-17,Tarjeta,pendiente
+Yanetsy,841,66311,92,5.00,30,150.00,Anguila 9 PM,2026-10-17,Tarjeta,pendiente
+Yanetsy,840,65923,09,4.00,30,120.00,Leidsa 8:55 PM,2026-10-17,Tarjeta,pendiente
+Yanetsy,839,63424,06,8.00,30,240.00,Anguila 12 PM,2026-10-17,Tarjeta,pendiente
+Yanetsy,838,63429,51,8.00,30,240.00,Anguila 12 PM,2026-10-17,Tarjeta,pendiente
+Yanetsy,833,64572,55,10.00,30,300.00,Florida 1:35 PM,2026-10-17,Tarjeta,pendiente
+Yanetsy,832,64611,05,10.00,30,300.00,Florida 1:35 PM,2026-10-17,Tarjeta,pendiente
+Yanetsy,831,64670,55,5.00,30,150.00,Florida 1:35 PM,2026-10-17,Tarjeta,pendiente
+Yanetsy,830,64798,05,5.00,30,150.00,Florida 1:35 PM,2026-10-17,Tarjeta,pendiente
+Yanetsy,826,67746,00,10.00,30,300.00,Anguila 3 PM,2026-10-18,Tarjeta,pendiente
+Yanetsy,825,67748,22,10.00,30,300.00,Anguila 3 PM,2026-10-18,Tarjeta,pendiente
+Yanetsy,822,68065,45,5.00,30,150.00,Anguila 6 PM,2026-10-18,Tarjeta,pendiente
+Yanetsy,821,68070,21,5.00,30,150.00,Anguila 6 PM,2026-10-18,Tarjeta,pendiente
+Yanetsy,820,68076,21,10.00,30,300.00,Anguila 6 PM,2026-10-18,Tarjeta,pendiente
+Yanetsy,819,68131,32,5.00,30,150.00,Anguila 8 PM,2026-10-18,Tarjeta,pendiente
+Yanetsy,818,68132,32,5.00,30,150.00,Anguila 8 PM,2026-10-18,Tarjeta,pendiente
+Yanetsy,817,68143,34,5.00,30,150.00,Anguila 8 PM,2026-10-18,Tarjeta,pendiente
+Yanetsy,816,68148,32,10.00,30,300.00,Anguila 8 PM,2026-10-18,Tarjeta,pendiente
+Yanetsy,815,68151,34,10.00,30,300.00,Anguila 8 PM,2026-10-18,Tarjeta,pendiente
+Yanetsy,811,68652,77,10.00,30,300.00,New York 10:30 PM,2026-10-18,Tarjeta,pendiente
+Yanetsy,810,68665,32,5.00,30,150.00,New York 10:30 PM,2026-10-18,Tarjeta,pendiente
+Yanetsy,809,68666,32,5.00,30,150.00,New York 10:30 PM,2026-10-18,Tarjeta,pendiente
+Yanetsy,806,68961,27,3.00,30,90.00,Anguila 1 PM,2026-10-19,Tarjeta,pendiente
+Yanetsy,805,69795,91,5.00,30,150.00,New York 2:30 PM,2026-10-19,Tarjeta,pendiente
+Yanetsy,800,69971,66,1.50,30,45.00,Anguila 4 PM,2026-10-19,Tarjeta,pendiente
+Yanetsy,790,71964,67,3.00,30,90.00,Anguila 9 PM,2026-10-20,Tarjeta,pendiente
+Yanetsy,789,71973,36,3.00,30,90.00,Anguila 9 PM,2026-10-20,Tarjeta,pendiente
+Yanetsy,786,72687,70,5.00,30,150.00,Florida 1:35 PM,2026-10-21,Tarjeta,pendiente
+Yanetsy,785,72788,49,2.00,30,60.00,Anguila 3 PM,2026-10-21,Tarjeta,pendiente
+Yanetsy,784,72813,51,2.00,30,60.00,Anguila 3 PM,2026-10-21,Tarjeta,pendiente
+Yanetsy,783,72826,49,3.00,30,90.00,Anguila 3 PM,2026-10-21,Tarjeta,pendiente
+Yanetsy,782,72833,51,3.00,30,90.00,Anguila 3 PM,2026-10-21,Tarjeta,pendiente
+Yanetsy,781,73620,87,1.00,30,30.00,New York 2:30 PM,2026-10-21,Tarjeta,pendiente
+Yanetsy,780,74070,98,3.00,30,90.00,Anguila 9 PM,2026-10-21,Tarjeta,pendiente
+Yanetsy,779,74115,25,3.00,30,90.00,Anguila 9 PM,2026-10-21,Tarjeta,pendiente
+Yanetsy,778,74143,25,3.00,30,90.00,Anguila 9 PM,2026-10-21,Tarjeta,pendiente
+Yanetsy,777,76190,24,4.00,30,120.00,Florida 9:50 PM,2026-10-21,Tarjeta,pendiente
+Yanetsy,772,78130,49,5.00,30,150.00,Anguila 4 PM,2026-10-22,Tarjeta,pendiente
+Yanetsy,771,78131,49,5.00,30,150.00,Anguila 4 PM,2026-10-22,Tarjeta,pendiente
+Yanetsy,770,78153,54,5.00,30,150.00,Anguila 4 PM,2026-10-22,Tarjeta,pendiente
+Yanetsy,763,82438,38,5.00,30,150.00,Florida 9:50 PM,2026-10-22,Tarjeta,pendiente
+Yanetsy,762,82439,83,5.00,30,150.00,Florida 9:50 PM,2026-10-22,Tarjeta,pendiente
+Yanetsy,761,82601,38,10.00,30,300.00,Florida 9:50 PM,2026-10-22,Tarjeta,pendiente
+Yanetsy,760,82602,83,10.00,30,300.00,Florida 9:50 PM,2026-10-22,Tarjeta,pendiente
+Yanetsy,759,88958,34,5.00,30,150.00,Anguila 8 PM,2026-10-23,Tarjeta,pendiente
+Yanetsy,758,89971,44,10.00,30,300.00,Anguila 8 PM,2026-10-23,Tarjeta,pendiente
+Yanetsy,757,82931,79,5.00,30,150.00,Anguila 11 AM,2026-10-23,Tarjeta,pendiente
+Yanetsy,756,82991,79,5.00,30,150.00,Anguila 11 AM,2026-10-23,Tarjeta,pendiente
+Yanetsy,755,83943,77,10.00,30,300.00,Anguila 11 AM,2026-10-23,Tarjeta,pendiente
+Yanetsy,753,84876,11,5.00,30,150.00,New York 2:30 PM,2026-10-23,Tarjeta,pendiente
+Yanetsy,752,84136,77,5.00,30,150.00,Real 12:50 PM,2026-10-23,Tarjeta,pendiente
+Yanetsy,751,84908,96,5.00,30,150.00,Anguila 3 PM,2026-10-23,Tarjeta,pendiente
+Yanetsy,750,85929,96,5.00,30,150.00,Anguila 3 PM,2026-10-23,Tarjeta,pendiente
+Yanetsy,748,87374,76,5.00,30,150.00,Anguila 6 PM,2026-10-23,Tarjeta,pendiente
+Yanetsy,747,87438,76,5.00,30,150.00,Anguila 6 PM,2026-10-23,Tarjeta,pendiente
+Yanetsy,746,88630,90,5.00,30,150.00,Georgia 7 PM,2026-10-23,Tarjeta,pendiente
+Yanetsy,728,97890,35,5.00,30,150.00,Georgia 11:34 PM,2026-10-26,Tarjeta,pendiente
+Yanetsy,702,99643,37,2.00,30,60.00,Anguila 12 PM,2026-10-28,Tarjeta,pendiente
+Yanetsy,701,99911,37,1.00,30,30.00,Anguila 12 PM,2026-10-28,Tarjeta,pendiente
+Yanetsy,700,99912,37,1.00,30,30.00,Anguila 12 PM,2026-10-28,Tarjeta,pendiente
+Yanetsy,699,100383,28,5.00,30,150.00,Florida 1:35 PM,2026-10-28,Tarjeta,pendiente
+CDC,915,51084,98,400.00,30,12000.00,Georgia 11:34 PM,2026-10-14,(sin FP),pendiente
+Freddy,976,40413,84,100.00,30,3000.00,Florida 1:35 PM,2026-10-12,Monedero,pendiente
+Freddy,975,40416,11,100.00,30,3000.00,Florida 1:35 PM,2026-10-12,Monedero,pendiente
+Freddy,974,40215,30,40.00,30,1200.00,Anguila 3 PM,2026-10-12,Monedero,pendiente
+Freddy,970,41573,13,30.00,30,900.00,Anguila 6 PM,2026-10-12,Monedero,pendiente
+Freddy,969,42264,33,40.00,30,1200.00,New York 10:30 PM,2026-10-12,Monedero,pendiente
+Freddy,961,42747,37,20.00,30,600.00,Anguila 9 AM,2026-10-13,Monedero,pendiente
+Freddy,960,42749,39,20.00,30,600.00,Anguila 9 AM,2026-10-13,Monedero,pendiente
+Freddy,956,42914,34,10.00,30,300.00,Anguila 10 AM,2026-10-13,Monedero,pendiente
+Freddy,955,42917,37,10.00,30,300.00,Anguila 10 AM,2026-10-13,Monedero,pendiente
+Camagüey-JC,1151,3484,25,50.00,30,1500.00,Florida 9:50 PM,2026-09-26,Tarjeta,pendiente
+Camagüey-JC,1136,8399,03,100.00,30,3000.00,Georgia 7 PM,2026-09-28,Tarjeta,pendiente
+Camagüey-JC,1135,8806,27,100.00,30,3000.00,Georgia 7 PM,2026-09-28,Tarjeta,pendiente
+AnaJulia,994,37202,13,10.00,30,300.00,Anguila 8 PM,2026-10-11,Tarjeta,pendiente
+AnaJulia,993,37215,25,10.00,30,300.00,Anguila 9 PM,2026-10-11,Tarjeta,pendiente
+AnaJulia,972,41133,13,10.00,30,300.00,Anguila 6 PM,2026-10-12,Tarjeta,pendiente
+AnaJulia,971,41137,34,10.00,30,300.00,Anguila 6 PM,2026-10-12,Tarjeta,pendiente
+AnaJulia,959,42925,37,10.00,30,300.00,Anguila 9 AM,2026-10-13,Tarjeta,pendiente
+AnaJulia,954,42990,37,10.00,30,300.00,Anguila 10 AM,2026-10-13,Tarjeta,pendiente
+AnaJulia,953,42992,34,10.00,30,300.00,Anguila 10 AM,2026-10-13,Tarjeta,pendiente
+AnaJulia,944,46146,47,10.00,30,300.00,Georgia 7 PM,2026-10-13,Tarjeta,pendiente
+AnaJulia,943,46154,73,10.00,30,300.00,Georgia 7 PM,2026-10-13,Tarjeta,pendiente
+AnaJulia,937,47029,13,10.00,30,300.00,Anguila 9 AM,2026-10-14,Tarjeta,pendiente
+AnaJulia,935,47296,28,10.00,30,300.00,Anguila 12 PM,2026-10-14,Tarjeta,pendiente
+AnaJulia,929,47246,47,10.00,30,300.00,Anguila 2 PM,2026-10-14,Tarjeta,pendiente
+AnaJulia,921,51074,64,50.00,30,1500.00,New York 10:30 PM,2026-10-14,Tarjeta,pendiente
+AnaJulia,919,48890,31,10.00,30,300.00,Florida 9:50 PM,2026-10-14,Tarjeta,pendiente
+AnaJulia,914,51764,44,5.00,30,150.00,Anguila 9 AM,2026-10-15,Tarjeta,pendiente
+AnaJulia,900,51696,68,5.00,30,150.00,Anguila 2 PM,2026-10-15,Tarjeta,pendiente
+AnaJulia,899,53630,03,10.00,30,300.00,New York 2:30 PM,2026-10-15,Tarjeta,pendiente
+AnaJulia,880,55224,03,10.00,30,300.00,Florida 9:50 PM,2026-10-15,Tarjeta,pendiente
+AnaJulia,877,55163,37,10.00,30,300.00,Anguila 10 PM,2026-10-15,Tarjeta,pendiente
+AnaJulia,858,57364,44,10.00,30,300.00,Anguila 11 AM,2026-10-16,Tarjeta,pendiente
+AnaJulia,836,64305,05,10.00,30,300.00,Florida 1:35 PM,2026-10-17,Tarjeta,pendiente
+AnaJulia,829,64364,33,10.00,30,300.00,Anguila 3 PM,2026-10-17,Tarjeta,pendiente
+Reynaldo@691204,1156,2071,99,60.00,30,1800.00,New York 2:30 PM,2026-09-26,Tarjeta,pendiente
+Reynaldo@691204,1144,6881,68,10.00,30,300.00,Florida 1:35 PM,2026-09-28,Tarjeta,pendiente
+Reynaldo@691204,1128,9303,07,10.00,30,300.00,New York 10:30 PM,2026-09-28,Tarjeta,pendiente
+Reynaldo@691204,1126,11034,37,20.00,30,600.00,Florida 1:35 PM,2026-09-29,Tarjeta,pendiente
+Reynaldo@691204,1124,11116,98,10.00,30,300.00,Anguila 3 PM,2026-09-29,Tarjeta,pendiente
+Reynaldo@691204,1047,30312,63,10.00,30,300.00,Anguila 7 PM,2026-10-07,Tarjeta,pendiente
+Reynaldo@691204,1037,30176,17,50.00,30,1500.00,New York 2:30 PM,2026-10-07,Tarjeta,pendiente
+Reynaldo@691204,1035,30319,71,50.00,30,1500.00,Georgia 7 PM,2026-10-07,Tarjeta,pendiente
+Yurislay,1119,13206,95,30.00,30,900.00,Florida 1:35 PM,2026-09-30,Tarjeta,pendiente
+Yurislay,1079,20652,11,20.00,30,600.00,Florida 1:35 PM,2026-10-04,Tarjeta,pendiente
+Yurislay,1078,20707,11,20.00,30,600.00,Florida 1:35 PM,2026-10-04,Tarjeta,pendiente
+Yurislay,1062,23513,22,30.00,30,900.00,Florida 1:35 PM,2026-10-06,Tarjeta,pendiente
+Yurislay,1061,23678,22,30.00,30,900.00,New York 2:30 PM,2026-10-06,Tarjeta,pendiente
+Yurislay,1038,29280,82,7.00,30,210.00,New York 2:30 PM,2026-10-07,Tarjeta,pendiente
+Yurislay,1012,34637,35,20.00,30,600.00,Florida 1:35 PM,2026-10-10,Tarjeta,pendiente
+Yurislay,933,47608,96,30.00,30,900.00,Florida 1:35 PM,2026-10-14,Tarjeta,pendiente
+Yurislay,898,53835,03,20.00,30,600.00,New York 2:30 PM,2026-10-15,Tarjeta,pendiente
+Lili,1083,20046,33,10.00,30,300.00,Anguila 9 AM,2026-10-04,Tarjeta,pendiente
+Lili,1082,20081,33,10.00,30,300.00,Anguila 9 AM,2026-10-04,Tarjeta,pendiente
+Lili,1080,20907,05,10.00,30,300.00,Georgia 12:30 PM,2026-10-04,Tarjeta,pendiente
+Lili,1073,21427,25,10.00,30,300.00,Anguila 8 PM,2026-10-04,Tarjeta,pendiente
+Lili,1067,22396,17,10.00,30,300.00,Anguila 5 PM,2026-10-05,Tarjeta,pendiente
+Lili,1065,22588,25,50.00,30,1500.00,Georgia 7 PM,2026-10-05,Tarjeta,pendiente
+Lili,1064,23058,62,50.00,30,1500.00,Anguila 11 AM,2026-10-06,Tarjeta,pendiente
+Lili,1055,24282,44,10.00,30,300.00,Georgia 11:34 PM,2026-10-06,Tarjeta,pendiente
+Lili,1041,27049,12,10.00,30,300.00,Loteka 1:30 PM,2026-10-07,Tarjeta,pendiente
+Lili,1011,34821,47,10.00,30,300.00,Florida 1:35 PM,2026-10-10,Tarjeta,pendiente
+Lili,1010,34766,03,10.00,30,300.00,Anguila 2 PM,2026-10-10,Tarjeta,pendiente
+Enrique,991,37727,77,150.00,30,4500.00,Florida 9:50 PM,2026-10-11,Tarjeta,pendiente
+Enrique,732,93340,64,2.00,30,60.00,Florida 1:35 PM,2026-10-25,Tarjeta,pendiente
+Celia,1093,17618,62,100.00,30,3000.00,Florida 1:35 PM,2026-10-01,Tarjeta,pendiente
+Yuri,992,37548,77,100.00,30,3000.00,Florida 9:50 PM,2026-10-11,Tarjeta,pendiente
+LuismAmador,951,43962,04,50.00,30,1500.00,Florida 1:35 PM,2026-10-13,Tarjeta,pendiente
+LuismAmador,948,44063,40,50.00,30,1500.00,New York 2:30 PM,2026-10-13,Tarjeta,pendiente
+Atisoul,697,101036,74,100.00,30,3000.00,Anguila 1 PM,2026-10-29,Tarjeta,pendiente
+Silvita,1150,4003,92,10.00,30,300.00,Florida 9:50 PM,2026-09-26,Tarjeta,pendiente
+Silvita,1149,4061,92,10.00,30,300.00,Florida 9:50 PM,2026-09-26,Tarjeta,pendiente
+Silvita,1118,13688,95,5.00,30,150.00,Florida 1:35 PM,2026-09-30,Tarjeta,pendiente
+Silvita,1056,25516,68,5.00,30,150.00,New York 10:30 PM,2026-10-06,Tarjeta,pendiente
+Silvita,1051,27271,51,5.00,30,150.00,Georgia 12:30 PM,2026-10-07,Tarjeta,pendiente
+Silvita,1050,27272,12,5.00,30,150.00,Georgia 12:30 PM,2026-10-07,Tarjeta,pendiente
+Silvita,1046,30936,15,3.00,30,90.00,New York 10:30 PM,2026-10-07,Tarjeta,pendiente
+Silvita,1044,31466,60,5.00,30,150.00,Georgia 11:34 PM,2026-10-07,Tarjeta,pendiente
+Silvita,1043,31871,29,3.00,30,90.00,Georgia 11:34 PM,2026-10-07,Tarjeta,pendiente
+Silvita,1040,27845,05,5.00,30,150.00,Florida 1:35 PM,2026-10-07,Tarjeta,pendiente
+Silvita,1039,29044,17,5.00,30,150.00,New York 2:30 PM,2026-10-07,Tarjeta,pendiente
+Silvita,1036,29807,71,5.00,30,150.00,Georgia 7 PM,2026-10-07,Tarjeta,pendiente
+Silvita,1002,36114,66,3.00,30,90.00,Georgia 11:34 PM,2026-10-10,Tarjeta,pendiente
+Silvita,950,43604,23,5.00,30,150.00,New York 2:30 PM,2026-10-13,Tarjeta,pendiente
+Silvita,922,50350,86,6.00,30,180.00,New York 10:30 PM,2026-10-14,Tarjeta,pendiente
+Silvita,916,49557,85,3.00,30,90.00,Georgia 7 PM,2026-10-14,Tarjeta,pendiente
+Silvita,909,52283,76,5.00,30,150.00,Georgia 12:30 PM,2026-10-15,Tarjeta,pendiente
+Silvita,774,76521,02,5.00,30,150.00,Georgia 12:30 PM,2026-10-22,Tarjeta,pendiente
+Silvita,773,76844,99,5.00,30,150.00,Georgia 12:30 PM,2026-10-22,Tarjeta,pendiente
+Yaniela,1145,6784,24,5.00,30,150.00,Georgia 12:30 PM,2026-09-28,Tarjeta,pendiente
+Yaniela,1109,15444,43,5.00,30,150.00,Florida 9:50 PM,2026-09-30,Tarjeta,pendiente
+Yaniela,934,47450,63,10.00,30,300.00,Georgia 12:30 PM,2026-10-14,Tarjeta,pendiente
+Yaniela,720,95383,02,20.00,30,600.00,Georgia 12:30 PM,2026-10-26,Tarjeta,pendiente
+Yaniela,719,96182,71,50.00,30,1500.00,Florida 1:35 PM,2026-10-26,Tarjeta,pendiente
+Cafeteria,1022,33125,33,70.00,30,2100.00,Florida 1:35 PM,2026-10-09,Tarjeta,pendiente
+Cafeteria,837,64228,05,20.00,30,600.00,Florida 1:35 PM,2026-10-17,Tarjeta,pendiente
+Lázarohb,823,67730,21,20.00,30,600.00,Anguila 6 PM,2026-10-18,Tarjeta,pendiente
+Lázarohb,797,70370,14,30.00,30,900.00,Florida 9:50 PM,2026-10-19,Tarjeta,pendiente
+Lázarohb,733,93234,64,30.00,30,900.00,Florida 1:35 PM,2026-10-25,Tarjeta,pendiente
+NIxon,1125,10393,22,50.00,30,1500.00,Anguila 2 PM,2026-09-29,Tarjeta,pendiente
+Myldrey,1063,23488,22,30.00,30,900.00,Florida 1:35 PM,2026-10-06,Tarjeta,pendiente
+Myldrey,792,70823,00,20.00,30,600.00,Florida 1:35 PM,2026-10-20,Tarjeta,pendiente
+Keiler,920,48169,31,50.00,30,1500.00,Florida 9:50 PM,2026-10-14,Tarjeta,pendiente
+Yuli,1152,3394,25,5.00,30,150.00,Florida 9:50 PM,2026-09-26,Tarjeta,pendiente
+Yuli,1108,15646,14,10.00,30,300.00,Florida 9:50 PM,2026-09-30,Tarjeta,pendiente
+Yuli,965,42255,52,10.00,30,300.00,Georgia 11:34 PM,2026-10-12,Tarjeta,pendiente
+Mini,1123,10983,37,20.00,30,600.00,Florida 9:50 PM,2026-09-29,Tarjeta,pendiente
+May93celin22,721,95407,13,20.00,30,600.00,Haití 3,2026-10-26,Tarjeta,pendiente
+Mini1234,814,68525,74,15.00,30,450.00,Florida 9:50 PM,2026-10-18,Tarjeta,pendiente
+Mayte,1113,14571,33,10.00,30,300.00,Georgia 7 PM,2026-09-30,Tarjeta,pendiente
+Lourdesli,1026,32465,27,10.00,30,300.00,Georgia 12:30 PM,2026-10-08,Tarjeta,pendiente
+Roberto-Carlos,1146,6033,43,5.00,30,150.00,Anguila 11 AM,2026-09-28,Tarjeta,pendiente

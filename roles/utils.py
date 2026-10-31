@@ -5,7 +5,7 @@ Utilidades para la aplicación roles: notificaciones, recursos, límites, dosis,
 from decimal import Decimal
 from django.contrib.auth.models import User
 from django.contrib.auth.models import User
-from django.db.models import Q, Sum, Count
+from django.db.models import F, Q, Sum, Count
 from django.utils import timezone
 from django.shortcuts import get_object_or_404
 from django.http import JsonResponse
@@ -572,10 +572,11 @@ def enviar_notificacion_postpago_diaria(cliente):
 # ============================================================
 
 def verificar_bono_referido_disponible(usuario):
+    # FIX_REFERIDOS_V1 (2026-10-14): aceptar los 3 tipos de recomendacion
     try:
         return Bono.objects.filter(
             usuario=usuario,
-            tipo='recomendacion',
+            tipo__in=['recomendacion', 'recomendacion_gestor', 'recomendacion_cliente'],
             estado='pendiente'
         ).exists()
     except Exception:
@@ -599,6 +600,22 @@ def get_pool_gestor(gestor, sorteo, forma_juego, forma_pago):
     """
     if not gestor:
         return Decimal('0')
+
+    # FIX_POOL_GESTOR_STR_V1: si llega un id/username (string o int), convertir a User
+    if not hasattr(gestor, 'is_superuser'):
+        from django.contrib.auth import get_user_model as _get_u
+        from django.db.models import Q as _Q
+        _U = _get_u()
+        _g = str(gestor).strip()
+        try:
+            if _g.isdigit():
+                gestor = _U.objects.filter(id=int(_g)).first()
+            else:
+                gestor = _U.objects.filter(_Q(username=_g) | _Q(email=_g)).first()
+        except Exception:
+            gestor = None
+        if not gestor:
+            return Decimal('0')
 
     es_superadmin = (
         gestor.is_superuser
@@ -1020,7 +1037,7 @@ def calcular_saldos_cliente(cliente, gestor=None):
     }
 
 
-def _aplicar_ingreso_a_fondo(cliente, gestor, forma_pago, monto, _skip_prestamos=False, _return_detalle=False):
+def _aplicar_ingreso_a_fondo(cliente, gestor, forma_pago, monto, _skip_prestamos=False, _return_detalle=False, request_id=None, tipo_mov='recarga', extra_data=None):
     """
     Aplica un ingreso (recarga/premio) al cliente:
     1. Si hay Postpago con saldo < 0 para (gestor, forma_pago), paga la deuda.
@@ -1166,20 +1183,33 @@ def _aplicar_ingreso_a_fondo(cliente, gestor, forma_pago, monto, _skip_prestamos
 
         al_fondo = monto
         if al_fondo > 0:
-            fondo, _ = Fondo.objects.select_for_update().get_or_create(
+            # FIX_RACE_FONDO_V1 (2026-10-15): incremento atomico via F()
+            # Evita perder montos cuando recarga y premio caen al mismo segundo.
+            fondo, _ = Fondo.objects.get_or_create(
                 usuario=cliente, forma_pago=forma_pago,
                 defaults={'monto': Decimal('0.00'), 'activo': True, 'asignado_por': gestor},
             )
-            fondo.monto += al_fondo
-            fondo.activo = True
+            Fondo.objects.filter(pk=fondo.pk).update(monto=F('monto') + al_fondo)
+            fondo.refresh_from_db()
+            # Asegurar activo=True si estaba inactivo
+            if not fondo.activo:
+                Fondo.objects.filter(pk=fondo.pk).update(activo=True)
+                fondo.activo = True
+            # Asignar gestor si faltaba
             if not fondo.asignado_por_id and gestor:
+                Fondo.objects.filter(pk=fondo.pk).update(asignado_por=gestor)
                 fondo.asignado_por = gestor
-            fondo.save(update_fields=['monto', 'activo', 'asignado_por'] if fondo.asignado_por_id else ['monto', 'activo'])
             try:
+                _datos = {'gestor': gestor.username, 'monto_bruto': float(al_fondo + pagado), 'postpago_descontado': float(pagado)}
+                if extra_data:
+                    _datos.update(extra_data)
+                
+                _motivo = f'Ingreso aplicado a fondo por {gestor.username}' if tipo_mov == 'recarga' else f'Premio acreditado {extra_data.get("sorteo", "") if extra_data else ""}'
+                
                 MovimientoFondo.objects.create(
-                    emisor=gestor, receptor=cliente, forma_pago=forma_pago,
-                    monto=al_fondo, tipo='recarga', estado='confirmado',
-                    motivo='Ingreso aplicado a fondo por ' + gestor.username,
+                    emisor=gestor if tipo_mov == 'recarga' else None, receptor=cliente, forma_pago=forma_pago,
+                    monto=al_fondo, tipo=tipo_mov, estado='confirmado',
+                    motivo=_motivo,
                     nota='Al fondo: ' + str(al_fondo),
                     saldo_antes=saldo_antes_fondo,
                     saldo_despues=fondo.monto,
@@ -1187,6 +1217,7 @@ def _aplicar_ingreso_a_fondo(cliente, gestor, forma_pago, monto, _skip_prestamos
                         'gestor': gestor.username,
                         'monto_bruto': float(al_fondo + pagado),
                         'postpago_descontado': float(pagado),
+                        **(  {'request_id': request_id} if request_id else {}  ),
                     },
                 )
             except Exception:
@@ -1228,6 +1259,47 @@ def resolver_referencia_movimiento(mov):
 
     if not d:
         return (None, None)
+
+    # FIX_REF_LINK_V3 (2026-10-15): apuestas y premios apuntan a mis_apuestas
+    _base = _safe_reverse("jugadas:mis_apuestas") or "/jugadas/mis-apuestas/"
+
+    def _fecha_desde_ref(ref):
+        try:
+            partes = ref.split("-")
+            if len(partes) >= 2 and len(partes[1]) == 8:
+                y = partes[1]
+                return f"{y[:4]}-{y[4:6]}-{y[6:8]}"
+        except Exception:
+            pass
+        return ""
+
+    def _url_buscar(ref, fecha_iso=""):
+        q = "?buscar=" + ref
+        if fecha_iso:
+            q += "&fecha_desde=" + fecha_iso + "&fecha_hasta=" + fecha_iso
+        return _base + q
+
+    # Apuesta: datos_transferencia.referencia = BOL-...
+    if d.get("referencia") and str(d["referencia"]).startswith("BOL-"):
+        ref = str(d["referencia"])
+        return (f"Boleta {ref}", _url_buscar(ref, _fecha_desde_ref(ref)))
+
+    # Premio: datos_transferencia.jugada_id -> buscar boleta de esa jugada
+    if d.get("jugada_id"):
+        jid = d["jugada_id"]
+        try:
+            from jugadas.models import Jugada
+            j = (Jugada.objects
+                 .filter(id=jid)
+                 .select_related("boleta")
+                 .first())
+            if j and j.boleta_id and j.boleta:
+                ref = j.boleta.referencia
+                fecha_iso = str(j.boleta.fecha_sorteo or "")
+                return (f"Boleta {ref}", _url_buscar(ref, fecha_iso))
+        except Exception:
+            pass
+        return (f"Jugada #{jid}", None)
 
     if "jugada_id" in d:
         jid = d["jugada_id"]
@@ -1325,3 +1397,110 @@ def gestor_paga_fijo_como_corrido(gestor):
         pass
     return False
 
+
+def resolver_sorteo_movimiento(mov):
+    """FIX_MOV_REF_V2 (2026-10-15): devuelve el nombre del sorteo
+    asociado a un MovimientoFondo (apuesta, premio, etc.).
+    Devuelve "" si no se puede determinar."""
+    import json as _json
+    try:
+        d = getattr(mov, "datos_transferencia", None)
+        if d is None:
+            d = {}
+        elif isinstance(d, str):
+            try:
+                d = _json.loads(d) if d.strip() else {}
+            except Exception:
+                d = {}
+        elif not isinstance(d, dict):
+            d = {}
+
+        # 1. Directo en datos_transferencia.sorteo
+        if d.get("sorteo"):
+            return str(d["sorteo"])
+
+        # 2. Via jugada_id
+        if d.get("jugada_id"):
+            try:
+                from jugadas.models import Jugada
+                j = (Jugada.objects
+                     .filter(id=d["jugada_id"])
+                     .select_related("sorteo")
+                     .first())
+                if j and j.sorteo_id:
+                    return j.sorteo.nombre
+            except Exception:
+                pass
+
+        # 3. Via referencia BOL-YYYYMMDD-XXXX
+        if d.get("referencia"):
+            ref = str(d["referencia"]).strip()
+            if ref.startswith("BOL-"):
+                try:
+                    from jugadas.models import Boleta
+                    b = (Boleta.objects
+                         .filter(referencia=ref)
+                         .prefetch_related("jugadas__sorteo")
+                         .first())
+                    if b:
+                        nombres = sorted(set(
+                            j.sorteo.nombre for j in b.jugadas.all() if j.sorteo_id
+                        ))
+                        if len(nombres) == 1:
+                            return nombres[0]
+                        elif len(nombres) > 1:
+                            return "Varios (" + str(len(nombres)) + ")"
+                except Exception:
+                    pass
+    except Exception:
+        pass
+    return ""
+
+
+def verificar_recarga_duplicada(emisor, receptor, forma_pago, monto, segundos=60):
+    """FIX_ANTI_DUP_60S (2026-10-18): Retorna True si ya existe una recarga igual en los ultimos N segundos."""
+    from django.utils import timezone
+    from datetime import timedelta
+    from roles.models import MovimientoFondo
+    if not emisor or not receptor or not forma_pago:
+        return False
+    limite = timezone.now() - timedelta(seconds=segundos)
+    return MovimientoFondo.objects.filter(
+        emisor=emisor,
+        receptor=receptor,
+        forma_pago=forma_pago,
+        monto=monto,
+        tipo='recarga',
+        creado_en__gte=limite
+    ).exists()
+
+
+# ═══════════════════════════════════════════════════════════════
+# FIX_FONDO_NOTIF_V1: helper para fondo dinámico de notificaciones
+# ═══════════════════════════════════════════════════════════════
+def obtener_fondo_cliente(cliente):
+    """
+    Devuelve dict con el fondo actual del cliente, desglosado por forma de pago.
+    Formato: {'desglose': {'Tarjeta': 2500.0, 'Cash': 300.0}, 'total': 2800.0, 'calculado_en': ISO}
+    """
+    from decimal import Decimal
+    from django.utils import timezone
+    from roles.models import Fondo
+
+    fondos = Fondo.objects.filter(
+        usuario=cliente, activo=True
+    ).select_related('forma_pago')
+
+    desglose = {}
+    total = Decimal('0.00')
+    for f in fondos:
+        fp_nombre = f.forma_pago.nombre if f.forma_pago else 'Sin FP'
+        monto_dec = Decimal(str(f.monto or 0))
+        desglose[fp_nombre] = float(monto_dec)
+        total += monto_dec
+
+    return {
+        'desglose': desglose,
+        'total': float(total),
+        'calculado_en': timezone.now().isoformat(),
+    }

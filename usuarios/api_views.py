@@ -16,6 +16,7 @@ from django.db.models import Q, Sum
 from django.http import HttpResponse, JsonResponse
 from django.utils import timezone
 from django.views.decorators.http import require_POST
+from django.views.decorators.csrf import csrf_exempt
 
 from usuarios.cache_utils import (
     marcar_online, esta_online, mapa_online, contar_online,
@@ -34,6 +35,7 @@ def _rate_limited(user_id, scope, min_sg=4):
 
 
 @login_required
+@csrf_exempt
 @require_POST
 def api_heartbeat(request):
     marcar_online(request.user)
@@ -227,6 +229,7 @@ def _state_paneles(user):
 
 
 @login_required
+@csrf_exempt
 @require_POST
 def api_offline(request):
     """

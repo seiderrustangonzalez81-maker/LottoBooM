@@ -1508,7 +1508,8 @@
         <div class="sr-card"
              data-estado="{{ s.estado_actual }}"
              data-origen="{{ s.origen|default:'otro' }}"
-             data-segundos="{% localize off %}{{ s.segundos_restantes }}{% endlocalize %}"
+             data-segundos="{% localize off %}{% if s.estado_actual == 'salido' and s.segundos_proximo %}{{ s.segundos_proximo }}{% else %}{{ s.segundos_restantes }}{% endif %}{% endlocalize %}"
+             data-segundos-proximo="{% localize off %}{{ s.segundos_proximo|default:0 }}{% endlocalize %}"
              style="animation-delay: {{ forloop.counter0 }}0ms;">
 
             <div class="sr-progress"><div class="sr-progress-fill"></div></div>
@@ -1545,7 +1546,8 @@
                 <span class="sr-estado-texto">
                     {% if s.estado_actual == 'abierto' %}Apuestas abiertas
                     {% elif s.estado_actual == 'cerrado' %}Sale pronto
-                    {% else %}Finalizado{% endif %}
+                    {% elif s.estado_actual == 'salido' %}Próximo sorteo
+                    {% else %}—{% endif %}
                 </span>
             </div>
         </div>
@@ -1567,13 +1569,21 @@
     // UTILIDADES
     // ══════════════════════════════════════════════════════════════
     function fmt(seg) {
+        seg = Math.max(0, parseInt(seg, 10) || 0);
         if (seg <= 0) return '00:00:00';
-        var h = Math.floor(seg / 3600);
+        // FIX_FMT_DIAS_V1: si > 12h, mostrar días + HH:MM:SS
+        var d = Math.floor(seg / 86400);
+        var h = Math.floor((seg % 86400) / 3600);
         var m = Math.floor((seg % 3600) / 60);
         var s = seg % 60;
-        return String(h).padStart(2,'0') + ':' +
-               String(m).padStart(2,'0') + ':' +
-               String(s).padStart(2,'0');
+        var p = function(n){ return String(n).padStart(2,'0'); };
+        if (seg > 43200) {
+            // > 12 horas → incluir días
+            if (d > 0) return d + 'd ' + p(h) + ':' + p(m) + ':' + p(s);
+            return p(h) + ':' + p(m) + ':' + p(s);
+        }
+        // ≤ 12 horas → formato clásico HH:MM:SS
+        return p(h) + ':' + p(m) + ':' + p(s);
     }
 
     function renderFlip(container, nuevoTexto) {
@@ -1675,8 +1685,7 @@
         var elapsed = Math.floor((Date.now() - start) / 1000);
 
         cards.forEach(function(c) {
-            if (c.estado === 'salido') return;
-
+            // FIX_PROXIMO_EN_LISTA_V1: los salidos también cuentan regresivo (al próximo día)
             var seg = Math.max(0, c.inicial - elapsed);
             c.segundosActual = seg;
 
@@ -1698,17 +1707,24 @@
             }
 
             // Transición a salido
-            if (seg === 0) {
+            // FIX_PROXIMO_EN_LISTA_V1: solo transiciona si aún no está salido
+            if (seg === 0 && c.estado !== 'salido') {
                 c.estado = 'salido';
                 c.el.dataset.estado = 'salido';
-                if (c.cd) renderFlip(c.cd, '—');
                 if (c.badge) c.badge.textContent = '🔴 Ya salió';
-                if (c.txt) c.txt.textContent = 'Finalizado';
+                if (c.txt) c.txt.textContent = 'Próximo sorteo';
                 if (c.progress) c.progress.style.width = '100%';
                 c.el.classList.remove('sr-urgent');
                 if (!c.confetiLanzado) {
                     c.confetiLanzado = true;
                     lanzarConfeti(c.el);
+                }
+                // Reload countdown al próximo día (dato del servidor)
+                var segProx = parseInt(c.el.dataset.segundosProximo || '0', 10) || 0;
+                if (segProx > 0 && c.cd) {
+                    c.inicial = segProx;
+                    c.startTick = Date.now();
+                    if (c.cd) renderFlip(c.cd, fmt(segProx));
                 }
             }
         });
@@ -1755,4 +1771,67 @@
     }
 })();
 </script>
+
+<!-- FIX_COMPARTIR_SORTEOS_V1: boton flotante para compartir sorteos abiertos -->
+<style>
+#btnCompartirSorteos {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 9999;
+  background: linear-gradient(135deg, #25D366, #128C7E);
+  color: #fff;
+  border: none;
+  border-radius: 50px;
+  padding: 14px 24px;
+  font-weight: 900;
+  font-size: 0.9rem;
+  box-shadow: 0 8px 24px rgba(37, 211, 102, 0.5);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+#btnCompartirSorteos:hover {
+  transform: translateY(-2px) scale(1.03);
+  box-shadow: 0 12px 32px rgba(37, 211, 102, 0.7);
+}
+#btnCompartirSorteos:active { transform: scale(0.97); }
+#btnCompartirSorteos i { font-size: 1.2rem; }
+#btnCompartirSorteos.loading { opacity: 0.7; pointer-events: none; }
+@media (max-width: 600px) {
+  #btnCompartirSorteos { padding: 12px 18px; font-size: 0.8rem; bottom: 16px; right: 16px; }
+}
+</style>
+
+<button id="btnCompartirSorteos" title="Compartir sorteos abiertos por WhatsApp">
+  <i class="fab fa-whatsapp"></i> Compartir sorteos abiertos
+</button>
+
+<script>
+(function(){
+  var btn = document.getElementById('btnCompartirSorteos');
+  if (!btn) return;
+  btn.addEventListener('click', function(){
+    btn.classList.add('loading');
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Cargando...';
+    fetch("{% url 'sorteos:api_sorteos_compartir' %}")
+      .then(function(r){ return r.json(); })
+      .then(function(d){
+        if (d.success){
+          window.open('https://wa.me/?text=' + encodeURIComponent(d.resumen), '_blank');
+        } else {
+          alert('Error: ' + (d.error || 'sin respuesta'));
+        }
+      })
+      .catch(function(e){ alert('Error de conexion'); console.error(e); })
+      .finally(function(){
+        btn.classList.remove('loading');
+        btn.innerHTML = '<i class="fab fa-whatsapp"></i> Compartir sorteos abiertos';
+      });
+  });
+})();
+</script>
+
 {% endblock %}

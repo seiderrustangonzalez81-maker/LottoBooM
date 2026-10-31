@@ -4,237 +4,586 @@
 {% block page_title %}Ganadores{% endblock %}
 {% block page_subtitle %}Lista de ganadores y premios{% endblock %}
 
+{% block extra_css %}
+<style>
+/* ═══════════════════════════════════════════════════════════
+   GANADORES — Mobile-first
+   ═══════════════════════════════════════════════════════════ */
+.ga-wrap{
+  --ga-bg:#f4f6fb;
+  --ga-surface:#ffffff;
+  --ga-surface-2:#fafbfe;
+  --ga-line:#e5e8f0;
+  --ga-line-2:#d4d9e6;
+  --ga-ink:#0f172a;
+  --ga-ink-2:#475569;
+  --ga-ink-3:#94a3b8;
+  --ga-primary:#4f46e5;
+  --ga-primary-soft:#eef0ff;
+  --ga-cyan:#0891b2;
+  --ga-cyan-soft:#e0f7fb;
+  --ga-violet:#7c3aed;
+  --ga-violet-soft:#f1ebfe;
+  --ga-amber:#d97706;
+  --ga-amber-soft:#fef3c7;
+  --ga-lime:#65a30d;
+  --ga-lime-soft:#ecfccb;
+  --ga-rose:#e11d48;
+  --ga-rose-soft:#ffe4e6;
+  --ga-emerald:#059669;
+  --ga-emerald-soft:#d1fae5;
+  --ga-sh-sm:0 1px 2px rgba(15,23,42,.04),0 2px 6px -2px rgba(15,23,42,.06);
+  --ga-sh:0 1px 2px rgba(15,23,42,.04),0 8px 22px -8px rgba(15,23,42,.10);
+  --ga-r:12px;--ga-r-lg:16px;--ga-r-xl:20px;
+  --ga-f:Arial,Helvetica,'Segoe UI',Roboto,sans-serif;
+  --ga-m:Consolas,'Courier New',monospace;
+  background:var(--ga-bg);
+  color:var(--ga-ink);
+  font-family:var(--ga-f);
+  padding:14px 14px 60px;
+  border-radius:var(--ga-r-lg);
+}
+.ga-wrap .money,.ga-wrap code,.ga-wrap .num{font-family:var(--ga-m);}
+
+/* ───── STATS ───── */
+.ga-stats{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px;
+}
+.ga-stat{
+  position:relative;display:flex;align-items:center;gap:12px;
+  padding:14px 16px;background:var(--ga-surface);
+  border:1px solid var(--ga-line);border-radius:var(--ga-r);
+  box-shadow:var(--ga-sh-sm);overflow:hidden;
+  transition:transform .18s ease,box-shadow .18s ease;
+}
+.ga-stat::before{
+  content:'';position:absolute;left:0;top:0;bottom:0;width:4px;
+  background:var(--accent,var(--ga-primary));
+}
+.ga-stat:hover{transform:translateY(-2px);box-shadow:var(--ga-sh);}
+.ga-stat .ic{
+  width:40px;height:40px;border-radius:11px;flex-shrink:0;
+  display:inline-flex;align-items:center;justify-content:center;
+  background:var(--accent-soft,var(--ga-primary-soft));
+  color:var(--accent,var(--ga-primary));
+  font-size:1rem;
+}
+.ga-stat .text{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1;}
+.ga-stat .lbl{
+  font-size:.62rem;color:var(--ga-ink-3);text-transform:uppercase;
+  font-weight:700;letter-spacing:1px;
+}
+.ga-stat .val{
+  font-size:1.22rem;font-weight:800;color:var(--ga-ink);
+  letter-spacing:-.4px;line-height:1.1;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.ga-stat .val.money{color:var(--accent,var(--ga-primary));}
+.ga-stat.c1{--accent:var(--ga-emerald);--accent-soft:var(--ga-emerald-soft);}
+.ga-stat.c2{--accent:var(--ga-primary);--accent-soft:var(--ga-primary-soft);}
+.ga-stat.c3{--accent:var(--ga-amber);--accent-soft:var(--ga-amber-soft);}
+.ga-stat.c4{--accent:var(--ga-cyan);--accent-soft:var(--ga-cyan-soft);}
+
+/* ───── FILTROS ───── */
+.ga-filters{
+  background:var(--ga-surface);border:1px solid var(--ga-line);
+  border-radius:var(--ga-r-lg);padding:14px 16px;margin-bottom:16px;
+  box-shadow:var(--ga-sh-sm);
+}
+.ga-filters-grid{
+  display:grid;grid-template-columns:1fr 1fr auto;gap:12px;align-items:end;
+}
+.ga-fgrp{display:flex;flex-direction:column;gap:5px;min-width:0;}
+.ga-fgrp label{
+  font-size:.62rem;font-weight:700;color:var(--ga-ink-3);
+  text-transform:uppercase;letter-spacing:1px;
+}
+.ga-fgrp select{
+  padding:9px 12px;border-radius:9px;border:1px solid var(--ga-line-2);
+  background:var(--ga-surface);font-size:.83rem;color:var(--ga-ink);
+  font-weight:600;outline:none;transition:.2s;font-family:inherit;width:100%;
+}
+.ga-fgrp select:focus{border-color:var(--ga-primary);box-shadow:0 0 0 3px rgba(79,70,229,.13);}
+.ga-btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:7px;
+  padding:10px 18px;border-radius:9px;border:none;
+  background:linear-gradient(135deg,var(--ga-primary),var(--ga-violet));
+  color:#fff;font-size:.83rem;font-weight:700;cursor:pointer;
+  font-family:inherit;letter-spacing:.2px;
+  box-shadow:0 4px 14px -6px var(--ga-violet);transition:.2s;
+  -webkit-tap-highlight-color:transparent;
+}
+.ga-btn:hover{transform:translateY(-1px);box-shadow:0 8px 22px -6px var(--ga-violet);}
+.ga-btn i{font-size:.78rem;}
+
+/* ───── CARDS GENÉRICAS ───── */
+.ga-card{
+  background:var(--ga-surface);border:1px solid var(--ga-line);
+  border-radius:var(--ga-r-lg);margin-bottom:16px;
+  box-shadow:var(--ga-sh-sm);overflow:hidden;
+  transition:box-shadow .2s ease;
+}
+.ga-card:hover{box-shadow:var(--ga-sh);}
+.ga-card-head{
+  display:flex;align-items:center;justify-content:space-between;
+  gap:12px;flex-wrap:wrap;padding:14px 18px;
+  border-bottom:1px solid var(--ga-line);
+  background:var(--ga-surface);
+}
+.ga-card-head h6{
+  margin:0;font-size:.98rem;font-weight:800;
+  color:var(--ga-ink);letter-spacing:-.2px;
+  display:inline-flex;align-items:center;gap:8px;
+}
+.ga-card-head h6 i{color:var(--ga-violet);font-size:.85rem;}
+.ga-card-head .chip{
+  display:inline-flex;align-items:center;gap:5px;
+  padding:3px 10px;border-radius:999px;
+  background:var(--ga-primary-soft);color:var(--ga-primary);
+  font-size:.7rem;font-weight:700;font-family:var(--ga-m);
+}
+.ga-card-body{padding:14px 18px;}
+
+/* ───── TABLA RESUMEN (comercial/banco) ───── */
+.ga-table-resumen{
+  width:100%;border-collapse:separate;border-spacing:0;
+  font-size:.82rem;
+}
+.ga-table-resumen thead th{
+  background:var(--ga-surface-2);color:var(--ga-ink-2);
+  font-size:.62rem;text-transform:uppercase;letter-spacing:.8px;
+  font-weight:800;padding:9px 10px;text-align:left;
+  border-bottom:1px solid var(--ga-line);
+}
+.ga-table-resumen thead th.r{text-align:right;}
+.ga-table-resumen tbody td{
+  padding:9px 10px;border-bottom:1px solid var(--ga-line);
+  color:var(--ga-ink);vertical-align:middle;
+}
+.ga-table-resumen tbody tr:hover td{background:var(--ga-surface-2);}
+.ga-table-resumen tbody td.r{text-align:right;}
+.ga-table-resumen tbody td .money{
+  color:var(--ga-emerald);font-weight:800;font-size:.82rem;
+}
+.ga-table-resumen .row-total td{
+  background:linear-gradient(135deg,var(--ga-primary),var(--ga-violet));
+  color:#fff;font-weight:800;border:none;
+}
+.ga-table-resumen .row-total td .money{color:#fff;}
+.ga-table-resumen .user-cell{
+  display:flex;align-items:center;gap:7px;
+  font-weight:700;
+}
+.ga-table-resumen .avatar{
+  width:26px;height:26px;border-radius:50%;
+  display:inline-flex;align-items:center;justify-content:center;
+  background:var(--ga-primary-soft);color:var(--ga-primary);
+  font-size:.72rem;font-weight:800;flex-shrink:0;
+}
+.ga-table-resumen .avatar.a-c{background:var(--ga-amber-soft);color:var(--ga-amber);}
+.ga-table-resumen .avatar.a-b{background:var(--ga-cyan-soft);color:var(--ga-cyan);}
+
+/* ───── LISTA DE PREMIOS ───── */
+.ga-premios{
+  display:flex;flex-direction:column;gap:10px;
+}
+.ga-premio{
+  display:grid;
+  grid-template-columns:44px 1fr auto;
+  gap:12px;align-items:center;
+  padding:12px 14px;
+  background:var(--ga-surface);
+  border:1px solid var(--ga-line);
+  border-radius:var(--ga-r);
+  transition:.15s;
+}
+.ga-premio:hover{border-color:var(--ga-line-2);box-shadow:var(--ga-sh-sm);}
+.ga-premio.pagado{border-left:4px solid var(--ga-emerald);}
+.ga-premio.pendiente{border-left:4px solid var(--ga-amber);}
+
+.ga-premio .badge-num{
+  width:44px;height:44px;border-radius:11px;
+  display:inline-flex;align-items:center;justify-content:center;
+  background:linear-gradient(135deg,var(--ga-primary),var(--ga-violet));
+  color:#fff;font-weight:800;font-size:.82rem;
+  font-family:var(--ga-m);
+  box-shadow:0 4px 12px -6px var(--ga-violet);
+}
+.ga-premio.pagado .badge-num{background:linear-gradient(135deg,var(--ga-emerald),#047857);box-shadow:0 4px 12px -6px var(--ga-emerald);}
+.ga-premio.pendiente .badge-num{background:linear-gradient(135deg,var(--ga-amber),#b45309);box-shadow:0 4px 12px -6px var(--ga-amber);}
+
+.ga-premio .info{min-width:0;}
+.ga-premio .info .user{
+  display:flex;align-items:center;gap:7px;flex-wrap:wrap;
+  font-weight:800;font-size:.9rem;color:var(--ga-ink);
+  margin-bottom:4px;
+}
+.ga-premio .info .user .estado{
+  display:inline-flex;align-items:center;gap:4px;
+  padding:2px 8px;border-radius:999px;
+  font-size:.58rem;font-weight:800;letter-spacing:.4px;
+  text-transform:uppercase;
+}
+.ga-premio .info .user .estado.pagado{background:var(--ga-emerald-soft);color:#047857;}
+.ga-premio .info .user .estado.pendiente{background:var(--ga-amber-soft);color:#b45309;}
+.ga-premio .info .user .estado.reclamado{background:var(--ga-cyan-soft);color:#0e7490;}
+.ga-premio .info .meta{
+  display:flex;flex-wrap:wrap;gap:6px 12px;
+  font-size:.72rem;color:var(--ga-ink-2);font-weight:600;
+}
+.ga-premio .info .meta span{display:inline-flex;align-items:center;gap:4px;}
+.ga-premio .info .meta i{color:var(--ga-ink-3);font-size:.68rem;}
+
+.ga-premio .premio-monto{
+  text-align:right;
+  display:flex;flex-direction:column;align-items:flex-end;gap:2px;
+}
+.ga-premio .premio-monto .lbl{
+  font-size:.55rem;color:var(--ga-ink-3);
+  text-transform:uppercase;letter-spacing:.7px;font-weight:700;
+}
+.ga-premio .premio-monto .monto{
+  font-size:1rem;font-weight:800;color:var(--ga-emerald);
+  font-family:var(--ga-m);letter-spacing:-.3px;
+}
+
+/* ───── EMPTY ───── */
+.ga-empty{
+  text-align:center;padding:50px 20px;
+  background:var(--ga-surface);
+  border:2px dashed var(--ga-line-2);border-radius:var(--ga-r-lg);
+  color:var(--ga-ink-3);
+}
+.ga-empty i{
+  font-size:2.6rem;color:var(--ga-ink-3);
+  margin-bottom:12px;display:block;
+}
+.ga-empty p{margin:0;font-size:.9rem;font-weight:600;}
+
+/* ═══════════ RESPONSIVE ═══════════ */
+
+/* TABLET */
+@media (max-width: 992px){
+  .ga-stats{grid-template-columns:repeat(2,1fr);gap:10px;}
+  .ga-stat{padding:12px 14px;}
+  .ga-stat .val{font-size:1.08rem;}
+}
+
+/* MÓVIL */
+@media (max-width: 640px){
+  .ga-wrap{padding:10px 10px 40px;}
+
+  /* Stats 2x2 */
+  .ga-stats{gap:8px;margin-bottom:12px;}
+  .ga-stat{padding:10px 12px;gap:9px;border-radius:10px;}
+  .ga-stat::before{width:3px;}
+  .ga-stat .ic{width:32px;height:32px;font-size:.85rem;border-radius:8px;}
+  .ga-stat .lbl{font-size:.55rem;letter-spacing:.7px;}
+  .ga-stat .val{font-size:.98rem;}
+
+  /* Filtros apilados */
+  .ga-filters{padding:12px;border-radius:14px;}
+  .ga-filters-grid{grid-template-columns:1fr;gap:10px;}
+  .ga-fgrp label{font-size:.55rem;letter-spacing:.7px;}
+  .ga-fgrp select{padding:10px 12px;font-size:.82rem;}
+  .ga-btn{width:100%;padding:11px 16px;font-size:.84rem;}
+
+  /* Cards */
+  .ga-card{border-radius:14px;margin-bottom:12px;}
+  .ga-card-head{padding:12px 14px;}
+  .ga-card-head h6{font-size:.88rem;}
+  .ga-card-head h6 i{font-size:.78rem;}
+  .ga-card-body{padding:10px 12px;}
+
+  /* Tabla resumen: mantener 3 columnas compactas */
+  .ga-table-resumen{font-size:.74rem;}
+  .ga-table-resumen thead th{padding:8px 6px;font-size:.55rem;letter-spacing:.5px;}
+  .ga-table-resumen tbody td{padding:8px 6px;}
+  .ga-table-resumen .avatar{width:22px;height:22px;font-size:.62rem;}
+  .ga-table-resumen .user-cell{gap:5px;}
+  .ga-table-resumen tbody td .money{font-size:.74rem;}
+
+  /* Lista de premios: layout móvil */
+  .ga-premio{
+    grid-template-columns:38px 1fr;
+    gap:10px;
+    padding:11px 12px;
+  }
+  .ga-premio .badge-num{width:38px;height:38px;font-size:.72rem;border-radius:9px;}
+  .ga-premio .premio-monto{
+    grid-column:1 / -1;
+    flex-direction:row;
+    justify-content:space-between;
+    align-items:center;
+    padding-top:8px;
+    border-top:1px dashed var(--ga-line);
+    margin-top:2px;
+  }
+  .ga-premio .premio-monto .lbl{font-size:.55rem;}
+  .ga-premio .premio-monto .monto{font-size:.92rem;}
+  .ga-premio .info .user{font-size:.84rem;}
+  .ga-premio .info .meta{font-size:.68rem;gap:4px 10px;}
+}
+
+/* MÓVIL PEQUEÑO */
+@media (max-width: 420px){
+  .ga-wrap{padding:8px 8px 30px;}
+  .ga-stat{padding:9px 10px;gap:7px;}
+  .ga-stat .ic{width:28px;height:28px;font-size:.78rem;}
+  .ga-stat .val{font-size:.88rem;}
+  .ga-stat .lbl{font-size:.5rem;}
+
+  .ga-table-resumen{font-size:.7rem;}
+  .ga-table-resumen thead th{padding:7px 4px;font-size:.5rem;}
+  .ga-table-resumen tbody td{padding:7px 4px;}
+  .ga-table-resumen .user-cell{font-size:.7rem;}
+  .ga-table-resumen .avatar{display:none;}
+
+  .ga-premio{padding:10px;}
+  .ga-premio .info .user{font-size:.8rem;}
+  .ga-premio .info .meta{font-size:.64rem;}
+}
+
+/* MUY ESTRECHO */
+@media (max-width: 360px){
+  .ga-stat .val{font-size:.82rem;}
+  .ga-stat .lbl{font-size:.46rem;}
+  .ga-premio .badge-num{width:34px;height:34px;font-size:.68rem;}
+}
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="row">
-    <!-- Resumen -->
-    <div class="col-lg-12">
-        <div class="row g-3 mb-4">
-            <div class="col-md-3">
-                <div class="card border-0 shadow-sm">
-                    <div class="card-body text-center">
-                        <h5 class="text-muted">Total Premios</h5>
-                        <h2 class="fw-bold text-success">${{ total_general|floatformat:2 }}</h2>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card border-0 shadow-sm">
-                    <div class="card-body text-center">
-                        <h5 class="text-muted">Ganadores</h5>
-                        <h2 class="fw-bold text-primary">{{ total_premios }}</h2>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card border-0 shadow-sm">
-                    <div class="card-body text-center">
-                        <h5 class="text-muted">Comerciales</h5>
-                        <h2 class="fw-bold text-warning">{{ subtotales_comercial|length }}</h2>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card border-0 shadow-sm">
-                    <div class="card-body text-center">
-                        <h5 class="text-muted">Bancos</h5>
-                        <h2 class="fw-bold text-info">{{ subtotales_banco|length }}</h2>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+<div class="ga-wrap">
 
-    <!-- Filtros -->
-    <div class="col-lg-12">
-        <div class="card border-0 shadow-sm mb-3">
-            <div class="card-body">
-                <div class="row g-2">
-                    <div class="col-md-4">
-                        <select class="form-select form-select-sm" id="filterSorteo">
-                            <option value="todos">Todos los sorteos</option>
-                            {% for sorteo in sorteos %}
-                            <option value="{{ sorteo.id }}">{{ sorteo.nombre }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="col-md-3">
-                        <select class="form-select form-select-sm" id="filterEstado">
-                            <option value="todos">Todos los estados</option>
-                            <option value="pagado">Pagados</option>
-                            <option value="pendiente">Pendientes</option>
-                            <option value="reclamado">Reclamados</option>
-                        </select>
-                    </div>
-                    <div class="col-md-2">
-                        <button class="btn btn-primary btn-sm w-100" onclick="filtrarPremios()">
-                            <i class="fas fa-search"></i> Filtrar
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
+  {# ═══════ RESUMEN ═══════ #}
+  <div class="ga-stats">
+    <div class="ga-stat c1">
+      <span class="ic"><i class="fas fa-trophy"></i></span>
+      <div class="text">
+        <div class="lbl">Total premios</div>
+        <div class="val money">${{ total_general|floatformat:2 }}</div>
+      </div>
     </div>
+    <div class="ga-stat c2">
+      <span class="ic"><i class="fas fa-medal"></i></span>
+      <div class="text">
+        <div class="lbl">Ganadores</div>
+        <div class="val">{{ total_premios }}</div>
+      </div>
+    </div>
+    <div class="ga-stat c3">
+      <span class="ic"><i class="fas fa-user-tie"></i></span>
+      <div class="text">
+        <div class="lbl">Comerciales</div>
+        <div class="val">{{ subtotales_comercial|length }}</div>
+      </div>
+    </div>
+    <div class="ga-stat c4">
+      <span class="ic"><i class="fas fa-university"></i></span>
+      <div class="text">
+        <div class="lbl">Bancos</div>
+        <div class="val">{{ subtotales_banco|length }}</div>
+      </div>
+    </div>
+  </div>
 
-    <!-- Subtotales por Comercial -->
-    <div class="col-lg-6">
-        <div class="card border-0 shadow-sm">
-            <div class="card-header bg-white border-0">
-                <h6 class="fw-bold mb-0"><i class="fas fa-user-tie"></i> Premios por Comercial</h6>
-            </div>
-            <div class="card-body">
-                {% if subtotales_comercial %}
-                <div class="table-responsive">
-                    <table class="table table-sm">
-                        <thead>
-                            <tr>
-                                <th>Comercial</th>
-                                <th class="text-end">Cantidad</th>
-                                <th class="text-end">Total</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for comercial in subtotales_comercial %}
-                            <tr>
-                                <td>{{ comercial.username }}</td>
-                                <td class="text-end">{{ comercial.cantidad }}</td>
-                                <td class="text-end fw-bold text-success">${{ comercial.total|floatformat:2 }}</td>
-                            </tr>
-                            {% endfor %}
-                            <tr class="table-dark">
-                                <td><strong>Total</strong></td>
-                                <td class="text-end">{{ total_premios }}</td>
-                                <td class="text-end fw-bold text-success">${{ total_general|floatformat:2 }}</td>
-                            </tr>
-                        </tbody>
-                    </table>
+  {# ═══════ FILTROS ═══════ #}
+  <div class="ga-filters">
+    <div class="ga-filters-grid">
+      <div class="ga-fgrp">
+        <label><i class="fas fa-calendar-alt"></i> Sorteo</label>
+        <select id="filterSorteo">
+          <option value="todos">Todos los sorteos</option>
+          {% for sorteo in sorteos %}
+            <option value="{{ sorteo.id }}">{{ sorteo.nombre }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="ga-fgrp">
+        <label><i class="fas fa-circle-dot"></i> Estado</label>
+        <select id="filterEstado">
+          <option value="todos">Todos los estados</option>
+          <option value="pagado">Pagados</option>
+          <option value="pendiente">Pendientes</option>
+          <option value="reclamado">Reclamados</option>
+        </select>
+      </div>
+      <div class="ga-fgrp">
+        <button class="ga-btn" onclick="filtrarPremios()">
+          <i class="fas fa-search"></i> Filtrar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  {# ═══════ SUBTOTALES POR COMERCIAL ═══════ #}
+  <div class="ga-card">
+    <div class="ga-card-head">
+      <h6><i class="fas fa-user-tie"></i> Premios por Comercial</h6>
+      {% if subtotales_comercial %}
+        <span class="chip">{{ subtotales_comercial|length }}</span>
+      {% endif %}
+    </div>
+    <div class="ga-card-body">
+      {% if subtotales_comercial %}
+        <table class="ga-table-resumen">
+          <thead>
+            <tr>
+              <th>Comercial</th>
+              <th class="r">Cant.</th>
+              <th class="r">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for comercial in subtotales_comercial %}
+            <tr>
+              <td>
+                <div class="user-cell">
+                  <span class="avatar a-c">{{ comercial.username|slice:":1"|upper }}</span>
+                  {{ comercial.username }}
                 </div>
-                {% else %}
-                <p class="text-muted text-center">No hay premios por comercial</p>
+              </td>
+              <td class="r num">{{ comercial.cantidad }}</td>
+              <td class="r"><span class="money">${{ comercial.total|floatformat:2 }}</span></td>
+            </tr>
+            {% endfor %}
+            <tr class="row-total">
+              <td><strong>Total</strong></td>
+              <td class="r num"><strong>{{ total_premios }}</strong></td>
+              <td class="r"><span class="money">${{ total_general|floatformat:2 }}</span></td>
+            </tr>
+          </tbody>
+        </table>
+      {% else %}
+        <div class="ga-empty" style="padding:30px 16px;">
+          <i class="fas fa-user-tie"></i>
+          <p>No hay premios por comercial</p>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  {# ═══════ SUBTOTALES POR BANCO ═══════ #}
+  <div class="ga-card">
+    <div class="ga-card-head">
+      <h6><i class="fas fa-university"></i> Premios por Banco</h6>
+      {% if subtotales_banco %}
+        <span class="chip">{{ subtotales_banco|length }}</span>
+      {% endif %}
+    </div>
+    <div class="ga-card-body">
+      {% if subtotales_banco %}
+        <table class="ga-table-resumen">
+          <thead>
+            <tr>
+              <th>Banco</th>
+              <th class="r">Cant.</th>
+              <th class="r">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for banco in subtotales_banco %}
+            <tr>
+              <td>
+                <div class="user-cell">
+                  <span class="avatar a-b">{{ banco.username|slice:":1"|upper }}</span>
+                  {{ banco.username }}
+                </div>
+              </td>
+              <td class="r num">{{ banco.cantidad }}</td>
+              <td class="r"><span class="money">${{ banco.total|floatformat:2 }}</span></td>
+            </tr>
+            {% endfor %}
+            <tr class="row-total">
+              <td><strong>Total</strong></td>
+              <td class="r num"><strong>{{ total_premios }}</strong></td>
+              <td class="r"><span class="money">${{ total_general|floatformat:2 }}</span></td>
+            </tr>
+          </tbody>
+        </table>
+      {% else %}
+        <div class="ga-empty" style="padding:30px 16px;">
+          <i class="fas fa-university"></i>
+          <p>No hay premios por banco</p>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  {# ═══════ LISTA DE PREMIOS ═══════ #}
+  <div class="ga-card">
+    <div class="ga-card-head">
+      <h6><i class="fas fa-trophy"></i> Lista de Premios</h6>
+    </div>
+    <div class="ga-card-body">
+      <div class="ga-premios" id="tablaPremios">
+        {% for premio in premios %}
+          <div class="ga-premio {% if premio.estado == 'pagado' %}pagado{% else %}pendiente{% endif %}"
+               data-sorteo="{{ premio.sorteo.id }}"
+               data-estado="{{ premio.estado }}">
+
+            <span class="badge-num">{{ forloop.counter }}</span>
+
+            <div class="info">
+              <div class="user">
+                {{ premio.usuario.username }}
+                <span class="estado {{ premio.estado }}">{{ premio.get_estado_display }}</span>
+              </div>
+              <div class="meta">
+                <span><i class="fas fa-ticket"></i> {{ premio.numero_apostado }}</span>
+                <span><i class="fas fa-calendar-alt"></i> {{ premio.sorteo.nombre }}</span>
+                {% if premio.comercial %}
+                  <span><i class="fas fa-user-tie"></i> {{ premio.comercial.username }}</span>
                 {% endif %}
-            </div>
-        </div>
-    </div>
-
-    <!-- Subtotales por Banco -->
-    <div class="col-lg-6">
-        <div class="card border-0 shadow-sm">
-            <div class="card-header bg-white border-0">
-                <h6 class="fw-bold mb-0"><i class="fas fa-university"></i> Premios por Banco</h6>
-            </div>
-            <div class="card-body">
-                {% if subtotales_banco %}
-                <div class="table-responsive">
-                    <table class="table table-sm">
-                        <thead>
-                            <tr>
-                                <th>Banco</th>
-                                <th class="text-end">Cantidad</th>
-                                <th class="text-end">Total</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for banco in subtotales_banco %}
-                            <tr>
-                                <td>{{ banco.username }}</td>
-                                <td class="text-end">{{ banco.cantidad }}</td>
-                                <td class="text-end fw-bold text-success">${{ banco.total|floatformat:2 }}</td>
-                            </tr>
-                            {% endfor %}
-                            <tr class="table-dark">
-                                <td><strong>Total</strong></td>
-                                <td class="text-end">{{ total_premios }}</td>
-                                <td class="text-end fw-bold text-success">${{ total_general|floatformat:2 }}</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-                {% else %}
-                <p class="text-muted text-center">No hay premios por banco</p>
+                {% if premio.banco %}
+                  <span><i class="fas fa-university"></i> {{ premio.banco.username }}</span>
                 {% endif %}
+                <span><i class="fas fa-clock"></i> {{ premio.fecha_generacion|date:"d/m/Y" }}</span>
+              </div>
             </div>
-        </div>
-    </div>
 
-    <!-- Lista de premios -->
-    <div class="col-lg-12 mt-3">
-        <div class="card border-0 shadow-sm">
-            <div class="card-header bg-white border-0">
-                <h6 class="fw-bold mb-0"><i class="fas fa-trophy"></i> Lista de Premios</h6>
+            <div class="premio-monto">
+              <span class="lbl">Premio</span>
+              <span class="monto">${{ premio.monto_premio|floatformat:2 }}</span>
             </div>
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table table-hover" id="tablaPremios">
-                        <thead class="table-light">
-                            <tr>
-                                <th>#</th>
-                                <th>Usuario</th>
-                                <th>Comercial</th>
-                                <th>Banco</th>
-                                <th>Sorteo</th>
-                                <th>Número</th>
-                                <th>Premio</th>
-                                <th>Estado</th>
-                                <th>Fecha</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for premio in premios %}
-                            <tr class="{% if premio.estado == 'pagado' %}table-success{% else %}table-warning{% endif %}"
-                                data-sorteo="{{ premio.sorteo.id }}"
-                                data-estado="{{ premio.estado }}">
-                                <td>{{ forloop.counter }}</td>
-                                <td><strong>{{ premio.usuario.username }}</strong></td>
-                                <td>{{ premio.comercial.username|default:"-" }}</td>
-                                <td>{{ premio.banco.username|default:"-" }}</td>
-                                <td>{{ premio.sorteo.nombre }}</td>
-                                <td><code>{{ premio.numero_apostado }}</code></td>
-                                <td class="fw-bold text-success">${{ premio.monto_premio|floatformat:2 }}</td>
-                                <td>
-                                    <span class="badge {% if premio.estado == 'pagado' %}bg-success{% else %}bg-warning{% endif %}">
-                                        {{ premio.get_estado_display }}
-                                    </span>
-                                </td>
-                                <td>{{ premio.fecha_generacion|date:"d/m/Y" }}</td>
-                            </tr>
-                            {% empty %}
-                            <tr>
-                                <td colspan="9" class="text-center py-4 text-muted">
-                                    <span style="font-size: 3rem;">🏆</span>
-                                    <p class="mt-2">No hay premios registrados</p>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
+          </div>
+        {% empty %}
+          <div class="ga-empty">
+            <i class="fas fa-trophy"></i>
+            <p>No hay premios registrados</p>
+          </div>
+        {% endfor %}
+      </div>
     </div>
+  </div>
+
 </div>
 
 <script>
 function filtrarPremios() {
-    const sorteo = document.getElementById('filterSorteo').value;
-    const estado = document.getElementById('filterEstado').value;
-    const items = document.querySelectorAll('#tablaPremios tbody tr');
+  const sorteo = document.getElementById('filterSorteo').value;
+  const estado = document.getElementById('filterEstado').value;
+  const items  = document.querySelectorAll('#tablaPremios .ga-premio');
 
-    let visible = 0;
-    items.forEach(function(item) {
-        if (item.querySelector('td').colSpan > 1) return;
+  items.forEach(function(item) {
+    const itemSorteo = item.dataset.sorteo;
+    const itemEstado = item.dataset.estado;
 
-        const itemSorteo = item.dataset.sorteo;
-        const itemEstado = item.dataset.estado;
+    let show = true;
+    if (sorteo !== 'todos' && itemSorteo !== sorteo) show = false;
+    if (estado !== 'todos' && itemEstado !== estado) show = false;
 
-        let show = true;
-        if (sorteo !== 'todos' && itemSorteo !== sorteo) show = false;
-        if (estado !== 'todos' && itemEstado !== estado) show = false;
-
-        item.style.display = show ? '' : 'none';
-        if (show) visible++;
-    });
+    item.style.display = show ? '' : 'none';
+  });
 }
 
-document.getElementById('filterSorteo').addEventListener('change', filtrarPremios);
-document.getElementById('filterEstado').addEventListener('change', filtrarPremios);
+document.addEventListener('DOMContentLoaded', function(){
+  const selSorteo = document.getElementById('filterSorteo');
+  const selEstado = document.getElementById('filterEstado');
+  if (selSorteo) selSorteo.addEventListener('change', filtrarPremios);
+  if (selEstado) selEstado.addEventListener('change', filtrarPremios);
+});
 </script>
+
 {% endblock %}

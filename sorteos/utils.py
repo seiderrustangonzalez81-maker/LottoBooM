@@ -145,6 +145,15 @@ def calcular_estado_sorteo(sorteo, ahora=None, fecha_consulta=None):
     sorteo.hora_salida = hora_salida
     sorteo.hora_cierre = dt_cierre
     sorteo.hora_salida_str = hora_salida.strftime('%I:%M %p')
+
+    # FIX_PROXIMO_EN_LISTA_V1: si ya salió, calcular segundos al próximo día
+    sorteo.segundos_proximo = 0
+    if estado == 'salido':
+        try:
+            sorteo.segundos_proximo = segundos_hasta_proximo(sorteo, ahora) or 0
+        except Exception:
+            sorteo.segundos_proximo = 0
+
     return sorteo
 
 
@@ -206,3 +215,38 @@ def get_sorteos_del_dia(fecha=None):
         if s.estado_actual != 'no_programado':
             resultado.append(s)
     return resultado
+
+# ═══════════════════════════════════════════════════════════════
+# FIX_PROXIMO_DIA_V1 — Countdown extendido al próximo día
+# ═══════════════════════════════════════════════════════════════
+def get_proximo_datetime_sorteo(sorteo, ahora=None):
+    """
+    Devuelve (dt_salida, es_hoy) del PRÓXIMO sorteo a partir de `ahora`.
+    Busca desde hoy hasta +7 días. None si no hay programación en la semana.
+    """
+    if ahora is None:
+        ahora = timezone.localtime(timezone.now())
+
+    hoy = ahora.date()
+    for offset in range(0, 8):
+        fecha = hoy + timedelta(days=offset)
+        hora = obtener_hora_desde_horarios(sorteo, fecha)
+        if not hora:
+            continue
+        dt = timezone.make_aware(
+            datetime.combine(fecha, hora),
+            timezone.get_current_timezone(),
+        )
+        if dt > ahora:
+            return dt, (offset == 0)
+    return None, None
+
+
+def segundos_hasta_proximo(sorteo, ahora=None):
+    """Segundos hasta la próxima salida (aunque sea mañana o pasado)."""
+    if ahora is None:
+        ahora = timezone.localtime(timezone.now())
+    dt, _ = get_proximo_datetime_sorteo(sorteo, ahora)
+    if not dt:
+        return None
+    return int((dt - ahora).total_seconds())

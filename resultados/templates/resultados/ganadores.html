@@ -774,33 +774,331 @@
 }
 .gw-empty__sub { color: var(--ink-mute); font-size: 0.82rem; margin: 0; }
 
-/* ─────────────────────────────────────────────────
-   RESPONSIVE
-   ───────────────────────────────────────────────── */
+/* ═════════════════════════════════════════════════
+   ⚡ RESPONSIVE
+   ═════════════════════════════════════════════════ */
+
+/* TABLET */
 @media (max-width: 1024px) {
   .gw-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
+
+/* MÓVIL GRANDE */
 @media (max-width: 720px) {
   .gw-head { padding: 18px 20px; }
-  .gw-filters { padding: 16px 16px; }
-  .gw-filters__grid { grid-template-columns: minmax(0, 1fr); }
+  .gw-head__right { width: 100%; }
+  .gw-head__right .gw-btn { flex: 1; }
+  .gw-filters { padding: 16px; }
+  .gw-filters__grid { grid-template-columns: minmax(0, 1fr); gap: 10px; }
   .gw-actions-row { justify-content: stretch; }
   .gw-actions-row .gw-btn { flex: 1; }
   .gw-pagination { flex-direction: column; align-items: stretch; gap: 10px; }
   .gw-pagination__list { justify-content: center; }
   .gw-details__summary { padding: 14px 16px; }
+  .gw-section__head { padding: 0 0 10px; }
+  .gw-section__hint { font-size: 0.74rem; }
 }
-@media (max-width: 480px) {
-  .gw-kpis { grid-template-columns: minmax(0, 1fr); gap: 10px; }
-  .gw-kpi { padding: 16px 18px; }
-  .gw-tabs { padding: 6px; gap: 6px; }
-  .gw-tab { padding: 8px 12px; font-size: 0.72rem; }
-  .gw-agg { padding: 16px 16px; }
+
+/* ═════════════════════════════════════════════════
+   MÓVIL ≤ 640px — TABLAS → CARDS
+   ═════════════════════════════════════════════════ */
+@media (max-width: 640px) {
+  .gw-kpis { gap: 10px; margin-bottom: 16px; }
+  .gw-kpi { padding: 14px 16px; border-radius: 16px; }
+  .gw-kpi__label { font-size: 0.58rem; letter-spacing: 1.2px; margin-bottom: 7px; }
+  .gw-kpi__value { font-size: 1.25rem; letter-spacing: -0.5px; }
+
+  /* Tabs → scroll horizontal sin barra */
+  .gw-tabs {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding: 6px;
+    border-radius: 14px;
+  }
+  .gw-tabs::-webkit-scrollbar { display: none; }
+  .gw-tab { padding: 8px 14px; font-size: 0.72rem; min-height: 38px; }
+
+  /* Filtros compactos */
+  .gw-filters { padding: 14px; border-radius: 16px; margin-bottom: 14px; }
+  .gw-fgrp label { font-size: 0.6rem; letter-spacing: 1px; }
+  .gw-input, .gw-select { min-height: 44px; font-size: 0.86rem; padding: 10px 12px; }
+
+  /* Agregados */
+  .gw-agrid { grid-template-columns: 1fr; gap: 10px; }
+  .gw-agg { padding: 14px 16px; border-radius: 16px; }
   .gw-agg__total { font-size: 1.35rem; }
+  .gw-agg__foot { font-size: 0.68rem; }
+
+  /* ───── TABLA "POR CLIENTE" → CARDS ───── */
+  .gw-table-wrap {
+    border-radius: 16px;
+    box-shadow: 0 12px 28px -18px rgba(167,139,250,0.18);
+    background: transparent;
+    border: none;
+  }
+  .gw-table-scroll { overflow: visible; }
+
+  .gw-table { display: block; font-size: 0.86rem; }
+  .gw-table thead { display: none; }
+  .gw-table tbody { display: block; }
+  .gw-table tbody tr {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    grid-template-areas:
+      "user   rank"
+      "counts counts"
+      "money  money"
+      "bar    bar"
+      "action action";
+    gap: 8px 10px;
+    padding: 14px 16px;
+    margin-bottom: 10px;
+    background: #ffffff;
+    border: 1px solid rgba(167,139,250,0.18);
+    border-radius: 16px;
+    box-shadow: 0 10px 24px -20px rgba(167,139,250,0.30);
+    position: relative;
+    overflow: hidden;
+  }
+  .gw-table tbody tr::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: var(--holo);
+    background-size: 400% 100%;
+    animation: gw-holo 10s linear infinite;
+  }
+  .gw-table tbody tr:hover td { background: transparent; }
+  .gw-table tbody td {
+    padding: 0;
+    border: none;
+    display: block;
+    overflow-wrap: anywhere;
+  }
+  .gw-table tbody td:nth-child(1) { grid-area: rank; justify-self: end; }
+  .gw-table tbody td:nth-child(2) { grid-area: user; min-width: 0; }
+  .gw-table tbody td:nth-child(3),
+  .gw-table tbody td:nth-child(4),
+  .gw-table tbody td:nth-child(5) {
+    grid-area: counts;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-right: 8px;
+    font-size: 0.74rem;
+  }
+  .gw-table tbody td:nth-child(3)::before { content: '📊 '; }
+  .gw-table tbody td:nth-child(4)::before { content: '⏳ '; }
+  .gw-table tbody td:nth-child(5)::before { content: '✅ '; }
+  .gw-table tbody td:nth-child(6) {
+    grid-area: money;
+    font-size: 1.25rem;
+    font-weight: 900;
+    padding-top: 4px;
+    border-top: 1px dashed var(--line);
+  }
+  .gw-table tbody td:nth-child(6) .gw-money { font-size: 1.25rem; }
+  .gw-table tbody td:nth-child(7) { grid-area: bar; }
+  .gw-table tbody td:nth-child(8) { grid-area: action; margin-top: 4px; }
+  .gw-table tbody td:nth-child(8) .gw-btn {
+    width: 100%;
+    min-height: 40px;
+    font-size: 0.76rem;
+    padding: 8px 14px;
+  }
+
+  .gw-rank { width: 24px; height: 24px; font-size: 0.68rem; }
+  .gw-user__avatar { width: 30px; height: 30px; font-size: 0.72rem; }
+  .gw-user__name { font-size: 0.86rem; }
+
+  /* ───── TABLA "DETALLE INDIVIDUAL" → CARDS ───── */
+  .gw-details { border-radius: 16px; }
+  .gw-details__summary {
+    padding: 12px 14px;
+    font-size: 0.78rem;
+    gap: 8px;
+  }
+  .gw-details__count { font-size: 0.66rem; padding: 2px 8px; }
+
+  .gw-details .gw-table { display: block; }
+  .gw-details .gw-table thead { display: none; }
+  .gw-details .gw-table tbody { display: block; padding: 10px; }
+  .gw-details .gw-table tbody tr {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    grid-template-areas:
+      "user     date"
+      "detail   detail"
+      "amount   status"
+      "action   action";
+    gap: 8px 10px;
+    padding: 12px 14px;
+    margin-bottom: 10px;
+    background: #ffffff;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    box-shadow: 0 8px 20px -18px rgba(19,24,38,0.20);
+    position: relative;
+    overflow: hidden;
+  }
+  .gw-details .gw-table tbody tr::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; bottom: 0;
+    width: 3px;
+    background: var(--holo);
+    background-size: 100% 400%;
+    animation: gw-holo 10s linear infinite;
+  }
+  .gw-details .gw-table tbody tr:hover td { background: transparent; }
+  .gw-details .gw-table tbody td {
+    padding: 0;
+    border: none;
+    display: block;
+    overflow-wrap: anywhere;
+    font-size: 0.78rem;
+  }
+  /* Usuario (col 1) */
+  .gw-details .gw-table tbody td:nth-child(1) { grid-area: user; min-width: 0; }
+  /* Sorteo (col 2) → dentro de "detail" */
+  .gw-details .gw-table tbody td:nth-child(2) {
+    grid-area: detail;
+    font-weight: 700;
+    color: var(--ink);
+    padding-top: 2px;
+  }
+  .gw-details .gw-table tbody td:nth-child(2)::before {
+    content: '🎰 ';
+    margin-right: 2px;
+  }
+  /* Número (col 3) */
+  .gw-details .gw-table tbody td:nth-child(3) {
+    grid-area: detail;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+  /* Forma de juego (col 4), forma pago (col 5), mult (col 6) — meta inline */
+  .gw-details .gw-table tbody td:nth-child(4),
+  .gw-details .gw-table tbody td:nth-child(5),
+  .gw-details .gw-table tbody td:nth-child(6) {
+    grid-area: detail;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.72rem;
+    color: var(--ink-soft);
+    margin-right: 10px;
+  }
+  .gw-details .gw-table tbody td:nth-child(4)::before { content: '🎲 '; }
+  .gw-details .gw-table tbody td:nth-child(5)::before { content: '💳 '; }
+  .gw-details .gw-table tbody td:nth-child(6)::before { content: '× '; }
+
+  /* Monto (col 7) */
+  .gw-details .gw-table tbody td:nth-child(7) {
+    grid-area: amount;
+    padding-top: 8px;
+    border-top: 1px dashed var(--line);
+    font-size: 1.1rem;
+  }
+  .gw-details .gw-table tbody td:nth-child(7) .gw-money { font-size: 1.15rem; }
+  /* Estado (col 8) */
+  .gw-details .gw-table tbody td:nth-child(8) {
+    grid-area: status;
+    justify-self: end;
+    align-self: end;
+    padding-top: 8px;
+  }
+  /* Fecha (col 9) */
+  .gw-details .gw-table tbody td:nth-child(9) {
+    grid-area: date;
+    justify-self: end;
+    font-size: 0.68rem;
+    color: var(--ink-mute);
+    text-align: right;
+    padding: 0;
+  }
+  /* Botón cobrar (col 10) */
+  .gw-details .gw-table tbody td:nth-child(10) {
+    grid-area: action;
+    margin-top: 4px;
+  }
+  .gw-details .gw-table tbody td:nth-child(10) .gw-btn {
+    width: 100%;
+    min-height: 40px;
+  }
+  /* Fila vacía */
+  .gw-details .gw-table tbody tr td[colspan] {
+    grid-column: 1 / -1;
+    display: block;
+    text-align: center;
+  }
+  .gw-empty { padding: 40px 16px; }
+  .gw-empty__icon { font-size: 2.2rem; }
+  .gw-empty__title { font-size: 0.86rem; }
+  .gw-empty__sub { font-size: 0.76rem; }
 }
+
+/* MÓVIL PEQUEÑO ≤ 480px */
+@media (max-width: 480px) {
+  .gw-kpis { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+  .gw-kpi { padding: 12px 14px; }
+  .gw-kpi__value { font-size: 1.15rem; }
+
+  .gw-head { padding: 16px 16px; border-radius: 18px; }
+  .gw-head__title { font-size: 1.15rem; letter-spacing: -0.3px; }
+  .gw-head__sub { font-size: 0.78rem; }
+  .gw-head__eyebrow { font-size: 0.6rem; letter-spacing: 1.1px; padding: 3px 10px; }
+
+  .gw-tab { padding: 7px 12px; font-size: 0.68rem; }
+
+  .gw-filters { padding: 12px; }
+  .gw-input, .gw-select { font-size: 0.84rem; padding: 10px; }
+
+  .gw-agrid { gap: 8px; }
+  .gw-agg { padding: 12px 14px; }
+  .gw-agg__total { font-size: 1.25rem; }
+  .gw-agg__icon { width: 30px; height: 30px; font-size: 0.95rem; }
+  .gw-agg__name { font-size: 0.8rem; }
+
+  /* Filas de tabla aún más compactas */
+  .gw-table tbody tr { padding: 12px 14px; gap: 7px 8px; }
+  .gw-table tbody td:nth-child(6) { font-size: 1.15rem; }
+  .gw-table tbody td:nth-child(6) .gw-money { font-size: 1.15rem; }
+
+  .gw-details .gw-table tbody tr { padding: 11px 12px; }
+  .gw-details .gw-table tbody td { font-size: 0.74rem; }
+  .gw-details .gw-table tbody td:nth-child(7) { font-size: 1.02rem; }
+  .gw-details .gw-table tbody td:nth-child(7) .gw-money { font-size: 1.05rem; }
+}
+
+/* MUY ESTRECHO ≤ 380px */
+@media (max-width: 380px) {
+  .gw-kpi { padding: 11px 12px; }
+  .gw-kpi__label { font-size: 0.54rem; letter-spacing: 1px; }
+  .gw-kpi__value { font-size: 1.05rem; }
+
+  .gw-head__title { font-size: 1.05rem; }
+  .gw-tab { font-size: 0.64rem; padding: 6px 10px; }
+  .gw-agg__total { font-size: 1.15rem; }
+
+  .gw-table tbody tr { padding: 10px 12px; }
+  .gw-details .gw-table tbody td:nth-child(4),
+  .gw-details .gw-table tbody td:nth-child(5),
+  .gw-details .gw-table tbody td:nth-child(6) {
+    font-size: 0.68rem;
+  }
+}
+
+/* Prefers-reduced-motion */
 @media (prefers-reduced-motion: reduce) {
   .gw-head::before,
-  .gw-section__title::before { animation: none !important; }
+  .gw-section__title::before,
+  .gw-table tbody tr::before,
+  .gw-details .gw-table tbody tr::before { animation: none !important; }
   .gw-btn, .gw-tab, .gw-agg { transition: none; }
   .gw-agg__bar-fill { transition: none; }
 }

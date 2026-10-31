@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block page_title %}🏆 Top Apostadores{% endblock %}
+{% block page_subtitle %}Los que más apuestan en cada período{% endblock %}
+
+{% block extra_css %}
+<style>
+.rt-wrap{--rt-bg:#f4f6fb;--rt-surface:#fff;--rt-surface-2:#fafbfe;--rt-line:#e5e8f0;--rt-line-2:#d4d9e6;--rt-ink:#0f172a;--rt-ink-2:#475569;--rt-ink-3:#94a3b8;--rt-primary:#4f46e5;--rt-primary-soft:#eef0ff;--rt-violet:#7c3aed;--rt-gold:#d97706;--rt-gold-soft:#fef3c7;--rt-silver:#64748b;--rt-bronze:#a16207;--rt-sh:0 1px 2px rgba(15,23,42,.04),0 8px 22px -8px rgba(15,23,42,.10);--rt-r-lg:16px;--rt-f:Arial,Helvetica,'Segoe UI',Roboto,sans-serif;--rt-m:Consolas,'Courier New',monospace;background:var(--rt-bg);color:var(--rt-ink);font-family:var(--rt-f);padding:14px 14px 60px;border-radius:var(--rt-r-lg);}
+.rt-head{display:flex;align-items:center;gap:14px;padding:18px 22px;margin-bottom:16px;background:linear-gradient(135deg,var(--rt-primary),var(--rt-violet));color:#fff;border-radius:var(--rt-r-lg);box-shadow:0 12px 28px -14px var(--rt-violet);}
+.rt-head__icon{width:48px;height:48px;border-radius:12px;background:rgba(255,255,255,.2);display:grid;place-items:center;font-size:1.5rem;flex-shrink:0;}
+.rt-head__text h2{margin:0 0 3px;font-size:1.2rem;font-weight:800;color:#fff;}
+.rt-head__text p{margin:0;font-size:.8rem;opacity:.9;color:#fff;}
+.rt-tabs{display:flex;gap:6px;flex-wrap:wrap;padding:6px;margin-bottom:16px;background:var(--rt-surface);border:1px solid var(--rt-line);border-radius:999px;box-shadow:var(--rt-sh);}
+.rt-tab{padding:8px 14px;border-radius:999px;background:transparent;color:var(--rt-ink-2);border:none;font-weight:700;font-size:.78rem;font-family:inherit;cursor:pointer;text-decoration:none;transition:.15s;white-space:nowrap;min-height:36px;display:inline-flex;align-items:center;-webkit-tap-highlight-color:transparent;}
+.rt-tab:hover:not(.is-active){background:var(--rt-surface-2);color:var(--rt-ink);}
+.rt-tab.is-active{background:linear-gradient(135deg,var(--rt-primary),var(--rt-violet));color:#fff;box-shadow:0 6px 16px -8px var(--rt-violet);}
+.rt-list{background:var(--rt-surface);border:1px solid var(--rt-line);border-radius:var(--rt-r-lg);overflow:hidden;box-shadow:var(--rt-sh);}
+.rt-item{display:grid;grid-template-columns:56px 1fr auto;align-items:center;gap:14px;padding:14px 18px;border-bottom:1px solid var(--rt-line);transition:background .15s;position:relative;}
+.rt-item:last-child{border-bottom:none;}
+.rt-item:hover{background:var(--rt-surface-2);}
+.rt-item.is-yo{background:linear-gradient(90deg,var(--rt-primary-soft) 0%,transparent 60%);}
+.rt-item.is-yo::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--rt-primary);}
+.rt-rank{width:48px;height:48px;border-radius:12px;display:grid;place-items:center;font-weight:800;font-size:1.1rem;font-family:var(--rt-m);background:var(--rt-surface-2);color:var(--rt-ink-2);border:1px solid var(--rt-line);flex-shrink:0;}
+.rt-item:nth-child(1) .rt-rank{background:linear-gradient(135deg,var(--rt-gold),#b45309);color:#fff;border-color:transparent;}
+.rt-item:nth-child(2) .rt-rank{background:linear-gradient(135deg,var(--rt-silver),#475569);color:#fff;border-color:transparent;}
+.rt-item:nth-child(3) .rt-rank{background:linear-gradient(135deg,var(--rt-bronze),#854d0e);color:#fff;border-color:transparent;}
+.rt-info{min-width:0;}
+.rt-name{font-weight:800;font-size:.95rem;color:var(--rt-ink);margin:0 0 4px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.rt-name .chip-yo{padding:2px 8px;border-radius:999px;background:var(--rt-primary);color:#fff;font-size:.6rem;font-weight:800;letter-spacing:.5px;text-transform:uppercase;}
+.rt-name .chip-top3{padding:2px 8px;border-radius:999px;background:var(--rt-gold-soft);color:var(--rt-gold);font-size:.6rem;font-weight:800;letter-spacing:.5px;text-transform:uppercase;}
+.rt-meta{display:flex;flex-wrap:wrap;gap:5px 14px;font-size:.74rem;color:var(--rt-ink-2);font-weight:600;}
+.rt-meta span{display:inline-flex;align-items:center;gap:4px;}
+.rt-meta i{color:var(--rt-ink-3);font-size:.7rem;}
+.rt-bar{height:8px;border-radius:999px;background:var(--rt-surface-2);overflow:hidden;margin-top:8px;max-width:240px;}
+.rt-bar__fill{height:100%;border-radius:999px;background:linear-gradient(90deg,var(--rt-primary),var(--rt-violet));}
+.rt-vol{text-align:right;flex-shrink:0;}
+.rt-vol__label{font-size:.55rem;color:var(--rt-ink-3);text-transform:uppercase;letter-spacing:.7px;font-weight:700;margin-bottom:3px;}
+.rt-vol__value{font-family:var(--rt-m);font-weight:800;font-size:1rem;color:var(--rt-ink);letter-spacing:-.3px;white-space:nowrap;}
+.rt-mine{margin-top:16px;padding:14px 18px;background:linear-gradient(135deg,var(--rt-primary),var(--rt-violet));color:#fff;border-radius:var(--rt-r-lg);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;}
+.rt-mine__label{font-size:.7rem;text-transform:uppercase;letter-spacing:1px;opacity:.85;font-weight:800;}
+.rt-mine__value{font-family:var(--rt-m);font-weight:900;font-size:1.4rem;line-height:1.1;}
+.rt-mine__right{text-align:right;font-size:.78rem;opacity:.9;}
+.rt-empty{padding:50px 20px;text-align:center;background:var(--rt-surface);border:2px dashed var(--rt-line-2);border-radius:var(--rt-r-lg);color:var(--rt-ink-3);}
+.rt-empty i{font-size:2.4rem;display:block;margin-bottom:12px;opacity:.5;}
+.rt-empty p{margin:0;font-weight:600;font-size:.9rem;}
+@media (max-width:640px){
+.rt-wrap{padding:10px 10px 40px;}
+.rt-head{padding:14px 16px;border-radius:16px;}
+.rt-head__icon{width:40px;height:40px;font-size:1.2rem;}
+.rt-head__text h2{font-size:1rem;}
+.rt-tabs{overflow-x:auto;flex-wrap:nowrap;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding:5px;border-radius:14px;}
+.rt-tabs::-webkit-scrollbar{display:none;}
+.rt-tab{padding:7px 12px;font-size:.72rem;flex-shrink:0;min-height:34px;}
+.rt-item{grid-template-columns:44px 1fr;gap:10px 12px;padding:12px 14px;}
+.rt-rank{width:40px;height:40px;font-size:.95rem;border-radius:10px;}
+.rt-name{font-size:.86rem;}
+.rt-vol{grid-column:1 / -1;text-align:left;display:flex;align-items:baseline;gap:8px;padding-top:6px;border-top:1px dashed var(--rt-line);margin-top:2px;}
+.rt-vol__label{margin-bottom:0;}
+.rt-vol__value{font-size:.95rem;}
+.rt-bar{max-width:100%;margin-top:6px;}
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="rt-wrap">
+  <div class="rt-head">
+    <div class="rt-head__icon">🏆</div>
+    <div class="rt-head__text">
+      <h2>Top Apostadores</h2>
+      <p>{{ inicio|date:"d/m/Y" }} — {{ fin|date:"d/m/Y" }}</p>
+    </div>
+  </div>
+
+  <div class="rt-tabs" role="tablist">
+    {% for key, label in periodos %}
+      <a href="?periodo={{ key }}" class="rt-tab {% if key == periodo %}is-active{% endif %}">{{ label }}</a>
+    {% endfor %}
+  </div>
+
+  {% if ranking %}
+    <div class="rt-list">
+      {% for item in ranking %}
+        <div class="rt-item {% if item.es_yo %}is-yo{% endif %}">
+          <div class="rt-rank">{{ item.posicion }}</div>
+          <div class="rt-info">
+            <div class="rt-name">
+              {{ item.username_display }}
+              {% if item.es_yo %}<span class="chip-yo">Tú</span>{% endif %}
+              {% if item.en_top3 %}<span class="chip-top3">Top 3</span>{% endif %}
+            </div>
+            <div class="rt-meta">
+              <span><i class="fas fa-ticket"></i> {{ item.boletas }} boleta{{ item.boletas|pluralize:"s" }}</span>
+              {% if not es_gestor %}<span><i class="fas fa-trophy"></i> Nivel {{ item.posicion }}</span>{% endif %}
+            </div>
+            {% if es_gestor and ranking.0.total_apostado %}
+              <div class="rt-bar" aria-hidden="true">
+                <div class="rt-bar__fill" style="width:{% widthratio item.total_apostado ranking.0.total_apostado 100 %}%;"></div>
+              </div>
+            {% endif %}
+          </div>
+          {% if es_gestor %}
+            <div class="rt-vol">
+              <div class="rt-vol__label">Apostado</div>
+              <div class="rt-vol__value">${{ item.total_apostado|floatformat:2 }}</div>
+            </div>
+          {% endif %}
+        </div>
+      {% endfor %}
+    </div>
+
+    {% if mi_posicion %}
+      <div class="rt-mine">
+        <div>
+          <div class="rt-mine__label">Tu posición</div>
+          <div class="rt-mine__value">#{{ mi_posicion.posicion }}</div>
+        </div>
+        <div class="rt-mine__right">
+          {{ mi_posicion.boletas }} boleta{{ mi_posicion.boletas|pluralize:"s" }}
+          {% if es_gestor %}<br>${{ mi_posicion.total_apostado|floatformat:2 }}{% endif %}
+        </div>
+      </div>
+    {% endif %}
+  {% else %}
+    <div class="rt-empty"><i class="fas fa-trophy"></i><p>Sin datos para este período. Vuelve más tarde.</p></div>
+  {% endif %}
+</div>
+{% endblock %}

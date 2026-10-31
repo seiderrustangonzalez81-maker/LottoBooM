@@ -1,171 +1,687 @@
-<!-- ESTADÍSTICAS -->
-<div class="stats-grid">
-    <div class="stat-card">
-        <div class="label">Total jugadas</div>
-        <div class="value">{{ estadisticas.total_jugadas }}</div>
-    </div>
-    <div class="stat-card" style="border-left-color: var(--warning);">
-        <div class="label">Total apostado</div>
-        <div class="value warning">${{ estadisticas.total_apostado|floatformat:2 }}</div>
-    </div>
-    <div class="stat-card" style="border-left-color: var(--success);">
-        <div class="label">Premios ganados</div>
-        <div class="value success">${{ estadisticas.total_premios|floatformat:2 }}</div>
-    </div>
-    <div class="stat-card" style="border-left-color: var(--primary);">
-        <div class="label">Tasa de acierto</div>
-        <div class="value primary">{{ estadisticas.tasa_acierto|floatformat:1 }}%</div>
-    </div>
-</div>
+{# ═══════════════════════════════════════════════════════════
+   MIS APUESTAS — Fragmento mejorado (mobile-first)
+   ═══════════════════════════════════════════════════════════ #}
 
-<!-- ACCIONES MASIVAS -->
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <div>
-        <input type="checkbox" id="selectAllJugadas" class="me-2">
-        <label for="selectAllJugadas" class="small">Seleccionar todas</label>
-        <button id="cancelarSeleccionadas" class="btn btn-danger btn-sm ms-2" disabled>
-            <i class="fas fa-times"></i> Cancelar seleccionadas
-        </button>
-        <span id="seleccionadasContador" class="small text-muted ms-2">0 seleccionadas</span>
-    </div>
-    <div>
-        <button class="btn btn-outline-secondary btn-sm toggle-all-clients" data-sorteo-id="all">
-            <i class="fas fa-expand-alt"></i> Expandir/Colapsar todos
-        </button>
-    </div>
-</div>
+<style>
+/* ───── Variables ───── */
+.ma2-wrap{
+  --ma2-bg:#f4f6fb;
+  --ma2-surface:#ffffff;
+  --ma2-surface-2:#fafbfe;
+  --ma2-line:#e5e8f0;
+  --ma2-line-2:#d4d9e6;
+  --ma2-ink:#0f172a;
+  --ma2-ink-2:#475569;
+  --ma2-ink-3:#94a3b8;
+  --ma2-primary:#4f46e5;
+  --ma2-primary-soft:#eef0ff;
+  --ma2-cyan:#0891b2;
+  --ma2-cyan-soft:#e0f7fb;
+  --ma2-violet:#7c3aed;
+  --ma2-violet-soft:#f1ebfe;
+  --ma2-amber:#d97706;
+  --ma2-amber-soft:#fef3c7;
+  --ma2-lime:#65a30d;
+  --ma2-lime-soft:#ecfccb;
+  --ma2-rose:#e11d48;
+  --ma2-rose-soft:#ffe4e6;
+  --ma2-emerald:#059669;
+  --ma2-emerald-soft:#d1fae5;
+  --ma2-sh-sm:0 1px 2px rgba(15,23,42,.04),0 2px 6px -2px rgba(15,23,42,.06);
+  --ma2-sh:0 1px 2px rgba(15,23,42,.04),0 8px 22px -8px rgba(15,23,42,.10);
+  --ma2-r:12px;--ma2-r-lg:16px;--ma2-r-xl:20px;
+  --ma2-f:Arial,Helvetica,'Segoe UI',Roboto,sans-serif;
+  --ma2-m:Consolas,'Courier New',monospace;
+}
+.ma2-wrap{
+  background:var(--ma2-bg);
+  color:var(--ma2-ink);
+  font-family:var(--ma2-f);
+  padding:14px 14px 60px;
+  border-radius:var(--ma2-r-lg);
+}
+.ma2-wrap .money,.ma2-wrap code{font-family:var(--ma2-m);}
 
-<!-- RESULTADOS -->
-{% if page_obj.object_list %}
+/* ───── STATS ───── */
+.ma2-stats{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px;
+}
+.ma2-stat{
+  position:relative;display:flex;align-items:center;gap:12px;
+  padding:14px 16px;background:var(--ma2-surface);
+  border:1px solid var(--ma2-line);border-radius:var(--ma2-r);
+  box-shadow:var(--ma2-sh-sm);overflow:hidden;
+  transition:transform .18s ease,box-shadow .18s ease;
+}
+.ma2-stat::before{
+  content:'';position:absolute;left:0;top:0;bottom:0;width:4px;
+  background:var(--accent,var(--ma2-primary));
+}
+.ma2-stat:hover{transform:translateY(-2px);box-shadow:var(--ma2-sh);}
+.ma2-stat .ic{
+  width:40px;height:40px;border-radius:11px;flex-shrink:0;
+  display:inline-flex;align-items:center;justify-content:center;
+  background:var(--accent-soft,var(--ma2-primary-soft));
+  color:var(--accent,var(--ma2-primary));
+  font-size:1rem;
+}
+.ma2-stat .text{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1;}
+.ma2-stat .lbl{
+  font-size:.62rem;color:var(--ma2-ink-3);text-transform:uppercase;
+  font-weight:700;letter-spacing:1px;
+}
+.ma2-stat .val{
+  font-size:1.22rem;font-weight:800;color:var(--ma2-ink);
+  letter-spacing:-.4px;line-height:1.1;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.ma2-stat .val.money{color:var(--accent,var(--ma2-primary));}
+
+/* Colores por stat */
+.ma2-stat.c1{--accent:var(--ma2-violet);--accent-soft:var(--ma2-violet-soft);}
+.ma2-stat.c2{--accent:var(--ma2-amber);--accent-soft:var(--ma2-amber-soft);}
+.ma2-stat.c3{--accent:var(--ma2-emerald);--accent-soft:var(--ma2-emerald-soft);}
+.ma2-stat.c4{--accent:var(--ma2-cyan);--accent-soft:var(--ma2-cyan-soft);}
+
+/* ───── ACCIONES MASIVAS ───── */
+.ma2-actions{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  flex-wrap:wrap;padding:12px 16px;margin-bottom:16px;
+  background:var(--ma2-surface);border:1px solid var(--ma2-line);
+  border-radius:var(--ma2-r);box-shadow:var(--ma2-sh-sm);
+}
+.ma2-actions-left{display:flex;align-items:center;gap:10px;flex-wrap:wrap;min-width:0;}
+.ma2-check-label{
+  display:inline-flex;align-items:center;gap:7px;
+  font-size:.82rem;font-weight:600;color:var(--ma2-ink-2);cursor:pointer;
+}
+.ma2-check-label input[type=checkbox]{width:18px;height:18px;accent-color:var(--ma2-primary);cursor:pointer;}
+.ma2-btn{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:8px 14px;border-radius:9px;border:1px solid transparent;
+  font-size:.78rem;font-weight:700;cursor:pointer;font-family:inherit;
+  transition:transform .12s ease,box-shadow .18s ease,background .18s ease;
+  -webkit-tap-highlight-color:transparent;
+}
+.ma2-btn i{font-size:.75rem;}
+.ma2-btn:disabled{opacity:.45;cursor:not-allowed;transform:none!important;}
+.ma2-btn.danger{background:var(--ma2-rose);color:#fff;}
+.ma2-btn.danger:hover:not(:disabled){background:#be123c;box-shadow:0 4px 14px -6px var(--ma2-rose);}
+.ma2-btn.ghost{background:var(--ma2-surface);color:var(--ma2-ink-2);border-color:var(--ma2-line-2);}
+.ma2-btn.ghost:hover{color:var(--ma2-primary);border-color:var(--ma2-primary);}
+.ma2-count{
+  display:inline-block;padding:3px 10px;border-radius:999px;
+  background:var(--ma2-primary-soft);color:var(--ma2-primary);
+  font-size:.7rem;font-weight:700;letter-spacing:.2px;
+}
+
+/* ───── CARD SORTEO ───── */
+.ma2-sorteo{
+  background:var(--ma2-surface);border:1px solid var(--ma2-line);
+  border-radius:var(--ma2-r-lg);margin-bottom:16px;
+  box-shadow:var(--ma2-sh-sm);overflow:hidden;
+  transition:box-shadow .2s ease;
+}
+.ma2-sorteo:hover{box-shadow:var(--ma2-sh);}
+.ma2-sorteo-head{
+  display:flex;align-items:center;justify-content:space-between;
+  gap:12px;flex-wrap:wrap;
+  padding:14px 18px;
+  background:linear-gradient(135deg,var(--ma2-primary) 0%,var(--ma2-violet) 100%);
+  color:#fff;
+}
+.ma2-sorteo-head h6{
+  margin:0;font-size:1rem;font-weight:800;
+  display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+  color:#fff;letter-spacing:-.2px;
+}
+.ma2-sorteo-head h6 i{opacity:.9;font-size:.9rem;}
+.ma2-sorteo-head small{
+  font-size:.72rem;font-weight:600;
+  background:rgba(255,255,255,.22);
+  padding:2px 9px;border-radius:999px;
+  color:#fff;
+}
+.ma2-sorteo-head .acciones{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.ma2-chip-count{
+  display:inline-flex;align-items:center;gap:5px;
+  padding:4px 10px;border-radius:999px;
+  background:rgba(255,255,255,.22);color:#fff;
+  font-size:.7rem;font-weight:700;
+}
+.ma2-btn-toggle{
+  background:rgba(255,255,255,.14);color:#fff;
+  border:1px solid rgba(255,255,255,.3);
+  padding:5px 11px;border-radius:8px;
+  font-size:.7rem;font-weight:700;cursor:pointer;
+  font-family:inherit;transition:.15s;
+  -webkit-tap-highlight-color:transparent;
+}
+.ma2-btn-toggle:hover{background:rgba(255,255,255,.26);}
+
+/* ───── CARD CLIENTE ───── */
+.ma2-cliente{
+  border-top:1px solid var(--ma2-line);
+}
+.ma2-cliente:first-of-type{border-top:none;}
+.ma2-cliente-head{
+  display:flex;align-items:center;justify-content:space-between;
+  gap:10px;flex-wrap:wrap;
+  padding:12px 18px;cursor:pointer;
+  background:var(--ma2-surface);
+  transition:background .15s ease;
+  user-select:none;
+  -webkit-tap-highlight-color:transparent;
+}
+.ma2-cliente-head:hover{background:var(--ma2-surface-2);}
+.ma2-cliente-head[aria-expanded="true"]{background:var(--ma2-surface-2);}
+.ma2-cliente-info{
+  display:flex;align-items:center;gap:9px;flex-wrap:wrap;
+  font-weight:800;font-size:.9rem;color:var(--ma2-ink);
+  min-width:0;
+}
+.ma2-cliente-info i{color:var(--ma2-violet);}
+.ma2-rol-badge{
+  display:inline-flex;align-items:center;gap:4px;
+  padding:2px 9px;border-radius:999px;
+  font-size:.62rem;font-weight:700;letter-spacing:.3px;
+  text-transform:uppercase;
+  background:var(--ma2-primary-soft);color:var(--ma2-primary);
+}
+.ma2-jugadas-count{
+  display:inline-block;padding:2px 9px;border-radius:999px;
+  background:#e2e8f0;color:var(--ma2-ink-2);
+  font-size:.66rem;font-weight:700;
+}
+.ma2-cliente-resumen{
+  display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+  font-size:.78rem;color:var(--ma2-ink-2);font-weight:600;
+}
+.ma2-cliente-resumen strong{color:var(--ma2-ink);font-weight:800;}
+.ma2-cliente-resumen .premio{color:var(--ma2-emerald);}
+.ma2-ganancia{
+  display:inline-flex;align-items:center;gap:4px;
+  padding:3px 10px;border-radius:999px;font-weight:800;
+  font-size:.76rem;
+}
+.ma2-ganancia.positiva{background:var(--ma2-emerald-soft);color:#047857;}
+.ma2-ganancia.negativa{background:var(--ma2-rose-soft);color:#be123c;}
+.ma2-ganancia i{font-size:.72rem;}
+
+.ma2-estado{
+  display:inline-flex;align-items:center;gap:4px;
+  padding:3px 9px;border-radius:999px;
+  font-size:.62rem;font-weight:800;letter-spacing:.4px;
+  text-transform:uppercase;
+}
+.ma2-estado i{font-size:.5rem;}
+.ma2-estado.pendiente{background:var(--ma2-amber-soft);color:#b45309;}
+.ma2-estado.ganadora{background:var(--ma2-lime-soft);color:#4d7c0f;}
+.ma2-estado.perdedora{background:var(--ma2-rose-soft);color:#be123c;}
+.ma2-estado.cancelada{background:#e2e8f0;color:var(--ma2-ink-3);}
+.ma2-estado.confirmada{background:var(--ma2-cyan-soft);color:#0e7490;}
+.ma2-estado.finalizada{background:#e2e8f0;color:var(--ma2-ink-3);}
+
+/* ───── FORMA DE PAGO ───── */
+.ma2-fp-block{
+  padding:10px 18px 4px;
+  background:var(--ma2-surface);
+}
+.ma2-fp-head{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:4px 11px;border-radius:999px;
+  background:var(--ma2-cyan-soft);color:#0e7490;
+  font-size:.7rem;font-weight:800;letter-spacing:.3px;
+  margin-bottom:6px;
+}
+.ma2-fp-head i{font-size:.7rem;}
+
+/* ───── FORMA DE JUEGO ───── */
+.ma2-fj{
+  display:grid;
+  grid-template-columns:130px 1fr auto auto auto;
+  gap:10px;align-items:center;
+  padding:9px 2px;
+  border-bottom:1px dashed var(--ma2-line);
+}
+.ma2-fj:last-child{border-bottom:none;}
+.ma2-fj-nombre{
+  display:flex;align-items:center;gap:6px;
+  font-weight:800;font-size:.78rem;color:var(--ma2-ink);
+  text-transform:capitalize;
+}
+.ma2-fj-nombre i{color:var(--ma2-violet);font-size:.7rem;}
+.ma2-fj-nums{
+  display:flex;flex-wrap:wrap;gap:5px;min-width:0;
+}
+/* FIX_NUMEROS_SIN_FONDO_AZUL_V1: sin recuadro, solo ganador resaltado */
+/* FIX_NUMEROS_FORCE_TRANSPARENT_V1: sin fondo en ningún número, solo ganador con borde */
+.ma2-fj-nums > span{
+  display:inline-flex;align-items:center;gap:4px;
+  padding:2px 4px;border-radius:4px;
+  background:transparent !important;border:none !important;
+  box-shadow:none !important;
+  font-size:.78rem;font-weight:700;color:var(--ma2-ink);
+  font-family:var(--ma2-m);
+}
+.ma2-fj-nums > span.num-ganador{
+  background:transparent !important;
+  border:2px solid #f59e0b !important;
+  border-radius:6px !important;
+  box-shadow:0 0 0 2px rgba(245,158,11,.25) !important;
+  color:#92400e !important;
+  font-weight:900 !important;
+  padding:2px 6px !important;
+}
+.ma2-fj-nums > span .monto{
+  color:var(--ma2-ink-3);font-size:.68rem;font-weight:600;
+}
+.ma2-fj-monto{
+  font-weight:800;font-size:.88rem;color:var(--ma2-ink);
+  font-family:var(--ma2-m);letter-spacing:-.3px;
+  text-align:right;white-space:nowrap;
+}
+.ma2-fj-acciones{
+  display:flex;align-items:center;gap:5px;
+}
+.ma2-fj-acciones .checkbox-jugada{
+  width:18px;height:18px;accent-color:var(--ma2-primary);cursor:pointer;
+}
+.ma2-act{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:30px;height:30px;border-radius:8px;border:1px solid var(--ma2-line-2);
+  background:var(--ma2-surface);color:var(--ma2-ink-2);
+  font-size:.78rem;cursor:pointer;transition:.15s;
+  -webkit-tap-highlight-color:transparent;
+}
+.ma2-act:hover{transform:translateY(-1px);color:#fff;border-color:transparent;}
+.ma2-act.cancelar:hover{background:var(--ma2-rose);box-shadow:0 4px 12px -5px var(--ma2-rose);}
+.ma2-act.detalle:hover{background:var(--ma2-primary);box-shadow:0 4px 12px -5px var(--ma2-primary);}
+
+/* ───── PAGINACIÓN ───── */
+.ma2-pag{
+  display:flex;justify-content:center;
+  margin:22px 0 8px;
+}
+.ma2-pag .pagination{
+  display:flex;gap:4px;list-style:none;padding:0;margin:0;flex-wrap:wrap;
+  justify-content:center;
+}
+.ma2-pag .page-link{
+  display:inline-flex;align-items:center;justify-content:center;
+  min-width:36px;height:36px;padding:0 10px;
+  border-radius:9px;border:1px solid var(--ma2-line-2);
+  background:var(--ma2-surface);color:var(--ma2-ink-2);
+  font-size:.82rem;font-weight:700;text-decoration:none;
+  transition:.15s;
+}
+.ma2-pag .page-link:hover{
+  border-color:var(--ma2-primary);color:var(--ma2-primary);
+}
+.ma2-pag .page-item.active .page-link{
+  background:linear-gradient(135deg,var(--ma2-primary),var(--ma2-violet));
+  color:#fff;border-color:transparent;
+  box-shadow:0 4px 14px -6px var(--ma2-violet);
+}
+.ma2-pag .page-item.disabled .page-link{
+  opacity:.45;cursor:not-allowed;pointer-events:none;
+}
+
+/* ───── EMPTY ───── */
+.ma2-empty{
+  text-align:center;padding:60px 20px;
+  background:var(--ma2-surface);
+  border:2px dashed var(--ma2-line-2);border-radius:var(--ma2-r-lg);
+  color:var(--ma2-ink-3);
+}
+.ma2-empty i{
+  font-size:2.6rem;color:var(--ma2-ink-3);
+  margin-bottom:12px;display:block;
+}
+.ma2-empty p{margin:0;font-size:.9rem;font-weight:600;}
+
+/* ═══════════ RESPONSIVE ═══════════ */
+
+/* TABLET */
+@media (max-width:900px){
+  .ma2-stats{grid-template-columns:repeat(2,1fr);gap:10px;}
+  .ma2-stat{padding:12px 14px;}
+  .ma2-stat .val{font-size:1.08rem;}
+  .ma2-fj{grid-template-columns:1fr auto auto;gap:8px;}
+  .ma2-fj-nums{grid-column:1 / -1;order:2;}
+  .ma2-fj-monto{grid-column:2 / 3;order:1;align-self:start;}
+  .ma2-fj-acciones{grid-column:3 / 4;order:1;align-self:start;}
+}
+
+/* MÓVIL */
+@media (max-width:640px){
+  .ma2-wrap{padding:10px 10px 40px;}
+
+  /* Stats 2x2 con padding compacto */
+  .ma2-stats{gap:8px;margin-bottom:12px;}
+  .ma2-stat{padding:10px 12px;gap:9px;border-radius:10px;}
+  .ma2-stat::before{width:3px;}
+  .ma2-stat .ic{width:32px;height:32px;font-size:.85rem;border-radius:8px;}
+  .ma2-stat .lbl{font-size:.55rem;letter-spacing:.7px;}
+  .ma2-stat .val{font-size:.98rem;}
+
+  /* Acciones: apiladas, botones a 100% de ancho */
+  .ma2-actions{
+    flex-direction:column;align-items:stretch;
+    padding:10px 12px;gap:10px;
+  }
+  .ma2-actions-left{
+    flex-direction:column;align-items:stretch;gap:8px;
+  }
+  .ma2-check-label{font-size:.78rem;}
+  .ma2-btn{justify-content:center;padding:10px 14px;font-size:.8rem;width:100%;}
+  .ma2-count{align-self:flex-start;}
+
+  /* Card sorteo: padding ajustado */
+  .ma2-sorteo{border-radius:14px;margin-bottom:12px;}
+  .ma2-sorteo-head{padding:12px 14px;gap:8px;}
+  .ma2-sorteo-head h6{font-size:.9rem;}
+  .ma2-sorteo-head h6 i{font-size:.82rem;}
+  .ma2-sorteo-head small{font-size:.66rem;}
+  .ma2-sorteo-head .acciones{width:100%;justify-content:space-between;}
+
+  /* Card cliente: apilado y legible */
+  .ma2-cliente-head{
+    flex-direction:column;align-items:stretch;gap:10px;
+    padding:12px 14px;
+  }
+  .ma2-cliente-info{font-size:.84rem;gap:7px;}
+  .ma2-rol-badge{font-size:.56rem;padding:2px 7px;}
+  .ma2-jugadas-count{font-size:.6rem;}
+  .ma2-cliente-resumen{
+    gap:8px 12px;font-size:.74rem;
+    justify-content:flex-start;
+  }
+  .ma2-ganancia{font-size:.72rem;padding:2px 8px;}
+  .ma2-estado{font-size:.56rem;padding:2px 8px;}
+
+  /* Forma de pago */
+  .ma2-fp-block{padding:10px 14px 4px;}
+  .ma2-fp-head{font-size:.66rem;padding:3px 9px;}
+
+  /* Forma de juego: fila + wrap de números */
+  .ma2-fj{
+    grid-template-columns:1fr auto auto;
+    gap:6px 8px;
+    padding:10px 2px;
+    align-items:center;
+  }
+  .ma2-fj-nombre{font-size:.76rem;grid-column:1 / 2;grid-row:1;}
+  .ma2-fj-nums{grid-column:1 / -1;grid-row:2;gap:5px;}
+  .ma2-fj-monto{grid-column:2 / 3;grid-row:1;font-size:.84rem;text-align:right;}
+  .ma2-fj-acciones{grid-column:3 / 4;grid-row:1;}
+
+  /* Botones acción más grandes para touch */
+  .ma2-act{width:34px;height:34px;font-size:.82rem;}
+  .ma2-fj-acciones .checkbox-jugada{width:20px;height:20px;}
+
+  /* Números más compactos */
+  .ma2-fj-nums > span{font-size:.68rem;padding:2px 7px;gap:3px;}
+  .ma2-fj-nums > span .monto{font-size:.62rem;}
+
+  /* Paginación */
+  .ma2-pag .page-link{min-width:32px;height:32px;font-size:.76rem;padding:0 8px;}
+
+  /* Empty */
+  .ma2-empty{padding:40px 16px;}
+  .ma2-empty i{font-size:2rem;}
+  .ma2-empty p{font-size:.82rem;}
+}
+
+/* MÓVIL PEQUEÑO */
+@media (max-width:420px){
+  .ma2-wrap{padding:8px 8px 30px;}
+  .ma2-stat{padding:9px 10px;gap:7px;}
+  .ma2-stat .ic{width:28px;height:28px;font-size:.78rem;}
+  .ma2-stat .val{font-size:.9rem;}
+  .ma2-stat .lbl{font-size:.5rem;}
+
+  .ma2-sorteo-head h6{font-size:.84rem;}
+  .ma2-cliente-info{font-size:.78rem;}
+
+  .ma2-fj-nombre{font-size:.72rem;}
+  .ma2-fj-monto{font-size:.78rem;}
+  .ma2-act{width:32px;height:32px;font-size:.78rem;}
+
+  .ma2-fj-nums > span{font-size:.62rem;padding:2px 5px;}
+}
+
+/* MUY ESTRECHO */
+@media (max-width:360px){
+  .ma2-stat .val{font-size:.82rem;}
+  .ma2-stat .lbl{font-size:.46rem;letter-spacing:.5px;}
+  .ma2-cliente-resumen{font-size:.68rem;gap:6px 10px;}
+  .ma2-fj-nums > span{font-size:.58rem;padding:1px 5px;}
+}
+</style>
+
+<div class="ma2-wrap">
+
+  {# ═══════ ESTADÍSTICAS ═══════ #}
+  <div class="ma2-stats">
+    <div class="ma2-stat c1">
+      <span class="ic"><i class="fas fa-dice"></i></span>
+      <div class="text">
+        <div class="lbl">Total jugadas</div>
+        <div class="val">{{ estadisticas.total_jugadas }}</div>
+      </div>
+    </div>
+    <div class="ma2-stat c2">
+      <span class="ic"><i class="fas fa-coins"></i></span>
+      <div class="text">
+        <div class="lbl">Total apostado</div>
+        <div class="val money">${{ estadisticas.total_apostado|floatformat:2 }}</div>
+      </div>
+    </div>
+    <div class="ma2-stat c3">
+      <span class="ic"><i class="fas fa-trophy"></i></span>
+      <div class="text">
+        <div class="lbl">Premios ganados</div>
+        <div class="val money">${{ estadisticas.total_premios|floatformat:2 }}</div>
+      </div>
+    </div>
+    <div class="ma2-stat c4">
+      <span class="ic"><i class="fas fa-bullseye"></i></span>
+      <div class="text">
+        <div class="lbl">Tasa de acierto</div>
+        <div class="val">{{ estadisticas.tasa_acierto|floatformat:1 }}%</div>
+      </div>
+    </div>
+  </div>
+
+  {# ═══════ ACCIONES MASIVAS ═══════ #}
+  <div class="ma2-actions">
+    <div class="ma2-actions-left">
+      <label class="ma2-check-label" for="selectAllJugadas">
+        <input type="checkbox" id="selectAllJugadas">
+        Seleccionar todas
+      </label>
+      <button id="cancelarSeleccionadas" class="ma2-btn danger" disabled>
+        <i class="fas fa-times"></i> Cancelar seleccionadas
+      </button>
+      <span id="seleccionadasContador" class="ma2-count">0 seleccionadas</span>
+    </div>
+    <div>
+      <button class="ma2-btn ghost toggle-all-clients" data-sorteo-id="all">
+        <i class="fas fa-expand-alt"></i> Expandir / Colapsar
+      </button>
+    </div>
+  </div>
+
+  {# ═══════ RESULTADOS ═══════ #}
+  {% if page_obj.object_list %}
     {% for sorteo_data in page_obj.object_list %}
-        <div class="card-sorteo" data-sorteo-id="{{ sorteo_data.sorteo.id }}">
-            <div class="card-header">
-                <h6>
-                    <i class="fas fa-calendar-alt me-2"></i>{{ sorteo_data.sorteo.nombre }}
-                    <small class="text-muted ms-2">{{ sorteo_data.sorteo.fecha|date:"d/m/Y" }}</small>
-                </h6>
-                <div>
-                    <span class="badge bg-primary bg-opacity-10 text-primary me-2">
-                        {{ sorteo_data.clientes|length }} cliente(s)
-                    </span>
-                    <button class="btn btn-sm btn-outline-secondary toggle-clients-sorteo" data-sorteo-id="{{ sorteo_data.sorteo.id }}">
-                        <i class="fas fa-expand-alt"></i> Toggle
-                    </button>
-                </div>
-            </div>
-            {% for cliente_data in sorteo_data.clientes %}
-                <div class="card-cliente" data-cliente-id="{{ cliente_data.cliente.id }}">
-                    <div class="cliente-header" data-bs-toggle="collapse" data-bs-target="#cliente-{{ sorteo_data.sorteo.id }}-{{ cliente_data.cliente.id }}" aria-expanded="true" aria-controls="cliente-{{ sorteo_data.sorteo.id }}-{{ cliente_data.cliente.id }}">
-                        <div class="cliente-info">
-                            <i class="fas fa-user-circle me-1"></i>{{ cliente_data.cliente.username }}
-                            <span class="rol-badge">
-                                {% if cliente_data.cliente == user %}
-                                    <i class="fas fa-user-check"></i> Tú
-                                {% else %}
-                                    <i class="fas fa-user-tie"></i> Gestor
-                                {% endif %}
-                            </span>
-                            <span class="badge bg-secondary">{{ cliente_data.cantidad_jugadas }} jugadas</span>
-                        </div>
-                        <div class="resumen">
-                            <span><strong>Total:</strong> ${{ cliente_data.total_apostado|floatformat:2 }}</span>
-                            {% if cliente_data.total_premios > 0 %}
-                                <span><strong class="text-success">Premios:</strong> ${{ cliente_data.total_premios|floatformat:2 }}</span>
-                            {% endif %}
-                            <span class="ganancia {% if cliente_data.ganancia_neta >= 0 %}positiva{% else %}negativa{% endif %}">
-                                <i class="fas fa-coins"></i> {{ cliente_data.ganancia_neta|floatformat:2 }}
-                            </span>
-                            <span class="estado-badge {{ cliente_data.estado_general }}">
-                                <i class="fas fa-circle"></i>
-                                {{ cliente_data.estado_general|capfirst }}
-                            </span>
-                        </div>
-                    </div>
-                    <div class="collapse show" id="cliente-{{ sorteo_data.sorteo.id }}-{{ cliente_data.cliente.id }}">
-                        {% for fp_data in cliente_data.formas_pago %}
-                            <div class="forma-pago-block">
-                                <div class="fp-header">
-                                    <i class="fas fa-credit-card me-1"></i>{{ fp_data.forma_pago.nombre|default:"Sin forma de pago" }}
-                                </div>
-                                {% for fj_data in fp_data.formas_juego %}
-                                    <div class="forma-juego-group" data-forma="{{ fj_data.forma_nombre }}">
-                                        <span class="fj-nombre">{{ fj_data.forma_nombre|default:"Sin tipo" }}</span>
-                                        <span class="fj-numeros">
-                                            {% for item in fj_data.numeros_con_monto %}
-                                                <span data-bs-toggle="tooltip" title="Monto individual: ${{ item.monto|floatformat:2 }} (Total grupo: ${{ fj_data.monto_total|floatformat:2 }})">
-                                                    {{ item.numero }} <span class="text-muted">${{ item.monto|floatformat:2 }}</span>
-                                                </span>
-                                            {% endfor %}
-                                        </span>
-                                        <span class="fj-monto">${{ fj_data.monto_total|floatformat:2 }}</span>
-                                        <span class="fj-estado">
-                                            <span class="estado-badge {{ fj_data.estado }}">
-                                                <i class="fas fa-circle"></i>
-                                                {{ fj_data.estado|capfirst }}
-                                            </span>
-                                        </span>
-                                        <span class="fj-acciones">
-                                            {% for jugada in fj_data.jugadas %}
-                                                <input type="checkbox" class="checkbox-jugada" data-jugada-id="{{ jugada.id }}" {% if jugada.estado != 'pendiente' %}disabled{% endif %}>
-                                                {% if jugada.estado == 'pendiente' and jugada.puede_modificar %}
-                                                    <button class="btn-accion cancelar cancelar-btn"
-                                                            data-id="{{ jugada.id }}"
-                                                            data-sorteo="{{ jugada.sorteo.nombre }}"
-                                                            title="Cancelar jugada">
-                                                        <i class="fas fa-times"></i>
-                                                    </button>
-                                                {% endif %}
-                                                <button class="btn-accion detalle btn-detalle"
-                                                        data-id="{{ jugada.id }}"
-                                                        title="Ver detalle"
-                                                        data-bs-toggle="modal"
-                                                        data-bs-target="#detalleModal">
-                                                    <i class="fas fa-eye"></i>
-                                                </button>
-                                            {% endfor %}
-                                        </span>
-                                    </div>
-                                {% empty %}
-                                    <div class="text-muted small py-1">Sin jugadas</div>
-                                {% endfor %}
-                            </div>
-                        {% empty %}
-                            <div class="text-muted small py-1">Sin formas de pago</div>
-                        {% endfor %}
-                    </div>
-                </div>
-            {% endfor %}
+      <div class="ma2-sorteo" data-sorteo-id="{{ sorteo_data.sorteo.id }}">
+
+        <div class="ma2-sorteo-head">
+          <h6>
+            <i class="fas fa-calendar-alt"></i>
+            {{ sorteo_data.sorteo.nombre }}
+            <small>{{ sorteo_data.sorteo.fecha|date:"d/m/Y" }}</small>
+          </h6>
+          <div class="acciones">
+            <span class="ma2-chip-count">
+              <i class="fas fa-users"></i>
+              {{ sorteo_data.clientes|length }} cliente{{ sorteo_data.clientes|length|pluralize }}
+            </span>
+            <button class="ma2-btn-toggle toggle-clients-sorteo" data-sorteo-id="{{ sorteo_data.sorteo.id }}">
+              <i class="fas fa-expand-alt"></i> Toggle
+            </button>
+          </div>
         </div>
+
+        {% for cliente_data in sorteo_data.clientes %}
+          <div class="ma2-cliente" data-cliente-id="{{ cliente_data.cliente.id }}">
+
+            <div class="ma2-cliente-head"
+                 data-bs-toggle="collapse"
+                 data-bs-target="#cliente-{{ sorteo_data.sorteo.id }}-{{ cliente_data.cliente.id }}"
+                 aria-expanded="true"
+                 aria-controls="cliente-{{ sorteo_data.sorteo.id }}-{{ cliente_data.cliente.id }}">
+
+              <div class="ma2-cliente-info">
+                <i class="fas fa-user-circle"></i>
+                {{ cliente_data.cliente.username }}
+                <span class="ma2-rol-badge">
+                  {% if cliente_data.cliente == user %}
+                    <i class="fas fa-user-check"></i> Tú
+                  {% else %}
+                    <i class="fas fa-user-tie"></i> Gestor
+                  {% endif %}
+                </span>
+                <span class="ma2-jugadas-count">
+                  {{ cliente_data.cantidad_jugadas }} jugada{{ cliente_data.cantidad_jugadas|pluralize }}
+                </span>
+              </div>
+
+              <div class="ma2-cliente-resumen">
+                <span><strong>Total:</strong> ${{ cliente_data.total_apostado|floatformat:2 }}</span>
+                {% if cliente_data.total_premios > 0 %}
+                  <span><strong class="premio">Premios:</strong> ${{ cliente_data.total_premios|floatformat:2 }}</span>
+                {% endif %}
+                <span class="ma2-ganancia {% if cliente_data.ganancia_neta >= 0 %}positiva{% else %}negativa{% endif %}">
+                  <i class="fas fa-coins"></i>
+                  {{ cliente_data.ganancia_neta|floatformat:2 }}
+                </span>
+                <span class="ma2-estado {{ cliente_data.estado_general }}">
+                  <i class="fas fa-circle"></i>
+                  {{ cliente_data.estado_general|capfirst }}
+                </span>
+              </div>
+            </div>
+
+            <div class="collapse show" id="cliente-{{ sorteo_data.sorteo.id }}-{{ cliente_data.cliente.id }}">
+
+              {% for fp_data in cliente_data.formas_pago %}
+                <div class="ma2-fp-block">
+                  <div class="ma2-fp-head">
+                    <i class="fas fa-credit-card"></i>
+                    {{ fp_data.forma_pago.nombre|default:"Sin forma de pago" }}
+                  </div>
+
+                  {% for fj_data in fp_data.formas_juego %}
+                    <div class="ma2-fj" data-forma="{{ fj_data.forma_nombre }}">
+
+                      <div class="ma2-fj-nombre">
+                        <i class="fas fa-dice"></i>
+                        {{ fj_data.forma_nombre|default:"Sin tipo" }}
+                      </div>
+
+                      <div class="ma2-fj-nums">
+                        {% for item in fj_data.numeros_con_monto %}
+                          <span class="{% if item.estado == 'ganadora' %}num-ganador{% endif %}"
+                                data-bs-toggle="tooltip"
+                                title="Monto individual: ${{ item.monto|floatformat:2 }} (Total grupo: ${{ fj_data.monto_total|floatformat:2 }})">
+                            {{ item.numero }}
+                            <span class="monto">${{ item.monto|floatformat:2 }}</span>
+                          </span>
+                        {% endfor %}
+                      </div>
+
+                      <div class="ma2-fj-monto">${{ fj_data.monto_total|floatformat:2 }}</div>
+
+                      <div class="ma2-fj-acciones">
+                        {% for jugada in fj_data.jugadas %}
+                          <input type="checkbox"
+                                 class="checkbox-jugada"
+                                 data-jugada-id="{{ jugada.id }}"
+                                 {% if jugada.estado != 'pendiente' %}disabled{% endif %}>
+                          {% if jugada.estado == 'pendiente' and jugada.puede_modificar %}
+                            <button class="ma2-act cancelar cancelar-btn"
+                                    data-id="{{ jugada.id }}"
+                                    data-sorteo="{{ jugada.sorteo.nombre }}"
+                                    title="Cancelar jugada">
+                              <i class="fas fa-times"></i>
+                            </button>
+                          {% endif %}
+                          <button class="ma2-act detalle btn-detalle"
+                                  data-id="{{ jugada.id }}"
+                                  title="Ver detalle"
+                                  data-bs-toggle="modal"
+                                  data-bs-target="#detalleModal">
+                            <i class="fas fa-eye"></i>
+                          </button>
+                        {% endfor %}
+                      </div>
+
+                    </div>
+                  {% empty %}
+                    <div class="text-muted small py-1">Sin jugadas</div>
+                  {% endfor %}
+
+                </div>
+              {% empty %}
+                <div class="text-muted small py-1 px-3">Sin formas de pago</div>
+              {% endfor %}
+
+            </div>
+          </div>
+        {% endfor %}
+
+      </div>
     {% endfor %}
 
-    <!-- PAGINACIÓN -->
+    {# ═══════ PAGINACIÓN ═══════ #}
     {% if page_obj.has_other_pages %}
-        <div class="pagination-wrapper">
-            <nav aria-label="Navegación de apuestas">
-                <ul class="pagination">
-                    {% if page_obj.has_previous %}
-                        <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}&{{ request.GET.urlencode }}">Anterior</a></li>
-                    {% else %}
-                        <li class="page-item disabled"><span class="page-link">Anterior</span></li>
-                    {% endif %}
-                    {% for num in page_obj.paginator.page_range %}
-                        <li class="page-item {% if num == page_obj.number %}active{% endif %}">
-                            <a class="page-link" href="?page={{ num }}&{{ request.GET.urlencode }}">{{ num }}</a>
-                        </li>
-                    {% endfor %}
-                    {% if page_obj.has_next %}
-                        <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}&{{ request.GET.urlencode }}">Siguiente</a></li>
-                    {% else %}
-                        <li class="page-item disabled"><span class="page-link">Siguiente</span></li>
-                    {% endif %}
-                </ul>
-            </nav>
-        </div>
+      <div class="ma2-pag">
+        <nav aria-label="Navegación de apuestas">
+          <ul class="pagination">
+            {% if page_obj.has_previous %}
+              <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.previous_page_number }}&{{ request.GET.urlencode }}">Ant.</a>
+              </li>
+            {% else %}
+              <li class="page-item disabled"><span class="page-link">Ant.</span></li>
+            {% endif %}
+
+            {% for num in page_obj.paginator.page_range %}
+              <li class="page-item {% if num == page_obj.number %}active{% endif %}">
+                <a class="page-link" href="?page={{ num }}&{{ request.GET.urlencode }}">{{ num }}</a>
+              </li>
+            {% endfor %}
+
+            {% if page_obj.has_next %}
+              <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.next_page_number }}&{{ request.GET.urlencode }}">Sig.</a>
+              </li>
+            {% else %}
+              <li class="page-item disabled"><span class="page-link">Sig.</span></li>
+            {% endif %}
+          </ul>
+        </nav>
+      </div>
     {% endif %}
 
-{% else %}
-    <div class="alert alert-info text-center py-4">
-        <i class="fas fa-inbox fa-3x d-block mb-3 text-muted"></i>
-        <p class="mb-0">No se encontraron apuestas con los filtros seleccionados.</p>
+  {% else %}
+    <div class="ma2-empty">
+      <i class="fas fa-inbox"></i>
+      <p>No se encontraron apuestas con los filtros seleccionados.</p>
     </div>
-{% endif %}
+  {% endif %}
+
+</div>

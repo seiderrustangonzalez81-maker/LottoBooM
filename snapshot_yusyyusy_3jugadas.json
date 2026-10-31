@@ -1,0 +1,29 @@
+[
+  {
+    "id": 102715,
+    "fecha": "2026-10-31",
+    "num": "21",
+    "monto": "20.00",
+    "estado": "confirmada",
+    "monto_premio": "None",
+    "premios": []
+  },
+  {
+    "id": 102714,
+    "fecha": "2026-10-31",
+    "num": "12",
+    "monto": "20.00",
+    "estado": "confirmada",
+    "monto_premio": "None",
+    "premios": []
+  },
+  {
+    "id": 102713,
+    "fecha": "2026-10-31",
+    "num": "77",
+    "monto": "20.00",
+    "estado": "confirmada",
+    "monto_premio": "None",
+    "premios": []
+  }
+]

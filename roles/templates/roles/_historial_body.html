@@ -3,9 +3,6 @@
 .page-wrapper{background:#f0fdf4;min-height:100vh;padding-bottom:40px;}
 .hdr{background:rgba(255,255,255,.85);backdrop-filter:blur(12px);border-radius:var(--rad);padding:22px 26px;margin-bottom:20px;box-shadow:0 8px 32px rgba(16,185,129,.10);display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;}
 .hdr h1{font-size:1.5rem;font-weight:800;color:#064E3B;margin:0;}
-.toggle-vista{display:inline-flex;background:#fff;border:1.5px solid #b6e5c2;border-radius:12px;overflow:hidden;box-shadow:2px 2px 0 #a7e8b8;}
-.btn-vista{padding:8px 14px;font-weight:800;font-size:.75rem;color:#065F46;cursor:pointer;border:none;background:transparent;font-family:inherit;transition:.12s;}
-.btn-vista.active{background:var(--g-grad);color:#fff;}
 .filtros{background:rgba(255,255,255,.85);border-radius:var(--rad);padding:18px 20px;margin-bottom:18px;box-shadow:0 8px 32px rgba(16,185,129,.10);}
 .filtros .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;}
 .filtros label{font-size:.68rem;font-weight:800;color:#065F46;text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:3px;}
@@ -22,7 +19,8 @@
 .tabla tbody tr.row-main td{padding:9px 8px;border-bottom:1px solid #ecfdf5;vertical-align:middle;}
 .tabla tbody tr.row-main:hover td{background:#f0fdf4;}
 /* Colores de fila por tipo */
-tr.tipo-recarga td, tr.tipo-premio td, tr.tipo-pago_deuda td{background:#f0fdf4;}
+tr.tipo-recarga td, tr.tipo-pago_deuda td{background:#f0fdf4;}
+tr.tipo-premio td{background:#fffbeb !important; border-top:1px solid #fcd34d; border-bottom:1px solid #fcd34d;} /* FIX_PREMIO_COLOR: Dorado suave */
 tr.tipo-apuesta td, tr.tipo-retiro td{background:#fef2f2;}
 tr.tipo-ajuste td{background:#eef2ff;}
 tr.tipo-postpago td{background:#fffbeb;}
@@ -49,7 +47,7 @@ tr.row-detail td{padding:0;background:#f8fafc;border-bottom:2px solid #c8ead4;}
 .chip{display:inline-block;padding:2px 9px;border-radius:20px;font-size:.58rem;font-weight:800;text-transform:uppercase;letter-spacing:.4px;white-space:nowrap;}
 .chip-recarga{background:#d1fae5;color:#065F46;}
 .chip-apuesta{background:#fee2e2;color:#991B1B;}
-.chip-premio{background:#fef3c7;color:#92400E;}
+.chip-premio{background:#fde047;color:#713f12;font-weight:900;box-shadow:0 0 6px rgba(253,224,71,0.6);} /* FIX_PREMIO_CHIP */
 .chip-ajuste{background:#e0e7ff;color:#3730A3;}
 .chip-retiro{background:#fce7f3;color:#9d174d;}
 .chip-postpago,.chip-pago_deuda{background:#fef2f2;color:#7f1d1d;}
@@ -84,27 +82,6 @@ tr.row-detail td{padding:0;background:#f8fafc;border-bottom:2px solid #c8ead4;}
 .pag{display:flex;justify-content:center;gap:8px;margin-top:20px;}
 .pag a,.pag span{padding:7px 13px;border-radius:9px;background:#fff;border:1.5px solid #b6e5c2;font-weight:700;color:#064E3B;text-decoration:none;font-size:.78rem;}
 .pag .cur{background:var(--g-grad);color:#fff;border-color:#047857;}
-/* Vista tarjetas */
-.vista-tarjetas{padding:8px 4px;}
-.tg-grupo{margin-bottom:14px;}
-.tg-grupo .group-header{background:linear-gradient(90deg,#ecfdf5,#f0fdf4);border-radius:10px;margin-bottom:8px;padding:8px 12px;}
-.tarjeta{background:#fff;border-radius:12px;padding:12px 14px;margin-bottom:8px;border-left:5px solid #b6e5c2;box-shadow:0 2px 8px rgba(0,0,0,.05);}
-.tarjeta.tipo-recarga, .tarjeta.tipo-premio, .tarjeta.tipo-pago_deuda{border-left-color:#10B981;}
-.tarjeta.tipo-apuesta, .tarjeta.tipo-retiro{border-left-color:#ef4444;}
-.tarjeta.tipo-ajuste{border-left-color:#6366f1;}
-.tarjeta.tipo-postpago{border-left-color:#f59e0b;}
-.tarjeta.tipo-comision{border-left-color:#a855f7;}
-.tc-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;gap:8px;flex-wrap:wrap;}
-.tc-fecha{font-size:.65rem;color:#6B7280;font-weight:700;}
-.tc-cliente{font-size:.78rem;color:#334155;margin-bottom:4px;}
-.tc-monto{font-size:1.2rem;font-weight:900;font-family:'Courier New',monospace;margin:4px 0;}
-.tc-monto.cred{color:#047857;} .tc-monto.deb{color:#b91c1c;}
-.tc-saldo{font-size:.68rem;color:#6B7280;font-family:'Courier New',monospace;}
-.tc-motivo{font-size:.72rem;color:#374151;margin-top:6px;font-weight:600;}
-.tc-ref{font-size:.68rem;color:#0369a1;margin-top:4px;font-weight:800;}
-@media(max-width:900px){.tabla{display:none;}.vista-tarjetas{display:block !important;}}
-@media(min-width:901px){.vista-tarjetas{display:none !important;}}
-
 /* ═══ Footer totales ═══ */
 .hist-footer{
   display:grid;
@@ -169,15 +146,114 @@ tr.row-detail td{padding:0;background:#f8fafc;border-bottom:2px solid #c8ead4;}
   display:block;
   margin-top:2px;
 }
+
+.sorteo-cell{max-width:140px;font-size:.72rem;color:#0f172a;}
+.sorteo-cell strong{font-weight:800;}
+
+.chip-link{text-decoration:none;cursor:pointer;transition:transform .12s,box-shadow .12s;}
+.chip-link:hover{transform:scale(1.08);box-shadow:0 2px 8px rgba(0,0,0,.2);}
+
+/* FIX_CSS_LAYOUT_V1 (2026-10-18): Layout flexible para KPIs y Filtros */
+.kpis {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 10px !important;
+    margin-bottom: 18px !important;
+}
+.kpi {
+    flex: 1 1 140px !important; /* Se adapta al ancho, pero no se aplasta */
+}
+
+.filtros .grid {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 10px !important;
+}
+.filtros .grid > div {
+    flex: 1 1 140px !important; /* Clientes, comerciales, tipos, FP alineados */
+    min-width: 130px !important;
+}
+
+/* Los últimos 3 elementos siempre son: Desde, Hasta y Buscar */
+.filtros .grid > div:nth-last-child(3),
+.filtros .grid > div:nth-last-child(2) {
+    flex: 0 1 130px !important; /* Desde y Hasta uno al lado del otro */
+}
+
+.filtros .grid > div:last-child {
+    flex: 1 1 100% !important; /* Buscar motivo ocupa toda la línea */
+    margin-top: 5px !important;
+}
+
+@media (max-width: 576px) {
+    .filtros .grid > div:nth-last-child(3),
+    .filtros .grid > div:nth-last-child(2) {
+        flex: 1 1 calc(50% - 5px) !important; /* En móviles, fechas se reparten la mitad */
+    }
+}
+
+/* FIX_CSS_V3 (2026-10-19): Layout definitivo para PC y Móvil */
+.kpis {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 10px !important;
+    margin-bottom: 18px !important;
+}
+.kpi {
+    flex: 1 1 calc(25% - 10px) !important; /* 4 columnas en PC */
+    min-width: 130px !important;
+}
+
+.filtros .grid {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 10px !important;
+}
+.filtros .grid > div {
+    flex: 1 1 calc(33% - 10px) !important;
+    min-width: 130px !important;
+}
+.filtros .grid > div:nth-last-child(3),
+.filtros .grid > div:nth-last-child(2) {
+    flex: 0 1 140px !important; /* Fechas juntas */
+}
+.filtros .grid > div:last-child {
+    flex: 1 1 100% !important; /* Buscador ancho completo */
+}
+
+@media (max-width: 768px) {
+    .kpis {
+        flex-direction: column !important; /* Uno a continuación del otro */
+    }
+    .kpi {
+        flex: 1 1 100% !important;
+        width: 100% !important;
+    }
+    .filtros .grid {
+        flex-direction: column !important; /* Filtros uno a continuación del otro */
+    }
+    .filtros .grid > div,
+    .filtros .grid > div:nth-last-child(3),
+    .filtros .grid > div:nth-last-child(2),
+    .filtros .grid > div:last-child {
+        flex: 1 1 100% !important;
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+}
+
+/* FIX_MONTO_PREMIO_V1 (2026-10-20): Resaltar el monto de los premios */
+.monto.monto-premio {
+    color: #b45309 !important; /* Color dorado oscuro/anaranjado */
+    font-size: 1rem !important; /* Ligeramente más grande */
+    font-weight: 900 !important;
+    text-shadow: 0 1px 2px rgba(180, 83, 9, 0.2);
+}
 </style>
 
 <div class="page-wrapper container-fluid py-3">
   <div class="hdr">
     <h1>📒 Historial de Movimientos de Fondo</h1>
-    <div class="toggle-vista" role="group" aria-label="Cambiar vista">
-      <button type="button" class="btn-vista" data-vista="tabla">📋 Tabla</button>
-      <button type="button" class="btn-vista" data-vista="tarjetas">🃏 Tarjetas</button>
-    </div>
   </div>
 
   <div class="kpis">
@@ -192,25 +268,25 @@ tr.row-detail td{padding:0;background:#f8fafc;border-bottom:2px solid #c8ead4;}
       {% if es_superadmin or es_banco %}
       <div><label>Comercial</label>
         <select name="comercial" onchange="this.form.submit()">
-          <option value="">— Todos —</option>
+          <option value="">— Seleccionar —</option>
           {% for c in comerciales_sel %}<option value="{{ c.id }}" {% if filtros.comercial == c.id|stringformat:'s' %}selected{% endif %}>{{ c.username }}</option>{% endfor %}
         </select>
       </div>{% endif %}
       <div><label>Cliente</label>
         <select name="cliente" onchange="this.form.submit()">
-          <option value="">— Todos —</option>
+          <option value="">— Seleccionar —</option>
           {% for c in clientes_sel %}<option value="{{ c.id }}" {% if filtros.cliente == c.id|stringformat:'s' %}selected{% endif %}>{{ c.username }}</option>{% endfor %}
         </select>
       </div>
       <div><label>Tipo</label>
         <select name="tipo" onchange="this.form.submit()">
-          <option value="">— Todos —</option>
+          <option value="">— Seleccionar —</option>
           {% for t, lbl in tipos %}<option value="{{ t }}" {% if filtros.tipo == t %}selected{% endif %}>{{ lbl }}</option>{% endfor %}
         </select>
       </div>
       <div><label>Forma de pago</label>
         <select name="forma_pago" onchange="this.form.submit()">
-          <option value="">— Todas —</option>
+          <option value="">— Seleccionar —</option>
           {% for fp in formas_pago %}<option value="{{ fp.id }}" {% if filtros.forma_pago == fp.id|stringformat:'s' %}selected{% endif %}>{{ fp.nombre }}</option>{% endfor %}
         </select>
       </div>
@@ -228,13 +304,14 @@ tr.row-detail td{padding:0;background:#f8fafc;border-bottom:2px solid #c8ead4;}
         <table>
           <thead>
             <tr>
-              <th class="col-exp"></th>
               <th>Fecha / Hora</th>
               <th>Tipo</th>
               <th>Cliente</th>
               <th>Forma de pago</th>
-              <th>Movimiento</th>
-              <th>Fondo final</th>
+              <th>Sorteo</th>
+              <th>Desde</th>
+              <th>Monto</th>
+              <th>Hasta</th>
               <th>Motivo</th>
               <th>Referencia</th>
               <th>Gestor</th>
@@ -243,7 +320,7 @@ tr.row-detail td{padding:0;background:#f8fafc;border-bottom:2px solid #c8ead4;}
           <tbody>
             {% for grupo in grupos_dia %}
               <tr class="row-group">
-                <td colspan="10">
+                <td colspan="11">
                   <div class="group-header">
                     <span class="group-label">{{ grupo.label }}</span>
                     <span class="group-meta">
@@ -255,38 +332,42 @@ tr.row-detail td{padding:0;background:#f8fafc;border-bottom:2px solid #c8ead4;}
                 </td>
               </tr>
               {% for m in grupo.movs %}
-                <tr class="row-main tipo-{{ m.tipo }}">
-                  <td class="col-exp">
-                    <button type="button" class="btn-expand" data-mov-id="{{ m.id }}" aria-label="Ver detalles">▶</button>
-                  </td>
+                <tr class="row-main tipo-{{ m.tipo }}" style="cursor:pointer;" data-mov-id="{{ m.id }}">
                   <td>
                     <div class="fecha">{{ m.creado_en|date:'d/m/Y' }}</div>
                     <div class="hora">{{ m.creado_en|date:'H:i:s' }}</div>
                   </td>
-                  <td><span class="chip chip-{{ m.tipo }}">{{ m.get_tipo_display }}</span></td>
+                  <td>
+                    {% if m.ref_url and m.tipo == 'apuesta' %}
+                      <a href="{{ m.ref_url }}" class="chip chip-{{ m.tipo }} chip-link" title="Ver jugadas de esta apuesta">{{ m.get_tipo_display }} 🔗</a>
+                    {% elif m.ref_url and m.tipo == 'premio' %}
+                      <a href="{{ m.ref_url }}" class="chip chip-{{ m.tipo }} chip-link" title="Ver jugada ganadora">{{ m.get_tipo_display }} 🏆</a>
+                    {% else %}
+                      <span class="chip chip-{{ m.tipo }}">{{ m.get_tipo_display }}</span>
+                    {% endif %}
+                  </td>
                   <td><strong>{{ m.receptor.username }}</strong></td>
                   <td>{{ m.forma_pago.nombre|default:"—" }}</td>
+                  <td class="sorteo-cell">
+                    {% if m.sorteo_nombre %}<strong>{{ m.sorteo_nombre }}</strong>{% else %}<span class="muted">—</span>{% endif %}
+                  </td>
+                  <td class="saldo-cell">
+                    {% if m.saldo_antes is not None %}${{ m.saldo_antes|floatformat:2 }}{% else %}<span class="muted">—</span>{% endif %}
+                  </td>
                   <td class="monto-cell">
-                    <span class="monto {% if m.monto >= 0 %}cred{% else %}deb{% endif %}">
-                      {% if m.monto >= 0 %}+{% endif %}${{ m.monto|floatformat:2 }}
-                    </span>
-                    <span class="tag {% if m.monto >= 0 %}tag-c{% else %}tag-d{% endif %}">
-                      {% if m.monto >= 0 %}CRÉDITO{% else %}DÉBITO{% endif %}
+                    <span class="monto {% if m.tipo == 'premio' %}monto-premio{% elif m.monto_display|slice:':1' == '+' %}cred{% else %}deb{% endif %}">
+                      {{ m.monto_display }}
                     </span>
                   </td>
-                  <td class="fondo-cell">
+                  <td class="saldo-cell">
                     {% if m.saldo_despues is not None %}
                       <span class="fondo-final {% if m.saldo_despues >= 0 %}ok{% else %}neg{% endif %}">
                         ${{ m.saldo_despues|floatformat:2 }}
                       </span>
-                      {% if m.saldo_antes is not None %}
-                        <span class="fondo-hint">desde ${{ m.saldo_antes|floatformat:2 }}</span>
-                      {% endif %}
                     {% else %}<span class="muted">—</span>{% endif %}
                   </td>
                   <td class="motivo-cell">
                     {{ m.motivo|default:m.nota|default:"—"|truncatechars:55 }}
-                    {% if m.nota and m.motivo %}<span class="nota">{{ m.nota|truncatechars:65 }}</span>{% endif %}
                   </td>
                   <td class="ref-cell">
                     {% if m.ref_url %}<a href="{{ m.ref_url }}">{{ m.ref_label }}</a>
@@ -296,7 +377,7 @@ tr.row-detail td{padding:0;background:#f8fafc;border-bottom:2px solid #c8ead4;}
                   <td>{{ m.emisor.username|default:"—" }}</td>
                 </tr>
                 <tr class="row-detail" data-mov-id="{{ m.id }}" hidden>
-                  <td colspan="10">
+                  <td colspan="11">
                     <div class="detail-box">
                       <div class="detail-row"><b>ID:</b> #{{ m.id }} · <b>Estado:</b> {{ m.get_estado_display }} · <b>Tipo:</b> {{ m.get_tipo_display }}</div>
                       {% if m.nota %}<div class="detail-row"><b>Nota:</b> {{ m.nota }}</div>{% endif %}
@@ -313,7 +394,7 @@ tr.row-detail td{padding:0;background:#f8fafc;border-bottom:2px solid #c8ead4;}
                 </tr>
               {% endfor %}
             {% empty %}
-              <tr><td colspan="10"><div class="empty"><i class="fas fa-inbox"></i>Sin movimientos con esos filtros.</div></td></tr>
+              <tr><td colspan="11"><div class="empty"><i class="fas fa-inbox"></i>Sin movimientos con esos filtros.</div></td></tr>
             {% endfor %}
           </tbody>
         </table>
@@ -321,45 +402,6 @@ tr.row-detail td{padding:0;background:#f8fafc;border-bottom:2px solid #c8ead4;}
     </div>
   </div>
 
-  {# ═══════════ VISTA TARJETAS ═══════════ #}
-  <div class="vista-tarjetas" style="display:none;">
-    {% for grupo in grupos_dia %}
-      <div class="tg-grupo">
-        <div class="group-header">
-          <span class="group-label">{{ grupo.label }}</span>
-          <span class="group-meta">
-            {{ grupo.count }} mov · <span class="cred">+${{ grupo.cred|floatformat:2 }}</span> · <span class="deb">${{ grupo.deb|floatformat:2 }}</span>
-          </span>
-        </div>
-        {% for m in grupo.movs %}
-          <div class="tarjeta tipo-{{ m.tipo }}">
-            <div class="tc-header">
-              <span class="chip chip-{{ m.tipo }}">{{ m.get_tipo_display }}</span>
-              <span class="tc-fecha">{{ m.creado_en|date:'d/m/Y H:i' }}</span>
-            </div>
-            <div class="tc-cliente"><b>{{ m.receptor.username }}</b> · {{ m.forma_pago.nombre|default:"—" }}</div>
-            <div class="tc-monto {% if m.monto >= 0 %}cred{% else %}deb{% endif %}">
-              {% if m.monto >= 0 %}+{% endif %}${{ m.monto|floatformat:2 }}
-            </div>
-            {% if m.saldo_antes is not None %}
-              <div class="tc-saldo">${{ m.saldo_antes|floatformat:2 }} → ${{ m.saldo_despues|floatformat:2 }}</div>
-            {% endif %}
-            {% if m.motivo %}<div class="tc-motivo">{{ m.motivo }}</div>{% endif %}
-            {% if m.ref_label %}
-              <div class="tc-ref">
-                {% if m.ref_url %}<a href="{{ m.ref_url }}" style="color:#0369a1;">{{ m.ref_label }}</a>
-                {% else %}{{ m.ref_label }}{% endif %}
-              </div>
-            {% endif %}
-          </div>
-        {% endfor %}
-      </div>
-    {% empty %}
-      <div class="empty"><i class="fas fa-inbox"></i>Sin movimientos con esos filtros.</div>
-    {% endfor %}
-  </div>
-
-  
   {# ═══════════ FOOTER · TOTALES AL PIE ═══════════ #}
   <div class="hist-footer">
     <div class="hf-item">
@@ -393,33 +435,132 @@ tr.row-detail td{padding:0;background:#f8fafc;border-bottom:2px solid #c8ead4;}
 
 <script>
 (function(){
-  // Expandir filas
-  document.querySelectorAll('.btn-expand').forEach(function(btn){
-    btn.addEventListener('click', function(e){
-      e.preventDefault();
-      var id = btn.dataset.movId;
+  // FIX_TABLA_MOVIL_V1: expandir detalle al click en fila
+  document.querySelectorAll('tr.row-main[data-mov-id]').forEach(function(tr){
+    tr.addEventListener('click', function(e){
+      // Si el click fue en un <a>, no expandir
+      if (e.target.closest('a')) return;
+      var id = tr.dataset.movId;
       var detail = document.querySelector('tr.row-detail[data-mov-id="' + id + '"]');
       if (!detail) return;
       detail.hidden = !detail.hidden;
-      btn.textContent = detail.hidden ? '▶' : '▼';
-    });
-  });
-
-  // Toggle tabla/tarjetas
-  function aplicarVista(v){
-    document.querySelectorAll('.vista-tabla').forEach(function(el){ el.style.display = (v === 'tabla') ? '' : 'none'; });
-    document.querySelectorAll('.vista-tarjetas').forEach(function(el){ el.style.display = (v === 'tarjetas') ? '' : 'none'; });
-    document.querySelectorAll('.btn-vista').forEach(function(b){ b.classList.toggle('active', b.dataset.vista === v); });
-  }
-  var guardada = 'tabla';
-  try { guardada = localStorage.getItem('mov_vista') || 'tabla'; } catch(_){}
-  aplicarVista(guardada);
-  document.querySelectorAll('.btn-vista').forEach(function(b){
-    b.addEventListener('click', function(){
-      var v = b.dataset.vista;
-      aplicarVista(v);
-      try { localStorage.setItem('mov_vista', v); } catch(_){}
     });
   });
 })();
 </script>
+
+<style>
+/* FIX_MOBILE_STRICT_V4 (2026-10-19): Forzar vista móvil */
+@media (max-width: 768px) {
+    .kpis { 
+        display: flex !important; 
+        flex-direction: column !important; 
+        width: 100% !important; 
+    }
+    .kpi { 
+        display: block !important; 
+        width: 100% !important; 
+        margin-bottom: 10px !important; 
+        flex: none !important;
+    }
+    .filtros .grid { 
+        display: flex !important; 
+        flex-direction: column !important; 
+        width: 100% !important; 
+    }
+    .filtros .grid > div { 
+        display: block !important; 
+        width: 100% !important; 
+        margin-bottom: 8px !important; 
+        flex: none !important;
+    }
+    .filtros .grid > div:last-child { 
+        width: 100% !important; 
+        margin-bottom: 0 !important; 
+    }
+}
+</style>
+
+<style>
+/* FIX_MOBILE_WRAP_V5 (2026-10-20): Ajuste fluido en móviles */
+@media (max-width: 768px) {
+    /* KPIs: Se ajustan de 2 en 2 o 1 en 1 según el ancho */
+    .kpis { 
+        display: flex !important; 
+        flex-direction: row !important; 
+        flex-wrap: wrap !important; 
+        gap: 8px !important;
+    }
+    .kpi { 
+        flex: 1 1 calc(50% - 8px) !important; 
+        min-width: 140px !important;
+        margin-bottom: 0 !important;
+    }
+
+    /* Filtros: Fluyen y caen a la siguiente línea */
+    .filtros .grid { 
+        display: flex !important; 
+        flex-direction: row !important; 
+        flex-wrap: wrap !important; 
+        gap: 8px !important;
+    }
+    .filtros .grid > div { 
+        flex: 1 1 calc(50% - 8px) !important; 
+        min-width: 130px !important;
+        margin-bottom: 0 !important;
+    }
+    
+    /* Fechas: Forzar que Desde y Hasta compartan línea al 50% */
+    .filtros .grid > div:nth-last-child(3),
+    .filtros .grid > div:nth-last-child(2) {
+        flex: 1 1 calc(50% - 8px) !important;
+    }
+
+    /* Buscador: Siempre a todo lo ancho en su propia línea */
+    .filtros .grid > div:last-child { 
+        flex: 1 1 100% !important; 
+        margin-top: 4px !important;
+    }
+}
+</style>
+
+<style>
+/* FIX_TABLE_AUTO_V1 (2026-10-20): Ajuste de tabla al contenido y scroll horizontal en móvil */
+.tabla > div {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important; /* Suavidad al deslizar en iOS */
+}
+
+.tabla table {
+    table-layout: auto !important;
+    width: 100% !important;
+}
+
+/* Evitar que las fechas, montos y saldos se partan en dos líneas */
+.tabla th, 
+.fecha, 
+.hora, 
+.monto-cell, 
+.saldo-cell,
+.chip {
+    white-space: nowrap !important;
+}
+
+/* Permitir que el motivo o la referencia sí usen varias líneas si hace falta */
+.motivo-cell, .ref-cell {
+    white-space: normal !important;
+    min-width: 120px;
+    max-width: 250px;
+}
+
+/* Ajustar tamaños en móviles para que quepa mejor, pero sin aplastar */
+@media (max-width: 768px) {
+    .tabla th, .tabla td {
+        font-size: 0.73rem !important;
+        padding: 8px 5px !important;
+    }
+    .monto, .saldo-ant, .saldo-desp {
+        font-size: 0.78rem !important;
+    }
+}
+</style>

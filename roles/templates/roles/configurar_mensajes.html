@@ -1,0 +1,239 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block page_title %}💬 Mensajes de bienvenida{% endblock %}
+{% block page_subtitle %}Configura los mensajes que verán tus clientes{% endblock %}
+
+{% block extra_css %}
+<style>
+.mb-wrap { max-width: 900px; margin: 0 auto; padding: 20px; }
+.mb-card {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 8px rgba(15,23,42,.04);
+}
+.mb-card h3 {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0 0 6px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.mb-card .mb-desc {
+  font-size: .82rem;
+  color: #64748b;
+  margin-bottom: 16px;
+}
+.mb-field { margin-bottom: 16px; }
+.mb-field label {
+  display: block;
+  font-weight: 700;
+  font-size: .78rem;
+  color: #334155;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  margin-bottom: 6px;
+}
+.mb-field textarea,
+.mb-field input[type="date"] {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 10px;
+  font-family: inherit;
+  font-size: .9rem;
+  color: #1e293b;
+  background: #fff;
+}
+.mb-field textarea { min-height: 100px; resize: vertical; }
+.mb-field textarea:focus,
+.mb-field input[type="date"]:focus {
+  outline: none;
+  border-color: #4f46e5;
+  box-shadow: 0 0 0 3px rgba(79,70,229,.15);
+}
+.mb-dates {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.mb-toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  background: #f8fafc;
+  border: 1.5px dashed #cbd5e1;
+  border-radius: 10px;
+  cursor: pointer;
+  margin-bottom: 16px;
+}
+.mb-toggle input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  accent-color: #4f46e5;
+}
+.mb-toggle span { font-weight: 700; font-size: .85rem; color: #334155; }
+.mb-status {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: .68rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  margin-left: 8px;
+}
+.mb-status.on { background: #d1fae5; color: #065f46; }
+.mb-status.off { background: #fee2e2; color: #991b1b; }
+.mb-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 8px;
+}
+.mb-btn {
+  padding: 12px 26px;
+  border-radius: 10px;
+  font-weight: 800;
+  font-size: .9rem;
+  cursor: pointer;
+  border: none;
+  font-family: inherit;
+  transition: .15s;
+}
+.mb-btn.save {
+  background: linear-gradient(135deg, #4f46e5, #7c3aed);
+  color: #fff;
+  box-shadow: 0 4px 12px -4px #4f46e5;
+}
+.mb-btn.save:hover { transform: translateY(-1px); box-shadow: 0 8px 20px -6px #4f46e5; }
+.mb-alert {
+  padding: 12px 16px;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: .85rem;
+  margin-bottom: 16px;
+}
+.mb-alert.success { background: #d1fae5; color: #065f46; border: 1px solid #10b981; }
+.mb-alert.error { background: #fee2e2; color: #991b1b; border: 1px solid #ef4444; }
+.mb-alert.info { background: #dbeafe; color: #1e40af; border: 1px solid #3b82f6; }
+@media (max-width: 640px) {
+  .mb-wrap { padding: 12px; }
+  .mb-card { padding: 18px; }
+  .mb-dates { grid-template-columns: 1fr; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="mb-wrap">
+
+  {% if messages %}
+    {% for m in messages %}
+      <div class="mb-alert {% if 'Error' in m.tags or '❌' in m.message %}error{% else %}success{% endif %}">
+        {{ m }}
+      </div>
+    {% endfor %}
+  {% endif %}
+
+  <div class="mb-alert info">
+    <i class="fas fa-info-circle"></i>
+    Estos mensajes se mostrarán a tus clientes en la sección <strong>Apostar</strong> (1 vez al día, hora Cuba).
+    Si un cliente tiene varios gestores, verá el mensaje de cada uno.
+  </div>
+
+  <form method="post">
+    {% csrf_token %}
+
+    {# ═══ CARD 1: Primera visita del día ═══ #}
+    <div class="mb-card">
+      <h3>
+        🌅 Primera visita del día
+        <span class="mb-status {% if msg_visita.activo %}on{% else %}off{% endif %}">
+          {% if msg_visita.activo %}ACTIVO{% else %}INACTIVO{% endif %}
+        </span>
+      </h3>
+      <p class="mb-desc">
+        Aparece cuando el cliente entra a <strong>Apostar</strong> por primera vez en el día.
+        Ideal para saludos de buenos días o avisos generales.
+      </p>
+
+      <div class="mb-field">
+        <label for="mensaje_visita">Mensaje</label>
+        <textarea id="mensaje_visita" name="mensaje_visita"
+                  placeholder="Ej: ¡Buenos días! Recuerda revisar tus límites antes de apostar.">{{ msg_visita.mensaje|default:'' }}</textarea>
+      </div>
+
+      <div class="mb-dates">
+        <div class="mb-field">
+          <label for="fecha_desde_visita">Válido desde (opcional)</label>
+          <input type="date" id="fecha_desde_visita" name="fecha_desde_visita"
+                 value="{{ msg_visita.fecha_desde|date:'Y-m-d'|default:'' }}">
+        </div>
+        <div class="mb-field">
+          <label for="fecha_hasta_visita">Válido hasta (opcional)</label>
+          <input type="date" id="fecha_hasta_visita" name="fecha_hasta_visita"
+                 value="{{ msg_visita.fecha_hasta|date:'Y-m-d'|default:'' }}">
+        </div>
+      </div>
+
+      <label class="mb-toggle">
+        <input type="checkbox" name="activo_visita" {% if msg_visita.activo %}checked{% endif %}>
+        <span>Activar mensaje de primera visita</span>
+      </label>
+    </div>
+
+    {# ═══ CARD 2: Bienvenida al apostar ═══ #}
+    <div class="mb-card">
+      <h3>
+        🎲 Bienvenida al apostar
+        <span class="mb-status {% if msg_apuesta.activo %}on{% else %}off{% endif %}">
+          {% if msg_apuesta.activo %}ACTIVO{% else %}INACTIVO{% endif %}
+        </span>
+      </h3>
+      <p class="mb-desc">
+        Aparece <strong>después de la primera apuesta confirmada del día</strong>.
+        Ideal para desear suerte: "¡Bienvenido a apostar! Mucha suerte hoy".
+      </p>
+
+      <div class="mb-field">
+        <label for="mensaje_apuesta">Mensaje</label>
+        <textarea id="mensaje_apuesta" name="mensaje_apuesta"
+                  placeholder="Ej: ¡Bienvenido a apostar! Mucha suerte en las apuestas del día.">{{ msg_apuesta.mensaje|default:'' }}</textarea>
+      </div>
+
+      <div class="mb-dates">
+        <div class="mb-field">
+          <label for="fecha_desde_apuesta">Válido desde (opcional)</label>
+          <input type="date" id="fecha_desde_apuesta" name="fecha_desde_apuesta"
+                 value="{{ msg_apuesta.fecha_desde|date:'Y-m-d'|default:'' }}">
+        </div>
+        <div class="mb-field">
+          <label for="fecha_hasta_apuesta">Válido hasta (opcional)</label>
+          <input type="date" id="fecha_hasta_apuesta" name="fecha_hasta_apuesta"
+                 value="{{ msg_apuesta.fecha_hasta|date:'Y-m-d'|default:'' }}">
+        </div>
+      </div>
+
+      <label class="mb-toggle">
+        <input type="checkbox" name="activo_apuesta" {% if msg_apuesta.activo %}checked{% endif %}>
+        <span>Activar mensaje de bienvenida al apostar</span>
+      </label>
+    </div>
+
+    <div class="mb-actions">
+      <button type="submit" class="mb-btn save">
+        <i class="fas fa-save"></i> Guardar mensajes
+      </button>
+    </div>
+  </form>
+
+</div>
+{% endblock %}

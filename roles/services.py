@@ -128,10 +128,15 @@ def _comision_desde_snapshot(cuadre, matriz_filas):
             base = Decimal('0.00')
         porcentaje = cuadre.porcentaje_comision_snapshot or Decimal('0.00')
         comision = (base * porcentaje / Decimal('100')).quantize(Decimal('0.01'))
+        # FIX_DESCUENTO_BONO_V1: restar descuento por bonos aplicados
+        descuento = getattr(cuadre, 'descuento_bono', Decimal('0.00')) or Decimal('0.00')
+        comision_neta = comision - descuento
         return {
             'modalidad': 'general',
             'porcentaje_general': porcentaje,
-            'comision_total': comision,
+            'comision_total': comision_neta,
+            'comision_bruta': comision,
+            'descuento_bono': descuento,
             'desglose': [],
         }
 
@@ -155,10 +160,15 @@ def _comision_desde_snapshot(cuadre, matriz_filas):
                 'porcentaje': porcentaje,
                 'comision': comision_fp,
             })
+        # FIX_DESCUENTO_BONO_V1: restar descuento por bonos aplicados
+        descuento = getattr(cuadre, 'descuento_bono', Decimal('0.00')) or Decimal('0.00')
+        comision_neta = comision_total - descuento
         return {
             'modalidad': 'por_grupo',
             'porcentaje_general': None,
-            'comision_total': comision_total,
+            'comision_total': comision_neta,
+            'comision_bruta': comision_total,
+            'descuento_bono': descuento,
             'desglose': desglose,
         }
 
@@ -236,12 +246,33 @@ class CuadreService:
                 if j.estado == 'ganadora' and j.monto_premio:
                     premios_por_fp_sorteo[j.forma_pago_id][j.sorteo_id] += j.monto_premio
 
+        # FIX_VENTAS_CLIENTES_V1: agrupar ventas por (fp, sorteo, cliente) y enriquecer
+        ventas_por_fp_sorteo_cliente = defaultdict(lambda: defaultdict(lambda: defaultdict(Decimal)))
+        for j in jugadas:
+            if j.forma_pago_id and j.monto:
+                ventas_por_fp_sorteo_cliente[j.forma_pago_id][j.sorteo_id][j.usuario_id] += j.monto
+
         ventas_por_sorteo = {}
         for fp_id, sort_dict in ventas_por_fp_sorteo.items():
-            ventas_por_sorteo[fp_id] = [
-                {'sorteo': sorteos.get(sid), 'monto': m}
-                for sid, m in sorted(sort_dict.items(), key=lambda x: -x[1])
-            ]
+            items = []
+            for sid, m in sorted(sort_dict.items(), key=lambda x: -x[1]):
+                if m <= 0:
+                    continue
+                cli_dict = ventas_por_fp_sorteo_cliente.get(fp_id, {}).get(sid, {})
+                clientes = []
+                for uid, monto_cli in sorted(cli_dict.items(), key=lambda x: -x[1]):
+                    u = User.objects.filter(id=uid).first()
+                    if u:
+                        clientes.append({
+                            'cliente': u,
+                            'monto': monto_cli,
+                        })
+                items.append({
+                    'sorteo': sorteos.get(sid),
+                    'monto': m,
+                    'clientes': clientes,
+                })
+            ventas_por_sorteo[fp_id] = items
 
         # FIX_PREMIOS_ANIDADO: enriquecer con clientes por sorteo
         premios_por_sorteo = {}
@@ -544,6 +575,23 @@ class CuadreService:
         )
 
     @staticmethod
+    @staticmethod
+    def recomputar_cuadres_desde(usuario, fecha_desde, fecha_hasta=None):
+        """Recomputa en cascada TODOS los cuadres de `usuario` desde `fecha_desde`
+        hasta `fecha_hasta` (default: hoy). Idempotente. No respeta `cerrado`."""
+        from datetime import date as _date, timedelta as _td
+        if fecha_hasta is None:
+            fecha_hasta = timezone.localdate()
+        if fecha_desde > fecha_hasta:
+            return []
+        afectados = []
+        f = fecha_desde
+        while f <= fecha_hasta:
+            CuadreService.generar_cuadre_completo(usuario, f)
+            afectados.append(f)
+            f += _td(days=1)
+        return afectados
+
     def _sumar_comisiones_snapshot(cuadres):
         """Suma las comisiones congeladas en los cuadres dados."""
         total = cuadres.aggregate(t=Sum('comision_calculada_snapshot'))['t']

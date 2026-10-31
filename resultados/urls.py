@@ -25,4 +25,5 @@ urlpatterns = [
     path('api/resumen-filtrado/', views.api_resumen_filtrado, name='api_resumen_filtrado'),
     path('editar/<int:resultado_id>/', views.editar_resultado, name='editar_resultado'),
     path('api/premios-sorteo/', views.api_premios_sorteo, name='api_premios_sorteo'),
+    path('api/premios-todos/', views.api_premios_todos, name='api_premios_todos'),
 ]

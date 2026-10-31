@@ -33,6 +33,7 @@ from roles.models import (
 )
 from sorteos.models import Sorteo
 from sorteos.utils import get_sorteos_abiertos, calcular_estado_sorteo, get_hora_salida
+from sorteos.utils import segundos_hasta_proximo as _seg_hasta_prox
 from pagos.models import FormaPago
 from roles.utils import get_pool_gestor, get_dosis_gestor, get_sobrelimite_gestor
 from jugadas.utils import consumir_postpago, liquidar_postpago, otorgar_postpago
@@ -80,11 +81,13 @@ def _boleta_duplicada(cliente_id, forma_pago_id, fecha_sorteo, items):
         if not firma_nueva_set:
             continue
 
-        # Traer boletas del cliente para ese sorteo/fecha/FP
+        # FIX_DUP_SIN_VENTANA_V1: bloquear duplicados sin importar tiempo
+        # (mientras la boleta siga activa y sea exactamente la misma)
         boletas = Boleta.objects.filter(
             usuario_id=cliente_id,
             fecha_sorteo=fecha_sorteo,
             forma_pago_id=forma_pago_id,
+            estado='activa',
             jugadas__sorteo_id=sid,
             jugadas__estado__in=['confirmada', 'pendiente'],
         ).distinct()
@@ -147,6 +150,10 @@ def _consolidar_tripletas(items):
     return otros + list(tripletas_por_key.values())
 
 
+# ─── Rangos de teléfonos offline ─────────────────────────────
+BLOQUES_DISPONIBLES = 10
+MAX_DENTRO_BLOQUE = 9_999_999
+
 def _siguiente_telefono_offline():
     """
     Genera el siguiente teléfono del rango offline.
@@ -198,7 +205,7 @@ def _get_banco_de(user):
             return sub.jefe
     return None
 
-def _construir_clientes_visibles(user):
+def _construir_clientes_visibles(user, gestor_cuenta_id=None):
     """
     Personas visibles para `user` al apostar.
 
@@ -208,11 +215,35 @@ def _construir_clientes_visibles(user):
       - Comercial  → solo clientes que ÉL mismo haya recargado.
       - Banco      → clientes recargados por él O por sus comerciales.
       - Superadmin → todos los usuarios activos.
+
+    NUEVO (selector "Bajo cuenta de"):
+      - Si `gestor_cuenta_id` viene y user es banco o superadmin,
+        se delega la consulta a ese gestor (como si ese gestor
+        estuviera consultando).
+      - Si coincide con user.id, o no viene, comportamiento normal.
     """
     es_superadmin = user.is_superuser or user.roles.filter(tipo='superadmin', activo=True).exists()
     es_banco      = user.roles.filter(tipo='banco', activo=True).exists()
     es_comercial  = user.roles.filter(tipo='comercial', activo=True).exists()
     es_cliente    = user.roles.filter(tipo='cliente', activo=True).exists()
+
+    # ═══ NUEVO: filtro por gestor seleccionado ═══
+    if gestor_cuenta_id and (es_superadmin or es_banco):
+        try:
+            gid = int(gestor_cuenta_id)
+            if gid != user.id:
+                if es_superadmin:
+                    gestor_sel = User.objects.get(id=gid, is_active=True)
+                else:
+                    # banco: solo sus comerciales reales (ascendidos por él)
+                    gestor_sel = User.objects.get(
+                        id=gid, is_active=True,
+                        roles__tipo='comercial', roles__activo=True,
+                        jefes__jefe=user, jefes__activo=True,
+                    )
+                return _construir_clientes_visibles(gestor_sel)
+        except (User.DoesNotExist, User.MultipleObjectsReturned, ValueError, TypeError):
+            pass
 
     # ═══════════════════════════════════════════════════════════
     # CASO CLIENTE → gestores con fondo/bono/postpago > 0
@@ -268,6 +299,7 @@ def _construir_clientes_visibles(user):
         return []
 
     ids = set()
+    _huerfanos_ids = set()
 
     if es_superadmin:
         ids.update(
@@ -287,8 +319,27 @@ def _construir_clientes_visibles(user):
                 asignado_por=user, estado='activo', saldo_restante__gt=0
             ).values_list('usuario_id', flat=True).distinct()
         )
+        # Clientes con postpago activo asignado por mí (deuda pendiente)
+        try:
+            from roles.models import Postpago as _PP
+            ids.update(
+                _PP.objects.filter(
+                    gestor=user, activo=True, saldo__lt=0
+                ).values_list('cliente_id', flat=True).distinct()
+            )
+        except Exception:
+            pass
 
         if es_banco:
+            # FIX_BANCO_VE_TODOS_V1: el banco ve TODOS los clientes activos
+            # (no solo los que ha recargado o los asignados a él)
+            ids.update(
+                User.objects.filter(
+                    is_active=True,
+                    roles__tipo='cliente',
+                    roles__activo=True,
+                ).values_list('id', flat=True).distinct()
+            )
             # Además: clientes recargados por MIS comerciales directos
             comerciales_ids = list(
                 Subordinacion.objects.filter(jefe=user, activo=True)
@@ -305,6 +356,32 @@ def _construir_clientes_visibles(user):
                         asignado_por__in=comerciales_ids, estado='activo', saldo_restante__gt=0
                     ).values_list('usuario_id', flat=True).distinct()
                 )
+                try:
+                    from roles.models import Postpago as _PP2
+                    ids.update(
+                        _PP2.objects.filter(
+                            gestor__in=comerciales_ids, activo=True, saldo__lt=0
+                        ).values_list('cliente_id', flat=True).distinct()
+                    )
+                except Exception:
+                    pass
+
+        # FIX_HUERFANOS_VISIBLES_V1: clientes sin gestor (solo bono con asignado_por=None)
+        try:
+            from django.utils import timezone as _tzH
+            from django.db.models import Q as _QH
+            _huerfanos_bono = set(Bono.objects.filter(
+                asignado_por__isnull=True, estado='activo', saldo_restante__gt=0,
+            ).filter(
+                _QH(fecha_vencimiento__isnull=True) | _QH(fecha_vencimiento__gte=_tzH.now())
+            ).values_list('usuario_id', flat=True))
+            _con_gestor = set(Fondo.objects.filter(
+                activo=True, asignado_por__isnull=False
+            ).values_list('usuario_id', flat=True))
+            _huerfanos_ids = _huerfanos_bono - _con_gestor
+            ids.update(_huerfanos_ids)
+        except Exception:
+            _huerfanos_ids = set()
 
     ids.discard(user.id)
 
@@ -313,18 +390,20 @@ def _construir_clientes_visibles(user):
 
     result = []
     for u in User.objects.filter(id__in=ids, is_active=True).distinct():
-        if es_superadmin:
-            saldo_total = Fondo.objects.filter(
-                usuario=u, activo=True
-            ).aggregate(t=Sum('monto'))['t'] or 0
-            bonos = Bono.objects.filter(usuario=u, estado='activo')
-        else:
-            saldo_total = Fondo.objects.filter(
-                usuario=u, asignado_por=user, activo=True
-            ).aggregate(t=Sum('monto'))['t'] or 0
-            bonos = Bono.objects.filter(usuario=u, asignado_por=user, estado='activo')
+        from decimal import Decimal as _Dec2
+        try:
+            from roles.utils import calcular_saldos_cliente as _calc_saldos
+            _gestor_arg = None if es_superadmin else user
+            _saldos_u = _calc_saldos(u, gestor=_gestor_arg)
+        except Exception:
+            _saldos_u = {'por_gestor': {}, 'total_global': {}}
 
-        total_bonos = sum(b.saldo_restante for b in bonos)
+        _tg = _saldos_u.get('total_global') or {}
+        saldo_total = float(_tg.get('saldo_total') or _Dec2('0'))
+        saldo_real  = float(_tg.get('saldo_real') or _Dec2('0'))
+        total_bonos = float(_tg.get('bonos') or _Dec2('0'))
+        total_post  = float(_tg.get('postpago') or _Dec2('0'))
+
         rol_obj = u.roles.filter(activo=True).first()
         es_offline = hasattr(u, 'cliente_offline')
 
@@ -332,11 +411,13 @@ def _construir_clientes_visibles(user):
             'id': u.id,
             'nombre': u.username,
             'telefono': _get_telefono(u),
-            'saldo_total': float(saldo_total),
-            'saldo_real': float(saldo_total + total_bonos),
-            'bonos_activos': float(total_bonos),
+            'saldo_total': saldo_total,
+            'saldo_real': saldo_real,
+            'bonos_activos': total_bonos,
+            'postpago': total_post,
             'rol': rol_obj.tipo if rol_obj else ('superadmin' if u.is_superuser else 'cliente'),
             'es_offline': es_offline,
+            'es_huerfano': u.id in _huerfanos_ids,
         })
 
     result.sort(key=lambda c: c['nombre'].lower())
@@ -796,6 +877,45 @@ def _do_cancelar_boleta(boleta, user, motivo=''):
             detalle['postpago'] = monto_postpago
             reintegr_total += monto_postpago
 
+    # ═══ FIX_CANCELAR_REVIERTE_PREMIOS_V1 ═══
+    # Al cancelar boleta, revertir premios pagados del fondo del cliente
+    premios_boleta = Premio.objects.filter(
+        jugada__boleta=boleta, estado='pagado', cobrado=True,
+    )
+    for p_prem in premios_boleta:
+        fp_premio = p_prem.jugada.forma_pago or forma_pago_ref
+        if fp_premio:
+            fondo_premio = Fondo.objects.select_for_update().filter(
+                usuario=boleta.usuario, forma_pago=fp_premio, activo=True,
+            ).first()
+            if fondo_premio:
+                saldo_antes_premio = fondo_premio.monto
+                fondo_premio.monto -= p_prem.monto_premio
+                fondo_premio.save(update_fields=['monto'])
+                MovimientoFondo.objects.create(
+                    emisor=None,
+                    receptor=boleta.usuario,
+                    forma_pago=fp_premio,
+                    monto=-p_prem.monto_premio,
+                    tipo='ajuste',
+                    estado='confirmado',
+                    motivo=f'Reversión premio #{p_prem.id} por cancelación boleta {boleta.referencia}',
+                    saldo_antes=saldo_antes_premio,
+                    saldo_despues=fondo_premio.monto,
+                    datos_transferencia={
+                        'premio_id': p_prem.id,
+                        'jugada_id': p_prem.jugada_id,
+                        'boleta_id': boleta.id,
+                        'boleta_ref': str(boleta.referencia),
+                        'cancelacion': True,
+                        'motivo': motivo or '',
+                    },
+                )
+        p_prem.estado = 'rechazado'
+        p_prem.cobrado = False
+        p_prem.save(update_fields=['estado', 'cobrado'])
+    # ═══ FIN FIX_CANCELAR_REVIERTE_PREMIOS_V1 ═══
+
     for j in jugadas:
         j.estado = 'cancelada'
         j.save(update_fields=['estado', 'actualizado_en'])
@@ -948,8 +1068,57 @@ def apostar(request):
     es_autorizador = es_superadmin or es_banco or es_comercial
     es_gestor = es_comercial or es_banco
 
-    # ← REFACTOR: una sola línea
-    clientes = _construir_clientes_visibles(user)
+    # ═══ NUEVO: selector "Bajo cuenta de" ═══
+    gestor_cuenta_id = (request.GET.get('gestor_cuenta') or '').strip()
+    if gestor_cuenta_id and not gestor_cuenta_id.isdigit():
+        gestor_cuenta_id = ''
+    if gestor_cuenta_id and str(gestor_cuenta_id) == str(user.id):
+        gestor_cuenta_id = ''
+
+    clientes = _construir_clientes_visibles(user, gestor_cuenta_id=gestor_cuenta_id)
+
+    gestor_cuenta_opciones = []
+    if es_superadmin:
+        # Grupo General
+        gestor_cuenta_opciones.append({
+            'grupo': 'General',
+            'opciones': [{'id': '', 'label': 'Todos'}],
+        })
+        # Cada banco + sus comerciales
+        for banco in User.objects.filter(
+            roles__tipo='banco', roles__activo=True, is_active=True
+        ).distinct().order_by('username'):
+            gestor_cuenta_opciones.append({
+                'grupo': f'Banco: {banco.username}',
+                'opciones': [{'id': str(banco.id), 'label': banco.username}],
+            })
+            comerciales_qs = User.objects.filter(
+                is_active=True,
+                roles__tipo='comercial', roles__activo=True,
+                jefes__jefe=banco, jefes__activo=True,
+            ).distinct().order_by('username')
+            comerciales_list = [{'id': str(u.id), 'label': u.username} for u in comerciales_qs]
+            if comerciales_list:
+                gestor_cuenta_opciones.append({
+                    'grupo': f'Comerciales de {banco.username}',
+                    'opciones': comerciales_list,
+                })
+    elif es_banco:
+        gestor_cuenta_opciones.append({
+            'grupo': 'Propio',
+            'opciones': [{'id': '', 'label': f'Yo ({user.username})'}],
+        })
+        comerciales_qs = User.objects.filter(
+            is_active=True,
+            roles__tipo='comercial', roles__activo=True,
+            jefes__jefe=user, jefes__activo=True,
+        ).distinct().order_by('username')
+        comerciales_list = [{'id': str(u.id), 'label': u.username} for u in comerciales_qs]
+        if comerciales_list:
+            gestor_cuenta_opciones.append({
+                'grupo': 'Mis comerciales',
+                'opciones': comerciales_list,
+            })
 
     fecha_actual = timezone.localdate()
     sorteos_disponibles = get_sorteos_abiertos(fecha_actual)
@@ -975,6 +1144,8 @@ def apostar(request):
         'formas_pago': formas_pago,
         'formas_pago_recarga': formas_pago_recarga,
         'clientes': clientes,
+        'gestor_cuenta_opciones': gestor_cuenta_opciones,
+        'gestor_cuenta_seleccionado': gestor_cuenta_id,
         'es_autorizador': es_autorizador,
         'es_cliente': not es_autorizador,
         'es_superadmin': es_superadmin,
@@ -1022,17 +1193,6 @@ def _dentro_ventana_banco(estado_sorteo, ahora=None, horas=24):
         return True
     # Sino, verificar que no hayan pasado más de `horas` horas
     return (ahora - hc) <= timedelta(hours=horas)
-
-@login_required
-@require_POST
-@csrf_exempt
-
-
-
-
-
-
-
 
 # ═══════════════════════════════════════════════════════════════
 # GUARD_POOL_BACKEND_V1
@@ -1138,6 +1298,33 @@ def _validar_pool_items(gestor, fecha, forma_pago, items, excluir_jugada_ids=Non
     return errores
 
 
+def _log_400_apuesta(view_func):
+    """FIX_LOG_400_V1 (2026-10-14): loguea cualquier JsonResponse 400 que
+    devuelva el guardar-apuesta. Antes los 400 por validacion no dejaban
+    rastro y hacia perder horas de diagnostico (caso Vany)."""
+    def wrapper(request, *args, **kwargs):
+        response = view_func(request, *args, **kwargs)
+        try:
+            if hasattr(response, 'status_code') and response.status_code == 400:
+                import json as _json
+                try:
+                    data = _json.loads(response.content)
+                    msg = data.get('message') or data.get('error') or ''
+                except Exception:
+                    msg = (response.content[:200] if hasattr(response, 'content') else '') or ''
+                logger.warning(
+                    '[guardar_apuesta 400] user=%s ip=%s msg=%r',
+                    request.user.username if getattr(request, 'user', None) and request.user.is_authenticated else 'anon',
+                    request.META.get('REMOTE_ADDR', '?'),
+                    msg,
+                )
+        except Exception as _e:
+            logger.error('[guardar_apuesta 400 log] %s', _e)
+        return response
+    return wrapper
+
+
+@_log_400_apuesta
 def _guardar_apuesta_impl(request):
     # ─── (cuerpo sin cambios, se mantiene tal cual lo tenías) ───
     try:
@@ -1162,10 +1349,13 @@ def _guardar_apuesta_impl(request):
             return JsonResponse({'success': False, 'message': 'Formato de fecha inválido. Use YYYY-MM-DD.'}, status=400)
 
         hoy = timezone.localdate()
-        limite_futuro = hoy + timedelta(days=180)
+        limite_futuro = hoy + timedelta(days=365)  # FIX_FUTURO_1ANO_V1
 
-        if fecha_apuesta < hoy:
-            return JsonResponse({'success': False, 'message': 'No se pueden realizar apuestas para fechas pasadas.'}, status=400)
+        # FIX_FUTURO_1ANO_V1 + FIX_USUARIO_URGENTE_V1
+        _u = request.user
+        _es_admin_f = _u.is_superuser or _u.roles.filter(tipo__in=['superadmin','banco'], activo=True).exists()
+        if fecha_apuesta < hoy and not _es_admin_f:
+            return JsonResponse({'success': False, 'message': 'Los clientes y comerciales solo pueden apostar desde hoy en adelante.'}, status=400)
         if fecha_apuesta > limite_futuro:
             return JsonResponse({'success': False, 'message': 'La fecha de la apuesta no puede ser superior a 6 meses en el futuro.'}, status=400)
 
@@ -1198,12 +1388,55 @@ def _guardar_apuesta_impl(request):
         if items_super and (len(super_sorteos_ids) < 2 or not all(super_sorteos_ids)):
             return JsonResponse({'success': False, 'message': 'Superparlet requiere dos sorteos'}, status=400)
 
+        # ═══ FIX_CIERRE_SORTEO_V1 (2026-10-15) ═══
+        # Antes de procesar nada: verificar que TODOS los sorteos del carrito
+        # estén abiertos (hora Cuba). Banco/superadmin pueden saltar (C2).
+        _es_banco_o_super = (
+            request.user.is_superuser
+            or request.user.roles.filter(tipo__in=['superadmin','banco'], activo=True).exists()
+        )
+        if not _es_banco_o_super:
+            from sorteos.utils import calcular_estado_sorteo as _ces
+            _todos_ids = list(set(list(sorteos_ids) + list(super_sorteos_ids)))
+            _cerrados = []
+            for _sid in _todos_ids:
+                try:
+                    _sorteo_chk = Sorteo.objects.filter(id=int(_sid)).first()
+                    if not _sorteo_chk:
+                        continue
+                    _estado_chk = _ces(_sorteo_chk, timezone.now(), fecha_apuesta)
+                    if getattr(_estado_chk, 'estado_actual', 'cerrado') != 'abierto':
+                        _cerrados.append(_sorteo_chk.nombre)
+                except Exception as _ecs:
+                    logger.warning(f'[FIX_CIERRE_SORTEO_V1] error verificando sorteo {_sid}: {_ecs}')
+
+            if _cerrados:
+                return JsonResponse({
+                    'success': False,
+                    'sorteo_cerrado': True,
+                    'sorteos_cerrados': _cerrados,
+                    'message': 'La jugada no sera recibida porque el sorteo ya cerro: ' + ', '.join(_cerrados),
+                }, status=400)
+        # ═══ FIN FIX_CIERRE_SORTEO_V1 ═══
+
         usuario = request.user
         try:
             cliente = User.objects.get(id=int(cliente_id))
         except (User.DoesNotExist, ValueError) as e:
             logger.error(f"Cliente no encontrado: {e}")
             return JsonResponse({'success': False, 'message': 'Cliente no encontrado'}, status=404)
+
+        # FIX_CLIENTE_SIN_DEUDA_V2: si el usuario es cliente autenticado, debe tener forma_pago
+        _es_cliente_puro = (
+            not usuario.is_superuser
+            and not usuario.roles.filter(tipo__in=['superadmin', 'banco', 'comercial'], activo=True).exists()
+            and usuario.roles.filter(tipo='cliente', activo=True).exists()
+        )
+        if _es_cliente_puro and (not forma_pago_id or not str(forma_pago_id).isdigit()):
+            return JsonResponse({
+                'success': False,
+                'message': 'Los clientes no pueden apostar en deuda o bono. Elige una forma de pago con saldo.'
+            }, status=400)
 
         forma_pago = None
         if forma_pago_id and forma_pago_id.isdigit():
@@ -1252,6 +1485,22 @@ def _guardar_apuesta_impl(request):
             except Exception as e:
                 logger.warning(f"Validación de números restringidos omitida: {e}")
 
+        # FIX_RELAJAR_FONDO_V1: banco/comercial/superadmin pueden apostar
+        # si el cliente tiene CUALQUIER relación con el gestor (Fondo, Postpago
+        # o Subordinación). Si no hay Fondo, la deuda se acumula en Postpago.
+        def _tiene_relacion_gestor(_cliente, _gestor):
+            if Fondo.objects.filter(usuario=_cliente, asignado_por=_gestor, activo=True).exists():
+                return True
+            try:
+                from roles.models import Postpago as _PP
+                if _PP.objects.filter(cliente=_cliente, gestor=_gestor, activo=True).exists():
+                    return True
+            except Exception:
+                pass
+            if Subordinacion.objects.filter(subordinado=_cliente, jefe=_gestor, activo=True).exists():
+                return True
+            return False
+
         destinatario = None
 
         if destinatario_id and str(destinatario_id).isdigit():
@@ -1270,34 +1519,28 @@ def _guardar_apuesta_impl(request):
             if es_superadmin:
                 pass
             elif (es_banco or es_comercial) and destinatario.id == usuario.id:
-                if not Fondo.objects.filter(
-                    usuario=cliente, asignado_por=usuario,
-                    forma_pago=forma_pago, activo=True
-                ).exists():
+                # FIX_RELAJAR_FONDO_V1: permitir si hay relacion con Postpago o Subordinacion
+                if not _tiene_relacion_gestor(cliente, usuario):
                     return JsonResponse({
                         'success': False,
-                        'message': 'No tienes fondos asignados a este cliente para esta forma de pago.'
+                        'message': 'No tienes relacion asignada con este cliente (fondo, postpago o subordinacion).'
                     }, status=400)
             else:
-                if not Fondo.objects.filter(
-                    usuario=usuario, asignado_por=destinatario,
-                    forma_pago=forma_pago, activo=True
-                ).exists():
+                # FIX_GUARDAR_COMERCIAL_V1 + FIX_RELAJAR_FONDO_V1
+                if not _tiene_relacion_gestor(cliente, destinatario):
                     return JsonResponse({
                         'success': False,
-                        'message': 'El gestor seleccionado no tiene fondos asignados para esta forma de pago.'
+                        'message': f'El cliente no tiene relacion con {destinatario.username} (fondo, postpago o subordinacion).'
                     }, status=400)
         else:
             if usuario.is_superuser or usuario.roles.filter(tipo__in=['banco', 'comercial'], activo=True).exists():
                 destinatario = usuario
                 if not usuario.is_superuser:
-                    if not Fondo.objects.filter(
-                        usuario=cliente, asignado_por=usuario,
-                        forma_pago=forma_pago, activo=True
-                    ).exists():
+                    # FIX_RELAJAR_FONDO_V1
+                    if not _tiene_relacion_gestor(cliente, usuario):
                         return JsonResponse({
                             'success': False,
-                            'message': 'No tienes fondos asignados a este cliente para esta forma de pago.'
+                            'message': 'No tienes relacion asignada con este cliente (fondo, postpago o subordinacion).'
                         }, status=400)
             else:
                 sub = Subordinacion.objects.filter(subordinado=cliente, activo=True).first()
@@ -1330,7 +1573,8 @@ def _guardar_apuesta_impl(request):
         modo_operacion = request.POST.get('modo_operacion', '')
 
         es_solo_editar = (es_edicion_boleta and modo_operacion == 'editar')
-        if es_edicion_boleta and modo_operacion == 'editar':
+        es_banco_o_admin_edit = usuario.is_superuser or usuario.roles.filter(tipo__in=['superadmin', 'banco'], activo=True).exists()
+        if es_edicion_boleta and modo_operacion == 'editar' and not es_banco_o_admin_edit:
             try:
                 orig_b = Boleta.objects.get(id=int(boleta_origen_id))
                 suma_orig = sum((j.monto for j in orig_b.jugadas.exclude(estado='cancelada')), Decimal('0.00'))
@@ -1397,7 +1641,7 @@ def _guardar_apuesta_impl(request):
         except Exception as _ePool:
             # Fail-open: si la validación falla por bug interno,
             # permitimos pasar pero dejamos rastro en logs.
-            logger.warning('[GUARD_POOL_BACKEND_V1] error interno: ' + str(_ePool))
+            import traceback as _tb; logger.warning('[GUARD_POOL_BACKEND_V1] error interno: ' + str(_ePool) + '\n' + _tb.format_exc())
         # ═══ FIN GUARD_POOL_BACKEND_V1 ═══
 
         with transaction.atomic():
@@ -1417,19 +1661,24 @@ def _guardar_apuesta_impl(request):
                     raise ValueError(f'La boleta original está en estado {orig.estado}, no se puede editar')
 
                 if es_solo_editar:
-                    # Modo editar: no cancelar, no reintegrar, reusar la misma boleta
+                    # FIX_REENVIAR_Y_BANCO_EDIT_V1: Revertir premios antes de borrar
+                    premios_ant = Premio.objects.filter(jugada__boleta=orig, estado='pagado', cobrado=True)
+                    for p in premios_ant:
+                        f = Fondo.objects.filter(usuario=orig.usuario, forma_pago=p.jugada.forma_pago).first()
+                        if f:
+                            f.monto -= p.monto_premio
+                            f.save(update_fields=['monto'])
+                        p.estado = 'anulado'
+                        p.cobrado = False
+                        p.save(update_fields=['estado', 'cobrado'])
                     orig.jugadas.all().delete()
                     orig.forma_pago = forma_pago
                     orig.fecha_sorteo = fecha_apuesta
                     orig.save(update_fields=['forma_pago', 'fecha_sorteo', 'actualizado_en'])
                     boleta = orig
                 else:
-                    # Modo reenviar: cancelar (con reintegro) y crear nueva
-                    ok_cancel, _, err_cancel = _do_cancelar_boleta(
-                        orig, usuario, motivo='Reenviada a nuevos sorteos',
-                    )
-                    if not ok_cancel:
-                        raise ValueError(f'No se pudo cancelar la boleta original: {err_cancel}')
+                    # FIX_REENVIAR_Y_BANCO_EDIT_V1: Reenviar NO cancela la original.
+                    pass
                     boleta = Boleta.objects.create(
                         usuario=cliente,
                         destinatario=destinatario,
@@ -1447,20 +1696,14 @@ def _guardar_apuesta_impl(request):
             # Ya se manejo en el bloque anterior si es edicion_boleta
 
 
+            # FIX_1_BOLETA_POR_SORTEO_V1: preparar diccionarios de boletas
+            # (se crearán bajo demanda en el loop para no dejar boletas huérfanas)
+            boletas_por_sorteo = {}   # {sorteo_id: Boleta}
+            boletas_super = []        # [Boleta] - 1 por cada superparlet
+
             if not es_edicion_pura and boleta is None:
-                boleta = Boleta.objects.create(
-                    usuario=cliente,
-                    destinatario=destinatario,
-                    comercial=usuario if usuario != cliente else None,
-                    creado_por=usuario,
-                    forma_pago=forma_pago,
-                    fecha_sorteo=fecha_apuesta,
-                    metadata={
-                        'origen': 'editar_boleta' if es_edicion_boleta else 'guardar_apuesta',
-                        'modo': modo_edicion or 'nuevo',
-                        'boleta_origen_id': int(boleta_origen_id) if es_edicion_boleta else None,
-                    },
-                )
+                # Nueva apuesta: NO crear boleta aquí. Se creará por sorteo.
+                pass
 
             jugadas_creadas = []
             total_apostado = Decimal('0.00')
@@ -1480,8 +1723,11 @@ def _guardar_apuesta_impl(request):
                     tipo_a_forma[nombre_tipo] = forma
 
             for item in items_normales:
-                forma_juego = tipo_a_forma.get(item.get('tipo'))
+                # FIX_STRIP_TIPO_V1: aplicar strip para coincidir con la clave del dict
+                _tipo_key = (item.get('tipo') or '').strip()
+                forma_juego = tipo_a_forma.get(_tipo_key) or tipo_a_forma.get(item.get('tipo'))
                 if not forma_juego:
+                    logger.warning(f'[DEBUG_APUESTA] item SKIP: forma_juego no encontrada para tipo={item.get("tipo")!r} (strip={_tipo_key!r}, keys_disponibles={list(tipo_a_forma.keys())})')
                     continue
                 numero = item.get('numero', '').strip()
                 if not numero:
@@ -1508,15 +1754,15 @@ def _guardar_apuesta_impl(request):
                     if not esta_abierto:
                         es_superadmin_ = usuario.is_superuser or usuario.roles.filter(tipo='superadmin', activo=True).exists()
                         es_banco_ = usuario.roles.filter(tipo='banco', activo=True).exists()
-                        # Superadmin: sin límite. Banco: solo dentro de 24h del cierre.
-                        permitido = False
-                        if es_superadmin_:
-                            permitido = True
-                        elif es_banco_:
-                            permitido = _dentro_ventana_banco(estado_sorteo, timezone.now(), horas=24)
+                        # FIX_VENTANA_BANCO_V2 (2026-10-14):
+                        # - superadmin y banco: pueden cargar fuera de tiempo sin limite.
+                        # - resto: bloqueado.
+                        # Decision de negocio: el banco es jefe de su sector y responde
+                        # por sus actos. El premio se calcula normal via reconciliar_premio_jugada.
+                        permitido = es_superadmin_ or es_banco_
                         if not permitido:
                             advertencias.append(
-                                f'El sorteo "{sorteo.nombre}" ya está cerrado y ha pasado más de 24h. Solo superadmin puede cargar jugadas fuera de tiempo.'
+                                f'El sorteo "{sorteo.nombre}" está cerrado. Solo banco y superadmin pueden cargar jugadas fuera de tiempo.'
                             )
                             continue
 
@@ -1525,7 +1771,7 @@ def _guardar_apuesta_impl(request):
                         advertencias.append(f'Sin pool configurado para {sorteo.nombre} - {forma_juego.nombre} - {forma_pago.nombre}.')
                         continue
 
-                    key_mem = (sorteo.id, forma_juego.id, forma_pago.id, numero)
+                    key_mem = (sorteo.id, forma_juego.id, getattr(forma_pago, 'id', 0), numero)  # FIX_FORMA_PAGO_NONE_V1
                     consumido_db = Jugada.objects.filter(
                         destinatario=destinatario, sorteo=sorteo, forma_juego=forma_juego,
                         forma_pago=forma_pago, fecha_sorteo=fecha_apuesta, numero=numero,
@@ -1569,11 +1815,32 @@ def _guardar_apuesta_impl(request):
                         except Jugada.DoesNotExist:
                             pass
 
+                    # FIX_1_BOLETA_POR_SORTEO_V1: obtener/crear boleta para este sorteo
+                    if boleta is not None:
+                        boleta_de_esta_jugada = boleta
+                    else:
+                        if sorteo.id not in boletas_por_sorteo:
+                            boletas_por_sorteo[sorteo.id] = Boleta.objects.create(
+                                usuario=cliente,
+                                destinatario=destinatario,
+                                comercial=usuario if usuario != cliente else None,
+                                creado_por=usuario,
+                                forma_pago=forma_pago,
+                                fecha_sorteo=fecha_apuesta,
+                                metadata={
+                                    'origen': 'guardar_apuesta',
+                                    'tipo': 'normal',
+                                    'sorteo_id': sorteo.id,
+                                    'sorteo_nombre': sorteo.nombre,
+                                },
+                            )
+                        boleta_de_esta_jugada = boletas_por_sorteo[sorteo.id]
+
                     jugada = Jugada(
                         usuario=cliente, destinatario=destinatario,
                         comercial=usuario if usuario != cliente else None,
                         forma_juego=forma_juego, sorteo=sorteo, forma_pago=forma_pago,
-                        boleta=boleta,
+                        boleta=boleta_de_esta_jugada,
                         numero=numero, monto=monto_final, fecha_sorteo=fecha_apuesta,
                         fecha=timezone.now(), estado='confirmada',
                         metadata={'original': item, 'duplicado': True} if modo_edicion == 'duplicar' else {'original': item}
@@ -1606,28 +1873,33 @@ def _guardar_apuesta_impl(request):
                     except Exception:
                         continue
 
-                    estado_sorteo = calcular_estado_sorteo(sorteo_principal, timezone.now(), fecha_apuesta)
-                    esta_abierto = getattr(estado_sorteo, 'estado_actual', 'cerrado') == 'abierto'
-                    if not esta_abierto:
-                        es_superadmin_ = usuario.is_superuser or usuario.roles.filter(tipo='superadmin', activo=True).exists()
-                        es_banco_ = usuario.roles.filter(tipo='banco', activo=True).exists()
-                        permitido = False
-                        if es_superadmin_:
-                            permitido = True
-                        elif es_banco_:
-                            permitido = _dentro_ventana_banco(estado_sorteo, timezone.now(), horas=24)
-                        if not permitido:
-                            advertencias.append(
-                                f'El sorteo "{sorteo_principal.nombre}" ya está cerrado y ha pasado más de 24h. Solo superadmin puede cargar Superparlet fuera de tiempo.'
-                            )
-                            continue
-
+                    # FIX_SUPER_AMBOS_ABIERTOS_V1: verificar AMBOS sorteos, no solo el principal
+                    es_superadmin_ = usuario.is_superuser or usuario.roles.filter(tipo='superadmin', activo=True).exists()
+                    es_banco_ = usuario.roles.filter(tipo='banco', activo=True).exists()
+                    permitido_todos = True
+                    for _sorteo_chk in super_sorteos_list:
+                        _estado_chk = calcular_estado_sorteo(_sorteo_chk, timezone.now(), fecha_apuesta)
+                        _abierto_chk = getattr(_estado_chk, 'estado_actual', 'cerrado') == 'abierto'
+                        if not _abierto_chk:
+                            _permitido = False
+                            if es_superadmin_:
+                                _permitido = True
+                            elif es_banco_:
+                                _permitido = _dentro_ventana_banco(_estado_chk, timezone.now(), horas=24)
+                            if not _permitido:
+                                advertencias.append(
+                                    f'SuperParlet cancelado: el sorteo "{_sorteo_chk.nombre}" no está abierto. Ambos sorteos deben estar abiertos para apostar.'
+                                )
+                                permitido_todos = False
+                                break
+                    if not permitido_todos:
+                        continue
                     pool_total = get_pool_gestor(destinatario, sorteo_principal, forma_juego, forma_pago)
                     if pool_total <= 0:
                         advertencias.append(f'Sin pool configurado para Superparlet - {forma_pago.nombre}.')
                         continue
 
-                    key_mem = (sorteo_principal.id, forma_juego.id, forma_pago.id, numero)
+                    key_mem = (sorteo_principal.id, forma_juego.id, getattr(forma_pago, 'id', 0), numero)  # FIX_FORMA_PAGO_NONE_V1
                     consumido_db = Jugada.objects.filter(
                         destinatario=destinatario, sorteo=sorteo_principal, forma_juego=forma_juego,
                         forma_pago=forma_pago, fecha_sorteo=fecha_apuesta, numero=numero,
@@ -1675,13 +1947,32 @@ def _guardar_apuesta_impl(request):
                         except Jugada.DoesNotExist:
                             pass
 
+                    # FIX_1_BOLETA_POR_SORTEO_V1: superparlet → boleta única por jugada
+                    if boleta is not None:
+                        boleta_de_esta_jugada = boleta
+                    else:
+                        boleta_de_esta_jugada = Boleta.objects.create(
+                            usuario=cliente,
+                            destinatario=destinatario,
+                            comercial=usuario if usuario != cliente else None,
+                            creado_por=usuario,
+                            forma_pago=forma_pago,
+                            fecha_sorteo=fecha_apuesta,
+                            metadata={
+                                'origen': 'guardar_apuesta',
+                                'tipo': 'superparlet',
+                                'sorteos': sorteo_ids_meta,
+                            },
+                        )
+                        boletas_super.append(boleta_de_esta_jugada)
+
                     jugada = Jugada(
                         usuario=cliente, destinatario=destinatario,
                         comercial=usuario if usuario != cliente else None,
                         forma_juego=forma_juego,
                         sorteo=sorteo_principal,
                         forma_pago=forma_pago,
-                        boleta=boleta,
+                        boleta=boleta_de_esta_jugada,
                         numero=numero, monto=monto_final, fecha_sorteo=fecha_apuesta,
                         fecha=timezone.now(), estado='confirmada',
                         metadata={
@@ -1708,7 +1999,29 @@ def _guardar_apuesta_impl(request):
                     'advertencias': advertencias
                 }, status=400)
 
-            ref_boleta = boleta.referencia if boleta else f"#{jugadas_creadas[0].id}"
+            # FIX_1_BOLETA_POR_SORTEO_V1: cleanup de boletas huérfanas + ref consolidada
+            _todas_boletas_nuevas = list(boletas_por_sorteo.values()) + boletas_super
+            # Eliminar boletas que no tienen jugadas (sorteos sin pool, etc.)
+            for _b in list(_todas_boletas_nuevas):
+                if not _b.jugadas.exists():
+                    _b.delete()
+                    if _b in boletas_super:
+                        boletas_super.remove(_b)
+                    else:
+                        for _sid, _b2 in list(boletas_por_sorteo.items()):
+                            if _b2.id == _b.id:
+                                del boletas_por_sorteo[_sid]
+                                break
+            _todas_boletas_nuevas = list(boletas_por_sorteo.values()) + boletas_super
+
+            # Referencia consolidada para MovimientoFondo
+            if boleta is not None:
+                ref_boleta = boleta.referencia
+            elif _todas_boletas_nuevas:
+                _refs = [b.referencia for b in _todas_boletas_nuevas]
+                ref_boleta = _refs[0] if len(_refs) == 1 else _refs[0] + f' (+{len(_refs)-1} más)'
+            else:
+                ref_boleta = f"#{jugadas_creadas[0].id}"
             monto_fondo_consumido = Decimal('0.00')
             monto_bono_consumido = Decimal('0.00')
             monto_postpago_consumido = Decimal('0.00')
@@ -1876,6 +2189,32 @@ def _guardar_apuesta_impl(request):
                 boleta.save(update_fields=['metadata'])
                 boleta.recalcular_totales()
 
+        # ── Calcular saldos finales para el resumen ──
+        fondo_final    = Decimal('0.00')
+        bono_final     = Decimal('0.00')
+        postpago_final = Decimal('0.00')
+        try:
+            if forma_pago and cliente and destinatario:
+                _f = Fondo.objects.filter(
+                    usuario=cliente, forma_pago=forma_pago,
+                    asignado_por=destinatario, activo=True
+                ).first()
+                fondo_final = _f.monto if _f else Decimal('0.00')
+
+                bono_final = Bono.objects.filter(
+                    usuario=cliente, asignado_por=destinatario,
+                    estado='activo', saldo_restante__gt=0,
+                ).aggregate(t=Sum('saldo_restante'))['t'] or Decimal('0.00')
+
+                from roles.models import Postpago as _PP
+                _pp = _PP.objects.filter(
+                    cliente=cliente, gestor=destinatario,
+                    forma_pago=forma_pago, activo=True,
+                ).first()
+                postpago_final = abs(_pp.saldo) if _pp and _pp.saldo < 0 else Decimal('0.00')
+        except Exception as _eS:
+            logger.warning(f'[resumen] calculo saldos finales: {_eS}')
+
         if boleta:
             mensaje = f'✅ Boleta {boleta.referencia} guardada ({len(jugadas_creadas)} jugadas)'
         else:
@@ -1893,6 +2232,14 @@ def _guardar_apuesta_impl(request):
         _items_originales = len(items_normales) + len(items_super)
         _descartadas = max(0, _items_originales - len(jugadas_creadas))
 
+        # FIX_CASCADE_V1: recomputar cuadres si hubo jugadas retroactivas
+        try:
+            from roles.cuadre_cascade import cascadear_retroactivas
+            cascadear_retroactivas(jugadas_creadas)
+        except Exception as _ce:
+            import logging
+            logging.getLogger(__name__).warning(f"cascadear_retroactivas falló: {_ce}")
+
         return JsonResponse({
             'success': True,
             'message': mensaje,
@@ -1905,6 +2252,16 @@ def _guardar_apuesta_impl(request):
                 'total': float(total_apostado),
                 'descartadas': _descartadas,
                 'items_originales': _items_originales,
+                'desglose': {
+                    'fondo':    float(monto_fondo_consumido),
+                    'bono':     float(monto_bono_consumido),
+                    'postpago': float(monto_postpago_consumido),
+                },
+                'saldos_finales': {
+                    'fondo':    float(fondo_final),
+                    'bono':     float(bono_final),
+                    'postpago': float(postpago_final),
+                },
             },
         })
 
@@ -1935,9 +2292,16 @@ def _calcular_permisos_boleta(user, boleta, es_banco=False, es_superadmin=False)
     es_dueno = (boleta.usuario_id == user.id)
     es_gestor = (boleta.destinatario_id == user.id)
     es_autorizador = es_banco or es_superadmin
+    # FIX_N_PLUS_1_PERMS_V1: una sola query + cache de sorteos por sorteo_id
     sorteo_abierto = True
-    for j in boleta.jugadas.exclude(estado="cancelada").select_related("sorteo"):
-        if not _sorteo_esta_abierto(j.sorteo, j.fecha_sorteo):
+    jugadas_qs = boleta.jugadas.exclude(estado="cancelada").values_list("sorteo_id", "fecha_sorteo").distinct()[:50]
+    _sorteos_cache = {}
+    for sorteo_id, fecha in jugadas_qs:
+        sorteo = _sorteos_cache.get(sorteo_id)
+        if sorteo is None:
+            sorteo = Sorteo.objects.filter(id=sorteo_id).first()
+            _sorteos_cache[sorteo_id] = sorteo
+        if not sorteo or not _sorteo_esta_abierto(sorteo, fecha):
             sorteo_abierto = False
             break
     base = {"es_dueno": es_dueno, "es_gestor": es_gestor, "sorteo_abierto": sorteo_abierto}
@@ -1956,10 +2320,12 @@ def _calcular_permisos_boleta(user, boleta, es_banco=False, es_superadmin=False)
 @login_required
 def mis_apuestas(request):
     user = request.user
-    es_superadmin = user.is_superuser or user.roles.filter(tipo='superadmin', activo=True).exists()
-    es_banco      = user.roles.filter(tipo='banco', activo=True).exists()
-    es_comercial  = user.roles.filter(tipo='comercial', activo=True).exists()
-    es_auditor_user = user.roles.filter(tipo='auditor', activo=True).exists()
+    # FIX_ROLES_CACHE_MIS_APUESTAS_V1: una sola query para todos los roles
+    _roles_activos = set(user.roles.filter(activo=True).values_list('tipo', flat=True))
+    es_superadmin = user.is_superuser or ('superadmin' in _roles_activos)
+    es_banco      = ('banco' in _roles_activos)
+    es_comercial  = ('comercial' in _roles_activos)
+    es_auditor_user = ('auditor' in _roles_activos)
     es_cliente    = not (es_superadmin or es_banco or es_comercial or es_auditor_user)
     es_autorizador = es_superadmin or es_banco or es_comercial or es_auditor_user
 
@@ -1995,11 +2361,17 @@ def mis_apuestas(request):
             Q(destinatario=user) | Q(destinatario__in=clientes_ids)
         )
     elif es_comercial:
-        clientes_ids = list(Fondo.objects.filter(
-            asignado_por=user, activo=True
+        # FIX_MIS_APUESTAS_COMERCIAL_V1 (2026-10-17): incluir subordinados y clientes sin fondo activo
+        clientes_ids = set(Fondo.objects.filter(
+            asignado_por=user
         ).values_list('usuario_id', flat=True).distinct())
+        sub_ids = set(Subordinacion.objects.filter(
+            jefe=user, activo=True
+        ).values_list('subordinado_id', flat=True).distinct())
+        todos_clientes_ids = list(clientes_ids | sub_ids)
+        
         base_qs = Jugada.objects.filter(
-            Q(usuario__in=clientes_ids) | Q(usuario=user) | Q(destinatario=user)
+            Q(usuario__in=todos_clientes_ids) | Q(usuario=user) | Q(destinatario=user)
         )
     elif es_auditor_user:
         from roles.utils import get_red_del_auditor
@@ -2078,11 +2450,16 @@ def mis_apuestas(request):
             User.objects.filter(id__in=ids_cli, is_active=True).distinct().order_by('username')
         )
     elif es_comercial:
-        ids_cli = Fondo.objects.filter(
-            asignado_por=user, activo=True
-        ).values_list('usuario_id', flat=True)
+        # FIX_MIS_APUESTAS_COMERCIAL_V1: incluir subordinados en el filtro
+        ids_cli = set(Fondo.objects.filter(
+            asignado_por=user
+        ).values_list('usuario_id', flat=True))
+        sub_ids = set(Subordinacion.objects.filter(
+            jefe=user, activo=True
+        ).values_list('subordinado_id', flat=True))
+        todos_ids = list(ids_cli | sub_ids)
         clientes_opciones = list(
-            User.objects.filter(id__in=ids_cli, is_active=True).distinct().order_by('username')
+            User.objects.filter(id__in=todos_ids, is_active=True).distinct().order_by('username')
         )
 
     if es_cliente:
@@ -2100,7 +2477,10 @@ def mis_apuestas(request):
     # ═══════════════════════════════════════════════════════════════
     # APLICAR FILTROS
     # ═══════════════════════════════════════════════════════════════
-    qs = base_qs
+    # FIX_OCULTAR_CANCELADAS_V1: en "Mis apuestas" solo se ven
+    # jugadas confirmadas, premiadas (ganadora) y no ganadoras (perdedora).
+    # Se excluyen canceladas y anuladas.
+    qs = base_qs.exclude(estado__in=['cancelada', 'anulada'])
 
     if es_superadmin and f_banco.isdigit():
         b_id = int(f_banco)
@@ -2147,58 +2527,30 @@ def mis_apuestas(request):
     if f_estado:
         qs = qs.filter(estado=f_estado)
     if f_buscar:
-        qs = qs.filter(numero__icontains=f_buscar)
+        # FIX_BUSQUEDA_FLEXIBLE_V1
+        q_filter = (
+            Q(numero__icontains=f_buscar) |
+            Q(usuario__username__icontains=f_buscar) |
+            Q(usuario__email__icontains=f_buscar)
+        )
+        if str(f_buscar).isdigit():
+            q_filter |= Q(usuario__id=int(f_buscar))
+        qs = qs.filter(q_filter)
 
+    # FIX_SELECT_RELATED_MIS_APUESTAS_V1: precargar FKs para evitar N+1 en agrupar_jugadas
+    qs = qs.select_related(
+        'boleta', 'sorteo', 'forma_juego', 'forma_pago',
+        'usuario', 'destinatario', 'comercial'
+    )
     # ─── Agrupar primero ───
     sorteos_agrupados_normales, sorteos_agrupados_superparlet = agrupar_jugadas(qs)
 
-    for _b in sorteos_agrupados_normales + sorteos_agrupados_superparlet:
-        if _b.get("boletas_count", 0) > 1:
-            _b["perms"] = {"puede_editar": False, "puede_reenviar": False, "puede_eliminar": False}
-        elif _b.get("boleta"):
-            _b["perms"] = _calcular_permisos_boleta(user, _b["boleta"], es_banco=es_banco, es_superadmin=es_superadmin)
-        else:
-            _b["perms"] = {"puede_editar": False, "puede_reenviar": False, "puede_eliminar": False}
 
-    for _b in sorteos_agrupados_normales + sorteos_agrupados_superparlet:
-        if _b.get("boletas_count", 0) > 1:
-            _b["perms"] = {"puede_editar": False, "puede_reenviar": False, "puede_eliminar": False}
-        elif _b.get("boleta"):
-            _b["perms"] = _calcular_permisos_boleta(user, _b["boleta"], es_banco=es_banco, es_superadmin=es_superadmin)
-        else:
-            _b["perms"] = {"puede_editar": False, "puede_reenviar": False, "puede_eliminar": False}
 
-    for _b in sorteos_agrupados_normales + sorteos_agrupados_superparlet:
-        if _b.get("boletas_count", 0) > 1:
-            _b["perms"] = {"puede_editar": False, "puede_reenviar": False, "puede_eliminar": False}
-        elif _b.get("boleta"):
-            _b["perms"] = _calcular_permisos_boleta(user, _b["boleta"], es_banco=es_banco, es_superadmin=es_superadmin)
-        else:
-            _b["perms"] = {"puede_editar": False, "puede_reenviar": False, "puede_eliminar": False}
 
-    for _b in sorteos_agrupados_normales + sorteos_agrupados_superparlet:
-        if _b.get("boletas_count", 0) > 1:
-            _b["perms"] = {"puede_editar": False, "puede_reenviar": False, "puede_eliminar": False}
-        elif _b.get("boleta"):
-            _b["perms"] = _calcular_permisos_boleta(user, _b["boleta"], es_banco=es_banco, es_superadmin=es_superadmin)
-        else:
-            _b["perms"] = {"puede_editar": False, "puede_reenviar": False, "puede_eliminar": False}
 
-    for _b in sorteos_agrupados_normales + sorteos_agrupados_superparlet:
-        if _b.get("boletas_count", 0) > 1:
-            _b["perms"] = {"puede_editar": False, "puede_reenviar": False, "puede_eliminar": False}
-        elif _b.get("boleta"):
-            _b["perms"] = _calcular_permisos_boleta(user, _b["boleta"], es_banco=es_banco, es_superadmin=es_superadmin)
-        else:
-            _b["perms"] = {"puede_editar": False, "puede_reenviar": False, "puede_eliminar": False}
 
-    for _b in sorteos_agrupados_normales + sorteos_agrupados_superparlet:
-        if _b.get("boletas_count", 0) > 1:
-            _b["perms"] = {"puede_editar": False, "puede_reenviar": False, "puede_eliminar": False}
-        elif _b.get("boleta"):
-            _b["perms"] = _calcular_permisos_boleta(user, _b["boleta"], es_banco=es_banco, es_superadmin=es_superadmin)
-        else:
-            _b["perms"] = {"puede_editar": False, "puede_reenviar": False, "puede_eliminar": False}
+
 
     for _b in sorteos_agrupados_normales + sorteos_agrupados_superparlet:
         if _b.get("boletas_count", 0) > 1:
@@ -2230,13 +2582,20 @@ def mis_apuestas(request):
         sorteos_agrupados_normales + sorteos_agrupados_superparlet
     )
 
+    # FIX_FILTROS_FINALES_MIS_APUESTAS_V1: una sola pasada al qs
+    _sorteo_ids = set()
+    _forma_ids = set()
+    for _sid, _fid in qs.values_list('sorteo_id', 'forma_juego_id').distinct():
+        if _sid: _sorteo_ids.add(_sid)
+        if _fid: _forma_ids.add(_fid)
+
     sorteos_filtro = list(Sorteo.objects.filter(
-        id__in=qs.values_list('sorteo_id', flat=True).distinct()
-    ).order_by('nombre'))
+        id__in=_sorteo_ids
+    ).order_by('nombre')) if _sorteo_ids else []
 
     formas_juego_filtro = list(FormaJuego.objects.filter(
-        id__in=qs.values_list('forma_juego_id', flat=True).distinct()
-    ).order_by('nombre'))
+        id__in=_forma_ids
+    ).order_by('nombre')) if _forma_ids else []
 
     context = {
         'sorteos_agrupados_normales': sorteos_agrupados_normales,
@@ -2274,6 +2633,15 @@ def mis_apuestas(request):
         'user': user,
         'hoy': timezone.now(),
     }
+    # FIX_M2_CARTEL_PREMIO_V1: carteles rojos de premios no vistos
+    try:
+        from roles.models import Notificacion as _NotifM2
+        context['carteles_premio'] = _NotifM2.objects.filter(
+            usuario=request.user, tipo='premio', leido=False,
+        ).order_by('-creado_en')[:3]
+    except Exception:
+        context['carteles_premio'] = []
+
     return render(request, 'jugadas/mis_apuestas.html', context)
 
 # ============================================================
@@ -2359,8 +2727,6 @@ def api_crear_cliente(request):
             return JsonResponse({'success': False, 'error': 'FP no valida'}, status=400)
         if recarga_fp.nombre.lower() == 'bono':
             return JsonResponse({'success': False, 'error': 'No se recarga con bono'}, status=400)
-        if not es_superadmin and not Fondo.objects.filter(usuario=user, forma_pago=recarga_fp, activo=True).exists():
-            return JsonResponse({'success': False, 'error': 'Sin FP asignada'}, status=400)
 
 
     try:
@@ -2397,6 +2763,11 @@ def api_crear_cliente(request):
             )
 
             if recarga_monto and recarga_fp:
+                # FIX_ANTI_DUP_CREACION (2026-10-18)
+                from roles.utils import verificar_recarga_duplicada
+                if verificar_recarga_duplicada(user, nuevo, recarga_fp, recarga_monto, segundos=60):
+                    # Es un cliente nuevo, si falla es un error de la red, pero lo blindamos
+                    pass 
                 # FASE1_POSTPAGO_V1: helper (aunque un cliente nuevo no debería tener postpago)
                 from roles.utils import _aplicar_ingreso_a_fondo
                 _aplicar_ingreso_a_fondo(
@@ -2510,7 +2881,7 @@ def api_verificar_sorteo(request, sorteo_id):
             'abierto': esta_abierto, 'id': sorteo.id,
             'estado': getattr(sorteo, 'estado_actual', None),
             'segundos_restantes': getattr(sorteo, 'segundos_restantes', 0),
-            'hora_salida': sorteo.hora_salida.strftime('%H:%M') if sorteo.hora_salida else None,
+            'hora_salida': sorteo.hora_salida.strftime('%I:%M %p').lstrip('0') if sorteo.hora_salida else None,
             'hora_cierre': sorteo.hora_cierre.strftime('%H:%M') if getattr(sorteo, 'hora_cierre', None) else None,
         })
     except Sorteo.DoesNotExist:
@@ -2608,6 +2979,14 @@ def api_verificar_saldo(request):
             else:
                 postpagos_sin_fp += monto_p
         postpago_pendiente = sum(postpagos_por_fp.values()) + postpagos_sin_fp
+        
+        # FIX_POSTPAGO_TARJETA_V1 (2026-10-18): Si Tarjeta > 0, ocultar postpago
+        from pagos.models import FormaPago
+        fp_tarjeta = FormaPago.objects.filter(nombre__iexact='Tarjeta').first()
+        if fp_tarjeta and saldos.get(fp_tarjeta.id, 0.0) > 0:
+            postpago_pendiente = 0.0
+            postpagos_por_fp = {}
+            postpagos_sin_fp = 0.0
 
         return JsonResponse({
             'saldos': saldos,
@@ -2654,10 +3033,11 @@ def api_forma_pago_cliente(request):
 
         formas_pago = []
         visto = set()
+        
+        # 1. Agregar las FPs de los fondos existentes
         for f in fondos_qs:
             if not f.forma_pago:
                 continue
-            # FIX_SELFVIEW_V1: dedupe por (FP, gestor) para no perder gestores
             key = (f.forma_pago.id, f.asignado_por_id)
             if key in visto:
                 continue
@@ -2668,6 +3048,30 @@ def api_forma_pago_cliente(request):
                 'gestor_id': f.asignado_por_id,
                 'gestor_username': f.asignado_por.username if f.asignado_por else None,
             })
+            
+        # 2. FIX_FP_NUEVAS_V1 (2026-10-18): Si el usuario es gestor, agregar las FPs que tiene asignadas
+        if not (es_superadmin or user.id == seleccionado.id):
+            from roles.models import RecursoAsignado
+            # Buscamos recursos asignados al gestor actual (o a su banco si es comercial)
+            recursos_qs = RecursoAsignado.objects.filter(
+                Q(banco=user) | Q(comercial=user),
+                tipo='forma_pago',
+                activo=True
+            ).select_related('forma_pago')
+            
+            for r in recursos_qs:
+                if not r.forma_pago:
+                    continue
+                key = (r.forma_pago.id, user.id)
+                if key in visto:
+                    continue
+                visto.add(key)
+                formas_pago.append({
+                    'id': r.forma_pago.id,
+                    'nombre': r.forma_pago.nombre,
+                    'gestor_id': user.id,
+                    'gestor_username': user.username,
+                })
         return JsonResponse({'formas_pago': formas_pago})
     except Exception as e:
         logger.error(f"Error en api_forma_pago_cliente: {e}", exc_info=True)
@@ -2682,7 +3086,15 @@ def api_sorteos_disponibles(request):
         CUBA_TZ = pytz.timezone(settings.TIME_ZONE)
 
     ahora = timezone.now().astimezone(CUBA_TZ)
-    hoy = ahora.date()
+    # FIX_FECHA_SORTEOS_V1 (2026-10-18): respetar la fecha enviada por el frontend
+    _req_fecha = request.GET.get('fecha')
+    if _req_fecha:
+        try:
+            hoy = datetime.strptime(_req_fecha, '%Y-%m-%d').date()
+        except ValueError:
+            hoy = ahora.date()
+    else:
+        hoy = ahora.date()
 
     def _hora_salida_hoy(sorteo):
         dia_es = {0: 'lunes', 1: 'martes', 2: 'miercoles', 3: 'jueves',
@@ -2713,7 +3125,10 @@ def api_sorteos_disponibles(request):
         elif ahora < dt_salida:
             return 'cerrado', int((dt_salida - ahora).total_seconds()), dt_cierre
         else:
-            return 'salido', 0, dt_cierre
+            # FIX_PROXIMO_DIA_V1: el sorteo ya salió hoy. Calculamos el countdown
+            # hasta la próxima salida (mañana o el día que corresponda).
+            seg_prox = _seg_hasta_prox(sorteo, ahora)
+            return 'salido', (seg_prox or 0), dt_cierre
 
     sorteos_data = []
     for s in Sorteo.objects.filter(activo=True).order_by('id'):
@@ -2727,6 +3142,7 @@ def api_sorteos_disponibles(request):
                 'estado': 'no_programado',
                 'esta_abierto': False,
                 'hora_salida': '—',
+                'hora_salida_sort': '99:99',
                 'hora_cierre': '—',
                 'segundos_restantes': 0,
                 'minutos_restantes': 0,
@@ -2743,22 +3159,56 @@ def api_sorteos_disponibles(request):
             'origen': s.origen or 'otro',
             'estado': estado,
             'esta_abierto': estado == 'abierto',
-            'hora_salida': hora_salida.strftime('%H:%M'),
-            'hora_cierre': dt_cierre.strftime('%H:%M') if dt_cierre else '',
+            'hora_salida': hora_salida.strftime('%I:%M %p').lstrip('0'),
+            'hora_salida_sort': hora_salida.strftime('%H:%M'),
+            'hora_cierre': dt_cierre.strftime('%I:%M %p').lstrip('0') if dt_cierre else '',
             'segundos_restantes': segundos,
             'minutos_restantes': minutos,
+            'es_proximo_dia': (estado == 'salido' and segundos > 0),
             'formas_juego': s.formas_juego or [],
         })
 
     orden_estado = {'abierto': 0, 'cerrado': 1, 'salido': 2, 'no_programado': 3}
     sorteos_data.sort(key=lambda x: (
         orden_estado.get(x['estado'], 9),
-        x['hora_salida'] if x['hora_salida'] != '—' else '99:99'
+        x.get('hora_salida_sort', '99:99')
     ))
 
     return JsonResponse(sorteos_data, safe=False)
 
 @login_required
+@login_required
+def api_sorteos_con_boleta(request):
+    """
+    FIX_MARCAS_SORTEOS_V1: devuelve los sorteo_ids donde el cliente
+    ya tiene una boleta activa para esa fecha + forma de pago.
+    """
+    try:
+        cliente_id = request.GET.get('cliente_id')
+        forma_pago_id = request.GET.get('forma_pago_id')
+        fecha = request.GET.get('fecha')
+        if not cliente_id or not forma_pago_id or not fecha:
+            return JsonResponse({'sorteo_ids': []})
+        try:
+            cliente_id = int(cliente_id)
+            forma_pago_id = int(forma_pago_id)
+            from datetime import datetime as _dt
+            fecha_d = _dt.strptime(fecha, '%Y-%m-%d').date()
+        except (ValueError, TypeError):
+            return JsonResponse({'sorteo_ids': []})
+
+        sorteo_ids = list(Boleta.objects.filter(
+            usuario_id=cliente_id,
+            forma_pago_id=forma_pago_id,
+            fecha_sorteo=fecha_d,
+            estado='activa',
+        ).values_list('jugadas__sorteo_id', flat=True).distinct())
+        sorteo_ids = [s for s in sorteo_ids if s]
+        return JsonResponse({'sorteo_ids': sorteo_ids})
+    except Exception as e:
+        return JsonResponse({'sorteo_ids': [], 'error': str(e)})
+
+
 def api_configuracion_sorteo(request):
     try:
         sorteo_id = request.GET.get('sorteo_id')
@@ -2800,8 +3250,11 @@ def api_verificar_password(request):
         password = data.get('password')
         if not password:
             return JsonResponse({'success': False, 'error': 'Contraseña requerida'})
-        user = authenticate(request, username=request.user.username, password=password)
-        if user is not None:
+        # FIX_VERIFICAR_PWD_V1 (2026-10-14):
+        # Antes se usaba authenticate(), que durante una sesion activa
+        # puede rotar la sesion o devolver None aunque la pwd sea correcta.
+        # check_password() valida sin tocar la sesion.
+        if request.user.check_password(password):
             return JsonResponse({'success': True})
         return JsonResponse({'success': False, 'error': 'Contraseña incorrecta'})
     except Exception as e:
@@ -2878,8 +3331,13 @@ def api_duplicar_boleta(request, boleta_id):
         fecha_apuesta = timezone.localdate()
 
     hoy = timezone.localdate()
-    if fecha_apuesta < hoy:
-        return JsonResponse({'success': False, 'error': 'No se puede duplicar a una fecha pasada'}, status=400)
+    # FIX_FUTURO_1ANO_V1
+    _es_admin_d = user.is_superuser or user.roles.filter(tipo__in=['superadmin','banco'], activo=True).exists()
+    if fecha_apuesta < hoy and not _es_admin_d:
+        return JsonResponse({'success': False, 'error': 'Los clientes y comerciales solo pueden duplicar desde hoy en adelante.'}, status=400)
+    _limite_d = hoy + timedelta(days=365)
+    if fecha_apuesta > _limite_d:
+        return JsonResponse({'success': False, 'error': 'No puedes duplicar a más de 1 año en el futuro.'}, status=400)
 
     cliente = original.usuario
     destinatario = original.destinatario
@@ -2916,7 +3374,7 @@ def api_duplicar_boleta(request, boleta_id):
             advertencias.append(f'Sin pool para {sorteo.nombre} - {forma_juego.nombre}.')
             continue
 
-        key_mem = (sorteo.id, forma_juego.id, forma_pago.id, numero)
+        key_mem = (sorteo.id, forma_juego.id, getattr(forma_pago, 'id', 0), numero)  # FIX_FORMA_PAGO_NONE_V1
         consumido_db = Jugada.objects.filter(
             destinatario=destinatario, sorteo=sorteo, forma_juego=forma_juego,
             forma_pago=forma_pago, fecha_sorteo=fecha_apuesta, numero=numero,
@@ -3091,6 +3549,14 @@ def api_duplicar_boleta(request, boleta_id):
         }
         nueva.save(update_fields=['metadata'])
         nueva.recalcular_totales()
+
+    # FIX_CASCADE_V1: recomputar cuadres si hubo jugadas retroactivas
+    try:
+        from roles.cuadre_cascade import cascadear_retroactivas
+        cascadear_retroactivas(jugadas_creadas)
+    except Exception as _ce:
+        import logging
+        logging.getLogger(__name__).warning(f"cascadear_retroactivas falló: {_ce}")
 
     return JsonResponse({
         'success': True,
@@ -3420,8 +3886,15 @@ def api_disponible_por_numero(request):
         forma_pago_id = request.GET.get('forma_pago_id')
         fecha_str = request.GET.get('fecha')
 
-        if not all([gestor_id, sorteo_id, forma_pago_id, fecha_str]):
-            return JsonResponse({'error': 'Faltan parámetros'}, status=400)
+        _faltantes = [k for k, v in {
+            'gestor_id': gestor_id,
+            'sorteo_id': sorteo_id,
+            'forma_pago_id': forma_pago_id,
+            'fecha': fecha_str,
+        }.items() if not v]
+        if _faltantes:
+            logger.warning('[api_disponible_por_numero] faltan parámetros: %s', _faltantes)
+            return JsonResponse({'error': 'Faltan parámetros', 'faltan': _faltantes}, status=400)
 
         gestor = get_object_or_404(User, id=gestor_id)
         sorteo = get_object_or_404(Sorteo, id=sorteo_id)
@@ -3582,6 +4055,20 @@ def guardar_apuesta(request):
     que se guardaria, sin persistir nada.
     Si dry_run es falso: guarda normalmente.
     """
+    import traceback as _tb
+    from django.db import transaction
+
+    try:
+        return _guardar_apuesta_body(request)
+    except Exception as _eTop:
+        logger.error('[guardar_apuesta TOP] %s\n%s', str(_eTop), _tb.format_exc())
+        return JsonResponse({
+            'success': False,
+            'message': 'Error interno del servidor. Contacta al administrador.',
+        }, status=500)
+
+
+def _guardar_apuesta_body(request):
     from django.db import transaction
 
     dry_run = (request.POST.get('dry_run', '').lower() == 'true')

@@ -37,4 +37,5 @@ urlpatterns = [
     # RESULTADOS (pendiente)
     # ============================================================
     path('resultado/crear/', views.resultado_crear, name='resultado_crear'),
+    path('api/compartir-sorteos/', views.api_sorteos_compartir, name='api_sorteos_compartir'),  # FIX_COMPARTIR_SORTEOS_V1
 ]

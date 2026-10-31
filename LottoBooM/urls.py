@@ -1,15 +1,31 @@
+import os
 from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
+from django.http import HttpResponse
+from django.views.decorators.cache import cache_page
+from django.views.generic import RedirectView
+from django.views.static import serve
+
+
+def favicon(request):
+    """Sirve /favicon.ico desde static/pwa/favicon.ico."""
+    path = os.path.join(settings.BASE_DIR, "static", "pwa", "favicon.ico")
+    return serve(request, "favicon.ico", os.path.dirname(path))
+
 
 urlpatterns = [
+    path('favicon.ico', favicon),
     path('admin/', admin.site.urls),
     path('', include('publico.urls')),           # tu home
 
     # ============================================================
     # RECUPERACIÓN DE CONTRASEÑA (Django built-in)
     # ============================================================
+    # FIX_LOGIN_500_V1: redirigir /accounts/login/ al login custom (evita TemplateDoesNotExist)
+    path('accounts/login/', RedirectView.as_view(url='/usuarios/login/', permanent=False)),
+    path('accounts/logout/', RedirectView.as_view(url='/usuarios/login/', permanent=False)),
     path('accounts/', include('django.contrib.auth.urls')),   # ← NUEVA
 
     path('usuarios/', include('usuarios.urls')),

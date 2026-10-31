@@ -125,6 +125,15 @@
     --blue-bg:#fffbeb; --blue-border:#fde68a;
   }
 
+  /* 🔶 DELEGADO — banco operando bajo un comercial */
+  body[data-theme="delegado"]{
+    --v-50:#fef2f2; --v-100:#fee2e2; --v-200:#fecaca; --v-300:#fca5a5;
+    --v-400:#f87171; --v-500:#ef4444; --v-600:#dc2626; --v-700:#b91c1c;
+    --v-800:#991b1b; --v-ink:#450a0a; --v-soft:#fef7f7; --v-shadow:#fca5a5;
+    --blue-text:#991b1b; --blue-text-strong:#7f1d1d;
+    --blue-bg:#fef2f2; --blue-border:#fecaca;
+  }
+
   /* 🌿 VERDE (default) — se mantiene del :root, solo para asegurar selector */
   body[data-theme="verde"]{
     --v-50:#f0fdf4; --v-100:#dcfce7; --v-200:#bbf7d0; --v-300:#86efac;
@@ -139,7 +148,7 @@
 
   .ap-container{
     display:flex; flex-direction:column; gap:14px;
-    width:100%; max-width:100%; padding-bottom:150px;
+    width:100%; max-width:100%; padding-bottom:0;
   }
 
   .ap-card{
@@ -335,7 +344,196 @@
   .sorteo-btn .sh{ font-size:.66rem; opacity:.85; font-weight:500; display:block; margin-top:2px; }
   .sorteo-btn.active .sh{ color:#dcfce7; opacity:.95; }
 
+  .sp-panel.sp-esclavo{
+    opacity:.72;
+    border-color:#94a3b8;
+    box-shadow:4px 4px 0 #cbd5e1, -1px -1px 0 #fff inset;
+    position:relative;
+  }
+  .sp-panel.sp-esclavo .sp-panel-header{
+    background:linear-gradient(135deg,#64748b,#475569);
+  }
+  .sp-panel.sp-esclavo .sp-panel-header::after{
+    content:'replicado';
+    margin-left:8px;
+    background:rgba(255,255,255,.25);
+    color:#fff;
+    padding:1px 8px;
+    border-radius:60px;
+    font-size:.6rem;
+    font-weight:800;
+    letter-spacing:.3px;
+  }
+  .sp-panel.sp-esclavo input,
+  .sp-panel.sp-esclavo textarea,
+  .sp-panel.sp-esclavo select,
+  .sp-panel.sp-esclavo .add-row,
+  .sp-panel.sp-esclavo .del{
+    pointer-events:none !important;
+    background:#f1f5f9 !important;
+    color:#475569 !important;
+    border-color:#cbd5e1 !important;
+    cursor:not-allowed !important;
+  }
+  .sp-panel.sp-esclavo .tabs-bar .tab3d{
+    pointer-events:none !important;
+    opacity:.65;
+  }
+
+  /* ═══════════════════════════════════════════════════════════════
+     MODOS_TABLAS_V1 — Diferencias visuales por modo (normal / gris / azul)
+     ═══════════════════════════════════════════════════════════════ */
+
+  /* ─── MODO REPLICAR (gris) → tablas en gris ─── */
+  .sp-panel.sp-esclavo .tabla-panel{
+    background:#f1f5f9 !important;
+    border-color:#cbd5e1 !important;
+  }
+  .sp-panel.sp-esclavo .tabla-ap th{
+    background:linear-gradient(145deg,#e2e8f0,#cbd5e1) !important;
+    color:#475569 !important;
+    border-color:#cbd5e1 !important;
+  }
+  .sp-panel.sp-esclavo .tabla-ap td{
+    background:#f8fafc !important;
+  }
+  .sp-panel.sp-esclavo .tabla-ap input,
+  .sp-panel.sp-esclavo .tabla-ap textarea{
+    background:#e2e8f0 !important;
+    color:#475569 !important;
+    border-color:#cbd5e1 !important;
+  }
+  .sp-panel.sp-esclavo .tabla-ap .total{
+    color:#64748b !important;
+  }
+  .sp-panel.sp-esclavo .tabs-bar .tab3d.active{
+    background:linear-gradient(145deg,#64748b,#475569) !important;
+  }
+
+  /* ─── MODO PROCESAR (azul) → tablas en azul ─── */
+  /* FIX_PROCESAR_MANUAL_V1_CSS — checks compactos en móvil */
+  @media (max-width: 768px){
+    #replicarWrap > div{
+      gap:6px !important;
+    }
+    #replicarWrap label{
+      font-size:.78rem !important;
+      min-width:0 !important;
+      padding:4px 6px !important;
+      gap:6px !important;
+    }
+    #replicarWrap label input[type="checkbox"]{
+      width:18px !important;
+      height:18px !important;
+    }
+    #replicarWrap label span{
+      white-space:nowrap;
+    }
+    #replicarWrap .chk-procesar-label{
+      min-width:0 !important;
+      border-width:1.5px !important;
+    }
+  }
+
+  /* FIX_MOVIL_PARSER_V1_CSS — textarea y boton comodos en movil */
+  @media (max-width: 768px){
+    #procesarText{
+      font-size:.9rem !important;
+      padding:12px !important;
+      min-height:140px;
+    }
+    #btnProcAhora{
+      width:100%;
+      padding:12px 16px !important;
+      font-size:.9rem !important;
+      box-shadow:3px 3px 0 #7c2d12 !important;
+      min-height:44px;
+    }
+    #procEstado{
+      font-size:.75rem !important;
+      text-align:center;
+      width:100%;
+    }
+  }
+
+  .sp-panel.sp-esclavo-procesar{
+    border: 2px solid #60a5fa !important;
+    box-shadow: 4px 4px 0 #3b82f6, -1px -1px 0 #fff inset !important;
+    position: relative;
+  }
+  .sp-panel.sp-esclavo-procesar::after{
+    content: '🔵 procesado';
+    position: absolute;
+    top: 8px; right: 8px;
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+    color: #fff;
+    font-size: .58rem;
+    font-weight: 800;
+    padding: 2px 8px;
+    border-radius: 60px;
+    letter-spacing: .3px;
+    box-shadow: 1px 1px 0 #1e3a8a;
+    z-index: 5;
+  }
+  .sp-panel.sp-esclavo-procesar .sp-panel-header{
+    background: linear-gradient(135deg, #2563eb, #1d4ed8) !important;
+  }
+  .sp-panel.sp-esclavo-procesar .tabla-panel{
+    background:#eff6ff !important;
+    border-color:#93c5fd !important;
+  }
+  .sp-panel.sp-esclavo-procesar .tabla-ap th{
+    background:linear-gradient(145deg,#dbeafe,#bfdbfe) !important;
+    color:#1e3a8a !important;
+    border-color:#93c5fd !important;
+  }
+  .sp-panel.sp-esclavo-procesar .tabla-ap td{
+    background:#f0f9ff !important;
+  }
+  .sp-panel.sp-esclavo-procesar .tabla-ap input,
+  .sp-panel.sp-esclavo-procesar .tabla-ap textarea{
+    background:#dbeafe !important;
+    color:#1e3a8a !important;
+    border-color:#93c5fd !important;
+    font-weight:700 !important;
+  }
+  .sp-panel.sp-esclavo-procesar .tabla-ap .total{
+    color:#1d4ed8 !important;
+  }
+  .sp-panel.sp-esclavo-procesar .tabs-bar .tab3d.active{
+    background:linear-gradient(145deg,#2563eb,#1d4ed8) !important;
+    color:#fff !important;
+  }
+  .sp-panel.sp-esclavo-procesar .tabla-ap input:focus,
+  .sp-panel.sp-esclavo-procesar .tabla-ap textarea:focus{
+    background:#ffffff !important;
+    border-color:#2563eb !important;
+    box-shadow:0 0 0 2px rgba(37,99,235,.25) !important;
+  }
+
   /* Sorteo cerrado (solo visible para banco/superadmin) */
+  /* FIX_MARCAS_SORTEOS_V1: sorteo con boleta previa */
+  .sorteo-btn--ya-jugo{
+    background:linear-gradient(145deg,#fff7ed,#ffedd5) !important;
+    border-color:#f97316 !important;
+    position:relative;
+  }
+  .sorteo-btn--ya-jugo::before{
+    content:'●';
+    position:absolute;top:6px;left:8px;
+    color:#ea580c;font-size:14px;line-height:1;
+    animation:pulseYaJugo 1.6s ease-in-out infinite;
+  }
+  @keyframes pulseYaJugo{
+    0%,100%{opacity:1;transform:scale(1);}
+    50%    {opacity:.4;transform:scale(.85);}
+  }
+  .sorteo-btn--ya-jugo.active{
+    background:linear-gradient(145deg,#ea580c,#c2410c) !important;
+    color:#fff;
+  }
+  .sorteo-btn--ya-jugo.active::before{ color:#fde047; }
+
   .sorteo-btn--cerrado{
     background: linear-gradient(145deg,#fff8e1,#fde68a);
     border-color:#d97706;
@@ -482,15 +680,16 @@
     text-transform:uppercase; letter-spacing:.3px;
   }
   .tabla-ap td{ padding:2px; vertical-align:middle; }
+  /* FIX_NUMEROS_SIN_FONDO_AZUL_V1: sin fondo azul, texto oscuro, borde sutil */
   .tabla-ap input,
   .tabla-ap textarea.num-inp,
   .tabla-ap textarea.pos-num,
   .tabla-ap textarea.vs-numA,
   .tabla-ap textarea.vs-numB{
     width:100%; max-width:100%;
-    border:1.5px solid #c8ead4; border-radius:5px;
+    border:1px solid #e2e8f0; border-radius:5px;
     padding:6px 3px; font-size:.78rem; text-align:center;
-    background:var(--blue-bg); color:var(--blue-text-strong);
+    background:#ffffff; color:#0f172a;
     font-family:'Courier New',monospace; font-weight:700;
     transition:.15s;
   }
@@ -541,9 +740,9 @@
   .tabla-ap td:has(> textarea.vs-numB){
     vertical-align:top;
   }
-  .tabla-ap input.monto{ text-align:right; font-family:Inter,sans-serif; font-weight:600; }
+  .tabla-ap input.monto{ text-align:center; vertical-align:middle; font-family:Inter,sans-serif; font-weight:600; }
   .tabla-ap .total{
-    text-align:right; font-weight:800; color:#15803d;
+    text-align:center; font-weight:800; color:#15803d;
     padding:0 3px; font-size:.72rem; white-space:nowrap;
     display:block; overflow:hidden; text-overflow:ellipsis;
   }
@@ -559,7 +758,7 @@
   .tabla-ap th.del-col,.tabla-ap td.del-col{ width:9%; }
   .tabla-ap th.num-col,.tabla-ap td.num-col{ width:26%; }
   .tabla-ap th.monto-col,.tabla-ap td.monto-col{ width:22%; }
-  .tabla-ap th.total-col,.tabla-ap td.total-col{ width:21%; text-align:right; }
+  .tabla-ap th.total-col,.tabla-ap td.total-col{ width:21%; text-align:center; }
   .tabla-ap th.vs-grupo-col,.tabla-ap td.vs-grupo-col{ width:24%; }
 
   /* POSICIONES_SINGLE_COLUMN_V1 */
@@ -913,10 +1112,11 @@
     font-family:'Courier New',monospace; font-weight:700;
     min-width:0; word-break:break-word;
   }
+  /* FIX_RESUMEN_SIN_FONDO_V1: números del resumen sin recuadro azul */
   .res-linea .numeros .num{
-    display:inline-block; padding:1px 5px; margin:1px;
-    border-radius:4px; background:#e0f2fe;
-    border:1px solid #93c5fd; color:var(--blue-text-strong);
+    display:inline-block; padding:0 3px; margin:0 2px;
+    border-radius:0; background:transparent;
+    border:none; color:var(--v-ink);
     font-weight:800;
   }
   .res-linea .monto-total{
@@ -969,7 +1169,7 @@
     border:2px solid #86efac; border-radius:14px;
     padding:12px 16px;
     box-shadow:0 -6px 0 var(--v-shadow);
-    margin-top:8px; z-index:40;
+    margin-top:0; z-index:40;
     max-width:100%; overflow:hidden;
   }
   .ap-footer .totales{
@@ -1098,7 +1298,7 @@
       overflow-x:hidden !important;
     }
     .ap-root{ padding:0 4px !important; }
-    .ap-container{ gap:8px; padding-bottom:180px; }
+    .ap-container{ gap:8px; padding-bottom:0; }
 
     .ap-card{
       margin-bottom:8px; border-radius:10px;
@@ -1275,7 +1475,254 @@
     .tabla-ap input{ font-size:.58rem; padding:3px 1px; }
     .tabla-ap .total{ font-size:.52rem; }
     .tabla-ap .del{ font-size:.44rem; padding:1px 2px; }
-    .sp-panel-datos{ grid-template-columns:1fr; }
+    /* FIX_MOVIL_DATOS_2COL: mantener 2 columnas incluso en pantallas muy pequeñas */
+    .sp-panel-datos{ grid-template-columns:1fr 1fr; }
+  }
+
+  /* ═══════════════════════════════════════════════════════════════
+     FASE1_AURORA_V1 — Panel lateral + paleta multicapa
+     ═══════════════════════════════════════════════════════════════ */
+  .ap-panel-lateral{
+    position:sticky;top:1rem;
+    background:linear-gradient(145deg,#eff6ff,#dbeafe);
+    border:2px solid #93c5fd;
+    border-radius:18px;
+    box-shadow:5px 5px 0 #93c5fd, -1px -1px 0 #fff inset;
+    overflow:hidden;
+    margin-bottom:1rem;
+  }
+  .ap-panel-header{
+    background:linear-gradient(135deg,#2563eb,#1d4ed8);
+    color:#fff;font-weight:900;font-size:.95rem;
+    padding:.9rem 1.1rem;
+    border-bottom:2px solid #1e3a8a;
+    text-shadow:0 1px 2px rgba(0,0,0,.35);
+    display:flex;align-items:center;gap:8px;
+  }
+  .ap-panel-header i{ color:#fde047; }
+  .ap-panel-body{ padding:1rem; }
+  .ap-panel-subheader{
+    font-size:.7rem;font-weight:800;
+    text-transform:uppercase;letter-spacing:.6px;
+    color:#1d4ed8;
+    margin:1rem 0 .5rem;
+    padding-bottom:.4rem;
+    border-bottom:2px dashed #bfdbfe;
+    display:flex;align-items:center;gap:6px;
+  }
+  .ap-panel-subheader i{ color:#f59e0b; }
+  .ap-panel-grid{ display:grid;grid-template-columns:1fr 1fr;gap:8px; }
+  .ap-panel-celda{
+    background:#fff;
+    border:1.5px solid #dbeafe;
+    border-radius:10px;
+    padding:.5rem .7rem;
+    display:flex;flex-direction:column;gap:2px;
+    box-shadow:2px 2px 0 rgba(147,197,253,.35);
+  }
+  .ap-panel-celda.span-2{ grid-column:span 2; }
+  .ap-panel-celda .lbl{
+    font-size:.6rem;font-weight:800;
+    text-transform:uppercase;letter-spacing:.5px;
+    color:#1e40af;
+  }
+  .ap-panel-celda .val{
+    font-size:.85rem;font-weight:800;
+    color:#1e293b;word-break:break-word;
+  }
+  .ap-panel-celda .val.warning{ color:#b45309; }
+  .ap-panel-celda .val.danger{ color:#b91c1c; }
+  .ap-panel-celda .val.success{ color:#047857; }
+  .ap-panel-total{
+    margin-top:1rem;
+    background:linear-gradient(135deg,#047857,#065f46);
+    border:2px solid #052e16;
+    border-radius:12px;
+    padding:.8rem 1rem;
+    display:flex;flex-direction:column;align-items:center;
+    box-shadow:3px 3px 0 #052e16;
+  }
+  .ap-panel-total .lbl{
+    font-size:.65rem;font-weight:800;
+    text-transform:uppercase;letter-spacing:.7px;
+    color:#a7f3d0;
+  }
+  .ap-panel-total .val{
+    font-size:1.6rem;font-weight:900;
+    color:#fff;text-shadow:0 2px 3px rgba(0,0,0,.35);
+    margin-top:2px;
+  }
+  .ap-panel-btn{
+    width:100%;margin-top:1rem;padding:.9rem 1rem;
+    background:linear-gradient(135deg,#22c55e,#16a34a);
+    border:2px solid #14532d;border-radius:60px;
+    color:#fff;font-weight:900;font-size:1rem;
+    cursor:pointer;box-shadow:4px 4px 0 #052e16;
+    transition:.15s;font-family:inherit;
+    text-shadow:0 1px 2px rgba(0,0,0,.25);
+    display:flex;align-items:center;justify-content:center;gap:8px;
+  }
+  .ap-panel-btn:hover:not(:disabled){
+    transform:translate(-1px,-1px);
+    box-shadow:5px 5px 0 #052e16;
+  }
+  .ap-panel-btn:disabled{
+    opacity:.45;cursor:not-allowed;
+    box-shadow:2px 2px 0 #a7e8b8;
+    text-shadow:none;
+  }
+
+  /* AURORA_MULTICAPA_V1 — Paleta intensa multicapa */
+  .ap-card:nth-of-type(1){
+    background:linear-gradient(145deg,#fff7ed,#ffedd5);
+    border:2px solid #fdba74;
+    box-shadow:4px 4px 0 #fdba74, -1px -1px 0 #fff inset;
+  }
+  .ap-card:nth-of-type(1) .ap-card-h{
+    background:linear-gradient(135deg,#ea580c,#c2410c);
+    color:#fff;border-bottom:2px solid #7c2d12;
+    text-shadow:0 1px 2px rgba(0,0,0,.3);
+  }
+  .ap-card:nth-of-type(1) .ap-card-h i{ color:#fde047; }
+
+  #cardFP{
+    background:linear-gradient(145deg,#fefce8,#fef9c3);
+    border:2px solid #fde047;
+    box-shadow:4px 4px 0 #fde047, -1px -1px 0 #fff inset;
+  }
+  #cardFP .ap-card-h{
+    background:linear-gradient(135deg,#d97706,#92400e);
+    color:#fff;border-bottom:2px solid #78350f;
+    text-shadow:0 1px 2px rgba(0,0,0,.3);
+  }
+  #cardFP .ap-card-h i{ color:#fde047; }
+
+  #cardSorteo{
+    background:linear-gradient(145deg,#f5f3ff,#ede9fe);
+    border:2px solid #c4b5fd;
+    box-shadow:4px 4px 0 #c4b5fd, -1px -1px 0 #fff inset;
+  }
+  #cardSorteo .ap-card-h{
+    background:linear-gradient(135deg,#7c3aed,#5b21b6);
+    color:#fff;border-bottom:2px solid #4c1d95;
+    text-shadow:0 1px 2px rgba(0,0,0,.3);
+  }
+  #cardSorteo .ap-card-h i{ color:#fde047; }
+
+  .ap-footer{
+    background:linear-gradient(145deg,#fdf2f8,#fce7f3);
+    border:2px solid #f9a8d4;
+    box-shadow:0 -6px 0 #f9a8d4;
+  }
+  .ap-footer .totales .item{ color:#831843; }
+  .ap-footer .totales .item .val{ color:#9d174d; }
+
+  /* FASE2_MOBILE_V1 — FAB + Bottom sheet (solo movil) */
+  .ap-fab{
+    position:fixed;
+    bottom:16px;right:16px;
+    z-index:9990;
+    background:linear-gradient(135deg,#2563eb,#1d4ed8);
+    color:#fff;border:2px solid #1e3a8a;
+    border-radius:60px;
+    padding:.7rem 1rem .7rem .9rem;
+    font-weight:900;font-size:.95rem;
+    display:flex;align-items:center;gap:8px;
+    box-shadow:4px 4px 0 #1e3a8a, 0 8px 24px rgba(30,58,138,.4);
+    cursor:pointer;font-family:inherit;
+    transition:transform .15s, box-shadow .15s;
+    text-shadow:0 1px 2px rgba(0,0,0,.25);
+  }
+  .ap-fab:active{ transform:scale(.96); }
+  .ap-fab i.fa-receipt{ color:#fde047; }
+  .ap-fab i.fa-chevron-up{ font-size:.7rem;opacity:.85; }
+
+  .ap-bottom-sheet{
+    position:fixed;inset:0;
+    z-index:9995;
+    pointer-events:none;
+    display:flex;align-items:flex-end;justify-content:center;
+  }
+  .ap-bottom-sheet.open{ pointer-events:auto; }
+  .ap-bottom-sheet-backdrop{
+    position:absolute;inset:0;
+    background:rgba(15,23,42,.6);
+    opacity:0;transition:opacity .25s;
+    pointer-events:none;
+  }
+  .ap-bottom-sheet.open .ap-bottom-sheet-backdrop{
+    opacity:1;pointer-events:auto;
+  }
+  .ap-bottom-sheet-content{
+    position:relative;
+    background:linear-gradient(180deg,#eff6ff 0%,#dbeafe 100%);
+    width:100%;max-width:640px;
+    max-height:80vh;
+    border-radius:24px 24px 0 0;
+    border:2px solid #93c5fd;border-bottom:none;
+    box-shadow:0 -8px 32px rgba(30,58,138,.35);
+    transform:translateY(100%);
+    transition:transform .3s cubic-bezier(.32,.72,0,1);
+    display:flex;flex-direction:column;
+    overflow:hidden;
+  }
+  .ap-bottom-sheet.open .ap-bottom-sheet-content{
+    transform:translateY(0);
+  }
+  .ap-bottom-sheet-handle{
+    width:44px;height:5px;
+    background:#93c5fd;
+    border-radius:3px;
+    margin:10px auto 6px;
+    flex-shrink:0;
+  }
+  .ap-bottom-sheet-header{
+    padding:.6rem 1rem .8rem;
+    display:flex;align-items:center;justify-content:space-between;
+    font-weight:900;font-size:1rem;
+    color:#1e3a8a;
+    border-bottom:2px solid #bfdbfe;
+  }
+  .ap-bottom-sheet-header i{ color:#f59e0b;margin-right:6px; }
+  .ap-bsheet-close{
+    background:#fff;border:2px solid #cbd5e1;
+    width:32px;height:32px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    cursor:pointer;color:#475569;font-size:.85rem;
+    transition:all .15s;padding:0;
+  }
+  .ap-bsheet-close:hover{ background:#fee2e2;border-color:#fca5a5;color:#b91c1c; }
+  .ap-bottom-sheet-body{
+    padding:1rem;
+    overflow-y:auto;
+    flex:1;
+    -webkit-overflow-scrolling:touch;
+  }
+
+  @media (min-width: 992px){
+    .ap-fab, .ap-bottom-sheet{ display:none !important; }
+  }
+
+  /* PROCESAR_V1_CSS — Brillito del check Procesar */
+  @keyframes glowProcesar {
+    0%,100% { box-shadow: 0 0 0 0 rgba(234,88,12,.55); }
+    50%     { box-shadow: 0 0 0 8px rgba(234,88,12,0); }
+  }
+  .chk-procesar-label{
+    animation: glowProcesar 2.2s ease-in-out infinite;
+  }
+  .chk-procesar-label:has(input:disabled){
+    opacity:.5;
+    animation:none;
+  }
+  #procesarText{
+    transition: border-color .15s, box-shadow .15s;
+    box-shadow:inset 0 1px 3px rgba(0,0,0,.05);
+  }
+  #procesarText:focus{
+    outline:none;
+    border-color:#ea580c;
+    box-shadow:0 0 0 3px rgba(234,88,12,.2);
   }
 
   /* AUTO_APPLIED_POSTPAGO */
@@ -1427,10 +1874,190 @@
     border-color: #dc2626 !important;
     color: #fff !important;
   }
+
+/* FIX_CARTEL_CIERRE_V1 (2026-10-15): cartel rojo oblicuo para sorteo cerrado */
+#cartelSorteoCerrado {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.75);
+  z-index: 999999;
+  align-items: center;
+  justify-content: center;
+}
+#cartelSorteoCerrado.activo { display: flex; }
+#cartelSorteoCerrado .caja {
+  background: linear-gradient(135deg, #dc2626, #7f1d1d);
+  color: #fff;
+  padding: 32px 48px;
+  border-radius: 16px;
+  border: 5px solid #fff;
+  box-shadow: 0 20px 60px rgba(220,38,38,0.8), inset 0 0 20px rgba(0,0,0,0.3);
+  transform: rotate(-9deg);
+  text-align: center;
+  max-width: 90vw;
+  animation: shakeRojo 0.6s ease-in-out;
+  font-family: inherit;
+}
+#cartelSorteoCerrado .caja .icono {
+  font-size: 3rem;
+  margin-bottom: 12px;
+  filter: drop-shadow(0 0 10px #fff);
+}
+#cartelSorteoCerrado .caja .titulo {
+  font-size: 1.4rem;
+  font-weight: 900;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.4);
+}
+#cartelSorteoCerrado .caja .detalle {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 18px;
+  opacity: 0.95;
+}
+#cartelSorteoCerrado .caja .btn-cerrar {
+  background: #fff;
+  color: #991b1b;
+  border: none;
+  padding: 10px 28px;
+  border-radius: 24px;
+  font-weight: 900;
+  cursor: pointer;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  transition: transform 0.15s;
+}
+#cartelSorteoCerrado .caja .btn-cerrar:hover {
+  transform: scale(1.05);
+}
+@keyframes shakeRojo {
+  0%, 100% { transform: rotate(-9deg) translateX(0); }
+  25% { transform: rotate(-9deg) translateX(-8px); }
+  75% { transform: rotate(-9deg) translateX(8px); }
+}
+
+/* FIX_ALIGN_MONTO_V1 — centrar inputs de monto para facilitar borrado */
+.tabla-ap input[type="number"],
+.tabla-ap input[type="text"].monto,
+.tabla-ap td input:not([type="checkbox"]):not([type="radio"]),
+.tabla-ap .monto-input,
+.tabla-ap input.monto {
+  text-align: center !important;
+  padding-left: 6px !important;
+  padding-right: 6px !important;
+}
+
+
+/* FIX_CARTEL_VERDE_V1 — ocultar cartel "Jugada guardada" hasta que se guarde */
+#cartelJugadaGuardada {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.55);
+  z-index: 99999;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(3px);
+}
+#cartelJugadaGuardada.activo {
+  display: flex;
+  animation: fadeInCartel .25s ease;
+}
+#cartelJugadaGuardada .caja {
+  background: linear-gradient(135deg, #10B981, #047857);
+  color: #fff;
+  padding: 32px 48px;
+  border-radius: 20px;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0,0,0,.5);
+  border: 3px solid #fde047;
+  max-width: 90vw;
+}
+#cartelJugadaGuardada .caja .icono {
+  font-size: 3rem;
+  margin-bottom: 12px;
+  filter: drop-shadow(0 0 10px #fff);
+}
+#cartelJugadaGuardada .caja .titulo {
+  font-size: 1.4rem;
+  font-weight: 900;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  text-shadow: 0 2px 4px rgba(0,0,0,.4);
+}
+#cartelJugadaGuardada .caja .detalle {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 18px;
+  opacity: .95;
+}
+#cartelJugadaGuardada .caja .btn-cerrar {
+  background: #fff;
+  color: #065f46;
+  border: none;
+  padding: 10px 22px;
+  border-radius: 12px;
+  font-weight: 900;
+  cursor: pointer;
+  transition: transform .15s;
+  box-shadow: 0 4px 12px rgba(0,0,0,.2);
+}
+#cartelJugadaGuardada .caja .btn-cerrar:hover {
+  transform: scale(1.05);
+}
+@keyframes fadeInCartel {
+  from { opacity: 0; transform: scale(.95); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+/* FIX_TABLAS_SCROLL_H_V1 — scroll horizontal en tablas de apuestas (móvil) */
+.tablas-container .table-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: #6C3CE1 #e5e7eb;
+  padding-bottom: 4px;
+}
+.tablas-container .table-wrap > table.tabla-ap {
+  min-width: 100%;
+  width: max-content;
+}
+.tablas-container .table-wrap::-webkit-scrollbar { height: 8px; }
+.tablas-container .table-wrap::-webkit-scrollbar-track { background: #e5e7eb; border-radius: 4px; }
+.tablas-container .table-wrap::-webkit-scrollbar-thumb { background: #6C3CE1; border-radius: 4px; }
+.tablas-container .table-wrap::-webkit-scrollbar-thumb:hover { background: #5530b8; }
+  /* FIX_NUMEROS_FORCE_V1: forzar fondo blanco en textareas de números */
+  .tabla-ap textarea.num-inp,
+  .tabla-ap textarea.pos-num,
+  .tabla-ap textarea.vs-numA,
+  .tabla-ap textarea.vs-numB {
+    background: #ffffff !important;
+    color: #0f172a !important;
+    border: 1px solid #e2e8f0 !important;
+  }
+  .tabla-ap textarea.num-inp:focus,
+  .tabla-ap textarea.pos-num:focus,
+  .tabla-ap textarea.vs-numA:focus,
+  .tabla-ap textarea.vs-numB:focus {
+    background: #ffffff !important;
+    border-color: #22c55e !important;
+    box-shadow: 0 0 0 2px rgba(34,197,94,.20) !important;
+  }
+
+.tabla-ap th.col-fijo{background:linear-gradient(180deg,#1e3a8a,#2563eb)!important;color:#fff!important;font-weight:800!important;}
+.tabla-ap td.col-fijo{background:rgba(59,130,246,.10)!important;}
+.tabla-ap td.col-fijo:focus-within{background:rgba(59,130,246,.20)!important;}
+.tabla-ap td.col-fijo input.monto,.tabla-ap td.col-fijo textarea.num-inp{border-left:3px solid #3b82f6!important;}
+/* FIX_COL_FIJO_COLOR_V1 */
 </style>
 {% endblock %}
 
 {% block content %}
+{% include 'partials/_bienvenidas_pendientes.html' %}
+
 <div class="ap-root">
   {# ═══ BARRA DE TEMAS ═══ #}
   <div class="ap-theme-bar" role="group" aria-label="Cambiar tema de color">
@@ -1468,11 +2095,27 @@
   {% endif %}
 
   <div class="container-fluid py-3" style="padding-left:6px;padding-right:6px;">
+  <div class="row g-3">
+    <div class="col-12 col-lg-8">
     <div class="ap-container">
 
       <div class="ap-card">
         <div class="ap-card-h"><i class="fas fa-user"></i> Cliente y fecha</div>
         <div class="ap-card-b">
+          {% if gestor_cuenta_opciones %}
+          <div style="margin-bottom:10px;">
+            <label class="ap-label mb-1">Bajo cuenta de</label>
+            <select id="selGestorCuenta" class="form-select form-select-sm">
+              {% for grupo in gestor_cuenta_opciones %}
+                <optgroup label="{{ grupo.grupo }}">
+                  {% for opt in grupo.opciones %}
+                    <option value="{{ opt.id }}"{% if opt.id == gestor_cuenta_seleccionado %} selected{% endif %}>{{ opt.label }}</option>
+                  {% endfor %}
+                </optgroup>
+              {% endfor %}
+            </select>
+          </div>
+          {% endif %}
           <div class="ap-row">
             <div class="ap-col-cliente">
               <label class="ap-label mb-1 d-flex justify-content-between align-items-center">
@@ -1486,21 +2129,17 @@
                 </button>
                 {% endif %}
               </label>
-              <input type="text"
-                     id="inpBuscarCliente"
-                     class="form-control form-control-sm mb-2 ap-buscar"
-                     placeholder="🔍 Buscar por usuario o teléfono..."
-                     autocomplete="off">
-              <select id="selCliente" class="form-select form-select-sm">
+                            <select id="selCliente" class="form-select form-select-sm">
                 <option value="">-- Seleccionar --</option>
                 {% for c in clientes %}
                   <option value="{{ c.id }}"
+                          {% if c.es_huerfano %}disabled data-huerfano="1"{% endif %}
                           data-nombre="{{ c.nombre }}"
                           data-telefono="{{ c.telefono|default:'' }}"
                           data-saldo="{{ c.saldo_total|floatformat:2 }}"
                           data-bonos="{{ c.bonos_activos|floatformat:2 }}"
                           data-rol="{{ c.rol|default:'' }}">
-                    {{ c.nombre }}{% if c.telefono %} · 📞 {{ c.telefono }}{% endif %}
+                    {{ c.nombre }}{% if c.telefono %} · 📞 {{ c.telefono }}{% endif %}{% if c.es_huerfano %} · <em style="color:#94a3b8;font-weight:600;">recargar primero</em>{% endif %}
                   </option>
                 {% empty %}
                   <option value="" disabled>Sin {% if es_cliente %}gestores{% else %}clientes{% endif %} disponibles.</option>
@@ -1510,7 +2149,12 @@
             <div class="ap-col-fecha">
               <label class="ap-label mb-1">Fecha</label>
               <div class="ap-fecha-row">
-                <input type="date" id="inpFecha" class="form-control form-control-sm" value="{{ hoy|date:'Y-m-d' }}" min="{{ hoy|date:'Y-m-d' }}">
+                {# FIX_FUTURO_1ANO_V1: cliente/comercial min=hoy; banco/superadmin sin min #}
+                {% if es_banco or es_superadmin %}
+                <input type="date" id="inpFecha" class="form-control form-control-sm" value="{{ hoy|date:'Y-m-d' }}">
+                {% else %}
+                <input type="date" id="inpFecha" class="form-control form-control-sm" value="{{ hoy|date:'Y-m-d' }}" min="{{ hoy|date:'Y-m-d' }}" title="Puedes apostar de hoy a 1 año">
+                {% endif %}
                 <button type="button" class="btn-compartir-wa" id="btnCompartirWA" title="Compartir apuesta actual por WhatsApp">
                   <i class="fab fa-whatsapp"></i>
                   <span>Compartir</span>
@@ -1547,20 +2191,25 @@
               font-family:inherit;letter-spacing:.3px;transition:.15s;">
               <i class="fas fa-hand-holding-usd"></i> Descontar del fondo
             </button>
-            {% if not es_cliente %}<button type="button" id="btnRecargarQuick" style="
-              width:100%;padding:9px 14px;
-              background:linear-gradient(145deg,#f59e0b,#d97706);
-              color:#fff;font-weight:800;font-size:.85rem;
-              border:2px solid #92400e;border-radius:10px;
-              cursor:pointer;box-shadow:3px 3px 0 #92400e;
-              display:flex;align-items:center;justify-content:center;gap:8px;
-              font-family:inherit;letter-spacing:.3px;
-              transition:.15s;">
-              <i class="fas fa-plus-circle"></i> Recargar a este cliente
-            </button>{% endif %}
           </div>
         </div>
       </div>
+
+      {# ═══════ BOTÓN GLOBAL DE RECARGA (siempre visible para gestores) ═══════ #}
+      {% if not es_cliente %}
+      <div id="recargarGlobalWrap" style="margin-bottom:12px;display:none;">
+        <button type="button" id="btnRecargarGlobal" style="
+          width:100%;padding:12px 18px;
+          background:linear-gradient(145deg,#f59e0b,#d97706);
+          color:#fff;font-weight:800;font-size:.9rem;
+          border:2px solid #92400e;border-radius:12px;
+          cursor:pointer;box-shadow:3px 3px 0 #92400e;
+          display:flex;align-items:center;justify-content:center;gap:8px;
+          font-family:inherit;letter-spacing:.3px;transition:.15s;">
+          <i class="fas fa-plus-circle"></i> Recargar a un cliente
+        </button>
+      </div>
+      {% endif %}
 
       <div class="ap-card" id="cardSorteo" style="display:none;">
         <div class="ap-card-h"><i class="fas fa-calendar-alt"></i> Sorteos (elige uno o varios)</div>
@@ -1575,11 +2224,75 @@
         </div>
       </div>
 
+
+          <div id="replicarWrap" style="margin-bottom:10px;padding:10px 12px;background:#eef2ff;border:1.5px solid #c7d2fe;border-radius:10px;">
+            <div style="display:flex;gap:10px;align-items:stretch;flex-wrap:wrap;">
+              <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:800;color:#3730a3;font-size:.85rem;margin:0;flex:1;min-width:120px;padding:4px 6px;">
+                <input type="checkbox" id="chkReplicar" style="width:20px;height:20px;cursor:pointer;accent-color:#4f46e5;margin:0;">
+                <span>&#128257; Replicar</span>
+              </label>
+              <label class="chk-procesar-label" style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:800;color:#7c2d12;font-size:.85rem;margin:0;flex:1;min-width:160px;padding:4px 10px;border-radius:12px;border:2px dashed #fdba74;background:#fff7ed;">
+                <input type="checkbox" id="chkProcesar" style="width:20px;height:20px;cursor:pointer;accent-color:#ea580c;margin:0;">
+                <span>&#128203; Procesar</span>
+              </label>
+            </div>
+          </div>
+          <div id="procesarTextWrap" style="display:none;margin-bottom:10px;padding:10px 12px;background:#fff7ed;border:2px solid #fdba74;border-radius:10px;">
+            <label style="display:block;font-weight:800;color:#7c2d12;font-size:.78rem;margin-bottom:6px;">
+              <i class="fas fa-paste"></i> Pega aquí el texto del cliente
+            </label>
+            <textarea id="procesarText" rows="6" placeholder="Ejemplo:
+T7 con 25
+D 8 1 5 con 50f y 20c" style="width:100%;padding:10px;border:1.5px solid #fdba74;border-radius:8px;font-family:'Courier New',monospace;font-size:.82rem;background:#ffffff;color:#1e293b;resize:vertical;"></textarea>
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:8px;flex-wrap:wrap;">
+              <small id="procEstado" style="font-size:.7rem;font-weight:700;color:#78350f;">Edita el texto y se procesará solo</small>
+              <button type="button" id="btnProcAhora" style="padding:6px 14px;background:linear-gradient(135deg,#ea580c,#c2410c);color:#fff;border:2px solid #7c2d12;border-radius:10px;font-weight:800;font-size:.78rem;cursor:pointer;font-family:inherit;box-shadow:2px 2px 0 #7c2d12;">
+                <i class="fas fa-bolt"></i> Procesar
+              </button>
+            </div>
+          </div>
+
       <div id="panelesSorteo"></div>
 
       <div id="saldoMsgContainer"></div>
 
     </div>
+    </div>
+    <div class="col-lg-4 d-none d-lg-block">
+      <div class="ap-panel-lateral">
+        <div class="ap-panel-header">
+          <i class="fas fa-receipt"></i> Resumen de la apuesta
+        </div>
+        <div class="ap-panel-body">
+          <div class="ap-panel-grid">
+            <div class="ap-panel-celda span-2"><span class="lbl">Cliente</span><span class="val" id="prCliente">—</span></div>
+            <div class="ap-panel-celda span-2"><span class="lbl">Gestor</span><span class="val" id="prGestor">—</span></div>
+            <div class="ap-panel-celda span-2"><span class="lbl">Forma de pago</span><span class="val" id="prFP">—</span></div>
+            <div class="ap-panel-celda"><span class="lbl">Fecha</span><span class="val" id="prFecha">—</span></div>
+            <div class="ap-panel-celda"><span class="lbl">Sorteos</span><span class="val" id="prSorteos">0</span></div>
+          </div>
+
+          <div class="ap-panel-subheader"><i class="fas fa-coins"></i> Detalle</div>
+
+          <div class="ap-panel-grid">
+            <div class="ap-panel-celda"><span class="lbl">Postpago</span><span class="val warning" id="prPostpago">$0.00</span></div>
+            <div class="ap-panel-celda"><span class="lbl">Bonos</span><span class="val warning" id="prBonos">$0.00</span></div>
+            <div class="ap-panel-celda"><span class="lbl">Saldo FP</span><span class="val" id="prSaldo">$0.00</span></div>
+            <div class="ap-panel-celda"><span class="lbl">Saldo final</span><span class="val danger" id="prSaldoFinal">$0.00</span></div>
+          </div>
+
+          <div class="ap-panel-total">
+            <span class="lbl">Total apuesta</span>
+            <span class="val" id="prTotal">$0.00</span>
+          </div>
+
+          <button type="button" class="ap-panel-btn" id="btnGoLateral" disabled>
+            <i class="fas fa-check-circle"></i> Confirmar apuesta
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
   </div>
 
   <div class="ap-footer">
@@ -1596,7 +2309,52 @@
 </div>
 
 {# ═══════ MODAL NUEVO CLIENTE OFFLINE ═══════ #}
-<div class="modal fade" id="modalNuevoCliente" tabindex="-1" aria-hidden="true">
+{# ═══════ FASE2_MOBILE_V1: FAB + Bottom sheet (solo móvil) ═══════ #}
+  <button type="button" class="ap-fab d-lg-none" id="apFab" aria-label="Ver resumen">
+    <i class="fas fa-receipt"></i>
+    <span id="apFabTotal">$0.00</span>
+    <i class="fas fa-chevron-up"></i>
+  </button>
+
+  <div class="ap-bottom-sheet d-lg-none" id="apBottomSheet" aria-hidden="true">
+    <div class="ap-bottom-sheet-backdrop" id="apSheetBackdrop"></div>
+    <div class="ap-bottom-sheet-content" id="apSheetContent">
+      <div class="ap-bottom-sheet-handle"></div>
+      <div class="ap-bottom-sheet-header">
+        <span><i class="fas fa-receipt"></i> Resumen de la apuesta</span>
+        <button type="button" class="ap-bsheet-close" id="apSheetClose"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="ap-bottom-sheet-body">
+        <div class="ap-panel-grid">
+          <div class="ap-panel-celda span-2"><span class="lbl">Cliente</span><span class="val" id="bsCliente">—</span></div>
+          <div class="ap-panel-celda span-2"><span class="lbl">Gestor</span><span class="val" id="bsGestor">—</span></div>
+          <div class="ap-panel-celda span-2"><span class="lbl">Forma de pago</span><span class="val" id="bsFP">—</span></div>
+          <div class="ap-panel-celda"><span class="lbl">Fecha</span><span class="val" id="bsFecha">—</span></div>
+          <div class="ap-panel-celda"><span class="lbl">Sorteos</span><span class="val" id="bsSorteos">0</span></div>
+        </div>
+
+        <div class="ap-panel-subheader"><i class="fas fa-coins"></i> Detalle</div>
+
+        <div class="ap-panel-grid">
+          <div class="ap-panel-celda"><span class="lbl">Postpago</span><span class="val warning" id="bsPostpago">$0.00</span></div>
+          <div class="ap-panel-celda"><span class="lbl">Bonos</span><span class="val warning" id="bsBonos">$0.00</span></div>
+          <div class="ap-panel-celda"><span class="lbl">Saldo FP</span><span class="val" id="bsSaldo">$0.00</span></div>
+          <div class="ap-panel-celda"><span class="lbl">Saldo final</span><span class="val danger" id="bsSaldoFinal">$0.00</span></div>
+        </div>
+
+        <div class="ap-panel-total">
+          <span class="lbl">Total apuesta</span>
+          <span class="val" id="bsTotal">$0.00</span>
+        </div>
+
+        <button type="button" class="ap-panel-btn" id="btnGoSheet" disabled>
+          <i class="fas fa-check-circle"></i> Confirmar apuesta
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="modalNuevoCliente" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content" style="border-radius:16px;border:1px solid #c8ead4;">
       <div class="modal-header" style="background:linear-gradient(135deg,#ef4444,#b91c1c);border-bottom:1px solid #7f1d1d;color:#fde047;">
@@ -1707,7 +2465,12 @@
       </div>
       <div class="modal-body">
         <p class="text-muted small fw-semibold">Ingresa tu contraseña para confirmar la apuesta.</p>
-        <input type="password" id="inpPwd" class="form-control" placeholder="Contraseña" style="border-radius:10px;border:1.5px solid #b6e5c2;color:#1e3a8a;font-weight:700;">
+        <div class="input-group">
+          <input type="password" id="inpPwd" class="form-control" placeholder="Contraseña" style="border-radius:10px 0 0 10px;border:1.5px solid #b6e5c2;color:#1e3a8a;font-weight:700;">
+          <button type="button" id="btnPwdEye" class="btn" style="background:#fff;border:1.5px solid #b6e5c2;border-left:none;border-radius:0 10px 10px 0;color:#16a34a;font-weight:800;" tabindex="-1" title="Ver/ocultar contraseña">
+            <i class="fas fa-eye" id="pwdEyeIcon"></i>
+          </button>
+        </div>
         <div id="pwdErr" class="text-danger small mt-2 fw-bold" style="display:none;"></div>
       </div>
       <div class="modal-footer" style="border-top:1px solid #c8ead4;">
@@ -1771,7 +2534,6 @@
   }
 })();
 </script>
-{% endblock %}
 
 
 {# ═══════ MODAL PREVIEW (opción 1) ═══════ #}
@@ -1788,7 +2550,17 @@
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body">
-        <div style="background:#f0fdf4;border:1.5px solid #86efac;border-radius:8px;padding:10px 12px;margin-bottom:14px;font-size:.82rem;">
+        <div class="mb-3">
+          <label class="ap-label mb-1" style="font-weight:800;">Cliente <span style="color:#DC2626;">*</span></label>
+          <select id="mrrClienteSelect" class="form-select" style="border-radius:10px;border:1.5px solid #b6e5c2;font-weight:700;color:#1e3a8a;">
+            <option value="">-- Selecciona un cliente --</option>
+            {% for c in clientes %}
+              <option value="{{ c.id }}" data-nombre="{{ c.nombre }}">{{ c.nombre }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div id="mrrInfoCliente" style="background:#f0fdf4;border:1.5px solid #86efac;border-radius:8px;padding:10px 12px;margin-bottom:14px;font-size:.82rem;">
           <div style="font-weight:800;color:#065F46;">Cliente: <span id="mrrCliente">—</span></div>
           <div style="color:#047857;font-weight:700;font-size:.78rem;margin-top:2px;">Fondo actual: <span id="mrrFondoActual">$0.00</span></div>
         </div>
@@ -1802,7 +2574,7 @@
 
         <div class="mb-3">
           <label class="ap-label mb-1" style="font-weight:800;">Monto a recargar <span style="color:#DC2626;">*</span></label>
-          <input type="number" step="0.01" min="0.01" id="mrrMonto" class="form-control" placeholder="0" style="border-radius:10px;border:1.5px solid #b6e5c2;font-weight:700;color:#1e3a8a;font-size:1.1rem;">
+          <input type="number" step="0.01" min="0.01" id="mrrMonto" class="form-control" placeholder="0" style="border-radius:10px;border:1.5px solid #b6e5c2;font-weight:700;color:#1e3a8a;font-size:1.1rem;" onkeydown="if(event.key==='Enter'){event.preventDefault();document.getElementById('mrrConfirmar').click();}">
         </div>
 
         <div id="mrrError" style="display:none;background:#fee2e2;border:1.5px solid #fca5a5;color:#7f1d1d;padding:8px 12px;border-radius:8px;font-weight:700;font-size:.8rem;"></div>
@@ -1854,6 +2626,38 @@
 </div>
 <style>
 @keyframes shk{0%,100%{transform:translateX(0);}25%{transform:translateX(-6px);}75%{transform:translateX(6px);}}
+
+  /* FIX_RESUMEN_NEUTRAL_V3: sin fondos ni sombras azules en el resumen */
+  .sp-resumen{
+    background:#f8f9fa !important;
+    border:1.5px solid #e5e7eb !important;
+    box-shadow:none !important;
+  }
+  .sp-resumen-header{
+    color:#374151 !important;
+    border-bottom:2px dashed #d1d5db !important;
+  }
+  .res-linea{
+    background:#ffffff !important;
+    border:1px solid #e5e7eb !important;
+    box-shadow:none !important;
+  }
+  .res-subgrupo{
+    background:transparent !important;
+    border:none !important;
+    padding:1px 4px !important;
+  }
+  /* Panel de datos superior: quitar azul */
+  .sp-panel-datos{
+    background:#f9fafb !important;
+    border-bottom:1px dashed #e5e7eb !important;
+  }
+  .sp-dato{
+    border-color:#e5e7eb !important;
+  }
+  .sp-dato .lbl{
+    color:#6b7280 !important;
+  }
 </style>
 
 <div class="modal fade" id="modalPreview" tabindex="-1" aria-hidden="true">
@@ -1883,6 +2687,33 @@
   </div>
 </div>
 
+
+{# FIX_HTML_CARTELES_V1 (2026-10-18): Estructura HTML de los carteles de error y exito #}
+<div id="cartelSorteoCerrado">
+  <div class="caja">
+    <div class="icono">⛔</div>
+    <div class="titulo">Jugada no recibida</div>
+    <div class="detalle" id="cartelDetalle">El sorteo ya cerró.</div>
+    <div class="acciones" style="display:flex; gap:10px; justify-content:center; margin-top:15px; flex-wrap:wrap;">
+      <button type="button" class="btn-wa" onclick="compartirApuestaWA()" style="background:#25D366; color:#fff; border:none; padding:12px 24px; border-radius:24px; font-weight:900; cursor:pointer; text-transform:uppercase; letter-spacing:1px;">
+        <i class="fab fa-whatsapp"></i> Compartir por WhatsApp
+      </button>
+      <button type="button" class="btn-cerrar" onclick="document.getElementById('cartelSorteoCerrado').classList.remove('activo')">Entendido</button>
+    </div>
+  </div>
+</div>
+
+<div id="cartelJugadaGuardada">
+  <div class="caja">
+    <div class="icono">✅</div>
+    <div class="titulo">Jugada guardada</div>
+    <div class="detalle" id="cartelVerdeDetalle">La jugada fue recibida correctamente. Es válida con las formas de juego, la forma de pago y el sorteo seleccionados. Descontada del fondo.</div>
+    <button type="button" class="btn-cerrar" onclick="window.location.href='{% url 'jugadas:mis_apuestas' %}'" style="margin-top:15px;">Ver mis apuestas</button>
+  </div>
+</div>
+
+{% endblock %}
+
 {% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function(){
@@ -1905,6 +2736,8 @@ console.log('[apostar] CSRF token presente:', CSRF ? 'sí' : 'NO');
 document.addEventListener('paste', function(e){
   const inp = e.target;
   if (!inp) return;
+  // FIX_PASTE_PROCESAR_V1: el textarea del parser NO se sanitiza
+  if (inp.id === 'procesarText') return;
   const tag = inp.tagName;
   if (tag === 'INPUT'){
     if (inp.type !== 'text' && inp.type !== 'number' && inp.type !== 'tel') return;
@@ -1941,7 +2774,7 @@ function _fetchPool() {
     ordenSorteos.forEach(function(sid){
         var key = gestorId + '_' + sid + '_' + fpId;
         if (_poolCache[key] !== undefined) return;
-        var hoy = new Date().toISOString().slice(0,10);
+        var hoy = new Date().toLocaleDateString('en-CA');
         fetch("{% url 'roles:api_limites_gestor' %}?gestor_id=" + gestorId + "&sorteo_id=" + sid + "&forma_pago_id=" + (fpSel || '') + "&fecha=" + hoy, {
             headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
         })
@@ -1987,7 +2820,7 @@ function _cargarPoolPorNumero(sid){
   if (_poolPorNumeroCache[key]) {
     return Promise.resolve(_poolPorNumeroCache[key]);
   }
-  var hoy = new Date().toISOString().slice(0,10);
+  var hoy = new Date().toLocaleDateString('en-CA');
   var url = "{% url 'jugadas:api_disponible_por_numero' %}"
           + "?gestor_id=" + gestorId
           + "&sorteo_id=" + sid
@@ -2072,55 +2905,11 @@ const ES_MODO_REENVIAR = (new URLSearchParams(window.location.search)).get('modo
 const USERNAME_ACTUAL = "{{ user.username|escapejs }}";
 const USER_ID_ACTUAL = {{ user.id }};
 const ES_BANCO_O_SUPER = {% if es_banco or es_superadmin %}true{% else %}false{% endif %};
+const GESTOR_CUENTA_SELECCIONADO = '{{ gestor_cuenta_seleccionado|default:""|escapejs }}';
 
 /* ═══════════════════════════════════════════════════════════════
    BUSCADOR DE CLIENTES — filtra el select por usuario o teléfono
    ═══════════════════════════════════════════════════════════════ */
-(function initBuscadorCliente(){
-  const inp = document.getElementById('inpBuscarCliente');
-  const sel = document.getElementById('selCliente');
-  if (!inp || !sel) return;
-
-  function normalizar(s){
-    return String(s || '')
-      .toLowerCase()
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')   // quita tildes
-      .replace(/[\s\-\(\)\.\+]/g, '');    // quita espacios, guiones, paréntesis, +
-  }
-
-  inp.addEventListener('input', function(){
-    const q = normalizar(this.value);
-    const opciones = Array.from(sel.querySelectorAll('option'));
-    const optgroups = Array.from(sel.querySelectorAll('optgroup'));
-
-    // El placeholder nunca se filtra
-    opciones.forEach(opt => {
-      if (!opt.value) { opt.hidden = false; opt.style.display = ''; return; }
-      const nombre = normalizar(opt.dataset.nombre || '');
-      const telf = normalizar(opt.dataset.telefono || '');
-      const match = !q || nombre.includes(q) || telf.includes(q);
-      opt.hidden = !match;
-      opt.style.display = match ? '' : 'none';
-    });
-
-    // Ocultar optgroups que quedaron vacíos
-    optgroups.forEach(grp => {
-      const visibles = Array.from(grp.querySelectorAll('option')).some(o => !o.hidden);
-      grp.hidden = !visibles;
-      grp.style.display = visibles ? '' : 'none';
-    });
-  });
-
-  // Al limpiar el buscador (por ejemplo con botón nativo ✕), resetear filtro
-  inp.addEventListener('search', function(){
-    if (this.value === '') {
-      sel.querySelectorAll('option').forEach(o => { o.hidden = false; o.style.display = ''; });
-      sel.querySelectorAll('optgroup').forEach(g => { g.hidden = false; g.style.display = ''; });
-    }
-  });
-})();
-
 /* ═══════════════════════════════════════════════════════════════
    CONSTANTES
    ═══════════════════════════════════════════════════════════════ */
@@ -2250,7 +3039,13 @@ function getClienteRealId(){
   return ES_CLIENTE ? USER_ID_ACTUAL : (cliente ? cliente.id : null);
 }
 function getDestinatarioId(){
-  return ES_CLIENTE ? (cliente ? cliente.id : null) : USER_ID_ACTUAL;
+  if (ES_CLIENTE) return cliente ? cliente.id : null;
+  // FIX_GUARDAR_COMERCIAL_V1: banco/superadmin operando bajo un comercial
+  if (typeof GESTOR_CUENTA_SELECCIONADO !== 'undefined' && GESTOR_CUENTA_SELECCIONADO) {
+    var _g = parseInt(GESTOR_CUENTA_SELECCIONADO);
+    if (!isNaN(_g) && _g > 0) return _g;
+  }
+  return USER_ID_ACTUAL;
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -2269,6 +3064,7 @@ $('selCliente').addEventListener('change', function(){
   bonoDisp = cliente.bonos || 0;
   limpiarPanelesSorteo();
   cargarFormasPago();
+  setTimeout(_cargarSorteosConBoleta, 600);  // FIX_REFRESH_MARCAS_V1
 });
 
 function resetAll(){
@@ -2303,7 +3099,7 @@ function cargarFormasPago(){
     bonosSinFp = parseFloat(saldoData.bonos_sin_fp) || 0;
     postpagosPorFp = saldoData.postpagos_por_fp || {};
     postpagosSinFp = parseFloat(saldoData.postpagos_sin_fp) || 0;
-    $('ftPostpago').textContent = fmtMoney(postpagoPendiente);
+    $('ftPostpago').textContent = postpagoPendiente > 0 ? '-' + fmtMoney(postpagoPendiente) : '$0.00';
     $('ftBono').textContent = fmtMoney(bonoDisp);
 
     if (!fps.length){
@@ -2311,7 +3107,17 @@ function cargarFormasPago(){
       return;
     }
 
-    let html = fps.map(f=>{
+    // FIX_UI_DEUDA_CLIENTE_V1 (2026-10-17): alerta visual si el cliente tiene deuda
+    let alertaDeuda = '';
+    if (postpagoPendiente > 0) {
+      alertaDeuda = `<div class="alert alert-danger" style="font-size:0.8rem; padding:10px; margin-bottom:10px; border-radius:8px; border: 1px solid #f5c2c7; background:#f8d7da; color:#842029;">
+        <i class="fas fa-exclamation-triangle"></i> 
+        <strong>Atención:</strong> Tienes una deuda pendiente de <strong>${fmtMoney(postpagoPendiente)}</strong>. 
+        Los premios de tus apuestas se usarán primero para cubrir esta deuda.
+      </div>`;
+    }
+
+    let html = alertaDeuda + fps.map(f=>{
       const s = saldos[f.id] || 0;
       const bonoFp = getBonoParaFp(f.id);
       const ppFp = getPostpagoParaFp(f.id);
@@ -2333,7 +3139,9 @@ function cargarFormasPago(){
       </div>`;
     }
     if (postpagoPendiente > 0){
-      html += `<div class="fp-chip fp-chip-postpago" data-tipo="postpago" data-n="Deuda" data-s="${postpagoPendiente}">
+      // FIX_CLIENTE_SIN_DEUDA_V1: cliente ve la deuda pero NO puede usarla
+      var _postpagoDis = ES_CLIENTE ? 'disabled' : '';
+      html += `<div class="fp-chip fp-chip-postpago ${_postpagoDis}" data-tipo="postpago" data-n="Deuda" data-s="${postpagoPendiente}" ${ES_CLIENTE ? 'title="Solo un gestor puede usar deuda"' : ''}>
         <span class="fp-nombre"><i class="fas fa-file-invoice-dollar"></i> Deuda</span>
         <strong>${fmtMoney(postpagoPendiente)}</strong>
       </div>`;
@@ -2361,6 +3169,8 @@ function cargarFormasPago(){
           saldoFP = parseFloat(ch.dataset.s) || 0;
         }
         ultimoEstadoDescuento = null;
+
+        setTimeout(_cargarSorteosConBoleta, 400);  // FIX_REFRESH_MARCAS_V1
 
         document.querySelectorAll('.sp-panel').forEach(p => {
           const elFP = p.querySelector('.sp-dato-fp');
@@ -2417,6 +3227,72 @@ function limpiarPanelesSorteo(){
   if (cont) cont.innerHTML = '';
 }
 
+var _sorteosConBoleta = new Set();
+
+function _cargarSorteosConBoleta(){
+  var cliId = getClienteRealId();
+  var fp = fpSel || '';
+  var fecha = $('inpFecha') ? $('inpFecha').value : '';
+  if (!cliId || !fp || !fecha){
+    _sorteosConBoleta = new Set();
+    _pintarMarcasSorteos();
+    return;
+  }
+  var url = "{% url 'jugadas:api_sorteos_con_boleta' %}?cliente_id=" + cliId
+          + "&forma_pago_id=" + fp + "&fecha=" + fecha;
+  fetch(url, {headers:{'Accept':'application/json'}})
+    .then(function(r){ return r.ok ? r.json() : null; })
+    .then(function(d){
+      if (d && d.sorteo_ids){
+        _sorteosConBoleta = new Set(d.sorteo_ids.map(String));
+      } else {
+        _sorteosConBoleta = new Set();
+      }
+      _pintarMarcasSorteos();
+    })
+    .catch(function(){});
+}
+
+function _pintarMarcasSorteos(){
+  document.querySelectorAll('.sorteo-btn').forEach(function(b){
+    if (_sorteosConBoleta.has(String(b.dataset.id))){
+      b.classList.add('sorteo-btn--ya-jugo');
+      if (!b.querySelector('.sh-ya-jugo')){
+        var badge = document.createElement('span');
+        badge.className = 'sh sh-ya-jugo';
+        badge.style.cssText = 'color:#c2410c;font-weight:800;font-size:.6rem;';
+        badge.textContent = '⚠️ Ya tiene jugada';
+        b.appendChild(badge);
+      }
+    } else {
+      b.classList.remove('sorteo-btn--ya-jugo');
+      var ex = b.querySelector('.sh-ya-jugo');
+      if (ex) ex.remove();
+    }
+  });
+}
+
+/* FIX_COUNTDOWN_FMT_V1 — Formato adaptativo de cuenta regresiva */
+function fmtSegundos(seg){
+  seg = Math.max(0, parseInt(seg, 10) || 0);
+  var d = Math.floor(seg / 86400);
+  var h = Math.floor((seg % 86400) / 3600);
+  var m = Math.floor((seg % 3600) / 60);
+  var s = seg % 60;
+  var p = function(n){ return (n < 10 ? '0' : '') + n; };
+  if (d > 0) return d + 'd ' + p(h) + ':' + p(m) + ':' + p(s);
+  return p(h) + ':' + p(m) + ':' + p(s);
+}
+function fmtSegundosCorto(seg){
+  seg = Math.max(0, parseInt(seg, 10) || 0);
+  var d = Math.floor(seg / 86400);
+  var h = Math.floor((seg % 86400) / 3600);
+  var m = Math.floor((seg % 3600) / 60);
+  if (d > 0) return d + 'd ' + h + 'h';
+  if (h > 0) return h + 'h ' + m + 'm';
+  return m + 'min';
+}
+
 function cargarSorteos(){
   $('cardSorteo').style.display = 'block';
   $('listaSorteos').innerHTML = '<span class="text-muted small"><i class="fas fa-spinner fa-spin"></i> Cargando...</span>';
@@ -2428,7 +3304,12 @@ function cargarSorteos(){
         $('listaSorteos').innerHTML = '<span class="text-muted small">Sin sorteos.</span>';
         return;
       }
-      const visibles = ES_BANCO_O_SUPER ? data : data.filter(s => s.esta_abierto);
+      // FIX_FILTRO_POR_ROL_V1: los administradores/banco ven todo; clientes y comerciales
+      // SOLO ven sorteos abiertos (ni cerrados ni salidos).
+      const visibles = ES_BANCO_O_SUPER
+        ? data.filter(s => s.estado !== 'no_programado')
+        : data.filter(s => s.esta_abierto === true);
+      setTimeout(_cargarSorteosConBoleta, 100);
 
       if (!visibles.length){
         $('listaSorteos').innerHTML = '<span class="text-muted small">No hay sorteos disponibles.</span>';
@@ -2437,27 +3318,89 @@ function cargarSorteos(){
 
       /* ✅ Ordenar: abiertos primero (por hora más próxima), cerrados al final */
       const compararPorHora = (a, b) => {
-        const ha = a.hora_salida || '99:99';
-        const hb = b.hora_salida || '99:99';
+        const ha = a.hora_salida_sort || '99:99';
+        const hb = b.hora_salida_sort || '99:99';
         return ha.localeCompare(hb);
       };
+      // FIX_ORDEN_DESC_V1: cerrados y salidos se ordenan descendente (más reciente primero)
+      const compararPorHoraDesc = (a, b) => {
+        const ha = a.hora_salida_sort || '00:00';
+        const hb = b.hora_salida_sort || '00:00';
+        return hb.localeCompare(ha);
+      };
+      // FIX_PANEL_CERRADOS_V1: separar abiertos (lista) de cerrados+salidos (panel colapsable)
       const abiertos = visibles.filter(s => s.esta_abierto).sort(compararPorHora);
-      const cerrados = visibles.filter(s => !s.esta_abierto).sort(compararPorHora);
-      const ordenados = [...abiertos, ...cerrados];
+      const cerrados = visibles.filter(s => !s.esta_abierto && s.estado !== 'salido').sort(compararPorHoraDesc);
+      const salidos  = visibles.filter(s => s.estado === 'salido').sort(compararPorHoraDesc);
 
-      $('listaSorteos').innerHTML = ordenados.map(s=>{
-        const cerrado = !s.esta_abierto;
-        const extraCls = cerrado ? ' sorteo-btn--cerrado' : '';
-        const badge = cerrado
-          ? '<span class="sh" style="color:#b45309;font-weight:800;">🔒 Cerrado</span>'
-          : `<span class="sh">🕒 ${s.hora_salida || '—'} · ⏱ ${s.minutos_restantes || 0}min</span>`;
+      // Helper: renderiza un botón de sorteo
+      function _renderBtnSorteo(s){
+        const esSalidoCls = (s.estado === 'salido');
+        const cerrado = !s.esta_abierto && !esSalidoCls;
+        const extraCls = esSalidoCls ? ' sorteo-btn--salido' : (cerrado ? ' sorteo-btn--cerrado' : '');
+        const badge = esSalidoCls
+          ? `<span class="sh" style="color:#6b7280;font-weight:700;">⏱ Próx: ${fmtSegundos(s.segundos_restantes || 0)}</span>`
+          : cerrado
+            ? '<span class="sh" style="color:#b45309;font-weight:800;">🔒 Cerrado</span>'
+            : `<span class="sh">🕒 ${s.hora_salida || '—'} · ⏱ ${fmtSegundos(s.segundos_restantes || 0)}</span>`;
         return `
-          <button type="button" class="sorteo-btn${extraCls}" data-id="${s.id}" data-nombre="${esc(s.nombre)}" data-cerrado="${cerrado ? '1' : '0'}" data-minutos="${s.minutos_restantes || 0}">
+          <button type="button" class="sorteo-btn${extraCls}" data-id="${s.id}" data-nombre="${esc(s.nombre)}" data-cerrado="${cerrado ? '1' : '0'}" data-minutos="${s.minutos_restantes || 0}" data-segundos="${s.segundos_restantes || 0}">
             <span>${esc(s.nombre)}</span>
             ${badge}
           </button>`;
-      }).join('');
+      }
 
+      // Lista principal: solo abiertos
+      $('listaSorteos').innerHTML = abiertos.length
+        ? abiertos.map(_renderBtnSorteo).join('')
+        : '<span class="text-muted small">No hay sorteos abiertos en este momento.</span>';
+
+      // Panel colapsable (solo admin/banco) con cerrados + salidos en grid
+      if (ES_BANCO_O_SUPER) {
+        var panelWrap = document.getElementById('panelCerradosWrap');
+        if (!panelWrap) {
+          panelWrap = document.createElement('div');
+          panelWrap.id = 'panelCerradosWrap';
+          panelWrap.style.cssText = 'display:none;margin-top:14px;';
+          panelWrap.innerHTML = ''
+            + '<button type="button" id="panelCerradosBtn" style="width:100%;background:#f3f4f6;border:1.5px solid #d1d5db;border-radius:10px;padding:12px 14px;font-weight:800;cursor:pointer;font-family:inherit;color:#374151;text-align:left;display:flex;justify-content:space-between;align-items:center;font-size:.85rem;gap:8px;">'
+            + '  <span><span id="panelCerradosLabel">▶ Ver sorteos cerrados y salidos</span> (<span id="panelCerradosCount">0</span>)</span>'
+            + '  <span id="panelCerradosArrow" style="font-size:.9rem;transition:transform .2s;">▼</span>'
+            + '</button>'
+            + '<div id="panelCerradosGrid" style="display:none;margin-top:10px;padding:12px;background:#f9fafb;border:1.5px solid #e5e7eb;border-radius:10px;grid-template-columns:repeat(auto-fill,minmax(145px,1fr));gap:8px;"></div>';
+
+          var listaEl = $('listaSorteos');
+          if (listaEl && listaEl.parentNode) {
+            listaEl.parentNode.insertBefore(panelWrap, listaEl.nextSibling);
+          }
+
+          // Listener del toggle
+          var btnToggle = document.getElementById('panelCerradosBtn');
+          var grid = document.getElementById('panelCerradosGrid');
+          var arrow = document.getElementById('panelCerradosArrow');
+          var label = document.getElementById('panelCerradosLabel');
+          btnToggle.addEventListener('click', function(){
+            var abierto = grid.style.display !== 'none';
+            grid.style.display = abierto ? 'none' : 'grid';
+            arrow.style.transform = abierto ? 'rotate(0deg)' : 'rotate(180deg)';
+            label.textContent = abierto
+              ? '▶ Ver sorteos cerrados y salidos'
+              : '▼ Ocultar sorteos cerrados y salidos';
+          });
+        }
+
+        // FIX_ORDEN_DESC_V1: mezclar cerrados + salidos y reordenar todo junto
+        var otros = [...cerrados, ...salidos].sort(compararPorHoraDesc);
+        var countEl = document.getElementById('panelCerradosCount');
+        var gridEl = document.getElementById('panelCerradosGrid');
+        if (countEl) countEl.textContent = otros.length;
+        if (gridEl) gridEl.innerHTML = otros.length
+          ? otros.map(_renderBtnSorteo).join('')
+          : '<span class="text-muted small" style="grid-column:1/-1;">No hay sorteos cerrados ni salidos.</span>';
+        panelWrap.style.display = otros.length ? 'block' : 'none';
+      }
+
+      // Listener común para todos los botones (abiertos + panel)
       document.querySelectorAll('.sorteo-btn').forEach(b=>{
         b.addEventListener('click', ()=>{
           const sid = b.dataset.id;
@@ -2468,7 +3411,8 @@ function cargarSorteos(){
           } else {
             b.classList.add('active');
             var mins = parseInt(b.dataset.minutos || '0', 10) || 0;
-            agregarPanelSorteo(sid, nombre, mins);
+            var segs = parseInt(b.dataset.segundos || '0', 10) || 0;
+            agregarPanelSorteo(sid, nombre, mins, segs);
           }
           actualizarCountSorteos();
         });
@@ -2482,15 +3426,119 @@ function cargarSorteos(){
 /* ═══════════════════════════════════════════════════════════════
    PANEL POR SORTEO
    ═══════════════════════════════════════════════════════════════ */
-function agregarPanelSorteo(sid, nombre, minutosRestantes){
+var modoReplicar = false;
+var _syncTimer = null;
+var _syncing = false;
+
+function _esMatriz(sid){
+  return ordenSorteos.length > 0 && String(sid) === String(ordenSorteos[0]);
+}
+
+function sincronizarMatrizASlaves(){
+  if (!modoReplicar || ordenSorteos.length < 2 || _syncing) return;
+  _syncing = true;
+  try {
+    var matriz = sorteosActivos[String(ordenSorteos[0])];
+    if (!matriz) return;
+    ordenSorteos.slice(1).forEach(function(sidRaw){
+      var sid = String(sidRaw);
+      var slave = sorteosActivos[sid];
+      if (!slave) return;
+      Object.keys(matriz.tablasActivas || {}).forEach(function(tk){
+        if (!slave.tablasActivas[tk]) return;
+        var stM = matriz.tablasActivas[tk];
+        var stS = slave.tablasActivas[tk];
+        var formsS = stS.forms || [];
+        stS.rows = (stM.rows || []).map(function(r){
+          var m = {};
+          formsS.forEach(function(f){
+            if (r.montos && f in r.montos) m[f] = r.montos[f];
+          });
+          return {
+            num: r.num || '',
+            numA: r.numA || '',
+            numB: r.numB || '',
+            posicion: r.posicion || '1',
+            monto: r.monto || '',
+            montos: m
+          };
+        });
+      });
+      if (matriz.tabActual && slave.tablasActivas[matriz.tabActual]) {
+        slave.tabActual = matriz.tabActual;
+      }
+      renderTabsSorteo(sid);
+      renderMiniResumenSorteo(sid);
+      aplicarModoEsclavo(sid);
+
+  /* FIX_AUTO_ADD_FILA_V1 — listener delegado (burbujeo: corre tras el listener específico) */
+  if (!cont._autoAddBound) {
+    cont._autoAddBound = true;
+    cont.addEventListener('input', function(ev){
+      var t = ev.target;
+      if (!t || !t.dataset || t.dataset.row == null) return;
+      if (t.classList && t.classList.contains('pos-sel')) return;
+      var i = parseInt(t.dataset.row, 10);
+      if (isNaN(i)) return;
+      var _s = sorteosActivos[sid];
+      if (!_s) return;
+      var _st = _s.tablasActivas[_s.tabActual];
+      var _def = TABLE_DEFS[_s.tabActual];
+      if (!_st || !_def) return;
+      try { _autoAddFilaSiNecesario(cont, _st, _def, sid, i); } catch(_){}
+    });
+  }
+
+    });
+    if (typeof recalcGlobal === 'function') recalcGlobal();
+  } finally {
+    _syncing = false;
+  }
+}
+
+function aplicarModoEsclavo(sid){
+  var panel = document.querySelector('.sp-panel[data-sorteo-id="' + sid + '"]');
+  if (!panel) return;
+  var esEsclavo = modoReplicar && !_esMatriz(sid) && ordenSorteos.length > 1;
+  panel.classList.toggle('sp-esclavo', esEsclavo);
+}
+
+function activarModoReplicar(on){
+  modoReplicar = !!on;
+  var chk = document.getElementById('chkReplicar');
+  if (chk) chk.checked = modoReplicar;
+  Object.keys(sorteosActivos).forEach(function(sid){ aplicarModoEsclavo(sid); });
+  if (modoReplicar){
+    sincronizarMatrizASlaves();
+  } else {
+    if (typeof recalcGlobal === 'function') recalcGlobal();
+  }
+}
+
+function _descartarTodoPorMatriz(){
+  if (!modoReplicar) return;
+  limpiarPanelesSorteo();
+  document.querySelectorAll('.sorteo-btn').forEach(function(x){ x.classList.remove('active'); });
+  modoReplicar = false;
+  var chk = document.getElementById('chkReplicar');
+  if (chk) chk.checked = false;
+  actualizarCountSorteos();
+  recalcGlobal();
+}
+
+function agregarPanelSorteo(sid, nombre, minutosRestantes, segundosRestantes){
   if (sorteosActivos[sid]) return;
   const btn = document.querySelector(`.sorteo-btn[data-id="${sid}"]`);
   const cerrado = btn ? btn.dataset.cerrado === '1' : false;
-  var segs = (typeof minutosRestantes === 'number' && minutosRestantes > 0) ? minutosRestantes * 60 : null;
+  // FIX_COUNTDOWN_FMT_V1: usamos segundos_restantes (puede incluir próximo día)
+  var segs = (typeof segundosRestantes === 'number' && segundosRestantes > 0)
+    ? segundosRestantes
+    : ((typeof minutosRestantes === 'number' && minutosRestantes > 0) ? minutosRestantes * 60 : null);
   sorteosActivos[sid] = {
     id: sid, nombre: nombre,
     cerrado: cerrado,
     minutos_restantes: minutosRestantes,
+    segundos_restantes: segundosRestantes,
     cierra_en: segs ? Date.now() + segs * 1000 : null,
     forma_cancelada: false,
     formas_juego: [], tablasActivas: {}, tabActual: null, cargado: false
@@ -2498,14 +3546,44 @@ function agregarPanelSorteo(sid, nombre, minutosRestantes){
   ordenSorteos.push(sid);
   renderPanelSorteo(sid);
   cargarConfigSorteo(sid);
+
+  // FIX_REENVIO_AUTOCOMPLETAR_V1: Si estamos en reenvío, inyectar líneas
+  if (ES_MODO_REENVIAR && window._boletaReenvio) {
+      _esperarInyectarReenvio(sid, 0);
+  }
+
   // Arrancar timer si aplica
   if (typeof _iniciarTimerCierre === 'function') _iniciarTimerCierre();
 }
 
+function _esperarInyectarReenvio(sid, intento) {
+  if (intento > 40) {
+      console.warn('[apostar] Timeout esperando config para reenvío en sorteo', sid);
+      return;
+  }
+  var s = sorteosActivos[sid];
+  if (!s || !s.cargado) {
+      setTimeout(function(){ _esperarInyectarReenvio(sid, intento + 1); }, 500);
+      return;
+  }
+  console.log('[apostar] Inyectando líneas de reenvío en sorteo:', sid);
+  var data = JSON.parse(JSON.stringify(window._boletaReenvio));
+  data.sorteo_ids = [sid];
+  data.lineas = (data.lineas || []).map(function(l){
+      l.sorteo_id = sid;
+      return l;
+  });
+  inyectarLineasBoleta(data);
+}
+
 function quitarPanelSorteo(sid){
   if (!sorteosActivos[sid]) return;
-  delete sorteosActivos[sid];
   const idx = ordenSorteos.indexOf(sid);
+  if (modoReplicar && idx === 0){
+    _descartarTodoPorMatriz();
+    return;
+  }
+  delete sorteosActivos[sid];
   if (idx >= 0) ordenSorteos.splice(idx, 1);
   const panel = document.querySelector(`.sp-panel[data-sorteo-id="${sid}"]`);
   if (panel) panel.remove();
@@ -2620,7 +3698,7 @@ function cargarConfigSorteo(sid){
           if (!esExcluidoSP){
             s.tablasActivas[tk] = {
               forms: ['parlet'],
-              rows: [newRow(['parlet'], 'solo_parlet')]
+              rows: [newRow(['parlet'], 'solo_parlet'), newRow(['parlet'], 'solo_parlet')]  /* FIX_FILAS_2VACIAS_V2 */
             };
           }
           return;
@@ -2641,7 +3719,7 @@ function cargarConfigSorteo(sid){
 
         s.tablasActivas[tk] = {
           forms: ordenadas,
-          rows: [newRow(ordenadas, def.kind)]
+          rows: [newRow(ordenadas, def.kind), newRow(ordenadas, def.kind)]  /* FIX_FILAS_2VACIAS_V2 */
         };
       });
 
@@ -2651,6 +3729,10 @@ function cargarConfigSorteo(sid){
       renderTabsSorteo(sid);
       renderMiniResumenSorteo(sid);
       recalcGlobal();
+      if (modoReplicar){
+        sincronizarMatrizASlaves();
+        Object.keys(sorteosActivos).forEach(function(s){ aplicarModoEsclavo(s); });
+      }
     })
     .catch(err=>{
       console.error('[apostar] Error config sorteo ' + sid, err);
@@ -2792,6 +3874,66 @@ function bindColumnaActiva(cont){
   }
 }
 
+/* FIX_AUTO_ADD_FILA_V1 — auto-inserción de fila cuando la última tiene contenido */
+function _filaTieneContenido(row, def){
+  if (!row) return false;
+  if (def.kind === 'posiciones') return String(row.num||'').trim() !== '';
+  if (def.kind === 'vs_groups') {
+    return String(row.numA||'').trim() !== '' || String(row.numB||'').trim() !== '';
+  }
+  if (String(row.num||'').trim() !== '') return true;
+  if (row.montos) {
+    for (var k in row.montos) {
+      if (parseFloat(row.montos[k]) > 0) return true;
+    }
+  }
+  return false;
+}
+
+function _autoAddFilaSiNecesario(cont, st, def, sid, i){
+  if (i !== st.rows.length - 1) return;
+  var row = st.rows[i];
+  if (!_filaTieneContenido(row, def)) return;
+
+  var act = document.activeElement;
+  var clase = null, formKey = null;
+  if (act && act.dataset && act.dataset.row == String(i)) {
+    if (act.classList.contains('num-inp')) clase = 'num-inp';
+    else if (act.classList.contains('pos-num')) clase = 'pos-num';
+    else if (act.classList.contains('vs-numA')) clase = 'vs-numA';
+    else if (act.classList.contains('vs-numB')) clase = 'vs-numB';
+    else if (act.classList.contains('pos-monto')) clase = 'pos-monto';
+    else if (act.classList.contains('monto-vs')) clase = 'monto-vs';
+    else if (act.classList.contains('monto')) { clase = 'monto'; formKey = act.dataset.form || null; }
+  }
+  var _selStart = act && act.selectionStart != null ? act.selectionStart : null;
+  var _selEnd = act && act.selectionEnd != null ? act.selectionEnd : null;
+
+  var forms = st.forms || [];
+  var nueva;
+  if (def.kind === 'posiciones') nueva = { posicion:'1', num:'', monto:'' };
+  else if (def.kind === 'vs_groups') nueva = { numA:'', numB:'', monto:'' };
+  else { nueva = { num:'', montos:{} }; forms.forEach(function(f){ nueva.montos[f]=''; }); }
+  st.rows.push(nueva);
+
+  try { renderTablaActivaSorteo(sid); } catch(_){ return; }
+
+  if (clase) {
+    setTimeout(function(){
+      try {
+        var q = '.' + clase + '[data-row="' + i + '"]' + (formKey ? '[data-form="'+formKey+'"]' : '');
+        var el = cont.querySelector(q);
+        if (el) {
+          el.focus();
+          if (_selStart != null && el.setSelectionRange) {
+            try { el.setSelectionRange(_selStart, _selEnd); } catch(_){}
+          }
+        }
+      } catch(_){}
+    }, 20);
+  }
+}
+
 function renderTablaActivaSorteo(sid){
   const s = sorteosActivos[sid];
   if (!s) return;
@@ -2890,6 +4032,7 @@ function renderTablaActivaSorteo(sid){
   cont.innerHTML = html;
   bindTablaEventsSorteo(cont, st, def, sid);
   bindColumnaActiva(cont);
+  aplicarModoEsclavo(sid);
 
   // Auto-resize de los textareas recién renderizados
   cont.querySelectorAll('textarea.num-inp, textarea.pos-num, textarea.vs-numA, textarea.vs-numB').forEach(ta => {
@@ -2907,9 +4050,10 @@ function bindTablaEventsSorteo(cont, st, def, sid){
   });
 
   cont.querySelectorAll('.pos-num').forEach(inp=>{
-    inp.addEventListener('input', function(){
+    inp.addEventListener('input', function(e){
       const i = parseInt(this.dataset.row);
-      const formatted = autoformatearPosiciones(this.value);
+      const isTyping = !e || !e.inputType || e.inputType.indexOf('delete') !== 0;
+      const formatted = autoformatearPosiciones(this.value, isTyping);
       this.value = formatted;
       st.rows[i].num = formatted;
       autoResizeTextarea(this);
@@ -2932,9 +4076,10 @@ function bindTablaEventsSorteo(cont, st, def, sid){
   });
 
   cont.querySelectorAll('.vs-numA').forEach(inp=>{
-    inp.addEventListener('input', function(){
+    inp.addEventListener('input', function(e){
       const i = parseInt(this.dataset.row);
-      const v = autoformatearGrupo(this.value, def.numDigits);
+      const isTyping = !e || !e.inputType || e.inputType.indexOf('delete') !== 0;
+      const v = autoformatearGrupo(this.value, def.numDigits, isTyping);
       this.value = v;
       st.rows[i].numA = v;
       autoResizeTextarea(this);
@@ -2946,9 +4091,10 @@ function bindTablaEventsSorteo(cont, st, def, sid){
   });
 
   cont.querySelectorAll('.vs-numB').forEach(inp=>{
-    inp.addEventListener('input', function(){
+    inp.addEventListener('input', function(e){
       const i = parseInt(this.dataset.row);
-      const v = autoformatearGrupo(this.value, def.numDigits);
+      const isTyping = !e || !e.inputType || e.inputType.indexOf('delete') !== 0;
+      const v = autoformatearGrupo(this.value, def.numDigits, isTyping);
       this.value = v;
       st.rows[i].numB = v;
       autoResizeTextarea(this);
@@ -2971,12 +4117,13 @@ function bindTablaEventsSorteo(cont, st, def, sid){
   });
 
   cont.querySelectorAll('.num-inp').forEach(inp=>{
-    inp.addEventListener('input', function(){
+    inp.addEventListener('input', function(e){
       const i = parseInt(this.dataset.row);
       const raw = this.value;
+      const isTyping = !e || !e.inputType || e.inputType.indexOf('delete') !== 0;
       const formatted = def.kind === 'solo_parlet'
         ? autoformatearSoloParlet(this.value.toUpperCase())
-        : autoformatear(this.value.toUpperCase(), def.numDigits, def.maxNums);
+        : autoformatear(this.value.toUpperCase(), def.numDigits, def.maxNums, isTyping);
       // FIX_DEBUG_INPUT_V1
       console.log('[INPUT] raw=' + JSON.stringify(raw) + ' → formatted=' + JSON.stringify(formatted) + ' kind=' + def.kind);
       this.value = formatted;
@@ -3740,9 +4887,10 @@ function agruparPorNumero(items){
 /* ═══════════════════════════════════════════════════════════════
    AUTOFORMATEO
    ═══════════════════════════════════════════════════════════════ */
-function autoformatearGrupo(texto, numDigits){
+function autoformatearGrupo(texto, numDigits, isTyping){
   // VS grupos: acepta PA, T0-T9, D0-D9 + auto-separa cada numDigits (2 por defecto)
   numDigits = numDigits || 2;
+  if (typeof isTyping === 'undefined') isTyping = true;
   const s = String(texto).toUpperCase();
   const tieneEspacioFinal = /\s$/.test(s);
   const limpio = s.replace(/[^0-9PATD\s]/g, '');
@@ -3785,6 +4933,11 @@ function autoformatearGrupo(texto, numDigits){
   if (bufferDigitos){ dividirEnBloques(bufferDigitos).forEach(pushUnique); }
   let result = out.join(' ');
   if (out.length && tieneEspacioFinal) result += ' ';
+  // AUTO_ESPACIO_V1
+  if (isTyping && out.length > 0 && !/\s$/.test(result)) {
+    var last = out[out.length - 1];
+    if (/^\d+$/.test(last) && last.length === numDigits) result += ' ';
+  }
   return result;
 }
 
@@ -3845,7 +4998,8 @@ document.addEventListener('keydown', function(e){
 }, true);
 
 // POSICIONES_SINGLE_COLUMN_V1: agrupa dígitos de a 2, separados por espacio
-function autoformatearPosiciones(texto){
+function autoformatearPosiciones(texto, isTyping){
+  if (typeof isTyping === 'undefined') isTyping = true;
   var s = String(texto || '').replace(/[^0-9\s]/g, '');
   var tieneEspacioFinal = /\s$/.test(s);
   var digitos = s.replace(/\s+/g, '');
@@ -3855,6 +5009,11 @@ function autoformatearPosiciones(texto){
   }
   var result = out.join(' ');
   if (out.length && tieneEspacioFinal) result += ' ';
+  // AUTO_ESPACIO_V1
+  if (isTyping && out.length > 0 && !/\s$/.test(result)) {
+    var last = out[out.length - 1];
+    if (/^\d+$/.test(last) && last.length === 2) result += ' ';
+  }
   return result;
 }
 
@@ -3890,9 +5049,12 @@ function tieneAbreviaturaIncompleta(valor){
   return /^[PTD]$/.test(ult);
 }
 
-function autoformatear(texto, numDigits, maxNums){
-  var s = String(texto || '').toUpperCase().replace(/[^0-9PATDX\s]/g, '');
+function autoformatear(texto, numDigits, maxNums, isTyping){
+  if (typeof isTyping === 'undefined') isTyping = true;
+  var s = String(texto || '').toUpperCase().replace(/[^0-9PATDXV\s]/g, '');
   var tieneEspacioFinal = /\s$/.test(s);
+  // V_REVERSAL_V1: separa la V como token propio (02V -> 02 V)
+  s = s.replace(/V/g, ' V ').replace(/\s+/g, ' ').trim();
   var tokens = s.split(/\s+/).filter(function(t){ return t.length; });
   var out = [];
   // FIX_DUP_NUM_V1: permitir tokens repetidos (el cliente puede querer 25 25)
@@ -3905,6 +5067,22 @@ function autoformatear(texto, numDigits, maxNums){
   for (var k = 0; k < tokens.length; k++){
     var tok = tokens[k];
     var esUltimo = (k === tokens.length - 1);
+
+    // V_REVERSAL_V1: la V voltea el ultimo numero de 2 digitos escrito
+    if (tok === 'V') {
+      if (numDigits === 2) {
+        for (var _vi = out.length - 1; _vi >= 0; _vi--) {
+          if (/^\d{2}$/.test(out[_vi])) {
+            var _rev = out[_vi].split('').reverse().join('');
+            if (_rev !== out[_vi]) {
+              pushUnique(_rev);
+            }
+            break;
+          }
+        }
+      }
+      continue;
+    }
 
     // Parlet explicito
     if (tok.indexOf('X') !== -1){
@@ -4014,6 +5192,11 @@ function autoformatear(texto, numDigits, maxNums){
     result = out.slice(0, maxNums).join(' ');
     if (tieneEspacioFinal) result += ' ';
   }
+  // AUTO_ESPACIO_V1
+  if (isTyping && out.length > 0 && !/\s$/.test(result)) {
+    var last = out[out.length - 1];
+    if (/^\d+$/.test(last) && last.length === numDigits) result += ' ';
+  }
   return result;
 }
 
@@ -4056,7 +5239,12 @@ function recalcGlobal(){
 
   let nuevoEstado;
   if (cliente && items.length > 0){
-    if (deficit > 0)            nuevoEstado = 'insuficiente';
+    // FIX_CLIENTE_SIN_DEUDA_V1: el cliente NO puede usar postpago
+    if (ES_CLIENTE && (fromPostpago > 0 || chipEspecial === 'postpago')) {
+      nuevoEstado = 'insuficiente';
+      deficit = total;  // fuerza bloqueo
+    }
+    else if (deficit > 0)            nuevoEstado = 'insuficiente';
     else if (fromPostpago > 0)  nuevoEstado = 'postpago';
     else if (fromBono > 0)      nuevoEstado = 'bono';
     else                        nuevoEstado = 'fp';
@@ -4258,12 +5446,73 @@ function recalcGlobal(){
   }
 
   $('btnGo').disabled = !ok;
+
+  // FASE1_PANEL_LATERAL_V1: sincronizar panel derecho
+  try {
+    var _pr;
+    _pr = document.getElementById('prCliente');
+    if (_pr) _pr.textContent = getClienteLabel() || '—';
+    _pr = document.getElementById('prGestor');
+    if (_pr) _pr.textContent = getGestorLabel() || '—';
+    _pr = document.getElementById('prFP');
+    if (_pr) {
+      var _chip = document.querySelector('.fp-chip.active');
+      _pr.textContent = _chip ? (_chip.dataset.n || '—') : '—';
+    }
+    _pr = document.getElementById('prFecha');
+    if (_pr) _pr.textContent = $('inpFecha') ? $('inpFecha').value : '—';
+    _pr = document.getElementById('prSorteos');
+    if (_pr) _pr.textContent = String(ordenSorteos.length);
+    _pr = document.getElementById('prPostpago');
+    if (_pr) _pr.textContent = fmtMoney(postpagoPendiente);
+    _pr = document.getElementById('prBonos');
+    if (_pr) _pr.textContent = fmtMoney(bonoDisp);
+    _pr = document.getElementById('prSaldo');
+    if (_pr) _pr.textContent = fmtMoney(saldoFP);
+    _pr = document.getElementById('prSaldoFinal');
+    if (_pr) _pr.textContent = fmtMoney(saldoFP - fromFP);
+    _pr = document.getElementById('prTotal');
+    if (_pr) _pr.textContent = fmtMoney(total);
+    var _btnL = document.getElementById('btnGoLateral');
+    if (_btnL) _btnL.disabled = !ok;
+
+    // FASE2_MOBILE_V1_JS: bottom sheet + FAB
+    var _bs;
+    _bs = document.getElementById('bsCliente');
+    if (_bs) _bs.textContent = getClienteLabel() || '—';
+    _bs = document.getElementById('bsGestor');
+    if (_bs) _bs.textContent = getGestorLabel() || '—';
+    _bs = document.getElementById('bsFP');
+    if (_bs) {
+      var _chipS = document.querySelector('.fp-chip.active');
+      _bs.textContent = _chipS ? (_chipS.dataset.n || '—') : '—';
+    }
+    _bs = document.getElementById('bsFecha');
+    if (_bs) _bs.textContent = $('inpFecha') ? $('inpFecha').value : '—';
+    _bs = document.getElementById('bsSorteos');
+    if (_bs) _bs.textContent = String(ordenSorteos.length);
+    _bs = document.getElementById('bsPostpago');
+    if (_bs) _bs.textContent = fmtMoney(postpagoPendiente);
+    _bs = document.getElementById('bsBonos');
+    if (_bs) _bs.textContent = fmtMoney(bonoDisp);
+    _bs = document.getElementById('bsSaldo');
+    if (_bs) _bs.textContent = fmtMoney(saldoFP);
+    _bs = document.getElementById('bsSaldoFinal');
+    if (_bs) _bs.textContent = fmtMoney(saldoFP - fromFP);
+    _bs = document.getElementById('bsTotal');
+    if (_bs) _bs.textContent = fmtMoney(total);
+    var _btnS = document.getElementById('btnGoSheet');
+    if (_btnS) _btnS.disabled = !ok;
+    var _fabT = document.getElementById('apFabTotal');
+    if (_fabT) _fabT.textContent = fmtMoney(total);
+  } catch(_ePR) { console.warn('[panel lateral]', _ePR); }
 }
 
 $('inpFecha').addEventListener('change', function(){
   document.querySelectorAll('.sp-dato-fecha').forEach(el => {
     el.textContent = this.value;
   });
+  setTimeout(_cargarSorteosConBoleta, 400);  // FIX_REFRESH_MARCAS_V1
 });
 
 $('btnGo').addEventListener('click', ()=>{
@@ -4273,6 +5522,100 @@ $('btnGo').addEventListener('click', ()=>{
   $('inpPwd').value = '';
   window._safeModalShow('modalPwd');
 });
+
+// FASE1_PANEL_LATERAL_V1: botón espejo
+var _btnGoLateral = document.getElementById('btnGoLateral');
+if (_btnGoLateral){
+  _btnGoLateral.addEventListener('click', function(){
+    var b = document.getElementById('btnGo');
+    if (b && !b.disabled) b.click();
+  });
+}
+
+// FASE2_MOBILE_V1_JS: FAB + bottom sheet handlers
+(function(){
+  var fab = document.getElementById('apFab');
+  var sheet = document.getElementById('apBottomSheet');
+  var backdrop = document.getElementById('apSheetBackdrop');
+  var btnClose = document.getElementById('apSheetClose');
+  var btnGoSheet = document.getElementById('btnGoSheet');
+
+  function abrirSheet(){
+    if (!sheet) return;
+    sheet.classList.add('open');
+    sheet.setAttribute('aria-hidden', 'false');
+    document.body.style.overflow = 'hidden';
+  }
+  function cerrarSheet(){
+    if (!sheet) return;
+    sheet.classList.remove('open');
+    sheet.setAttribute('aria-hidden', 'true');
+    document.body.style.overflow = '';
+  }
+
+  if (fab) fab.addEventListener('click', abrirSheet);
+  if (backdrop) backdrop.addEventListener('click', cerrarSheet);
+  if (btnClose) btnClose.addEventListener('click', cerrarSheet);
+
+  if (btnGoSheet){
+    btnGoSheet.addEventListener('click', function(){
+      var b = document.getElementById('btnGo');
+      if (b && !b.disabled){ cerrarSheet(); b.click(); }
+    });
+  }
+
+  var content = document.getElementById('apSheetContent');
+  if (content){
+    var startY = 0, deltaY = 0, dragging = false;
+    content.addEventListener('touchstart', function(e){
+      startY = e.touches[0].clientY;
+      dragging = true;
+      deltaY = 0;
+    }, {passive: true});
+    content.addEventListener('touchmove', function(e){
+      if (!dragging) return;
+      deltaY = e.touches[0].clientY - startY;
+      if (deltaY > 0){
+        content.style.transform = 'translateY(' + deltaY + 'px)';
+      }
+    }, {passive: true});
+    content.addEventListener('touchend', function(){
+      dragging = false;
+      if (deltaY > 100){ cerrarSheet(); }
+      content.style.transform = '';
+      deltaY = 0;
+    });
+  }
+})();
+
+// FIX_PWD_OJO_V1: toggle ver/ocultar contraseña
+(function initPwdEye(){
+  var btn = document.getElementById('btnPwdEye');
+  var inp = document.getElementById('inpPwd');
+  var ico = document.getElementById('pwdEyeIcon');
+  if (!btn || !inp || !ico) return;
+  btn.addEventListener('click', function(){
+    if (inp.type === 'password'){
+      inp.type = 'text';
+      ico.classList.remove('fa-eye');
+      ico.classList.add('fa-eye-slash');
+    } else {
+      inp.type = 'password';
+      ico.classList.remove('fa-eye-slash');
+      ico.classList.add('fa-eye');
+    }
+    inp.focus();
+  });
+  // Resetear al abrir el modal (siempre tipo password)
+  var modalEl = document.getElementById('modalPwd');
+  if (modalEl){
+    modalEl.addEventListener('show.bs.modal', function(){
+      inp.type = 'password';
+      ico.classList.remove('fa-eye-slash');
+      ico.classList.add('fa-eye');
+    });
+  }
+})();
 
 $('btnPwdOk').addEventListener('click', ()=>{
   const p = $('inpPwd').value;
@@ -4399,8 +5742,47 @@ function enviarApuesta(dryRun){
       if (d.advertencias && d.advertencias.length){
         d.advertencias.slice(0,4).forEach(w => toast('⚠️ ' + w, 'warning'));
       }
-      toast('✅ ' + d.message, 'success');
-      setTimeout(()=>{ window.location.href = "{% url 'jugadas:mis_apuestas' %}"; }, 1400);
+      // FIX_BORRADOR_CLEAR_ON_SUCCESS_V1: limpiar borrador al confirmar envío exitoso
+      try {
+        var _uidBorr = {{ request.user.id|default:0 }};
+        localStorage.removeItem('apostar_borrador_v1_user' + _uidBorr);
+        localStorage.removeItem('apostar_borrador_v2_user' + _uidBorr);
+        console.log('[BORRADOR] Limpiado tras envío exitoso, uid=' + _uidBorr);
+      } catch(_e){ console.warn('[BORRADOR] no se pudo limpiar:', _e); }
+
+      // FIX_CARTEL_VERDE_MOSTRAR_V1: mostrar cartel "Jugada guardada" (reemplaza toast+redirect)
+      var _cartelVerde = document.getElementById('cartelJugadaGuardada');
+      if (_cartelVerde) {
+        _cartelVerde.classList.add('activo');
+        // Restaurar botón por si el usuario cierra el cartel sin redirigir
+        var _bGo = document.getElementById('btnGo');
+        if (_bGo) {
+          _bGo.disabled = false;
+          _bGo.innerHTML = '<i class="fas fa-check-circle"></i> Confirmar apuesta';
+        }
+        // FIX_A1A3_A3_BIENVENIDA_APUESTA_V1: cartel de bienvenida al apostar (1ª vez del día)
+        setTimeout(function(){
+          try {
+            if (typeof window._cargarBienvenidaApuesta === 'function') {
+              window._cargarBienvenidaApuesta();
+            }
+          } catch(_eA3){ console.warn('[A3]', _eA3); }
+        }, 1200);
+      } else {
+        // Fallback: si no existe el cartel, mantener el toast + redirect
+        toast('✅ ' + d.message, 'success');
+        setTimeout(()=>{ window.location.href = "{% url 'jugadas:mis_apuestas' %}"; }, 1400);
+      }
+    } else if (d.sorteo_cerrado) {
+      // FIX_CARTEL_CIERRE_V1: mostrar cartel rojo oblicuo
+      var _detalle = document.getElementById('cartelDetalle');
+      if (_detalle) {
+        _detalle.textContent = d.message || 'La jugada no sera recibida porque el sorteo ya cerro.';
+      }
+      var _cartel = document.getElementById('cartelSorteoCerrado');
+      if (_cartel) _cartel.classList.add('activo');
+      b.disabled = false;
+      b.innerHTML = '<i class="fas fa-check-circle"></i> Confirmar apuesta';
     } else {
       toast('❌ ' + (d.message || 'Error'), 'danger');
       if (d.advertencias){
@@ -4916,24 +6298,80 @@ if (editBoletaEl) {
   const DEFAULT = 'verde';
   const VALIDOS = ['verde', 'azul', 'violeta', 'naranja', 'rosa', 'turquesa', 'ambar'];
 
-  function aplicarTema(theme){
+  // Detectar modo delegado (banco operando bajo un comercial)
+  var enModoDelegado = false;
+  var nombreComercial = '';
+  try {
+    var selG = document.getElementById('selGestorCuenta');
+    if (selG && selG.value && selG.value !== '') {
+      enModoDelegado = true;
+      var opt = selG.options[selG.selectedIndex];
+      nombreComercial = opt ? opt.textContent.trim() : '';
+    }
+  } catch(_) {}
+
+  function aplicarTema(theme, forzar){
     if (!VALIDOS.includes(theme)) theme = DEFAULT;
     document.body.setAttribute('data-theme', theme);
     document.querySelectorAll('.ap-tbtn').forEach(btn => {
       btn.classList.toggle('active', btn.dataset.theme === theme);
     });
-    try { localStorage.setItem(STORAGE_KEY, theme); } catch(_) {}
+    if (!forzar) {
+      try { localStorage.setItem(STORAGE_KEY, theme); } catch(_) {}
+    }
   }
 
-  // Aplicar guardado o default ANTES de pintar
-  let guardado = DEFAULT;
-  try { guardado = localStorage.getItem(STORAGE_KEY) || DEFAULT; } catch(_) {}
-  aplicarTema(guardado);
+  if (enModoDelegado) {
+    // Modo delegado: forzar tema rojo, ocultar botones de temas
+    aplicarTema('delegado', true);
+    var barra = document.querySelector('.ap-theme-bar');
+    if (barra) barra.style.display = 'none';
 
-  // Conectar botones
-  document.querySelectorAll('.ap-tbtn').forEach(btn => {
-    btn.addEventListener('click', () => aplicarTema(btn.dataset.theme));
-  });
+    // Banner arriba de todo
+    var banner = document.createElement('div');
+    banner.id = 'bannerDelegado';
+    banner.style.cssText = 'position:sticky;top:0;z-index:1000;'
+      + 'background:linear-gradient(135deg,#991b1b,#450a0a);'
+      + 'color:#fff;padding:12px 16px;margin:-8px -8px 12px -8px;'
+      + 'border-bottom:3px solid #fca5a5;'
+      + 'display:flex;justify-content:space-between;align-items:center;'
+      + 'gap:10px;flex-wrap:wrap;font-weight:800;font-size:.85rem;'
+      + 'box-shadow:0 4px 12px rgba(153,27,27,.4);';
+    banner.innerHTML = '<span>🔶 OPERANDO COMO: <strong>' + (nombreComercial || 'comercial') + '</strong></span>'
+      + '<button type="button" id="bannerDelegadoVolver" style="'
+      + 'background:#fff;color:#991b1b;border:none;padding:8px 16px;'
+      + 'border-radius:8px;font-weight:900;cursor:pointer;font-family:inherit;'
+      + 'font-size:.78rem;letter-spacing:.3px;">← Volver a mi cuenta</button>';
+
+    var apRoot = document.querySelector('.ap-root');
+    if (apRoot && apRoot.parentNode) {
+      apRoot.parentNode.insertBefore(banner, apRoot);
+    } else {
+      document.body.insertBefore(banner, document.body.firstChild);
+    }
+
+    var btnVolver = document.getElementById('bannerDelegadoVolver');
+    if (btnVolver) {
+      btnVolver.addEventListener('click', function(){
+        try {
+          var url = new URL(window.location.href);
+          url.searchParams.delete('gestor_cuenta');
+          window.location.href = url.toString();
+        } catch(e) {
+          window.location.href = window.location.pathname;
+        }
+      });
+    }
+  } else {
+    // Modo normal: comportamiento original
+    let guardado = DEFAULT;
+    try { guardado = localStorage.getItem(STORAGE_KEY) || DEFAULT; } catch(_) {}
+    aplicarTema(guardado);
+
+    document.querySelectorAll('.ap-tbtn').forEach(btn => {
+      btn.addEventListener('click', () => aplicarTema(btn.dataset.theme));
+    });
+  }
 })();
 
 /* ═══════════════════════════════════════════════════════════════
@@ -5092,13 +6530,8 @@ function compartirApuestaWA(){
 
   setTimeout(actualizarVisibilidad, 500);
 
-  btn.addEventListener('click', function(){
-    if (!cliente || !fpSel) return;
-    var url = '/roles/recarga-directa/?usuario_id=' + encodeURIComponent(cliente.id)
-            + '&forma_pago_id=' + encodeURIComponent(fpSel)
-            + '&volver=apostar';
-    window.location.href = url;
-  });
+  // FIX_BTN_RECARGA_LIMPIO_V1: handler viejo (redirect) eliminado
+
 
   // ═══════════════════════════════════════════════════════════════
   // MODAL RECARGA RÁPIDA (reemplaza el redirect)
@@ -5106,87 +6539,174 @@ function compartirApuestaWA(){
   btn.addEventListener('click', function(e){
     e.preventDefault();
     e.stopImmediatePropagation();
-    if (!cliente || !fpSel) return;
+    console.log('[BTN_RECARGA] Click capturado, cliente:', cliente, 'fpSel:', fpSel);
+    if (!cliente || !cliente.id) { console.warn('[BTN_RECARGA] cliente sin id'); return; }
+    if (!fpSel) { console.warn('[BTN_RECARGA] fpSel vacío'); return; }
 
-    // Setup modal
     var modalEl = document.getElementById('modalRecargaRapida');
     if (!modalEl) { alert('Modal no disponible'); return; }
+
+    // 1. Nombre en texto
     var mrrCli = document.getElementById('mrrCliente');
-    if (mrrCli) mrrCli.textContent = cliente.nombre;
+    if (mrrCli) mrrCli.textContent = cliente.nombre || '';
+
+    // 2. Cliente en el <select> del modal
+    var mrrCliSel = document.getElementById('mrrClienteSelect');
+    if (mrrCliSel) {
+      var _val = String(cliente.id);
+      var _existe = false;
+      for (var _i=0; _i<mrrCliSel.options.length; _i++) {
+        if (String(mrrCliSel.options[_i].value) === _val) { _existe = true; break; }
+      }
+      if (!_existe) {
+        var _opt = document.createElement('option');
+        _opt.value = _val;
+        _opt.textContent = (cliente.nombre || 'Cliente') + ' (actual)';
+        mrrCliSel.appendChild(_opt);
+      }
+      mrrCliSel.value = _val;
+      console.log('[BTN_RECARGA] Cliente seteado en select:', _val);
+    }
+
+    // 3. Forma de pago
     var mrrSel = document.getElementById('mrrFormaPago');
-    if (mrrSel && fpSel) mrrSel.value = fpSel;
+    if (mrrSel) {
+      mrrSel.value = String(fpSel);
+      console.log('[BTN_RECARGA] FP seteada:', fpSel);
+    }
+
+    // 4. Limpiar
     var mrrInp = document.getElementById('mrrMonto');
     if (mrrInp) mrrInp.value = '';
     var mrrErr = document.getElementById('mrrError');
     if (mrrErr) mrrErr.style.display = 'none';
 
-    // Mostrar fondo actual del chip
+    // 5. Fondo actual
     var chipAct = document.querySelector('.fp-chip.active');
     var fondoAct = chipAct ? (chipAct.querySelector('strong') ? chipAct.querySelector('strong').textContent : '$0.00') : '$0.00';
     var mrrFondo = document.getElementById('mrrFondoActual');
     if (mrrFondo) mrrFondo.textContent = fondoAct;
 
+    // 6. Abrir modal
     bootstrap.Modal.getOrCreateInstance(modalEl).show();
-  }, true);  // capture: true para que se ejecute ANTES que otros listeners
+    console.log('[BTN_RECARGA] Modal abierto');
+  }, true);  // capture:true  // capture: true para que se ejecute ANTES que otros listeners
 
-  // Boton confirmar del modal
-  setTimeout(function(){
+  // FIX_MRR_CONFIRM_V2: handler único y limpio del botón Confirmar recarga
+(function(){
+  function bindConfirmar() {
     var btnConf = document.getElementById('mrrConfirmar');
-    if (!btnConf || btnConf.dataset.bound) return;
-    btnConf.dataset.bound = '1';
-    btnConf.addEventListener('click', function(){
-      var fp = document.getElementById('mrrFormaPago').value;
-      var monto = parseFloat(document.getElementById('mrrMonto').value) || 0;
+    if (!btnConf) {
+      console.warn('[MRR] botón #mrrConfirmar no existe, reintentando...');
+      return false;
+    }
+    if (btnConf.dataset.boundV2 === '1') {
+      return true;  // ya enlazado
+    }
+    btnConf.dataset.boundV2 = '1';
+    console.log('[MRR] Handler V2 enlazado al botón Confirmar');
+
+    btnConf.addEventListener('click', function(e){
+      e.preventDefault();
+      e.stopImmediatePropagation();
+
+      var modalEl = document.getElementById('modalRecargaRapida');
+      var selCli = document.getElementById('mrrClienteSelect');
+      var selFP  = document.getElementById('mrrFormaPago');
+      var inpMonto = document.getElementById('mrrMonto');
       var errBox = document.getElementById('mrrError');
 
-      if (!fp || monto <= 0){
-        errBox.textContent = 'Selecciona forma de pago y monto mayor a 0.';
-        errBox.style.display = 'block';
+      var cliId = selCli ? String(selCli.value || '').trim() : '';
+      var fpId  = selFP ? String(selFP.value || '').trim() : '';
+      var monto = parseFloat(inpMonto ? inpMonto.value : '0') || 0;
+
+      function showErr(msg){
+        if (errBox) { errBox.textContent = msg; errBox.style.display = 'block'; }
+        else { alert(msg); }
+        console.warn('[MRR] Error:', msg, {cliId: cliId, fpId: fpId, monto: monto});
+      }
+
+      if (!cliId) { showErr('Selecciona un cliente.'); return; }
+      if (!fpId)  { showErr('Selecciona una forma de pago.'); return; }
+      if (monto <= 0) { showErr('El monto debe ser mayor a 0.'); return; }
+      if (errBox) errBox.style.display = 'none';
+
+      if (btnConf.dataset.procesando === '1') {
+        console.warn('[MRR] Ya hay un procesamiento en curso, ignorando clic');
         return;
       }
-      errBox.style.display = 'none';
+      btnConf.dataset.procesando = '1';
       btnConf.disabled = true;
+      var oldHtml = btnConf.innerHTML;
       btnConf.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Procesando...';
 
+      // request_id único por intento (evita huella duplicada si falla y se reintenta)
+      var requestId = 'rr_' + Date.now() + '_' + Math.random().toString(36).slice(2, 10);
+
       var fd = new FormData();
-      fd.append('usuario_id', cliente.id);
-      fd.append('forma_pago_id', fp);
+      fd.append('usuario_id', cliId);
+      fd.append('forma_pago_id', fpId);
       fd.append('monto', monto.toFixed(2));
+      fd.append('request_id', requestId);
       fd.append('csrfmiddlewaretoken', CSRF);
+
+      console.log('[MRR] Enviando recarga:', {cliId: cliId, fpId: fpId, monto: monto, requestId: requestId});
 
       fetch("{% url 'roles:api_recarga_rapida' %}", {
         method: 'POST',
         body: fd,
         headers: { 'X-Requested-With': 'XMLHttpRequest' },
       })
-      .then(function(r){ return r.json(); })
+      .then(function(r){
+        console.log('[MRR] Respuesta HTTP:', r.status);
+        return r.text().then(function(txt){
+          try { return JSON.parse(txt); }
+          catch(_) { return { success: false, error: 'Respuesta inválida del servidor: ' + txt.slice(0,200) }; }
+        });
+      })
       .then(function(d){
         btnConf.disabled = false;
-        btnConf.innerHTML = '<i class="fas fa-check"></i> Confirmar recarga';
-        if (d.success){
-          window._safeModalHide('modalRecargaRapida');
-          if (typeof toast === 'function') {
-            toast('💰 Recarga exitosa: $' + d.monto.toFixed(2) + ' en ' + d.forma_pago_nombre + '. Nuevo saldo: $' + d.saldo_actual.toFixed(2), 'success');
+        btnConf.dataset.procesando = '0';
+        btnConf.innerHTML = oldHtml;
+        console.log('[MRR] Respuesta:', d);
+
+        if (d.success) {
+          if (modalEl && window.bootstrap && bootstrap.Modal) {
+            try { bootstrap.Modal.getOrCreateInstance(modalEl).hide(); } catch(_) {}
           }
-          // Recargar chips (sin recargar la página)
+          if (typeof toast === 'function') {
+            toast('💰 Recarga exitosa: $' + (d.monto || monto).toFixed(2) + ' en ' + (d.forma_pago_nombre || '') + '. Nuevo saldo: $' + (d.saldo_actual || 0).toFixed(2), 'success');
+          } else {
+            alert('Recarga exitosa. Nuevo saldo: $' + (d.saldo_actual || 0).toFixed(2));
+          }
           if (typeof cargarFormasPago === 'function') {
-            cargarFormasPago();
+            try { cargarFormasPago(); } catch(_) {}
           }
         } else {
-          errBox.textContent = d.error || 'Error al recargar';
-          errBox.style.display = 'block';
+          showErr(d.error || 'Error desconocido al procesar la recarga');
         }
       })
-      .catch(function(e){
+      .catch(function(err){
         btnConf.disabled = false;
-        btnConf.innerHTML = '<i class="fas fa-check"></i> Confirmar recarga';
-        errBox.textContent = 'Error de conexión: ' + e.message;
-        errBox.style.display = 'block';
+        btnConf.dataset.procesando = '0';
+        btnConf.innerHTML = oldHtml;
+        console.error('[MRR] Error de red:', err);
+        showErr('Error de red: ' + err.message);
       });
-    });
-  }, 500);
+    }, true);  // capture:true para asegurar que se ejecuta antes que otros
 
-  var preselect = '{{ cliente_preseleccionado_id|default:"" }}';
+    return true;
+  }
+
+  // Intentar enlazar ahora y reintentar hasta que el DOM esté listo
+  if (!bindConfirmar()) {
+    document.addEventListener('DOMContentLoaded', bindConfirmar);
+    setTimeout(bindConfirmar, 500);
+    setTimeout(bindConfirmar, 1500);
+  }
+})();
+
+var preselect = '{{ cliente_preseleccionado_id|default:"" }}';
   var recargaOk = {{ recarga_ok|yesno:"true,false" }};
 
   if (preselect) {
@@ -5246,6 +6766,53 @@ function mostrarPreviewApuesta(data){
     listaHtml += '<div style="margin-top:8px;background:#fee2e2;color:#7f1d1d;border-radius:6px;padding:6px 10px;font-weight:700;font-size:.72rem;">⚠️ ' + descartadas + ' jugada(s) descartada(s) por pool agotado o sorteo cerrado.</div>';
   }
 
+  // ═══ Desglose del cobro + saldos finales (PATCH_RESUMEN_COBRO_V1) ═══
+  var desgloseHtml = '';
+  try {
+    var dg = p.desglose || {};
+    var sf = p.saldos_finales || {};
+    var tieneDesglose = (dg.fondo || dg.bono || dg.postpago);
+    var tieneSaldos  = (sf.fondo !== undefined || sf.bono !== undefined || sf.postpago !== undefined);
+    if (tieneDesglose || tieneSaldos) {
+      desgloseHtml += '<div style="margin-top:14px;">';
+
+      // ─── Desglose del cobro ───
+      if (tieneDesglose) {
+        var totales = (dg.fondo || 0) + (dg.bono || 0) + (dg.postpago || 0);
+        desgloseHtml += '<div style="font-weight:800;color:#1e3a8a;font-size:.78rem;text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px;">💳 Se descontará de su fondo</div>';
+        desgloseHtml += '<div style="background:#eff6ff;border:1.5px solid #93c5fd;border-radius:10px;padding:10px 12px;font-size:.82rem;">';
+        if (dg.fondo > 0) {
+          desgloseHtml += '<div style="display:flex;justify-content:space-between;padding:4px 0;"><span>💰 Desde tu fondo disponible:</span><strong style="color:#1e40af;">$' + dg.fondo.toFixed(2) + '</strong></div>';
+        }
+        if (dg.bono > 0) {
+          desgloseHtml += '<div style="display:flex;justify-content:space-between;padding:4px 0;"><span>🎁 Desde bonos activos:</span><strong style="color:#1e40af;">$' + dg.bono.toFixed(2) + '</strong></div>';
+        }
+        if (dg.postpago > 0) {
+          desgloseHtml += '<div style="display:flex;justify-content:space-between;padding:4px 0;color:#7f1d1d;"><span>⚠️ A cuenta (postpago — te queda como deuda):</span><strong>$' + dg.postpago.toFixed(2) + '</strong></div>';
+        }
+        desgloseHtml += '</div>';
+      }
+
+      // ─── Saldos finales del cliente ───
+      if (tieneSaldos) {
+        var restante = (sf.fondo || 0) + (sf.bono || 0);
+        desgloseHtml += '<div style="font-weight:800;color:#065F46;font-size:.78rem;text-transform:uppercase;letter-spacing:.4px;margin-top:14px;margin-bottom:8px;">💰 Tu saldo después de apostar</div>';
+        desgloseHtml += '<div style="background:#f0fdf4;border:1.5px solid #86efac;border-radius:10px;padding:10px 12px;font-size:.82rem;">';
+        var fondoAntes = (sf.fondo || 0) + (dg.fondo || 0);
+        desgloseHtml += '<div style="display:flex;justify-content:space-between;padding:4px 0;"><span>💵 Fondo antes de la jugada:</span><strong style="color:#065F46;">$' + fondoAntes.toFixed(2) + '</strong></div>';
+        desgloseHtml += '<div style="display:flex;justify-content:space-between;padding:4px 0;"><span>💵 Fondo después de la jugada:</span><strong style="color:#065F46;">$' + (sf.fondo || 0).toFixed(2) + '</strong></div>';
+        desgloseHtml += '<div style="display:flex;justify-content:space-between;padding:4px 0;"><span>🎁 Bonos activos:</span><strong style="color:#065F46;">$' + (sf.bono || 0).toFixed(2) + '</strong></div>';
+        if (sf.postpago > 0) {
+          desgloseHtml += '<div style="display:flex;justify-content:space-between;padding:4px 0;color:#7f1d1d;"><span>📌 Postpago acumulado:</span><strong>$' + sf.postpago.toFixed(2) + '</strong></div>';
+        }
+        desgloseHtml += '<div style="display:flex;justify-content:space-between;padding:6px 0;margin-top:4px;border-top:1px dashed #86efac;font-weight:900;"><span>💼 Su fondo actual es de:</span><span style="color:#047857;">$' + restante.toFixed(2) + '</span></div>';
+        desgloseHtml += '</div>';
+      }
+
+      desgloseHtml += '</div>';
+    }
+  } catch(_eD) { console.warn('[preview desglose]', _eD); }
+
   // Overlay completo
   var overlay = document.createElement('div');
   overlay.id = 'lottortPreviewOverlay';
@@ -5259,6 +6826,7 @@ function mostrarPreviewApuesta(data){
     + '  <div style="padding:18px 22px;overflow-y:auto;flex:1;">'
     +      advHtml
     +      listaHtml
+    +      desgloseHtml
     + '    <div style="background:linear-gradient(135deg,#d1fae5,#a7f3d0);border:2px solid #10B981;border-radius:10px;padding:12px 14px;text-align:center;font-weight:900;color:#065F46;font-size:1.1rem;margin-top:14px;">'
     + '      <div style="font-size:.7rem;text-transform:uppercase;letter-spacing:.5px;">💵 Total a descontar</div>'
     + '      <div style="font-size:1.8rem;margin-top:4px;">$' + total.toFixed(2) + '</div>'
@@ -5344,17 +6912,25 @@ document.addEventListener('DOMContentLoaded', function(){
       var chipActivo = document.querySelector('.fp-chip.active');
       if (chipActivo && chipActivo.dataset.n){
         var nomFP = chipActivo.dataset.n;
-        // Quitar prefijos como "Tarjeta" exacto
-        for (var k in fondos){
-          if (k === nomFP || k.indexOf(nomFP) !== -1 || nomFP.indexOf(k) !== -1){
-            saldoNuevo = fondos[k];
-            break;
+        // FIX_MATCH_FP_V1: primero match EXACTO, luego fallback difuso
+        if (Object.prototype.hasOwnProperty.call(fondos, nomFP)){
+          saldoNuevo = parseFloat(fondos[nomFP]) || 0;
+        } else {
+          for (var k in fondos){
+            if (k.indexOf(nomFP) !== -1 || nomFP.indexOf(k) !== -1){
+              saldoNuevo = parseFloat(fondos[k]) || 0;
+              break;
+            }
           }
         }
       }
 
       // Si cambió el saldo, actualizar chip + recalcular
-      if (lastSaldo !== null && Math.abs(saldoNuevo - lastSaldo) > 0.009){
+      // FIX_POLL_EDIT_V1: en modo edición / reenvío NO se toca saldoFP ni se
+      // muestra toast — el fondo mostrado debe ser el estado original de la boleta.
+      var _enEdicion = (typeof ES_SOLO_EDITAR !== 'undefined' && ES_SOLO_EDITAR)
+                    || (typeof ES_MODO_REENVIAR !== 'undefined' && ES_MODO_REENVIAR);
+      if (!_enEdicion && lastSaldo !== null && Math.abs(saldoNuevo - lastSaldo) > 0.009){
         // Actualizar saldo global
         saldoFP = saldoNuevo;
         if (typeof recalcGlobal === 'function') recalcGlobal();
@@ -5362,7 +6938,10 @@ document.addEventListener('DOMContentLoaded', function(){
           toast('💰 Fondo actualizado: $' + saldoNuevo.toFixed(2), 'success');
         }
       }
-      lastSaldo = saldoNuevo;
+      // En modo edición tampoco actualizamos lastSaldo (así al salir se refresca limpio)
+      if (!_enEdicion){
+        lastSaldo = saldoNuevo;
+      }
 
       // Actualizar el chip visual
       if (chipActivo){
@@ -5376,6 +6955,14 @@ document.addEventListener('DOMContentLoaded', function(){
   }
 
   function startPolling(){
+    // FIX_POLL_EDIT_V1: en modo edición NO arrancamos polling.
+    // El fondo de una boleta en edición es inmutable hasta guardar.
+    var _enEdicion = (typeof ES_SOLO_EDITAR !== 'undefined' && ES_SOLO_EDITAR)
+                  || (typeof ES_MODO_REENVIAR !== 'undefined' && ES_MODO_REENVIAR);
+    if (_enEdicion){
+      console.log('[apostar] polling de fondo desactivado en modo edición');
+      return;
+    }
     if (timer) clearInterval(timer);
     lastSaldo = null;
     timer = setInterval(pollFondo, POLL_MS);
@@ -5470,9 +7057,19 @@ function _tickCierre(){
       }
     }
 
-    // Si llegó a 0 sin confirmar → marcar como cancelable (el backend lo rechazará después)
+    // FIX_COUNTDOWN_CERO_V1: si llegó a 0, marcar como cancelable
+    // y actualizar el badge visual para que no quede congelado.
     if (restante === 0 && !s.forma_cancelada){
       s.forma_cancelada = true;
+      if (btn){
+        var sh0 = btn.querySelector('.sh');
+        if (sh0){
+          sh0.textContent = '🔒 Cerrado';
+          sh0.style.color = '#b45309';
+          sh0.style.fontWeight = '800';
+        }
+      }
+      btn && btn.classList.add('sorteo-btn--cerrado');
     }
   });
 }
@@ -5774,6 +7371,15 @@ window._safeModalHide = function(modalId) {
 
     // Límites: siempre visible si hay sorteo activo (aunque no haya cliente/FP aún)
     btnLimites.style.display = tieneSorteo ? 'inline-flex' : 'none';
+
+    // Botón global "Recargar a un cliente": solo gestores, y solo con cliente seleccionado
+    var btnRecGlobal = document.getElementById('btnRecargarGlobal');
+    if (btnRecGlobal) {
+      var wrapRec = btnRecGlobal.parentElement;
+      if (wrapRec) {
+        wrapRec.style.display = (esGestor && tieneCliente) ? 'block' : 'none';
+      }
+    }
   }
 
   // Observar cambios cada 500ms (sencillo y suficiente)
@@ -5933,7 +7539,7 @@ window._safeModalHide = function(modalId) {
                  + '<th style="padding:8px;text-align:left;border-radius:6px 0 0 0;">Forma</th>'
                  + '<th style="padding:8px;text-align:right;">Limite</th>'
                  + '<th style="padding:8px;text-align:right;">Dosis</th>'
-                 + '<th style="padding:8px;text-align:right;border-radius:0 6px 0 0;">Sobrelimite</th>'
+                 + '<th style="padding:8px;text-align:right;border-radius:0 6px 0 0;">Sobre Límites</th>'
                  + '</tr></thead><tbody>';
         formas.forEach(function(f){
           html += '<tr style="border-bottom:1px solid #e5e7eb;">'
@@ -5952,7 +7558,724 @@ window._safeModalHide = function(modalId) {
   });
 })();
 
-window.autoformatear = autoformatear;
+/* PROCESAR_V1_JS — exclusion mutua + textarea */
+(function initProcesar(){
+  function bind(){
+    var chkReplicar = document.getElementById('chkReplicar');
+    var chkProcesar = document.getElementById('chkProcesar');
+    var wrapProcesar = document.getElementById('procesarTextWrap');
+    if (!chkReplicar || !chkProcesar) return;
+    if (chkProcesar.dataset.bound === '1') return;
+    chkProcesar.dataset.bound = '1';
+
+    chkProcesar.addEventListener('change', function(){
+      if (this.checked) {
+        chkReplicar.checked = false;
+        chkReplicar.disabled = true;
+        try { if (typeof activarModoReplicar === 'function') activarModoReplicar(false); } catch(_){}
+        if (wrapProcesar) wrapProcesar.style.display = 'block';
+      } else {
+        chkReplicar.disabled = false;
+        if (wrapProcesar) wrapProcesar.style.display = 'none';
+      }
+    });
+
+    chkReplicar.addEventListener('change', function(){
+      if (this.checked) {
+        chkProcesar.checked = false;
+        chkProcesar.disabled = true;
+        if (wrapProcesar) wrapProcesar.style.display = 'none';
+      } else {
+        chkProcesar.disabled = false;
+      }
+    });
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', bind);
+  } else {
+    setTimeout(bind, 200);
+  }
+})();
+
+/* === REPLICAR_V1 init (dentro del DOMContentLoaded) === */
+  (function initReplicarDentro(){
+    var chk = document.getElementById('chkReplicar');
+    if (chk){
+      chk.addEventListener('change', function(){
+        if (this.checked && ordenSorteos.length < 2){
+          this.checked = false;
+          if (typeof toast === 'function') toast('Selecciona al menos 2 sorteos para replicar', 'warning');
+          return;
+        }
+        activarModoReplicar(this.checked);
+      });
+    }
+
+    function _debounceSync(){
+      if (!modoReplicar || !ordenSorteos.length) return;
+      if (_syncTimer) clearTimeout(_syncTimer);
+      _syncTimer = setTimeout(sincronizarMatrizASlaves, 120);
+    }
+
+    document.addEventListener('input', function(e){
+      if (!modoReplicar) return;
+      var p = e.target.closest && e.target.closest('.sp-panel');
+      if (!p) return;
+      if (!_esMatriz(p.dataset.sorteoId)) return;
+      _debounceSync();
+    }, true);
+
+    document.addEventListener('click', function(e){
+      if (!modoReplicar) return;
+      var p = e.target.closest && e.target.closest('.sp-panel');
+      if (!p) return;
+      if (!_esMatriz(p.dataset.sorteoId)) return;
+      _debounceSync();
+    }, true);
+  })();
+
+  /* === SELECTOR_BAJO_CUENTA_V1 === */
+  (function initGestorCuentaSelector(){
+    var sel = document.getElementById('selGestorCuenta');
+    if (!sel) return;
+    sel.addEventListener('change', function(){
+      var v = this.value;
+      try {
+        var url = new URL(window.location.href);
+        if (v) { url.searchParams.set('gestor_cuenta', v); }
+        else   { url.searchParams.delete('gestor_cuenta'); }
+        window.location.href = url.toString();
+      } catch(e) {
+        var u = window.location.pathname + '?gestor_cuenta=' + encodeURIComponent(v);
+        window.location.href = u;
+      }
+    });
+  })();
+
+  /* FIX_MOVIL_PARSER_V1 — helpers para movil y normalizacion */
+function _procEsMovil(){
+  try {
+    return (navigator.maxTouchPoints || 0) > 1 ||
+           /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent || '');
+  } catch(_) { return false; }
+}
+
+function _procNormalizarTexto(texto){
+  var t = String(texto || '');
+  t = t.replace(/\bTe(\d)/g, 'T$1');
+  t = t.replace(/\bDe(\d)/g, 'D$1');
+  t = t.replace(/\bPA\./g, 'PA');
+  t = t.replace(/\.(?=\s|$)/g, '');
+  t = t.replace(/[\u2013\u2014]/g, '-');
+  t = t.replace(/[_;]/g, ' ');  // FIX_FIX_UNDERSCORE: _ y ; → espacio
+  // FIX_PRESERVA_NEWLINES_V1: colapsar espacios/tabs pero NO newlines
+  t = t.replace(/[ \t]+/g, ' ');
+  t = t.replace(/[ \t]+\n/g, '\n');
+  t = t.replace(/\n+/g, '\n');
+  return t;
+}
+
+function _procActualizarEstado(msg, tipo){
+  var el = document.getElementById('procEstado');
+  if (!el) return;
+  el.textContent = msg;
+  if (tipo === 'ok')    el.style.color = '#16a34a';
+  else if (tipo === 'error') el.style.color = '#dc2626';
+  else if (tipo === 'proc')  el.style.color = '#2563eb';
+  else                       el.style.color = '#78350f';
+}
+
+/* PARSER_V1_FUNCS — procesa texto pegado hacia la tabla Tradicional del primer sorteo */
+  function _procExpandirLetra(letra, digito){
+    var r = [];
+    if (letra === 'T') {
+      for (var i = 0; i <= 9; i++) r.push(String(i) + digito);
+    } else if (letra === 'D') {
+      for (var i = 0; i <= 9; i++) r.push(digito + String(i));
+    }
+    return r;
+  }
+  
+  function _procSimilitud(a, b){
+    a = String(a||'').toLowerCase(); b = String(b||'').toLowerCase();
+    if (a === b) return 0;
+    if (!a.length) return b.length;
+    if (!b.length) return a.length;
+    var m = [];
+    for (var i = 0; i <= b.length; i++) m[i] = [i];
+    for (var j = 0; j <= a.length; j++) m[0][j] = j;
+    for (i = 1; i <= b.length; i++){
+      for (j = 1; j <= a.length; j++){
+        if (b.charAt(i-1) === a.charAt(j-1)) m[i][j] = m[i-1][j-1];
+        else m[i][j] = Math.min(m[i-1][j-1]+1, m[i][j-1]+1, m[i-1][j]+1);
+      }
+    }
+    return m[b.length][a.length];
+  }
+
+  function _procEsPalabra(word, target){
+    if (!word) return false;
+    var w = String(word).toLowerCase().trim();
+    if (!w) return false;
+    var tol = w.length <= 4 ? 1 : 2;
+    return _procSimilitud(w, target) <= tol;
+  }
+
+  function _procEsParle(word){
+    return _procEsPalabra(word, 'parle') ||
+           _procEsPalabra(word, 'parlet') ||
+           _procEsPalabra(word, 'parley');
+  }
+
+  function _procEsCandado(word){
+    if (!word) return false;
+    var w = String(word);
+    if (w.indexOf('\uD83D\uDD12') >= 0 || w.indexOf('\uD83D\uDD10') >= 0 || w.indexOf('\uD83D\uDD13') >= 0) return true;
+    return _procEsPalabra(w, 'candado');
+  }
+
+  function _procExpandirNumeros(str){
+    str = String(str || '').toUpperCase().replace(/[-;,_]/g, ' ').replace(/\s+/g, ' ').trim();
+    if (!str) return [];
+    var tokens = str.split(' ').filter(function(t){ return t; });
+    var out = [];
+    var pendingLetter = null;
+    for (var k = 0; k < tokens.length; k++){
+      var tok = tokens[k];
+      if (tok === 'T' || tok === 'D'){ pendingLetter = tok; continue; }
+      var mComp = tok.match(/^([TD])(\d+)$/);
+      if (mComp){
+        var exp = _procExpandirLetra(mComp[1], mComp[2]);
+        for (var e1 = 0; e1 < exp.length; e1++) out.push(exp[e1]);
+        pendingLetter = null;
+        continue;
+      }
+      if (tok === 'PA' || tok === 'PAREJAS'){
+        ['00','11','22','33','44','55','66','77','88','99'].forEach(function(n){ out.push(n); });
+        pendingLetter = null;
+        continue;
+      }
+      var mv = tok.match(/^(\d{2})V$/);
+      if (mv){
+        out.push(mv[1]);
+        var rev = mv[1].split('').reverse().join('');
+        if (rev !== mv[1]) out.push(rev);
+        continue;
+      }
+      if (/^\d+$/.test(tok)){
+        // FIX_EXPANDIR_MULTI_V1: la letra pendiente (D/T) aplica a TODOS los
+        // tokens de 1 digito siguientes hasta que aparezca otra letra o
+        // un token de 2+ digitos.
+        if (pendingLetter && tok.length === 1){
+          var exp2 = _procExpandirLetra(pendingLetter, tok);
+          for (var e2 = 0; e2 < exp2.length; e2++) out.push(exp2[e2]);
+          continue;
+        }
+        pendingLetter = null;
+        if (tok.length === 2){
+          out.push(tok);
+        } else if (tok.length % 2 === 0){
+          for (var j = 0; j < tok.length; j += 2) out.push(tok.substr(j, 2));
+        } else {
+          out.push(tok);
+        }
+        continue;
+      }
+    }
+    return out;
+  }
+  
+  function _procParsearMontos(str){
+    str = String(str || '').toLowerCase().replace(/\s+/g, ' ').trim();
+    var res = { fijo: null, corridos: null, parlet: null, candado: null };
+    if (!str) return res;
+
+    var mCand = str.match(/(?:candado|candad|candao|kandado|canado|caandado)[\s:]*([0-9]+(?:\.[0-9]+)?)/i);
+    if (mCand) res.candado = mCand[1];
+
+    var mParle = str.match(/(?:parle|parlet|parl|palet|parler|parley)[\s:]*([0-9]+(?:\.[0-9]+)?)/i);
+    if (mParle) res.parlet = mParle[1];
+
+    var mF = str.match(/([0-9]+(?:\.[0-9]+)?)\s*f\b/);
+    var mC = str.match(/([0-9]+(?:\.[0-9]+)?)\s*c\b/);
+    if (mF) res.fijo = mF[1];
+    if (mC) res.corridos = mC[1];
+
+    if (!res.fijo && !res.corridos){
+      var mY = str.match(/([0-9]+(?:\.[0-9]+)?)\s+y\s+([0-9]+(?:\.[0-9]+)?)/);
+      if (mY){ res.fijo = mY[1]; res.corridos = mY[2]; }
+      else if (!res.candado && !res.parlet){
+        var mS = str.match(/([0-9]+(?:\.[0-9]+)?)/);
+        if (mS) res.fijo = mS[1];
+      }
+    }
+    return res;
+  }
+
+  function _procFmtMonto(n){
+    if (n === Math.floor(n)) return String(n);
+    return n.toFixed(2);
+  }
+  function _procAgruparFilas(filas){
+    // FIX_AGRUPAR_FORMAS_V2: separar por tabla, agrupar tradicionales, respetar pick3/candado.
+    var conCandado = [];
+    var pick3 = [];
+    var sinCandado = [];
+    filas.forEach(function(f){
+      if (f.tabla === 'tabla-pick3') pick3.push(f);
+      else if (f.montos.candado) conCandado.push(f);
+      else sinCandado.push(f);
+    });
+
+    var info = {};
+    var orden = [];
+    sinCandado.forEach(function(f){
+      var nums = String(f.num||'').split(/\s+/).filter(function(n){ return n; });
+      var esParlet = nums.length && nums.every(function(n){ return /x/i.test(n); });
+      nums.forEach(function(n){
+        if (!n) return;
+        if (!info[n]) { info[n] = { fijo: 0, corridos: 0, parlet: 0, esParlet: /x/i.test(n) }; orden.push(n); }
+        if (f.montos.fijo)     info[n].fijo     += parseFloat(f.montos.fijo)     || 0;
+        if (f.montos.corridos) info[n].corridos += parseFloat(f.montos.corridos) || 0;
+        if (f.montos.parlet)   info[n].parlet   += parseFloat(f.montos.parlet)   || 0;
+      });
+    });
+
+    var resultado = [];
+    orden.forEach(function(n){
+      var d = info[n];
+      if (d.esParlet){
+        resultado.push({
+          num: n,
+          montos: { fijo:'', corridos:'', parlet: d.parlet > 0 ? _procFmtMonto(d.parlet) : '' },
+          tabla: 'tabla-tradicional'
+        });
+      }
+    });
+
+    var grupos = {};
+    var ordenG = [];
+    orden.forEach(function(n){
+      var d = info[n];
+      if (d.esParlet) return;
+      function _push(forma){
+        if (d[forma] <= 0) return;
+        var k = forma + '|' + _procFmtMonto(d[forma]);
+        if (!grupos[k]) { grupos[k] = { forma: forma, monto: d[forma], nums: [] }; ordenG.push(k); }
+        grupos[k].nums.push(n);
+      }
+      _push('fijo');
+      _push('corridos');
+      _push('parlet');
+    });
+
+    ordenG.forEach(function(k){
+      var g = grupos[k];
+      var montos = { fijo:'', corridos:'', parlet:'' };
+      montos[g.forma] = _procFmtMonto(g.monto);
+      resultado.push({ num: g.nums.join(' '), montos: montos, tabla: 'tabla-tradicional' });
+    });
+
+    conCandado.forEach(function(f){
+      resultado.push({
+        num: f.num,
+        montos: {
+          fijo: f.montos.fijo || '',
+          corridos: f.montos.corridos || '',
+          parlet: f.montos.parlet || '',
+          candado: f.montos.candado || ''
+        },
+        tabla: 'tabla-tradicional'
+      });
+    });
+
+    pick3.forEach(function(f){
+      resultado.push({
+        num: f.num,
+        montos: { pick3: f.montos.pick3 || '' },
+        tabla: 'tabla-pick3'
+      });
+    });
+
+    return resultado;
+  }
+
+  function _procParsearTexto(texto){
+    var lineas = String(texto || '').split(/\r?\n/).map(function(l){ return l.trim(); });
+    lineas = lineas.filter(function(l){
+      if (!l) return false;
+      if (/^\[/.test(l)) return false;
+      if (/^tarieta|^tarjeta|^saldo/i.test(l)) return false;
+      return true;
+    });
+
+    var filas = [];
+    var grupoPendiente = null;
+    var parletsExplicitos = [];
+
+    function _emitirGrupo(){
+      if (!grupoPendiente) return;
+      var m = grupoPendiente.montos;
+      var nums = grupoPendiente.nums;
+      var numStr = nums.join(' ');
+
+      // FIX_PICK3_ROUTE_V2: si TODOS los numeros tienen 3 digitos → pick3
+      var _todos3 = nums.length > 0 && nums.every(function(n){ return /^\d{3}$/.test(n); });
+      if (_todos3 && (m.fijo || m.corridos || m.parlet)){
+        filas.push({
+          num: numStr,
+          montos: { pick3: m.fijo || m.corridos || m.parlet || '' },
+          tabla: 'tabla-pick3'
+        });
+        grupoPendiente = null;
+        return;
+      }
+
+      // Emitir grupo normal SIN candado
+      if (nums.length > 0 && (m.fijo || m.corridos || m.parlet)){
+        filas.push({
+          num: numStr,
+          montos: {
+            fijo: m.fijo || '',
+            corridos: m.corridos || '',
+            parlet: m.parlet || ''
+          },
+          tabla: 'tabla-tradicional'
+        });
+      }
+
+      // FIX_CANDADO_SEPARADO_V1: el candado va en su propia fila
+      if (m.candado){
+        var pp = _candadoAPorParlet(m.candado, nums.length);
+        if (pp){
+          filas.push({
+            num: numStr,
+            montos: {
+              fijo: '',
+              corridos: '',
+              parlet: pp,
+              candado: m.candado
+            },
+            tabla: 'tabla-tradicional'
+          });
+        }
+      }
+
+      grupoPendiente = null;
+    }
+
+    function _candadoAPorParlet(total, n){
+      if (n < 2) return null;
+      var combos = n * (n - 1) / 2;
+      if (combos <= 0) return null;
+      return (parseFloat(total) / combos).toFixed(2);
+    }
+
+    function _aplicarInstruccion(grupo, instr){
+      if (!grupo || !instr) return;
+      var m = _procParsearMontos(instr);
+      if (m.fijo) grupo.montos.fijo = m.fijo;
+      if (m.corridos) grupo.montos.corridos = m.corridos;
+      if (m.parlet) grupo.montos.parlet = m.parlet;
+      if (m.candado){
+        var pp = _candadoAPorParlet(m.candado, grupo.nums.length);
+        if (pp) {
+          grupo.montos.parlet = pp;
+          grupo.montos.candado = m.candado;  // FIX_CANDADO_V1
+        }
+      }
+    }
+
+    function _detectarInstruccionPos(linea){
+      // Busca el indice donde comienza la instruccion (con/candado/parle/emoji)
+      var m = linea.match(/\s+(con|candado|kandado|canado|candad|parle|parlet|parl|palet|parler|parley)\s/i);
+      if (m) return m.index + 1;
+      var m2 = linea.match(/\s+(candado|kandado|canado|candad|parle|parlet|parl|palet|parler|parley)(?=\s|$)/i);
+      if (m2) return m2.index + 1;
+      var mEmoji = linea.match(/\s+([\uD83D\uDD10\uD83D\uDD12\uD83D\uDD13])/);
+      if (mEmoji) return mEmoji.index + 1;
+      return -1;
+    }
+
+    var i = 0;
+    while (i < lineas.length){
+      var linea = lineas[i];
+
+      // CASO A: parlet explicito "NN*MM-N" o "NNxMM N"
+      var mPE = linea.match(/^\s*([0-9]{2})\s*[*xX]\s*([0-9]{2})\s*(?:[-\s]\s*([0-9]+(?:\.[0-9]+)?))?\s*$/);
+      if (mPE){
+        _emitirGrupo();
+        filas.push({ num: mPE[1] + 'x' + mPE[2], montos: { fijo:'', corridos:'', parlet: mPE[3] || '' } });
+        parletsExplicitos.push(filas.length - 1);
+        i++;
+        continue;
+      }
+
+      // CASO B: "cada parle X" aplica a TODOS los parlets explicitos anteriores
+      if (/^cada\s+parle/i.test(linea)){
+        var mCada = linea.match(/([0-9]+(?:\.[0-9]+)?)/);
+        if (mCada){
+          for (var pE = 0; pE < parletsExplicitos.length; pE++){
+            filas[parletsExplicitos[pE]].montos.parlet = mCada[1];
+          }
+        }
+        i++;
+        continue;
+      }
+
+      // CASO C: instruccion pura → aplica al grupo pendiente o al ultimo emitido
+      if (/^(con|candado|kandado|canado|candad|parle|parlet|parl|palet|parler|parley)\b/i.test(linea) ||
+          /^[\uD83D\uDD10\uD83D\uDD12\uD83D\uDD13]/.test(linea)){
+        var instrP = linea.replace(/^con\s+/i, '');
+        if (grupoPendiente){
+          _aplicarInstruccion(grupoPendiente, instrP);
+          _emitirGrupo();
+        } else if (filas.length > 0){
+          // FIX_CANDADO_ULTIMO_V1: aplicar al ultimo grupo emitido
+          var _mm = _procParsearMontos(instrP);
+          if (_mm.candado || _mm.parlet){
+            var _ultima = filas[filas.length - 1];
+            var _numsUlt = String(_ultima.num || '').split(/\s+/).filter(function(x){ return x; });
+            var _montosExtra = { fijo:'', corridos:'', parlet:'', candado:'' };
+            if (_mm.candado){
+              var _pp = _candadoAPorParlet(_mm.candado, _numsUlt.length);
+              if (_pp){ _montosExtra.parlet = _pp; _montosExtra.candado = _mm.candado; }
+            } else if (_mm.parlet){
+              _montosExtra.parlet = _mm.parlet;
+            }
+            filas.push({
+              num: _ultima.num,
+              montos: _montosExtra,
+              tabla: 'tabla-tradicional'
+            });
+          }
+        }
+        i++;
+        continue;
+      }
+
+      // CASO D: linea mixta (grupo + instruccion)
+      var posInstr = _detectarInstruccionPos(linea);
+      if (posInstr > 0){
+        var grupoStr = linea.slice(0, posInstr).trim();
+        var instrStr = linea.slice(posInstr).trim();
+        var numsD = _procExpandirNumeros(grupoStr);
+        if (numsD.length){
+          _emitirGrupo();
+          grupoPendiente = { nums: numsD, montos: { fijo:'', corridos:'', parlet:'' } };
+          _aplicarInstruccion(grupoPendiente, instrStr);
+          _emitirGrupo();
+          i++;
+          continue;
+        }
+      }
+
+      // CASO E: solo numeros → grupo pendiente
+      var numsE = _procExpandirNumeros(linea);
+      if (numsE.length){
+        _emitirGrupo();
+        grupoPendiente = { nums: numsE, montos: { fijo:'', corridos:'', parlet:'' } };
+        i++;
+        continue;
+      }
+
+      i++;
+    }
+    _emitirGrupo();
+    return _procAgruparFilas(filas);
+  }
+
+  function _procProcesarTexto(){
+    var ta = document.getElementById('procesarText');
+    if (!ta) return;
+    var texto = ta.value || '';
+    if (!texto.trim()) return;
+    var _scrollTop = ta.scrollTop;
+    var _selStart = ta.selectionStart;
+    var _selEnd = ta.selectionEnd;
+    var textoNorm = _procNormalizarTexto(texto);
+    var filas = _procParsearTexto(textoNorm);
+    if (!filas.length){
+      if (typeof toast === 'function') toast('No se interpreto ninguna linea valida', 'warning');
+      return;
+    }
+    if (!ordenSorteos.length){
+      if (typeof toast === 'function') toast('Selecciona al menos un sorteo', 'warning');
+      return;
+    }
+    var tk = 'tabla-tradicional';
+    var aplicados = 0;
+
+    // FIX_PARSER_ESPERA_CARGA_V1: si el primer sorteo no está cargado, esperar y reintentar
+    var _matriz = sorteosActivos[String(ordenSorteos[0])];
+    if (_matriz && !_matriz.cargado){
+      if (!window._procReintentos) window._procReintentos = 0;
+      if (window._procReintentos < 30){ // 30 × 500ms = 15s
+        window._procReintentos++;
+        _procActualizarEstado('\u23f3 Esperando carga de sorteos... (' + window._procReintentos + '/30)', 'proc');
+        clearTimeout(window._procRetryT);
+        window._procRetryT = setTimeout(function(){
+          try { _procProcesarTexto(); } catch(e){ console.error('[procesar retry]', e); }
+        }, 500);
+        return;
+      } else {
+        _procActualizarEstado('\u274c Los sorteos tardaron demasiado en cargar', 'error');
+        window._procReintentos = 0;
+        return;
+      }
+    } else if (_matriz && _matriz.cargado){
+      window._procReintentos = 0;
+    }
+
+    // FIX_PICK3_ROUTE_V1: agrupar filas por tabla
+    var _filasPorTabla = {};
+    filas.forEach(function(f){
+      var t = f.tabla || 'tabla-tradicional';
+      if (!_filasPorTabla[t]) _filasPorTabla[t] = [];
+      _filasPorTabla[t].push(f);
+    });
+
+    // PARSER_V1_REPLICAR: aplicar la misma jugada a TODOS los sorteos seleccionados
+    ordenSorteos.forEach(function(sidRaw){
+      var sid = String(sidRaw);
+      var s = sorteosActivos[sid];
+      if (!s) return;
+      if (!s.cargado) return;
+
+      var _aplicadoEsteSorteo = false;
+      var _primeraTablaAplicada = null;
+
+      Object.keys(_filasPorTabla).forEach(function(tkTabla){
+        var st = s.tablasActivas && s.tablasActivas[tkTabla];
+        if (!st) return;  // FIX_PICK3_ROUTE_V1: sorteo no tiene esa tabla → ignorar silencioso
+        var _kind = (TABLE_DEFS[tkTabla] && TABLE_DEFS[tkTabla].kind) || 'multi';
+        st.rows = _filasPorTabla[tkTabla].map(function(f){
+          var r = newRow(st.forms, _kind);
+          r.num = f.num;
+          Object.keys(f.montos).forEach(function(k){
+            if (k in r.montos) r.montos[k] = f.montos[k];
+          });
+          return r;
+        });
+        if (!_primeraTablaAplicada) _primeraTablaAplicada = tkTabla;
+        _aplicadoEsteSorteo = true;
+      });
+
+      if (!_aplicadoEsteSorteo) return;
+
+      s.tabActual = _primeraTablaAplicada || tk;
+      if (typeof renderTabsSorteo === 'function') renderTabsSorteo(sid);
+      if (typeof renderMiniResumenSorteo === 'function') renderMiniResumenSorteo(sid);
+
+      var panel = document.querySelector('.sp-panel[data-sorteo-id="' + sid + '"]');
+      if (panel){
+        if (String(sidRaw) === String(ordenSorteos[0])){
+          panel.classList.remove('sp-esclavo-procesar');
+        } else {
+          panel.classList.add('sp-esclavo-procesar');
+        }
+      }
+      aplicados++;
+    });
+
+    if (typeof recalcGlobal === 'function') recalcGlobal();
+    try { ta.scrollTop = _scrollTop; ta.selectionStart = _selStart; ta.selectionEnd = _selEnd; } catch(_){}
+    if (aplicados === 0){
+      _procActualizarEstado('\u26a0\ufe0f Ningun sorteo tiene tabla Tradicional', 'error');
+      if (typeof toast === 'function') toast('Ningun sorteo tiene tabla Tradicional', 'warning');
+    } else {
+      _procActualizarEstado('\u2705 ' + filas.length + ' fila(s) \u2192 ' + aplicados + ' sorteo(s)', 'ok');
+      if (typeof toast === 'function') toast('OK: ' + filas.length + ' fila(s) aplicadas a ' + aplicados + ' sorteo(s)', 'success');
+    }
+  }
+  
+  (function _bindProcesarText(){
+    function _procFeedback(estado){
+      var ta = document.getElementById('procesarText');
+      if (!ta) return;
+      if (estado === 'procesando'){
+        ta.style.borderColor = '#2563eb';
+        ta.style.boxShadow = '0 0 0 3px rgba(37,99,235,.2)';
+      } else if (estado === 'ok'){
+        ta.style.borderColor = '#16a34a';
+        ta.style.boxShadow = '0 0 0 3px rgba(22,163,74,.2)';
+        setTimeout(function(){
+          if (ta) { ta.style.borderColor = '#fdba74'; ta.style.boxShadow = ''; }
+        }, 800);
+      } else {
+        ta.style.borderColor = '#fdba74';
+        ta.style.boxShadow = '';
+      }
+    }
+    window._procFeedback = _procFeedback;
+
+    function bind(){
+      var ta = document.getElementById('procesarText');
+      if (!ta || ta.dataset.procBound === '1') return;
+      ta.dataset.procBound = '1';
+
+      // FIX_MOVIL_PARSER_V1: debounces adaptados a movil
+      var esMovil = _procEsMovil();
+      var D_PASTE  = esMovil ? 300 : 50;
+      var D_INPUT  = esMovil ? 800 : 250;
+      var D_CHANGE = esMovil ? 400 : 200;
+      var D_KEY    = esMovil ? 500 : 300;
+
+      function _programar(delay){
+        clearTimeout(ta._procT);
+        _procFeedback('procesando');
+        _procActualizarEstado('\u23f3 Procesando...', 'proc');
+        ta._procT = setTimeout(function(){
+          try {
+            _procProcesarTexto();
+            _procFeedback('ok');
+          } catch(e){
+            console.error('[procesar]', e);
+            _procFeedback('error');
+            _procActualizarEstado('\u274c Error: ' + (e && e.message ? e.message : 'desconocido'), 'error');
+          }
+        }, delay);
+      }
+
+      var btnAhora = document.getElementById('btnProcAhora');
+      if (btnAhora && btnAhora.dataset.bound !== '1'){
+        btnAhora.dataset.bound = '1';
+        btnAhora.addEventListener('click', function(){
+          try {
+            _procFeedback('procesando');
+            _procActualizarEstado('\u26a1 Procesando...', 'proc');
+            _procProcesarTexto();
+            _procFeedback('ok');
+          } catch(e){
+            console.error('[procesar]', e);
+            _procFeedback('error');
+            _procActualizarEstado('\u274c Error: ' + (e && e.message ? e.message : 'desconocido'), 'error');
+          }
+        });
+      }
+
+      // FIX_PROCESAR_MANUAL_V1: solo el botón procesa, no el textarea
+      // (listeners de input/change/blur/keydown desactivados)
+    }
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', bind);
+    } else {
+      setTimeout(bind, 400);
+    }
+  })();
+
+  // Exponer parser para debug
+  window._procProcesarTexto = _procProcesarTexto;
+  window._procNormalizarTexto = _procNormalizarTexto;
+  window._procParsearTexto = _procParsearTexto;
+  window._procExpandirNumeros = _procExpandirNumeros;
+  window._procParsearMontos = _procParsearMontos;
+  // FIX_PARSER_ESPERA_CARGA_V1: exponer variables para debug
+  window.ordenSorteos = ordenSorteos;
+  window.sorteosActivos = sorteosActivos;
+  window._procParsearTexto = _procParsearTexto;
+
+  window.autoformatear = autoformatear;
 window.expandirToken = expandirToken;
 window.numerosEnFila = numerosEnFila;
 window.autoformatearSoloParlet = autoformatearSoloParlet;
@@ -5982,5 +8305,643 @@ document.addEventListener('submit', function(ev){
   return false;
 }, true);
 
+
+
+/* ═══════════════════════════════════════════════════════════════
+   APOSTAR_DRAFT_V1 — Autoguardado y restauración de borrador
+   ═══════════════════════════════════════════════════════════════ */
+(function(){
+  'use strict';
+
+  var KEY_PREFIX = 'apostar_draft_v1_';
+  var TTL_MS     = 7 * 24 * 60 * 60 * 1000;   // 7 días
+  var SAVE_DEBOUNCE = 1000;                    // 1s
+
+  function getBoletaKey(){
+    try {
+      var u = new URLSearchParams(window.location.search);
+      var id = u.get('edit_boleta');
+      if (id) return KEY_PREFIX + 'boleta_' + id;
+    } catch(_){}
+    return KEY_PREFIX + 'nuevo';
+  }
+
+  function snapshot(){
+    var snap = {
+      version: 1,
+      ts: Date.now(),
+      url: window.location.pathname + window.location.search,
+      ordenSorteos: (typeof ordenSorteos !== 'undefined' && Array.isArray(ordenSorteos)) ? ordenSorteos.slice() : [],
+      fpSel: (typeof fpSel !== 'undefined') ? fpSel : null,
+      fecha: (document.getElementById('inpFecha') || {}).value || null,
+      sorteoData: {}
+    };
+    try {
+      if (typeof sorteosActivos === 'undefined') return snap;
+      Object.keys(sorteosActivos).forEach(function(sid){
+        var s = sorteosActivos[sid];
+        var sData = {
+          sid: s.sid, nombre: s.nombre,
+          tabActual: s.tabActual,
+          tablasActivas: {}
+        };
+        Object.keys(s.tablasActivas || {}).forEach(function(tk){
+          var st = s.tablasActivas[tk];
+          sData.tablasActivas[tk] = {
+            forms: (st.forms || []).slice(),
+            rows: (st.rows || []).map(function(r){
+              return {
+                num: r.num || '',
+                numA: r.numA || '',
+                numB: r.numB || '',
+                posicion: r.posicion || '1',
+                monto: r.monto || '',
+                montos: Object.assign({}, r.montos || {})
+              };
+            })
+          };
+        });
+        snap.sorteoData[sid] = sData;
+      });
+    } catch(e){ console.warn('[draft snapshot]', e); }
+    return snap;
+  }
+
+  function isEmpty(snap){
+    if (!snap) return true;
+    if (snap.ordenSorteos && snap.ordenSorteos.length) return false;
+    if (!snap.sorteoData) return true;
+    var n = 0;
+    Object.keys(snap.sorteoData).forEach(function(sid){
+      var s = snap.sorteoData[sid];
+      Object.keys(s.tablasActivas || {}).forEach(function(tk){
+        var rows = s.tablasActivas[tk].rows || [];
+        rows.forEach(function(r){
+          if ((r.num || '').trim() || (r.numA || '').trim() || (r.numB || '').trim() || r.monto) n++;
+        });
+      });
+    });
+    return n === 0;
+  }
+
+  function save(){
+    try {
+      var snap = snapshot();
+      if (isEmpty(snap)) {
+        try { localStorage.removeItem(getBoletaKey()); } catch(_){}
+        return;
+      }
+      localStorage.setItem(getBoletaKey(), JSON.stringify(snap));
+    } catch(e){ console.warn('[draft save]', e); }
+  }
+
+  var saveTimer = null;
+  function scheduleSave(){
+    if (saveTimer) clearTimeout(saveTimer);
+    saveTimer = setTimeout(save, SAVE_DEBOUNCE);
+  }
+
+  function load(){
+    try {
+      var raw = localStorage.getItem(getBoletaKey());
+      if (!raw) return null;
+      var snap = JSON.parse(raw);
+      if (!snap || !snap.ts) return null;
+      if (Date.now() - snap.ts > TTL_MS) {
+        localStorage.removeItem(getBoletaKey());
+        return null;
+      }
+      return snap;
+    } catch(e){ return null; }
+  }
+
+  function clear(){
+    try { localStorage.removeItem(getBoletaKey()); } catch(_){}
+  }
+
+  function restore(snap){
+    if (!snap || !snap.sorteoData) return false;
+    var restored = false;
+    try {
+      // 1) Recrear paneles desde cero
+      if (typeof sorteosActivos !== 'undefined'){
+        Object.keys(sorteosActivos).forEach(function(sid){
+          try { if (typeof quitarPanelSorteo === 'function') quitarPanelSorteo(sid); } catch(_){}
+          try { delete sorteosActivos[sid]; } catch(_){}
+        });
+      }
+      if (typeof ordenSorteos !== 'undefined'){
+        ordenSorteos.length = 0;
+      }
+
+      // 2) Crear cada panel guardado
+      Object.keys(snap.sorteoData).forEach(function(sid){
+        var sData = snap.sorteoData[sid];
+        try {
+          if (typeof agregarPanelSorteo === 'function'){
+            agregarPanelSorteo(sData.sid, sData.nombre, 9999);
+          }
+          var s = (typeof sorteosActivos !== 'undefined') ? sorteosActivos[sData.sid] : null;
+          if (!s) return;
+          s.tabActual = sData.tabActual;
+          Object.keys(sData.tablasActivas).forEach(function(tk){
+            s.tablasActivas[tk] = {
+              forms: sData.tablasActivas[tk].forms.slice(),
+              rows: sData.tablasActivas[tk].rows.map(function(r){
+                return {
+                  num: r.num || '',
+                  numA: r.numA || '',
+                  numB: r.numB || '',
+                  posicion: r.posicion || '1',
+                  monto: r.monto || '',
+                  montos: Object.assign({}, r.montos || {})
+                };
+              })
+            };
+          });
+          if (typeof renderTablaActivaSorteo === 'function'){
+            renderTablaActivaSorteo(sData.sid);
+          }
+          if (typeof renderTabsSorteo === 'function'){
+            try { renderTabsSorteo(sData.sid); } catch(_){}
+          }
+          restored = true;
+        } catch(e){ console.warn('[draft restore sorteo]', e); }
+      });
+
+      // 3) Restaurar orden de sorteos
+      if (snap.ordenSorteos && typeof ordenSorteos !== 'undefined'){
+        ordenSorteos.length = 0;
+        snap.ordenSorteos.forEach(function(x){ ordenSorteos.push(x); });
+      }
+
+      // 4) Forma de pago (por chip click)
+      if (snap.fpSel){
+        try {
+          var chip = document.querySelector('.chip-fp[data-n="' + snap.fpSel + '"], [data-fp="' + snap.fpSel + '"]');
+          if (chip) chip.click();
+        } catch(_){}
+      }
+
+      // 5) Fecha — FIX_FECHA_HOY_V1 (2026-10-14):
+      // Si la fecha del borrador es pasada, forzar hoy. Evita el 400
+      // "solo pueden apostar desde hoy en adelante" cuando hay drafts viejos.
+      if (snap.fecha){
+        var f = document.getElementById('inpFecha');
+        if (f) {
+          var _hoyISO = new Date().toLocaleDateString('en-CA');
+          f.value = (snap.fecha < _hoyISO) ? _hoyISO : snap.fecha;
+          try { f.dispatchEvent(new Event('change', {bubbles:true})); } catch(_){}
+        }
+      }
+    } catch(e){ console.warn('[draft restore]', e); }
+    return restored;
+  }
+
+  // ═══ Exponer API ═══
+  window.apostarDraft = {
+    save: save, load: load, clear: clear,
+    restore: restore,
+    exists: function(){ return load() !== null; },
+    _snapshot: snapshot   // debug
+  };
+  console.log('[apostarDraft] API lista. Clave:', getBoletaKey());
+
+  // ═══ Hook A: si el usuario limpia manualmente → borrar draft ═══
+  try {
+    var _resetOriginal = window.resetAll;
+    if (typeof resetAll === 'function'){
+      window.resetAll = function(){
+        try { clear(); console.log('[apostarDraft] borrado por resetAll()'); } catch(_){}
+        return _resetOriginal.apply(this, arguments);
+      };
+    }
+  } catch(_){}
+
+  // ═══ Hook B: al enviar OK → borrar draft ═══
+  try {
+    var _enviarOriginal = window.enviarApuesta;
+    if (typeof enviarApuesta === 'function'){
+      window.enviarApuesta = function(dryRun){
+        var ret = _enviarOriginal.apply(this, arguments);
+        // Si NO es dryRun (envío real), el fetch tiene éxito → clear
+        if (!dryRun){
+          // Observamos cuándo cambia location para saber si redirigió con éxito
+          var checkInterval = setInterval(function(){
+            if (window.location.pathname.indexOf('mis-apuestas') !== -1){
+              try { clear(); } catch(_){}
+              clearInterval(checkInterval);
+            }
+          }, 500);
+          setTimeout(function(){ clearInterval(checkInterval); }, 30000);
+        }
+        return ret;
+      };
+    }
+  } catch(_){}
+
+  // ═══ Hook C: autosave con MutationObserver (debounced) ═══
+  function attachObserver(){
+    var target = document.querySelector('.sp-panel')?.parentElement
+              || document.getElementById('panelesSorteo')
+              || document.getElementById('sorteosPaneles')
+              || document.body;
+    if (!target) return;
+
+    var mo = new MutationObserver(function(muts){
+      for (var i = 0; i < muts.length; i++){
+        var t = muts[i].target;
+        // Ignorar cambios en el banner de draft
+        if (t && t.closest && t.closest('#apostarDraftBanner')) continue;
+        scheduleSave();
+        return;
+      }
+    });
+    mo.observe(target, {childList:true, subtree:true, characterData:true,
+                       attributes:true, attributeFilter:['value','data-value']});
+
+    // También en inputs/change para cubrir edición de texto
+    target.addEventListener('input',  scheduleSave, true);
+    target.addEventListener('change', scheduleSave, true);
+    console.log('[apostarDraft] autosave enganchado en', target.id || target.className);
+  }
+
+  // ═══ Arrancar al cargar DOM ═══
+  function boot(){
+    // 1) ¿Venimos con boleta a editar?
+    var urlBoleta = null;
+    try { urlBoleta = new URLSearchParams(window.location.search).get('edit_boleta'); } catch(_){}
+
+    var saved = load();
+
+    // 2) Auto-restaurar si hay draft y (a) no hay URL de edición o (b) coincide la boleta
+    if (saved){
+      var urlKey = getBoletaKey();
+      var sameBoleta = (urlBoleta && saved.url && saved.url.indexOf('edit_boleta=' + urlBoleta) !== -1);
+      var newDraft   = (!urlBoleta);
+
+      if (sameBoleta || newDraft){
+        var ok = restore(saved);
+        if (ok){
+          console.log('[apostarDraft] borrador restaurado automáticamente');
+          // Aviso pequeño discreto
+          var toast = document.createElement('div');
+          toast.style.cssText = 'position:fixed;bottom:16px;left:16px;z-index:99998;'+
+            'background:#4f46e5;color:#fff;padding:10px 14px;border-radius:10px;'+
+            'font-size:.82rem;font-weight:700;box-shadow:0 8px 24px rgba(79,70,229,.35);';
+          toast.textContent = '📌 Borrador restaurado';
+          document.body.appendChild(toast);
+          setTimeout(function(){ toast.remove(); }, 3500);
+        }
+      } else if (saved && !sameBoleta && urlBoleta){
+        // Hay draft de OTRA boleta → mostrar banner para decidir
+        var banner = document.createElement('div');
+        banner.id = 'apostarDraftBanner';
+        banner.style.cssText = 'position:fixed;top:12px;left:50%;transform:translateX(-50%);'+
+          'z-index:99998;background:#fef3c7;color:#92400e;padding:10px 16px;border-radius:10px;'+
+          'font-size:.85rem;font-weight:700;box-shadow:0 8px 24px rgba(0,0,0,.15);'+
+          'display:flex;gap:10px;align-items:center;flex-wrap:wrap;max-width:92vw;';
+        banner.innerHTML = '<span>📌 Tienes un borrador de otra boleta</span>'+
+          '<button id="apDraftDiscard" style="background:#dc2626;color:#fff;border:none;padding:6px 12px;border-radius:8px;font-weight:700;cursor:pointer;font-size:.78rem;">Descartar y cargar esta boleta</button>';
+        document.body.appendChild(banner);
+        document.getElementById('apDraftDiscard').onclick = function(){
+          clear();
+          banner.remove();
+          location.reload();
+        };
+      }
+    }
+
+    attachObserver();
+
+    // 3) Guardar al salir (último intento)
+    window.addEventListener('beforeunload', function(){
+      try { save(); } catch(_){}
+    });
+  }
+
+  if (document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', boot);
+  } else {
+    setTimeout(boot, 300); // dar tiempo a que la inicialización de apostar termine
+  }
+
+})();
+
+
+/* FIX_COL_FIJO_COLOR_V1 */
+(function(){function m(t){if(!t)return;var th=t.querySelectorAll("thead th"),i=-1;th.forEach(function(x,j){if((x.textContent||"").trim().toLowerCase()==="fijo"){i=j;x.classList.add("col-fijo")}else{x.classList.remove("col-fijo")}});if(i<0)return;t.querySelectorAll("tbody tr").forEach(function(r){var c=r.children;for(var k=0;k<c.length;k++){if(k===i)c[k].classList.add("col-fijo");else c[k].classList.remove("col-fijo")}})}function e(){document.querySelectorAll(".tabla-ap").forEach(m)}e();var _t=null;new MutationObserver(function(){clearTimeout(_t);_t=setTimeout(e,60)}).observe(document.body,{childList:true,subtree:true});document.addEventListener("click",function(ev){if(ev.target.closest(".tab-btn,.tab,[data-tab],[data-sorteo-tab]"))setTimeout(e,80)});window.__fixColFijo=e;})();
+
+/* FIX_AUTO_ADD_FILA_V2 - red de seguridad: garantiza fila vacia al final tras cada render */
+(function(){
+  if (window.__fixAutoAddV2) return;
+  window.__fixAutoAddV2 = true;
+  var _origRender = window.renderTablaActivaSorteo;
+  if (!_origRender) { console.warn("FIX_AUTO_ADD_FILA_V2: falta renderTablaActivaSorteo"); return; }
+  function check(sid){
+    try {
+      var s = sorteosActivos[sid];
+      if (!s) return;
+      var tk = s.tabActual;
+      var st = s.tablasActivas[tk];
+      var def = TABLE_DEFS[tk];
+      if (!st || !def) return;
+      var last = st.rows[st.rows.length - 1];
+      if (last && typeof _filaTieneContenido === "function" && _filaTieneContenido(last, def)) {
+        st.rows.push(newRow(st.forms, def.kind));
+        _origRender.call(window, sid);
+      }
+    } catch(_){}
+  }
+  window.renderTablaActivaSorteo = function(sid){
+    _origRender.apply(this, arguments);
+    check(sid);
+  };
+  console.log("OK FIX_AUTO_ADD_FILA_V2 activo");
+})();
 </script>
+
+{# ═══════ FIX_RECARGA_GLOBAL_V1: boton global + sync modal ═══════ #}
+<script>
+(function(){
+  'use strict';
+  document.addEventListener('DOMContentLoaded', function(){
+    var btnGlobal = document.getElementById('btnRecargarGlobal');
+    var selCli    = document.getElementById('mrrClienteSelect');
+    var mrrCli    = document.getElementById('mrrCliente');
+    var mrrFondo  = document.getElementById('mrrFondoActual');
+    var modalEl   = document.getElementById('modalRecargaRapida');
+    if (!btnGlobal || !modalEl || !selCli) return;
+
+    btnGlobal.addEventListener('click', function(e){
+      e.preventDefault();
+      selCli.value = '';
+      if (mrrCli)   mrrCli.textContent = '—';
+      if (mrrFondo) { mrrFondo.textContent = '$0.00'; mrrFondo.style.color = ''; }
+      var montoInp = document.getElementById('mrrMonto');
+      if (montoInp) montoInp.value = '';
+      var errBox = document.getElementById('mrrError');
+      if (errBox) errBox.style.display = 'none';
+
+      try {
+        if (typeof cliente !== 'undefined' && cliente && cliente.id){
+          var opt = selCli.querySelector('option[value="' + cliente.id + '"]');
+          if (opt){
+            selCli.value = cliente.id;
+            if (mrrCli) mrrCli.textContent = cliente.nombre || opt.textContent;
+          }
+        }
+      } catch(_){}
+
+      bootstrap.Modal.getOrCreateInstance(modalEl).show();
+    });
+
+    // FIX_MODAL_FP_V1: usar el saldo de la FP seleccionada
+    var selFp = document.getElementById('mrrFormaPago');
+    var _cacheSaldo = null;
+
+    function _actualizarFondoModal(){
+      if (!mrrFondo) return;
+      if (!_cacheSaldo || !selFp || !selFp.value){
+        mrrFondo.textContent = '$0.00';
+        mrrFondo.style.color = '';
+        return;
+      }
+      var fpId = selFp.value;
+      var saldoFp = parseFloat((_cacheSaldo.saldos || {})[fpId] || 0);
+      var bonoFp  = parseFloat((_cacheSaldo.bonos_por_fp || {})[fpId] || 0);
+      var ppFp    = parseFloat((_cacheSaldo.postpagos_por_fp || {})[fpId] || 0);
+      var total = saldoFp + bonoFp - ppFp;
+      var txt = (total < 0 ? '-$' : '$') + Math.abs(total).toFixed(2);
+      mrrFondo.textContent = txt;
+      mrrFondo.style.color = total < 0 ? '#b91c1c' : '#047857';
+    }
+
+    function _cargarSaldoModal(clienteId){
+      if (!clienteId){
+        _cacheSaldo = null;
+        _actualizarFondoModal();
+        return;
+      }
+      fetch("{% url 'jugadas:api_verificar_saldo' %}?usuario_id=" + clienteId, {
+        headers: { 'Accept': 'application/json' },
+        credentials: 'same-origin'
+      })
+      .then(function(r){ return r.ok ? r.json() : null; })
+      .then(function(d){
+        if (!d) return;
+        _cacheSaldo = d;
+        _actualizarFondoModal();
+      })
+      .catch(function(){});
+    }
+
+    selCli.addEventListener('change', function(){
+      var opt = selCli.options[selCli.selectedIndex];
+      if (opt && opt.value){
+        if (mrrCli) mrrCli.textContent = opt.dataset.nombre || opt.textContent;
+        _cargarSaldoModal(opt.value);
+      } else {
+        if (mrrCli)   mrrCli.textContent = '—';
+        _cacheSaldo = null;
+        _actualizarFondoModal();
+      }
+    });
+
+    if (selFp){
+      selFp.addEventListener('change', _actualizarFondoModal);
+    }
+  });
+})();
+
+// ═══════════════════════════════════════════════════════════════
+// FIX_RECARGA_TOTAL_V1: hook global que NO depende de variables internas
+// ═══════════════════════════════════════════════════════════════
+(function(){
+  console.log('[RECARGA_V1] Init');
+  var URL_API = "{% url 'roles:api_recarga_rapida' %}";
+
+  function getCliente() {
+    var sel = document.getElementById('selCliente');
+    if (!sel || !sel.value) return null;
+    var opt = sel.selectedIndex >= 0 ? sel.options[sel.selectedIndex] : null;
+    return { id: sel.value, nombre: opt ? (opt.dataset.nombre || opt.textContent) : sel.value };
+  }
+  function getFp() {
+    var chip = document.querySelector('.fp-chip.active');
+    if (!chip) return null;
+    return chip.dataset.fpId || chip.dataset.id || chip.dataset.formaPago || null;
+  }
+  function getCsrf() {
+    var m = document.cookie.match(/csrftoken=([^;]+)/);
+    return m ? m[1] : '';
+  }
+
+  function poblarModal() {
+    console.log('[RECARGA_V1] poblarModal');
+    var c = getCliente();
+    var f = getFp();
+    console.log('[RECARGA_V1] cliente:', c, '| fp:', f);
+
+    if (c && c.id) {
+      var selC = document.getElementById('mrrClienteSelect');
+      if (selC) {
+        var val = String(c.id), ex = false;
+        for (var i=0; i<selC.options.length; i++) if (String(selC.options[i].value)===val) {ex=true;break;}
+        if (!ex) { var o=document.createElement('option'); o.value=val; o.textContent=(c.nombre||'Cliente')+' (actual)'; selC.appendChild(o); }
+        selC.value = val;
+      }
+      var lbl = document.getElementById('mrrCliente');
+      if (lbl) lbl.textContent = c.nombre || '';
+    }
+    if (f) {
+      var selFp = document.getElementById('mrrFormaPago');
+      if (selFp) selFp.value = String(f);
+    }
+    var inpMonto = document.getElementById('mrrMonto');
+    if (inpMonto) inpMonto.value = '';
+    var errBox = document.getElementById('mrrError');
+    if (errBox) errBox.style.display = 'none';
+    var chip = document.querySelector('.fp-chip.active');
+    var fondo = chip && chip.querySelector('strong') ? chip.querySelector('strong').textContent : '$0.00';
+    var lblFondo = document.getElementById('mrrFondoActual');
+    if (lblFondo) lblFondo.textContent = fondo;
+  }
+
+  function hookModal() {
+    var modalEl = document.getElementById('modalRecargaRapida');
+    if (!modalEl) { setTimeout(hookModal, 500); return; }
+    if (modalEl.dataset.rv1 === '1') return;
+    modalEl.dataset.rv1 = '1';
+    modalEl.addEventListener('show.bs.modal', poblarModal);
+    modalEl.addEventListener('shown.bs.modal', poblarModal);
+    console.log('[RECARGA_V1] Modal hookeado');
+  }
+
+  function hookConfirm() {
+    var btn = document.getElementById('mrrConfirmar');
+    if (!btn) { setTimeout(hookConfirm, 500); return; }
+    if (btn.dataset.rv1 === '1') return;
+    btn.dataset.rv1 = '1';
+    btn.addEventListener('click', function(e){
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      console.log('[RECARGA_V1] Confirmar clickeado');
+
+      var selCli = document.getElementById('mrrClienteSelect');
+      var selFp = document.getElementById('mrrFormaPago');
+      var inpMonto = document.getElementById('mrrMonto');
+      var errBox = document.getElementById('mrrError');
+      var cliId = selCli ? String(selCli.value || '').trim() : '';
+      var fpId = selFp ? String(selFp.value || '').trim() : '';
+      var monto = parseFloat(inpMonto ? inpMonto.value : '0') || 0;
+
+      console.log('[RECARGA_V1] Valores:', {cliId: cliId, fpId: fpId, monto: monto});
+
+      if (!cliId) { if (errBox) {errBox.textContent='Selecciona un cliente.'; errBox.style.display='block';} return; }
+      if (!fpId) { if (errBox) {errBox.textContent='Selecciona forma de pago.'; errBox.style.display='block';} return; }
+      if (monto <= 0) { if (errBox) {errBox.textContent='Monto debe ser mayor a 0.'; errBox.style.display='block';} return; }
+      if (errBox) errBox.style.display = 'none';
+
+      btn.disabled = true;
+      var old = btn.innerHTML;
+      btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Procesando...';
+
+      var reqId = 'rr_' + Date.now() + '_' + Math.random().toString(36).slice(2,10);
+      var fd = new FormData();
+      fd.append('usuario_id', cliId);
+      fd.append('forma_pago_id', fpId);
+      fd.append('monto', monto.toFixed(2));
+      fd.append('request_id', reqId);
+      fd.append('csrfmiddlewaretoken', getCsrf());
+
+      console.log('[RECARGA_V1] POST a:', URL_API);
+
+      fetch(URL_API, {method: 'POST', body: fd, headers: {'X-Requested-With': 'XMLHttpRequest'}})
+      .then(function(r){ console.log('[RECARGA_V1] HTTP:', r.status); return r.text(); })
+      .then(function(txt){
+        console.log('[RECARGA_V1] Respuesta:', txt.slice(0,300));
+        var d; try { d = JSON.parse(txt); } catch(_) { d = {success:false, error:'Respuesta inválida: '+txt.slice(0,100)}; }
+        btn.disabled = false; btn.innerHTML = old;
+        if (d.success) {
+          var m = document.getElementById('modalRecargaRapida');
+          if (m) try { bootstrap.Modal.getInstance(m).hide(); } catch(_) {}
+          if (typeof toast === 'function') {
+            toast('💰 Recarga: $' + (d.monto||monto).toFixed(2) + ' en ' + (d.forma_pago_nombre||'') + '. Saldo: $' + (d.saldo_actual||0).toFixed(2), 'success');
+          } else { alert('Recarga exitosa: $' + (d.monto||monto).toFixed(2)); }
+          if (typeof cargarFormasPago === 'function') cargarFormasPago();
+          
+          /* FIX_RECARGA_SALDO_AUTO_V1: actualizar saldo sin recargar página */
+          (function(){
+            var _num = (typeof d.saldo_actual === 'number') ? d.saldo_actual : parseFloat(d.saldo_actual || 0);
+            var _fmt = function(n){ return '$' + parseFloat(n||0).toFixed(2); };
+            console.log('[RECARGA_SALDO_V1] Update saldo:', _num);
+            
+            if (!isNaN(_num)) {
+              var _chipA = document.querySelector('.fp-chip.active');
+              if (_chipA) {
+                var _sA = _chipA.querySelector('strong');
+                if (_sA) _sA.textContent = _fmt(_num);
+              }
+              ['ftFondo','prFondo','bsFondo','apFabTotal','mrrFondoActual'].forEach(function(id){
+                var el = document.getElementById(id);
+                if (el) el.textContent = _fmt(_num);
+              });
+            }
+            
+            var _sel2 = document.getElementById('selCliente');
+            if (_sel2 && _sel2.value) {
+              fetch('/jugadas/api/forma-pago-cliente/?cliente_id=' + encodeURIComponent(_sel2.value), {headers:{'X-Requested-With':'XMLHttpRequest'}})
+              .then(function(r){ return r.json(); })
+              .then(function(data){
+                var forms = data && (data.formas_pago || data.formas || data.fondos);
+                if (Array.isArray(forms)) {
+                  forms.forEach(function(fp){
+                    var chip = document.querySelector('.fp-chip[data-fp-id="' + fp.id + '"]') || document.querySelector('.fp-chip[data-id="' + fp.id + '"]');
+                    if (chip) {
+                      var st = chip.querySelector('strong');
+                      if (st) st.textContent = _fmt(fp.monto || fp.saldo || 0);
+                    }
+                  });
+                  console.log('[RECARGA_SALDO_V1] Chips refrescados desde API');
+                }
+              })
+              .catch(function(e){ console.warn('[RECARGA_SALDO_V1] fetch err:', e); });
+            }
+            
+            if (typeof actualizarVisibilidad === 'function') {
+              setTimeout(function(){ try { actualizarVisibilidad(); } catch(_){} }, 200);
+            }
+            if (typeof recalcGlobal === 'function') {
+              try { recalcGlobal(); } catch(_){}
+            }
+          })();
+        } else {
+          if (errBox) { errBox.textContent = d.error || 'Error'; errBox.style.display = 'block'; }
+        }
+      })
+      .catch(function(err){
+        console.error('[RECARGA_V1] Error:', err);
+        btn.disabled = false; btn.innerHTML = old;
+        if (errBox) { errBox.textContent = 'Error: ' + err.message; errBox.style.display = 'block'; }
+      });
+    });
+    console.log('[RECARGA_V1] Confirmar hookeado');
+  }
+
+  hookModal(); hookConfirm();
+  setTimeout(hookModal, 1000); setTimeout(hookConfirm, 1000);
+  setTimeout(hookModal, 3000); setTimeout(hookConfirm, 3000);
+})();
+</script>
+
+
+<script>
+window._BORRADOR_CTX = {
+  userId: {{ request.user.id|default:0 }},
+  editMode: {% if edit_boleta_data or es_modo_reenviar %}true{% else %}false{% endif %}
+};
+</script>
+<script src="{% static 'js/borrador_apostar.js' %}?v=20261022b"></script>
+
 {% endblock extra_js %}

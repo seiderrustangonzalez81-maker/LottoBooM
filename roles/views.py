@@ -32,7 +32,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 
 # Apps propias
-from jugadas.models import FormaJuego, Jugada
+from jugadas.models import Boleta, FormaJuego, Jugada        # ← añadido Boleta
 from pagos.models import FormaPago
 from sorteos.models import DosisBase, Sorteo
 
@@ -66,11 +66,10 @@ from .models import (
     ViaPago,
     SolicitudRetiro
 )
-from .utils import crear_notificacion
+from .utils import crear_notificacion, get_recursos_visibles
 from roles.services import CuadreService
 
 logger = logging.getLogger(__name__)
-
 # ============================================================
 # FUNCIÓN AUXILIAR PARA ORDENAR SORTEOS POR HORA
 # ============================================================
@@ -205,7 +204,7 @@ def anular_bonos_usuario(usuario):
     bonos_activos = Bono.objects.filter(
         usuario=usuario, estado='activo'
     ).filter(
-        Q(fecha_vencimiento__isnull=True) | 
+        Q(fecha_vencimiento__isnull=True) |
         Q(fecha_vencimiento__gte=timezone.now())
     ).order_by(
         F('fecha_vencimiento').asc(nulls_last=True), 'creado_en'
@@ -595,6 +594,37 @@ def mis_notificaciones(request):
         'page_obj': page_obj, 'no_leidas': no_leidas, 'total': notificaciones.count(),
         'filtros': {'estado': estado, 'prioridad': prioridad, 'categoria': categoria},
     }
+
+    # FIX_NOTIF_FONDO_FALLBACK_V2: dinámico para no leídas, congelado/retro-congelado para leídas
+    from roles.utils import obtener_fondo_cliente
+    from django.contrib.auth import get_user_model
+    from django.utils import timezone as _tz
+    _User = get_user_model()
+    for _n in page_obj:
+        if (_n.tipo == 'pago' and _n.datos
+                and 'cliente_id' in _n.datos
+                and 'solicitud_id' in _n.datos):
+            if _n.leido:
+                if _n.datos.get('fondo_snapshot'):
+                    _n.fondo_mostrar = _n.datos.get('fondo_snapshot')
+                    _n.fondo_congelado = True
+                else:
+                    _cli = _User.objects.filter(id=_n.datos['cliente_id']).first()
+                    if _cli:
+                        _snap = obtener_fondo_cliente(_cli)
+                        _datos = dict(_n.datos)
+                        _datos['fondo_snapshot'] = _snap
+                        _datos['fondo_congelado_en'] = _tz.now().isoformat()
+                        _datos['retro_congelado'] = True
+                        _n.datos = _datos
+                        _n.save(update_fields=['datos'])
+                        _n.fondo_mostrar = _snap
+                        _n.fondo_congelado = True
+            else:
+                _cli = _User.objects.filter(id=_n.datos['cliente_id']).first()
+                if _cli:
+                    _n.fondo_mostrar = obtener_fondo_cliente(_cli)
+                    _n.fondo_congelado = False
     return render(request, 'roles/notificaciones.html', context)
 
 @login_required
@@ -612,7 +642,17 @@ def marcar_notificacion_leida(request, notificacion_id):
 def marcar_todas_leidas(request):
     if request.method == 'POST':
         now = timezone.now()
-        count = Notificacion.objects.filter(usuario=request.user, leido=False).update(leido=True, leido_en=now)
+        # FIX_NOTIF_FONDO_DINAMICO_V1: loop individual para congelar snapshot
+        _retiro_qs = Notificacion.objects.filter(
+            usuario=request.user, leido=False
+        ).filter(datos__has_key='cliente_id')
+        _retiro_ids = list(_retiro_qs.values_list('id', flat=True))
+        for _n in _retiro_qs:
+            _n.marcar_como_leida()
+        _rest_count = Notificacion.objects.filter(
+            usuario=request.user, leido=False
+        ).exclude(id__in=_retiro_ids).update(leido=True, leido_en=now)
+        count = len(_retiro_ids) + (_rest_count or 0)
         return JsonResponse({'success': True, 'marcadas': count})
     return JsonResponse({'success': False}, status=400)
 
@@ -992,12 +1032,18 @@ def ascender_usuario(request):
         bancos_disponibles = User.objects.none()
 
     if q:
-        usuarios = usuarios.filter(
+        # FIX_BUSQUEDA_FLEXIBLE_V1
+        q_filter = (
             Q(username__icontains=q) |
             Q(email__icontains=q) |
             Q(first_name__icontains=q) |
-            Q(last_name__icontains=q)
+            Q(last_name__icontains=q) |
+            Q(perfil__telefono__icontains=q) |
+            Q(clienteoffline__telefono_offline__icontains=q)
         )
+        if str(q).isdigit():
+            q_filter |= Q(id=int(q))
+        usuarios = usuarios.filter(q_filter)
 
     usuarios = usuarios.order_by('username')
 
@@ -1552,20 +1598,36 @@ def lista_clientes(request):
         messages.info(request, "Los clientes no tienen acceso a la lista de clientes.")
         return redirect('jugadas:mis_apuestas')
 
+    # FIX_HUERFANOS_LISTA_V1: clientes sin gestor (bono activo con asignado_por=None)
+    from django.utils import timezone as _tzH2
+    from django.db.models import Q as _QH2
+    _huerfanos_bono2 = set(Bono.objects.filter(
+        asignado_por__isnull=True, estado='activo', saldo_restante__gt=0,
+    ).filter(
+        _QH2(fecha_vencimiento__isnull=True) | _QH2(fecha_vencimiento__gte=_tzH2.now())
+    ).values_list('usuario_id', flat=True))
+    _con_gestor2 = set(Fondo.objects.filter(
+        activo=True, asignado_por__isnull=False
+    ).values_list('usuario_id', flat=True))
+    huerfanos_ids = list(_huerfanos_bono2 - _con_gestor2)
+
     # ─── Base de clientes ───
     if es_superadmin:
         clientes = User.objects.filter(is_active=True).order_by('username')
     elif es_banco:
+        # FIX_LISTA_CLIENTES_BANCO_VE_TODOS_V1: el banco ve TODOS los clientes activos
+        # (mismo criterio que en apostar/_construir_clientes_visibles)
         comerciales_ids = Subordinacion.objects.filter(jefe=user, activo=True).values_list('subordinado_id', flat=True)
-        clientes_ids = Fondo.objects.filter(asignado_por__in=comerciales_ids, activo=True).values_list('usuario_id', flat=True).distinct()
-        clientes_directos = Fondo.objects.filter(asignado_por=user, activo=True).values_list('usuario_id', flat=True).distinct()
         clientes = User.objects.filter(
-            Q(id__in=clientes_ids) | Q(id__in=clientes_directos) | Q(id__in=comerciales_ids),
+            Q(roles__tipo='cliente', roles__activo=True) | Q(id__in=comerciales_ids),
             is_active=True
-        ).order_by('username')
+        ).exclude(is_superuser=True).distinct().order_by('username')
     else:  # comercial
         clientes_ids = Fondo.objects.filter(asignado_por=user, activo=True).values_list('usuario_id', flat=True).distinct()
-        clientes = User.objects.filter(id__in=clientes_ids, is_active=True).order_by('username')
+        clientes = User.objects.filter(
+            Q(id__in=clientes_ids) | Q(id__in=huerfanos_ids),
+            is_active=True
+        ).order_by('username')
 
     # ─── Filtros ───
     q = (request.GET.get('q') or '').strip()
@@ -1601,23 +1663,33 @@ def lista_clientes(request):
         if estado_filtro == 'offline' and online:
             continue
 
-        # Fondos según rol del que mira
-        if es_superadmin:
-            fondos_qs = Fondo.objects.filter(usuario=cliente, activo=True).select_related('forma_pago')
-        elif tipo in ('comercial', 'banco'):
-            fondos_qs = Fondo.objects.none()  # no se muestran fondos de gestores
-        else:
-            fondos_qs = Fondo.objects.filter(
-                usuario=cliente, asignado_por=user, activo=True
-            ).select_related('forma_pago')
-
+        # Fondos + bonos + postpago según rol del que mira
         fondos_dict = {}
         total_fondos = 0.0
-        for f in fondos_qs:
-            fp_nombre = f.forma_pago.nombre if f.forma_pago else 'Sin FP'
-            monto = float(f.monto or 0)
-            fondos_dict[fp_nombre] = fondos_dict.get(fp_nombre, 0) + monto
-            total_fondos += monto
+        total_postpago = 0.0
+
+        if tipo in ('comercial', 'banco'):
+            pass
+        else:
+            from decimal import Decimal as _Dec
+            try:
+                from roles.utils import calcular_saldos_cliente
+                _gestor_arg = None if es_superadmin else user
+                _saldos = calcular_saldos_cliente(cliente, gestor=_gestor_arg)
+            except Exception:
+                _saldos = {'por_gestor': {}, 'total_global': {}}
+
+            for _g_entry in (_saldos.get('por_gestor') or {}).values():
+                for _fp_entry in (_g_entry.get('por_fp') or {}).values():
+                    fp_nombre = _fp_entry.get('fp_nombre') or 'Sin FP'
+                    monto_neto = (
+                        (_fp_entry.get('fondo') or _Dec('0')) +
+                        (_fp_entry.get('bonos') or _Dec('0')) -
+                        (_fp_entry.get('postpago') or _Dec('0'))
+                    )
+                    fondos_dict[fp_nombre] = fondos_dict.get(fp_nombre, 0.0) + float(monto_neto)
+                    total_fondos += float(monto_neto)
+                    total_postpago += float(_fp_entry.get('postpago') or _Dec('0'))
 
         clientes_data.append({
             'cliente': cliente,
@@ -1626,6 +1698,8 @@ def lista_clientes(request):
             'online': online,
             'fondos': fondos_dict,
             'total_fondos': total_fondos,
+            'total_postpago': total_postpago,
+            'saldo_real': total_fondos,
             'mostrar_fondos': tipo == 'cliente',
         })
 
@@ -1866,6 +1940,50 @@ def mis_vias_pago(request):
         'total_vias': vias.count(),
     }
     return render(request, 'roles/mis_vias_pago.html', context)
+
+@login_required
+def vias_pago_de_mi_gestor(request):
+    """FIX_VIAS_CLIENTE_V1 (2026-10-14): el cliente ve las vias de pago
+    de su gestor (asignado_por del fondo activo). Read-only."""
+    user = request.user
+    es_cliente = user.roles.filter(tipo='cliente', activo=True).exists()
+    if not es_cliente:
+        messages.error(request, "Solo los clientes pueden ver esta seccion.")
+        return redirect('publico:home')
+
+    # Gestor(es) del cliente segun Fondo activo
+    gestores_ids = list(
+        Fondo.objects.filter(usuario=user, activo=True)
+        .exclude(asignado_por__isnull=True)
+        .values_list('asignado_por_id', flat=True)
+        .distinct()
+    )
+    gestores = User.objects.filter(id__in=gestores_ids)
+
+    grupos = []
+    for g in gestores:
+        vias = (ViaPago.objects
+                .filter(gestor=g, activo=True)
+                .select_related('forma_pago')
+                .order_by('forma_pago__nombre', 'nombre'))
+        vias_por_forma = {}
+        for via in vias:
+            key = via.forma_pago_id
+            if key not in vias_por_forma:
+                vias_por_forma[key] = {'forma_pago': via.forma_pago, 'vias': []}
+            vias_por_forma[key]['vias'].append(via)
+        grupos.append({
+            'gestor': g,
+            'vias_por_forma': list(vias_por_forma.values()),
+            'total': vias.count(),
+        })
+
+    context = {
+        'grupos': grupos,
+        'sin_gestor': not gestores.exists(),
+    }
+    return render(request, 'roles/vias_pago_gestor_cliente.html', context)
+
 
 @login_required
 def agregar_via_pago(request):
@@ -3115,7 +3233,7 @@ def gestion_limites_dosis(request):
 
     todos_sorteos = list(Sorteo.objects.filter(activo=True).order_by('nombre'))
     todas_fj = list(FormaJuego.objects.filter(activo=True).order_by('nombre'))
-    todas_fp = list(FormaPago.objects.filter(activo=True).order_by('nombre'))
+    todas_fp = list(FormaPago.objects.filter(activo=True).exclude(nombre__iexact='bono').order_by('nombre'))
 
     generado = request.GET.get('generado') == '1' or bool(recursos_actuales['sorteos'])
     matriz = None
@@ -3195,7 +3313,7 @@ def gestion_limites_dosis(request):
 @login_required
 def cuadre_diario_view(request):
     usuario_actual = request.user
-    hoy = date.today()
+    hoy = timezone.localdate()
     fecha_str = request.GET.get("fecha")
     fecha_hasta_str = request.GET.get("fecha_hasta")
     fecha = parse_date(fecha_str) if fecha_str else hoy
@@ -3864,316 +3982,11 @@ def asignar_recursos_limites(request):
     else:
         bancos = [user]
         ids = Subordinacion.objects.filter(jefe=user, activo=True).values_list('subordinado_id', flat=True)
-        comerciales = list(User.objects.filter(id__in=ids, is_active=True).order_by('username'))
-
-    todos_sorteos = list(Sorteo.objects.filter(activo=True).order_by('nombre'))
-    todas_fj = list(FormaJuego.objects.filter(activo=True).order_by('nombre'))
-    todas_fp = list(FormaPago.objects.filter(activo=True).exclude(nombre__iexact='bono').order_by('nombre'))
-
-    destino_id = request.POST.get('destino') or request.GET.get('destino', '')
-    destino = None
-    es_destino_global = False
-    es_destino_banco = False
-    es_destino_comercial = False
-
-    if destino_id == 'global':
-        es_destino_global = True
-    elif destino_id and str(destino_id).isdigit():
-        destino = User.objects.filter(id=int(destino_id), is_active=True).first()
-        if destino:
-            es_destino_banco = destino.roles.filter(tipo='banco', activo=True).exists()
-            es_destino_comercial = destino.roles.filter(tipo='comercial', activo=True).exists()
-
-    if es_banco and not es_superadmin and destino and es_destino_comercial:
-        if not Subordinacion.objects.filter(jefe=user, subordinado=destino, activo=True).exists():
-            messages.error(request, "Ese comercial no es tu subordinado.")
-            return redirect('roles:asignar_recursos_limites')
-
-    # Recursos actuales (solo para bancos/comerciales, no para global)
-    recursos_actuales = {'sorteos': [], 'fj': [], 'fp': []}
-    if destino:
-        filtro = {'banco': destino, 'comercial__isnull': True} if es_destino_banco else {'comercial': destino}
-        for r in RecursoAsignado.objects.filter(**filtro, activo=True):
-            if r.tipo == 'sorteo' and r.sorteo_id: recursos_actuales['sorteos'].append(r.sorteo_id)
-            elif r.tipo == 'forma_juego' and r.forma_juego_id: recursos_actuales['fj'].append(r.forma_juego_id)
-            elif r.tipo == 'forma_pago' and r.forma_pago_id: recursos_actuales['fp'].append(r.forma_pago_id)
-
-    # ─── POST ───
-    if request.method == 'POST':
-        accion = request.POST.get('accion', '')
-
-        if accion == 'cargar':
-            if not destino_id:
-                messages.error(request, "Selecciona un destino.")
-                return redirect('roles:asignar_recursos_limites')
-            return redirect(reverse('roles:asignar_recursos_limites') + "?destino=" + destino_id)
-
-        if accion == 'generar':
-            if not destino_id:
-                messages.error(request, "Selecciona un destino.")
-                return redirect('roles:asignar_recursos_limites')
-
-            sorteos_ids = [int(x) for x in request.POST.getlist('sorteos') if str(x).isdigit()]
-            fj_ids = [int(x) for x in request.POST.getlist('formas_juego') if str(x).isdigit()]
-            fp_ids = [int(x) for x in request.POST.getlist('formas_pago') if str(x).isdigit()]
-
-            if not (sorteos_ids and fj_ids and fp_ids):
-                messages.error(request, "Marca al menos 1 sorteo, 1 FJ y 1 FP.")
-                return redirect(reverse('roles:asignar_recursos_limites') + "?destino=" + destino_id)
-
-            # Guardar recursos solo si es banco/comercial (no global)
-            if not es_destino_global:
-                with transaction.atomic():
-                    filtro_del = {'banco': destino} if es_destino_banco else {'comercial': destino}
-                    RecursoAsignado.objects.filter(**filtro_del).delete()
-                    for sid in sorteos_ids:
-                        RecursoAsignado.objects.create(
-                            banco=destino if es_destino_banco else None,
-                            comercial=destino if es_destino_comercial else None,
-                            tipo='sorteo', sorteo_id=sid, activo=True, creado_por=user
-                        )
-                    for fj in fj_ids:
-                        RecursoAsignado.objects.create(
-                            banco=destino if es_destino_banco else None,
-                            comercial=destino if es_destino_comercial else None,
-                            tipo='forma_juego', forma_juego_id=fj, activo=True, creado_por=user
-                        )
-                    for fp in fp_ids:
-                        RecursoAsignado.objects.create(
-                            banco=destino if es_destino_banco else None,
-                            comercial=destino if es_destino_comercial else None,
-                            tipo='forma_pago', forma_pago_id=fp, activo=True, creado_por=user
-                        )
-
-            request.session['arl_sorteos'] = sorteos_ids
-            request.session['arl_fj'] = fj_ids
-            request.session['arl_fp'] = fp_ids
-            request.session['arl_destino'] = destino_id
-            messages.success(request, "Recursos cargados. Edita la matriz y guarda.")
-            return redirect(reverse('roles:asignar_recursos_limites') + "?destino=" + destino_id + "&generado=1")
-
-        if accion == 'guardar':
-            if not destino_id:
-                messages.error(request, "Sin destino.")
-                return redirect('roles:asignar_recursos_limites')
-
-            sorteos_ids = request.session.get('arl_sorteos', [])
-            fj_ids = request.session.get('arl_fj', [])
-            fp_ids = request.session.get('arl_fp', [])
-            if not (sorteos_ids and fj_ids and fp_ids):
-                messages.error(request, "Sesión expirada. Vuelve a generar la matriz.")
-                return redirect(reverse('roles:asignar_recursos_limites') + "?destino=" + destino_id)
-
-            guardados = 0
-            desactivados = 0
-
-            with transaction.atomic():
-                for sid in sorteos_ids:
-                    for fj_id in fj_ids:
-                        for fp_id in fp_ids:
-                            # Nombre de los checkboxes: chk_<fp>_<sorteo>_<fj>
-                            chk_name = 'chk_%d_%d_%d' % (fp_id, sid, fj_id)
-                            marcado = chk_name in request.POST
-
-                            lim_str = (request.POST.get('limite_%d_%d_%d' % (fp_id, sid, fj_id)) or '').strip()
-                            sob_str = (request.POST.get('sobrelimite_%d_%d_%d' % (fp_id, sid, fj_id)) or '').strip()
-                            dos_str = (request.POST.get('dosis_%d_%d_%d' % (fp_id, sid, fj_id)) or '').strip()
-
-                            filtros = {'sorteo_id': sid, 'forma_juego_id': fj_id, 'forma_pago_id': fp_id}
-                            if es_destino_global:
-                                filtros['banco'] = None
-                                filtros['comercial'] = None
-                                filtros['es_global'] = True
-                            elif es_destino_banco:
-                                filtros['banco'] = destino
-                                filtros['comercial'] = None
-                            else:
-                                filtros['banco'] = None
-                                filtros['comercial'] = destino
-
-                            if not marcado:
-                                # Desmarcada: desactivar si existía
-                                LimiteApuesta.objects.filter(**filtros).update(activo=False)
-                                DosisPago.objects.filter(**filtros).update(activo=False)
-                                desactivados += 1
-                                continue
-
-                            # Marcada: guardar
-                            try:
-                                lim = Decimal(lim_str or '0')
-                                sob = Decimal(sob_str or lim_str or '0')
-                                dos = Decimal(dos_str) if dos_str else None
-                            except Exception:
-                                continue
-
-                            defaults = {'monto_maximo': lim, 'monto_sobrelimite': sob, 'activo': True}
-                            defaults['es_global'] = es_destino_global
-                            LimiteApuesta.objects.update_or_create(**filtros, defaults=defaults)
-
-                            if dos:
-                                ddefaults = {'monto_por_peso': dos, 'activo': True}
-                                ddefaults['es_global'] = es_destino_global
-                                DosisPago.objects.update_or_create(**filtros, defaults=ddefaults)
-
-                            guardados += 1
-
-            # Guardar toggle "pagar fijo como corrido"
-            from .models import ConfiguracionRecursos
-            pagar_fc = (request.POST.get('pagar_fijo_como_corrido') == 'on')
-            target_cfg_user = None
-            if es_destino_global:
-                target_cfg_user = user
-            elif destino:
-                target_cfg_user = destino
-            if target_cfg_user:
-                ConfiguracionRecursos.objects.update_or_create(
-                    usuario=target_cfg_user,
-                    defaults={
-                        'pagar_fijo_como_corrido': pagar_fc,
-                        'actualizado_por': user,
-                    }
-                )
-
-            messages.success(request, "Guardados: %d. Desactivados: %d." % (guardados, desactivados))
-            return redirect(reverse('roles:asignar_recursos_limites') + "?destino=" + destino_id + "&generado=1")
-
-    # ─── GET ───
-    matriz_filas = []
-    fj_seleccionadas = []
-    fp_seleccionadas = []
-    sorteos_seleccionados_obj = []
-
-    if request.GET.get('generado') == '1':
-        # Recuperar de sesión, asegurando que coincidan con el destino actual
-        destino_guardado = request.session.get('arl_destino', '')
-        if str(destino_guardado) == str(destino_id):
-            sorteos_ids = request.session.get('arl_sorteos', [])
-            fj_ids = request.session.get('arl_fj', [])
-            fp_ids = request.session.get('arl_fp', [])
-        else:
-            sorteos_ids = []
-            fj_ids = []
-            fp_ids = []
-
-        if sorteos_ids and fj_ids and fp_ids:
-            fj_seleccionadas = fj_ids
-            fp_seleccionadas = fp_ids
-            sorteos_seleccionados_obj = list(Sorteo.objects.filter(id__in=sorteos_ids).order_by('nombre'))
-
-            fj_obj = list(FormaJuego.objects.filter(id__in=fj_ids).order_by('nombre'))
-            fp_obj = list(FormaPago.objects.filter(id__in=fp_ids).order_by('nombre'))
-
-            from .dosis_default import get_dosis_global, get_limite_por_forma, get_sobre_por_forma
-
-            # Valores actuales del destino
-            existentes_lim = {}
-            existentes_dos = {}
-            if es_destino_global:
-                qs_l = LimiteApuesta.objects.filter(banco=None, comercial=None, es_global=True, activo=True)
-                qs_d = DosisPago.objects.filter(banco=None, comercial=None, es_global=True, activo=True)
-            elif es_destino_banco:
-                qs_l = LimiteApuesta.objects.filter(banco=destino, comercial__isnull=True, activo=True)
-                qs_d = DosisPago.objects.filter(banco=destino, comercial__isnull=True, activo=True)
-            else:
-                qs_l = LimiteApuesta.objects.filter(comercial=destino, activo=True)
-                qs_d = DosisPago.objects.filter(comercial=destino, activo=True)
-
-            for l in qs_l:
-                existentes_lim[(l.sorteo_id, l.forma_juego_id, l.forma_pago_id)] = l
-            for d in qs_d:
-                existentes_dos[(d.sorteo_id, d.forma_juego_id, d.forma_pago_id)] = d
-
-            for sorteo in sorteos_seleccionados_obj:
-                filas_fj = []
-                for fj in fj_obj:
-                    celdas = []
-                    for fp in fp_obj:
-                        k = (sorteo.id, fj.id, fp.id)
-                        tiene_guardado = k in existentes_lim
-                        if tiene_guardado:
-                            lim = float(existentes_lim[k].monto_maximo)
-                            sob = float(existentes_lim[k].monto_sobrelimite)
-                        else:
-                            lim = float(get_limite_por_forma(fj.nombre))
-                            sob = float(get_sobre_por_forma(fj.nombre))
-                        if k in existentes_dos:
-                            dos = float(existentes_dos[k].monto_por_peso)
-                        else:
-                            dos = float(get_dosis_global(fj.nombre) or 1)
-                        celdas.append({
-                            'fp_id': fp.id,
-                            'fp_nombre': fp.nombre,
-                            'limite': lim,
-                            'sobre': sob,
-                            'dosis': dos,
-                            'marcado': tiene_guardado,
-                        })
-                    filas_fj.append({'fj': fj, 'celdas': celdas})
-                matriz_filas.append({'sorteo': sorteo, 'filas_fj': filas_fj})
-
-    # Leer toggle actual del destino
-    pagar_fijo_como_corrido_actual = False
-    try:
-        from .models import ConfiguracionRecursos
-        cfg_destino = None
-        if es_destino_global:
-            cfg_destino = ConfiguracionRecursos.objects.filter(usuario=user).first()
-        elif destino:
-            cfg_destino = ConfiguracionRecursos.objects.filter(usuario=destino).first()
-        if cfg_destino:
-            pagar_fijo_como_corrido_actual = cfg_destino.pagar_fijo_como_corrido
-    except Exception:
-        pass
-
-    # Etiqueta del destino
-    if es_destino_global:
-        destino_nombre = "🌐 Global (valores de superadmin)"
-    elif destino:
-        tipo = "🏦 Banco" if es_destino_banco else "👤 Comercial"
-        destino_nombre = "%s: %s" % (tipo, destino.username)
-    else:
-        destino_nombre = ""
-
-    context = {
-        'bancos': bancos,
-        'comerciales': comerciales,
-        'todos_sorteos': todos_sorteos,
-        'todas_fj': todas_fj,
-        'todas_fp': todas_fp,
-        'destino': destino,
-        'destino_id': destino_id,
-        'destino_nombre': destino_nombre,
-        'es_destino_global': es_destino_global,
-        'es_destino_banco': es_destino_banco,
-        'es_destino_comercial': es_destino_comercial,
-        'recursos_actuales': recursos_actuales,
-        'matriz_filas': matriz_filas,
-        'sorteos_seleccionados_obj': sorteos_seleccionados_obj,
-        'fp_seleccionadas': fp_seleccionadas,
-        'fj_seleccionadas': fj_seleccionadas,
-        'es_superadmin': es_superadmin,
-        'es_banco': es_banco,
-        'pagar_fijo_como_corrido_actual': pagar_fijo_como_corrido_actual,
-    }
-    return render(request, 'roles/asignar_recursos_limites.html', context)
-
-@login_required
-def asignar_recursos_limites(request):
-    user = request.user
-    es_superadmin = user.is_superuser or user.roles.filter(tipo='superadmin', activo=True).exists()
-    es_banco = user.roles.filter(tipo='banco', activo=True).exists()
-
-    if not (es_superadmin or es_banco):
-        messages.error(request, "Sin permisos.")
-        return redirect('publico:home')
-
-    if es_superadmin:
-        bancos = list(User.objects.filter(roles__tipo='banco', roles__activo=True, is_active=True).distinct().order_by('username'))
-        comerciales = list(User.objects.filter(roles__tipo='comercial', roles__activo=True, is_active=True).distinct().order_by('username'))
-    else:
-        bancos = [user]
-        ids = Subordinacion.objects.filter(jefe=user, activo=True).values_list('subordinado_id', flat=True)
-        comerciales = list(User.objects.filter(id__in=ids, is_active=True).order_by('username'))
+        # FIX: solo comerciales CON rol comercial activo (no clientes subordinados)
+        comerciales = list(User.objects.filter(
+            id__in=ids, is_active=True,
+            roles__tipo='comercial', roles__activo=True,
+        ).distinct().order_by('username'))
 
     todos_sorteos = list(Sorteo.objects.filter(activo=True).order_by('nombre'))
     todas_fj = list(FormaJuego.objects.filter(activo=True).order_by('nombre'))
@@ -4251,11 +4064,7 @@ def asignar_recursos_limites(request):
             return redirect(reverse('roles:asignar_recursos_limites') + "?destino=" + str(destino.id) + "&generado=1&sorteo_activo=" + str(primer))
 
         if accion == 'guardar':
-            sorteo_id = request.POST.get('sorteo_activo')
-            if not sorteo_id or not str(sorteo_id).isdigit():
-                messages.error(request, "Sorteo activo invalido.")
-                return redirect(reverse('roles:asignar_recursos_limites') + "?destino=" + str(destino.id) + "&generado=1")
-
+            # FIX_GUARDAR_TODOS_V1: iterar sobre TODOS los sorteos de la sesion
             sorteos_ids = request.session.get('arl_sorteos', [])
             fj_ids = request.session.get('arl_fj', [])
             fp_ids = request.session.get('arl_fp', [])
@@ -4263,47 +4072,51 @@ def asignar_recursos_limites(request):
                 messages.error(request, "Sesion expirada. Vuelve a generar la matriz.")
                 return redirect(reverse('roles:asignar_recursos_limites') + "?destino=" + str(destino.id))
 
-            sorteo_id = int(sorteo_id)
             guardados = 0
             with transaction.atomic():
-                for fp_id in fp_ids:
-                    for fj_id in fj_ids:
-                        key = 'limite_' + str(fp_id) + '_' + str(sorteo_id) + '_' + str(fj_id)
-                        if key not in request.POST:
-                            continue
-                        lim_str = (request.POST.get(key) or '').strip()
-                        sob_str = (request.POST.get('sobrelimite_' + str(fp_id) + '_' + str(sorteo_id) + '_' + str(fj_id)) or '').strip()
-                        dos_str = (request.POST.get('dosis_' + str(fp_id) + '_' + str(sorteo_id) + '_' + str(fj_id)) or '').strip()
-                        try:
-                            lim = Decimal(lim_str or '0')
-                            sob = Decimal(sob_str or lim_str or '0')
-                            dos = Decimal(dos_str) if dos_str else None
-                        except Exception:
-                            continue
-                        if lim <= 0 and sob <= 0 and not dos:
-                            continue
+                for sid in sorteos_ids:
+                    try:
+                        sid_int = int(sid)
+                    except (ValueError, TypeError):
+                        continue
+                    for fp_id in fp_ids:
+                        for fj_id in fj_ids:
+                            key = 'limite_' + str(fp_id) + '_' + str(sid_int) + '_' + str(fj_id)
+                            if key not in request.POST:
+                                continue
+                            lim_str = (request.POST.get(key) or '').strip()
+                            sob_str = (request.POST.get('sobrelimite_' + str(fp_id) + '_' + str(sid_int) + '_' + str(fj_id)) or '').strip()
+                            dos_str = (request.POST.get('dosis_' + str(fp_id) + '_' + str(sid_int) + '_' + str(fj_id)) or '').strip()
+                            try:
+                                lim = Decimal(lim_str or '0')
+                                sob = Decimal(sob_str or lim_str or '0')
+                                dos = Decimal(dos_str) if dos_str else None
+                            except Exception:
+                                continue
+                            if lim <= 0 and sob <= 0 and not dos:
+                                continue
 
-                        filtros = {'sorteo_id': sorteo_id, 'forma_juego_id': fj_id, 'forma_pago_id': fp_id}
-                        if es_destino_banco:
-                            filtros['banco'] = destino
-                            filtros['comercial'] = None
-                        else:
-                            filtros['banco'] = None
-                            filtros['comercial'] = destino
+                            filtros = {'sorteo_id': sid_int, 'forma_juego_id': fj_id, 'forma_pago_id': fp_id}
+                            if es_destino_banco:
+                                filtros['banco'] = destino
+                                filtros['comercial'] = None
+                            else:
+                                filtros['banco'] = None
+                                filtros['comercial'] = destino
 
-                        LimiteApuesta.objects.update_or_create(
-                            **filtros,
-                            defaults={'monto_maximo': lim, 'monto_sobrelimite': sob, 'activo': True}
-                        )
-                        if dos:
-                            DosisPago.objects.update_or_create(
+                            LimiteApuesta.objects.update_or_create(
                                 **filtros,
-                                defaults={'monto_por_peso': dos, 'activo': True}
+                                defaults={'monto_maximo': lim, 'monto_sobrelimite': sob, 'activo': True}
                             )
-                        guardados += 1
+                            if dos:
+                                DosisPago.objects.update_or_create(
+                                    **filtros,
+                                    defaults={'monto_por_peso': dos, 'activo': True}
+                                )
+                            guardados += 1
 
-            messages.success(request, "Guardados " + str(guardados) + " registros del sorteo seleccionado.")
-            return redirect(reverse('roles:asignar_recursos_limites') + "?destino=" + str(destino.id) + "&generado=1&sorteo_activo=" + str(sorteo_id))
+            messages.success(request, "Guardados " + str(guardados) + " registros en " + str(len(sorteos_ids)) + " sorteos.")
+            return redirect(reverse('roles:asignar_recursos_limites') + "?destino=" + str(destino.id) + "&generado=1")
 
     matriz_filas = []
     sorteos_seleccionados_ids = []
@@ -4338,22 +4151,44 @@ def asignar_recursos_limites(request):
                 for d in DosisPago.objects.filter(**filtro_exist, sorteo_id=sorteo_activo_id, activo=True):
                     existentes_dos[(d.forma_juego_id, d.forma_pago_id)] = d
 
-                for fj in fj_obj:
-                    celdas = []
-                    for fp in fp_obj:
-                        k = (fj.id, fp.id)
-                        if k in existentes_lim:
-                            lim = float(existentes_lim[k].monto_maximo)
-                            sob = float(existentes_lim[k].monto_sobrelimite)
-                        else:
-                            lim = float(get_limite_por_forma(fj.nombre))
-                            sob = float(get_sobre_por_forma(fj.nombre))
-                        if k in existentes_dos:
-                            dos = float(existentes_dos[k].monto_por_peso)
-                        else:
-                            dos = float(get_dosis_global(fj.nombre) or 1)
-                        celdas.append({'fp_id': fp.id, 'limite': lim, 'sobre': sob, 'dosis': dos})
-                    matriz_filas.append({'fj': fj, 'celdas': celdas})
+                # FIX_MATRIZ_V1: estructura anidada que el template espera
+                fila_obj = {'sorteo': sorteo_activo_obj, 'filas_fj': []}
+                # FIX_TODOS_SORTEOS_V1: construir matriz para TODOS los sorteos seleccionados
+                for sid in sorteos_seleccionados_ids:
+                    sid_int = int(sid)
+                    sorteo_obj = Sorteo.objects.filter(id=sid_int).first()
+                    if not sorteo_obj:
+                        continue
+
+                    # Límites existentes SOLO de este sorteo
+                    exist_lim_sid = {}
+                    exist_dos_sid = {}
+                    for l in LimiteApuesta.objects.filter(**filtro_exist, sorteo_id=sid_int, activo=True):
+                        exist_lim_sid[(l.forma_juego_id, l.forma_pago_id)] = l
+                    for d in DosisPago.objects.filter(**filtro_exist, sorteo_id=sid_int, activo=True):
+                        exist_dos_sid[(d.forma_juego_id, d.forma_pago_id)] = d
+
+                    fila_obj = {'sorteo': sorteo_obj, 'filas_fj': []}
+                    for fj in fj_obj:
+                        celdas = []
+                        for fp in fp_obj:
+                            k = (fj.id, fp.id)
+                            if k in exist_lim_sid:
+                                lim = float(exist_lim_sid[k].monto_maximo)
+                                sob = float(exist_lim_sid[k].monto_sobrelimite)
+                            else:
+                                lim = float(get_limite_por_forma(fj.nombre))
+                                sob = float(get_sobre_por_forma(fj.nombre))
+                            if k in exist_dos_sid:
+                                dos = float(exist_dos_sid[k].monto_por_peso)
+                            else:
+                                _dos = get_dosis_global(fj.nombre)
+                                if _dos is None:
+                                    _dos = 0
+                                dos = float(_dos)
+                            celdas.append({'fp_id': fp.id, 'limite': lim, 'sobre': sob, 'dosis': dos})
+                        fila_obj['filas_fj'].append({'fj': fj, 'celdas': celdas})
+                    matriz_filas.append(fila_obj)
 
     sorteos_seleccionados_obj = list(Sorteo.objects.filter(id__in=sorteos_seleccionados_ids).order_by('nombre'))
 
@@ -4550,6 +4385,13 @@ def recarga_directa(request):
         except Exception:
             messages.error(request, "Forma de pago no valida.")
             return redirect('roles:recarga_directa')
+
+        # FIX_ANTI_DUP_60S_ROLES (2026-10-18)
+        if tipo_mov == 'recarga':
+            from roles.utils import verificar_recarga_duplicada
+            if verificar_recarga_duplicada(user, usuario, forma_pago, monto, segundos=60):
+                messages.error(request, "⚠️ El sistema reconoció una entrada doble de recarga y solo procesó una. Debes esperar 1 minuto para realizar otra recarga idéntica.")
+                return redirect('roles:recarga_directa')
 
         if tipo_mov == 'ajuste':
             signo  = (request.POST.get('signo') or 'sumar').strip().lower()
@@ -4884,9 +4726,12 @@ def historial_movimientos(request):
     page_obj = paginator.get_page(request.GET.get('page'))
 
     # _enriquecer_hist: refs + agrupación por día
-    from roles.utils import resolver_referencia_movimiento, agrupar_movimientos_por_dia
+    from roles.utils import (resolver_referencia_movimiento,
+                             resolver_sorteo_movimiento,
+                             agrupar_movimientos_por_dia)
     for _m in page_obj:
         _m.ref_label, _m.ref_url = resolver_referencia_movimiento(_m)
+        _m.sorteo_nombre = resolver_sorteo_movimiento(_m)
     grupos_dia = agrupar_movimientos_por_dia(list(page_obj))
     if es_superadmin:
         clientes_sel = User.objects.filter(
@@ -5055,8 +4900,29 @@ def api_recarga_rapida(request):
     """
     Recarga rápida via AJAX desde el modal en apostar.html.
     Reutiliza _aplicar_ingreso_a_fondo.
+
+    FIX_IDEMPOTENCIA_V1: evita recargas duplicadas por doble submit.
     """
     user = request.user
+
+    # ═══ Anti-duplicado: request_id único enviado desde el frontend ═══
+    request_id = (request.POST.get('request_id') or '').strip()
+    if request_id:
+        # Verificar si ya se procesó este request en los últimos 5 minutos
+        from roles.models import MovimientoFondo as _MF
+        from django.utils import timezone as _tz
+        _limite = _tz.now() - _tz.timedelta(minutes=5)
+        _ya_existe = _MF.objects.filter(
+            datos_transferencia__request_id=request_id,
+            creado_en__gte=_limite,
+        ).exists()
+        if _ya_existe:
+            logger.warning(f'[api_recarga_rapida] DUPLICADO IGNORADO: request_id={request_id}')
+            return JsonResponse({
+                'success': False,
+                'error': 'Esta recarga ya fue procesada. No se duplicará.',
+                'duplicado': True,
+            }, status=409)
     es_superadmin = user.is_superuser or user.roles.filter(tipo='superadmin', activo=True).exists()
     es_banco = user.roles.filter(tipo='banco', activo=True).exists()
     es_comercial = user.roles.filter(tipo='comercial', activo=True).exists()
@@ -5084,11 +4950,37 @@ def api_recarga_rapida(request):
     except (User.DoesNotExist, FormaPago.DoesNotExist):
         return JsonResponse({'success': False, 'error': 'No encontrado'}, status=404)
 
+    # FIX_DUPLICADOS_V2 (2026-10-14): proteccion por huella.
+    # Si en los ultimos 10s hay otra recarga con mismo emisor+receptor+fp+monto,
+    # rechazarla aunque el frontend no mande request_id (JS viejo cacheado).
+    from roles.models import MovimientoFondo as _MF2
+    from django.utils import timezone as _tz2
+    from django.db import transaction as _tx2
+
+    with _tx2.atomic():
+        _limite = _tz2.now() - _tz2.timedelta(seconds=10)
+        _dup = _MF2.objects.select_for_update().filter(
+            emisor=user, receptor=usuario, forma_pago=forma_pago,
+            monto=monto, tipo='recarga', estado='confirmado',
+            creado_en__gte=_limite,
+        ).exists()
+        if _dup:
+            logger.warning(
+                f'[api_recarga_rapida] DUPLICADO POR HUELLA: '
+                f'gestor={user.username} cliente={usuario.username} monto={monto}'
+            )
+            return JsonResponse({
+                'success': False,
+                'error': 'Recarga duplicada detectada. No se aplicara de nuevo.',
+                'duplicado': True,
+            }, status=409)
+
     try:
         from .utils import _aplicar_ingreso_a_fondo
         monto_neto, descontado = _aplicar_ingreso_a_fondo(
             cliente=usuario, gestor=user,
             forma_pago=forma_pago, monto=monto,
+            request_id=request_id,
         )
 
         # Saldo actualizado
@@ -5648,3 +5540,386 @@ def responder_prestamo_view(request, prestamo_id):
             return redirect('roles:mis_prestamos')
 
     return render(request, 'roles/responder_prestamo.html', {'prestamo': prestamo})
+
+# ══════════════════════════════════════════════════════════════
+#  RANKING DE APOSTADORES + MI RENTABILIDAD
+#  Fase 1: solo visual. Cero gráficos. Cero librerías.
+# ══════════════════════════════════════════════════════════════
+
+def _calcular_rango_periodo(periodo, hoy=None):
+    """Devuelve (inicio, fin) como date según el período elegido."""
+    if hoy is None:
+        hoy = timezone.now().date()
+
+    if periodo == 'dia':
+        return hoy, hoy
+
+    if periodo == 'semana':
+        inicio = hoy - timedelta(days=hoy.weekday())   # lunes
+        return inicio, inicio + timedelta(days=6)
+
+    if periodo == 'quincena':
+        if hoy.day <= 15:
+            return hoy.replace(day=1), hoy.replace(day=15)
+        ultimo = (hoy.replace(day=1) + timedelta(days=32)).replace(day=1) - timedelta(days=1)
+        return hoy.replace(day=16), ultimo
+
+    if periodo == 'mes':
+        inicio = hoy.replace(day=1)
+        fin = (inicio + timedelta(days=32)).replace(day=1) - timedelta(days=1)
+        return inicio, fin
+
+    if periodo == 'trimestre':
+        mes_ini = ((hoy.month - 1) // 3) * 3 + 1
+        inicio = hoy.replace(month=mes_ini, day=1)
+        fin = (inicio + timedelta(days=100)).replace(day=1) - timedelta(days=1)
+        return inicio, fin
+
+    if periodo == 'semestre':
+        mes_ini = 1 if hoy.month <= 6 else 7
+        inicio = hoy.replace(month=mes_ini, day=1)
+        fin = (inicio + timedelta(days=190)).replace(day=1) - timedelta(days=1)
+        return inicio, fin
+
+    if periodo == 'anio':
+        return hoy.replace(month=1, day=1), hoy.replace(month=12, day=31)
+
+    # default: mes
+    inicio = hoy.replace(day=1)
+    fin = (inicio + timedelta(days=32)).replace(day=1) - timedelta(days=1)
+    return inicio, fin
+
+
+def _enmascarar(username):
+    """J***P*** → privacidad básica para ranking público."""
+    if not username:
+        return '—'
+    if len(username) <= 2:
+        return username[0] + '*'
+    return username[0] + '*' * (len(username) - 2) + username[-1]
+
+
+# ─────────────────────────────────────────────────────────────
+#  RANKING PÚBLICO DE APOSTADORES
+# ─────────────────────────────────────────────────────────────
+@login_required
+def ranking_apostadores(request):
+    """Top 10 apostadores por período. Sin montos visibles al cliente."""
+    periodo = (request.GET.get('periodo') or 'semana').lower()
+    if periodo not in ('dia', 'semana', 'quincena', 'mes', 'trimestre', 'semestre', 'anio'):
+        periodo = 'semana'
+
+    inicio, fin = _calcular_rango_periodo(periodo)
+
+    # Agregamos sobre Boleta (unidad de operación real)
+    base_qs = (Boleta.objects
+               .filter(creado_en__date__gte=inicio, creado_en__date__lte=fin)
+               .exclude(estado__in=['cancelada', 'anulada']))
+
+    ranking = (base_qs
+               .values('usuario__id', 'usuario__username')
+               .annotate(
+                   boletas=Count('id'),
+                   total_apostado=Sum('monto_total'),
+                   premios=Sum('premios_total'),
+               )
+               .order_by('-total_apostado')[:10])
+
+    # FIX_TOP_NOMBRES_V1: gestores ven nombres completos, clientes enmascarados
+    _es_gestor = (
+        request.user.is_superuser or
+        request.user.roles.filter(tipo__in=['superadmin', 'banco', 'comercial'], activo=True).exists()
+    )
+
+    lista = []
+    for i, item in enumerate(ranking, 1):
+        v = item['total_apostado'] or Decimal('0')
+        p = item['premios'] or Decimal('0')
+        _username_real = item['usuario__username']
+        _username_mostrar = _username_real if _es_gestor else _enmascarar(_username_real)
+        lista.append({
+            'posicion': i,
+            'username': _username_real,
+            'username_display': _username_mostrar,
+            'boletas': item['boletas'],
+            'total_apostado': v,
+            'es_yo': item['usuario__id'] == request.user.id,
+            'en_top3': i <= 3,
+        })
+
+    # Posición del usuario logueado (si no está en el top)
+    mi_posicion = None
+    if request.user.is_authenticated:
+        mi = (base_qs
+              .filter(usuario=request.user)
+              .aggregate(boletas=Count('id'), total=Sum('monto_total')))
+        if mi['boletas']:
+            superiores = (base_qs
+                          .values('usuario')
+                          .annotate(t=Sum('monto_total'))
+                          .filter(t__gt=(mi['total'] or 0))
+                          .count())
+            mi_posicion = {
+                'posicion': superiores + 1,
+                'boletas': mi['boletas'],
+                'total_apostado': mi['total'] or Decimal('0'),
+            }
+
+    context = {
+        'periodo': periodo,
+        'periodos': [
+            ('dia', 'Hoy'),
+            ('semana', 'Semana'),
+            ('quincena', 'Quincena'),
+            ('mes', 'Mes'),
+            ('trimestre', 'Trimestre'),
+            ('semestre', 'Semestre'),
+            ('anio', 'Año'),
+        ],
+        'inicio': inicio,
+        'fin': fin,
+        'ranking': lista,
+        'mi_posicion': mi_posicion,
+        'es_gestor': _es_gestor,
+    }
+    return render(request, 'roles/ranking_apostadores.html', context)
+
+
+# ─────────────────────────────────────────────────────────────
+#  MI RENTABILIDAD (gestores: comercial / banco / superadmin)
+# ─────────────────────────────────────────────────────────────
+@login_required
+def mi_rentabilidad(request):
+    """KPIs + Por sorteo + Por cliente. Solo para gestores."""
+    user = request.user
+
+    es_superadmin = user.is_superuser or user.roles.filter(tipo='superadmin', activo=True).exists()
+    es_banco      = user.roles.filter(tipo='banco', activo=True).exists()
+    es_comercial  = user.roles.filter(tipo='comercial', activo=True).exists()
+
+    if not (es_superadmin or es_banco or es_comercial):
+        messages.error(request, "No tienes acceso a esta sección.")
+        return redirect('publico:home')
+
+    # Filtros
+    periodo = (request.GET.get('periodo') or 'mes').lower()
+    if periodo not in ('semana', 'mes', 'trimestre', 'anio'):
+        periodo = 'mes'
+
+    inicio, fin = _calcular_rango_periodo(periodo)
+
+    # Scope de boletas según rol
+    boletas_qs = (Boleta.objects
+                  .filter(creado_en__date__gte=inicio, creado_en__date__lte=fin)
+                  .exclude(estado__in=['cancelada', 'anulada']))
+
+    if es_comercial and not (es_banco or es_superadmin):
+        boletas_qs = boletas_qs.filter(
+            Q(destinatario=user) | Q(comercial=user)
+        )
+    elif es_banco and not es_superadmin:
+        comerciales_ids = list(RelacionComercialBanco.objects
+                               .filter(banco=user)
+                               .values_list('comercial_id', flat=True))
+        boletas_qs = boletas_qs.filter(
+            Q(destinatario=user) |
+            Q(destinatario_id__in=comerciales_ids) |
+            Q(comercial_id__in=comerciales_ids)
+        )
+    # superadmin → sin filtro extra
+
+    # KPIs
+    agg = boletas_qs.aggregate(
+        vendido=Sum('monto_total'),
+        premios=Sum('premios_total'),
+        boletas=Count('id'),
+    )
+    vendido = agg['vendido'] or Decimal('0')
+    premios = agg['premios'] or Decimal('0')
+    neto    = vendido - premios
+    margen  = (neto / vendido * 100) if vendido else Decimal('0')
+
+    # Por sorteo → usamos Jugada (que sí tiene FK a Sorteo)
+    jugadas_qs = (Jugada.objects
+                  .filter(boleta__in=boletas_qs)
+                  .exclude(estado='cancelada'))
+
+    por_sorteo_raw = (jugadas_qs
+                      .values('sorteo__id', 'sorteo__nombre')
+                      .annotate(
+                          vendido=Sum('monto'),
+                          premios=Sum('monto_premio'),
+                          jugadas=Count('id'),
+                      )
+                      .order_by('-vendido'))
+
+    por_sorteo = []
+    for item in por_sorteo_raw:
+        v = item['vendido'] or Decimal('0')
+        p = item['premios'] or Decimal('0')
+        n = v - p
+        m = (n / v * 100) if v else Decimal('0')
+        por_sorteo.append({
+            'sorteo': item['sorteo__nombre'],
+            'vendido': v,
+            'premios': p,
+            'neto': n,
+            'margen': m,
+            'jugadas': item['jugadas'],
+        })
+
+    # Por cliente → sobre Boleta
+    por_cliente_raw = (boletas_qs
+                       .values('usuario__id', 'usuario__username')
+                       .annotate(
+                           boletas=Count('id'),
+                           vendido=Sum('monto_total'),
+                           premios=Sum('premios_total'),
+                       )
+                       .order_by('-vendido'))
+
+    por_cliente = []
+    for item in por_cliente_raw:
+        v = item['vendido'] or Decimal('0')
+        p = item['premios'] or Decimal('0')
+        n = v - p
+        m = (n / v * 100) if v else Decimal('0')
+        por_cliente.append({
+            'username': item['usuario__username'],
+            'boletas': item['boletas'],
+            'vendido': v,
+            'premios': p,
+            'neto': n,
+            'margen': m,
+        })
+
+    context = {
+        'periodo': periodo,
+        'periodos': [
+            ('semana', 'Semana'),
+            ('mes', 'Mes'),
+            ('trimestre', 'Trimestre'),
+            ('anio', 'Año'),
+        ],
+        'inicio': inicio,
+        'fin': fin,
+        'vendido': vendido,
+        'premios': premios,
+        'neto': neto,
+        'margen': margen,
+        'num_boletas': agg['boletas'] or 0,
+        'por_sorteo': por_sorteo[:30],
+        'por_cliente': por_cliente[:50],
+        'es_superadmin': es_superadmin,
+        'es_banco': es_banco,
+        'es_comercial': es_comercial,
+    }
+    return render(request, 'roles/mi_rentabilidad.html', context)
+
+# ═══════════════════════════════════════════════════════════════
+# A1+A3 · Mensajes de bienvenida (configuración gestor + API cliente)
+# ═══════════════════════════════════════════════════════════════
+@login_required
+def configurar_mensajes(request):
+    """A1+A3: el gestor configura los mensajes de bienvenida para sus clientes."""
+    user = request.user
+    es_gestor = user.roles.filter(
+        tipo__in=['banco', 'comercial', 'superadmin'], activo=True
+    ).exists()
+    if not es_gestor:
+        messages.error(request, "Solo los gestores pueden configurar mensajes.")
+        return redirect('publico:home')
+
+    from roles.models import MensajeBienvenida
+    msg_visita, _ = MensajeBienvenida.objects.get_or_create(
+        gestor=user, tipo='primera_visita',
+        defaults={'mensaje': '', 'activo': False},
+    )
+    msg_apuesta, _ = MensajeBienvenida.objects.get_or_create(
+        gestor=user, tipo='bienvenida_apuesta',
+        defaults={'mensaje': '', 'activo': False},
+    )
+
+    if request.method == 'POST':
+        try:
+            from datetime import datetime as _dt
+
+            def _parse_fecha(s):
+                s = (s or '').strip()
+                if not s:
+                    return None
+                try:
+                    return _dt.strptime(s, '%Y-%m-%d').date()
+                except ValueError:
+                    return None
+
+            # Primera visita
+            msg_visita.mensaje = (request.POST.get('mensaje_visita') or '').strip()
+            msg_visita.activo = request.POST.get('activo_visita') == 'on'
+            msg_visita.fecha_desde = _parse_fecha(request.POST.get('fecha_desde_visita'))
+            msg_visita.fecha_hasta = _parse_fecha(request.POST.get('fecha_hasta_visita'))
+            msg_visita.save()
+
+            # Bienvenida al apostar
+            msg_apuesta.mensaje = (request.POST.get('mensaje_apuesta') or '').strip()
+            msg_apuesta.activo = request.POST.get('activo_apuesta') == 'on'
+            msg_apuesta.fecha_desde = _parse_fecha(request.POST.get('fecha_desde_apuesta'))
+            msg_apuesta.fecha_hasta = _parse_fecha(request.POST.get('fecha_hasta_apuesta'))
+            msg_apuesta.save()
+
+            messages.success(request, "✅ Mensajes guardados correctamente.")
+            return redirect('roles:configurar_mensajes')
+        except Exception as e:
+            messages.error(request, f"❌ Error al guardar: {e}")
+
+    return render(request, 'roles/configurar_mensajes.html', {
+        'msg_visita': msg_visita,
+        'msg_apuesta': msg_apuesta,
+    })
+
+
+@login_required
+def api_mensajes_pendientes(request):
+    """A1: devuelve los mensajes de bienvenida activos de los gestores del cliente."""
+    from roles.models import MensajeBienvenida, Fondo
+
+    user = request.user
+
+    # Gestores del cliente (fondos activos)
+    gestores_ids = set(
+        Fondo.objects.filter(usuario=user, activo=True)
+        .exclude(asignado_por__isnull=True)
+        .values_list('asignado_por_id', flat=True)
+        .distinct()
+    )
+
+    if not gestores_ids:
+        return JsonResponse({'success': True, 'mensajes': []})
+
+    tipo = (request.GET.get('tipo') or 'primera_visita').strip()
+    if tipo not in ('primera_visita', 'bienvenida_apuesta'):
+        tipo = 'primera_visita'
+
+    qs = MensajeBienvenida.objects.filter(
+        gestor_id__in=gestores_ids,
+        tipo=tipo,
+        activo=True,
+    ).select_related('gestor')
+
+    mensajes = []
+    for m in qs:
+        if not m.vigente_hoy():
+            continue
+        if not (m.mensaje or '').strip():
+            continue
+        mensajes.append({
+            'id': m.id,
+            'gestor_id': m.gestor_id,
+            'gestor_nombre': m.gestor.username,
+            'tipo': m.tipo,
+            'mensaje': m.mensaje,
+            'fecha_desde': m.fecha_desde.isoformat() if m.fecha_desde else None,
+            'fecha_hasta': m.fecha_hasta.isoformat() if m.fecha_hasta else None,
+        })
+
+    return JsonResponse({'success': True, 'mensajes': mensajes})

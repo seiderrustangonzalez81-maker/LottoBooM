@@ -18,17 +18,9 @@ from django.utils import timezone
 from roles.models import Deuda, Fondo, MovimientoFondo, Rol
 from sorteos.helpers import get_hora_cierre
 
-
-
 # ============================================================
 # POSTPAGO
 # ============================================================
-
-
-
-
-
-
 class FormaJuego(models.Model):
     nombre = models.CharField(max_length=50, unique=True)
     digitos_esperados = models.PositiveSmallIntegerField(

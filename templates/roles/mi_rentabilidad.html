@@ -1,0 +1,376 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block page_title %}💰 Mi Rentabilidad{% endblock %}
+{% block page_subtitle %}Ventas, premios y beneficio por sorteo y por cliente{% endblock %}
+
+{% block extra_css %}
+<style>
+.mr-wrap{
+  --mr-bg:#f4f6fb; --mr-surface:#fff; --mr-surface-2:#fafbfe;
+  --mr-line:#e5e8f0; --mr-line-2:#d4d9e6;
+  --mr-ink:#0f172a; --mr-ink-2:#475569; --mr-ink-3:#94a3b8;
+  --mr-primary:#4f46e5; --mr-primary-soft:#eef0ff;
+  --mr-violet:#7c3aed; --mr-violet-soft:#f1ebfe;
+  --mr-mint:#059669; --mr-mint-soft:#d1fae5;
+  --mr-cyan:#0891b2; --mr-cyan-soft:#e0f7fb;
+  --mr-amber:#d97706; --mr-amber-soft:#fef3c7;
+  --mr-rose:#e11d48; --mr-rose-soft:#ffe4e6;
+  --mr-sh:0 1px 2px rgba(15,23,42,.04),0 8px 22px -8px rgba(15,23,42,.10);
+  --mr-r:12px; --mr-r-lg:16px;
+  --mr-f:Arial,Helvetica,'Segoe UI',Roboto,sans-serif;
+  --mr-m:Consolas,'Courier New',monospace;
+  background:var(--mr-bg);color:var(--mr-ink);
+  font-family:var(--mr-f);
+  padding:14px 14px 60px;border-radius:var(--mr-r-lg);
+}
+
+.mr-head{
+  display:flex;align-items:center;justify-content:space-between;gap:14px;
+  flex-wrap:wrap;padding:18px 22px;margin-bottom:16px;
+  background:linear-gradient(135deg,var(--mr-mint),var(--mr-cyan));
+  color:#fff;border-radius:var(--mr-r-lg);
+  box-shadow:0 12px 28px -14px var(--mr-mint);
+}
+.mr-head__text h2{margin:0 0 3px;font-size:1.2rem;font-weight:800;color:#fff;}
+.mr-head__text p{margin:0;font-size:.78rem;opacity:.9;color:#fff;}
+
+.mr-tabs{
+  display:flex;gap:6px;flex-wrap:wrap;
+  padding:6px;margin-bottom:16px;
+  background:var(--mr-surface);border:1px solid var(--mr-line);
+  border-radius:999px;box-shadow:var(--mr-sh);
+}
+.mr-tab{
+  padding:8px 14px;border-radius:999px;
+  background:transparent;color:var(--mr-ink-2);
+  border:none;font-weight:700;font-size:.78rem;
+  font-family:inherit;cursor:pointer;text-decoration:none;
+  transition:.15s;white-space:nowrap;min-height:36px;
+  display:inline-flex;align-items:center;
+  -webkit-tap-highlight-color:transparent;
+}
+.mr-tab:hover:not(.is-active){background:var(--mr-surface-2);color:var(--mr-ink);}
+.mr-tab.is-active{
+  background:linear-gradient(135deg,var(--mr-mint),var(--mr-cyan));
+  color:#fff;box-shadow:0 6px 16px -8px var(--mr-mint);
+}
+
+.mr-kpis{
+  display:grid;grid-template-columns:repeat(4,1fr);
+  gap:12px;margin-bottom:20px;
+}
+.mr-kpi{
+  position:relative;padding:16px 18px;
+  background:var(--mr-surface);border:1px solid var(--mr-line);
+  border-radius:var(--mr-r);box-shadow:var(--mr-sh);
+  overflow:hidden;
+}
+.mr-kpi::before{
+  content:'';position:absolute;left:0;top:0;bottom:0;width:4px;
+  background:var(--accent,var(--mr-primary));
+}
+.mr-kpi.k1{--accent:var(--mr-primary);}
+.mr-kpi.k2{--accent:var(--mr-amber);}
+.mr-kpi.k3{--accent:var(--mr-mint);}
+.mr-kpi.k4{--accent:var(--mr-violet);}
+
+.mr-kpi__label{
+  font-size:.6rem;color:var(--mr-ink-3);
+  text-transform:uppercase;letter-spacing:1px;font-weight:700;
+  margin-bottom:6px;display:flex;align-items:center;gap:6px;
+}
+.mr-kpi__label i{color:var(--accent);font-size:.7rem;}
+.mr-kpi__value{
+  font-family:var(--mr-m);font-weight:800;
+  font-size:1.3rem;color:var(--accent);
+  letter-spacing:-.5px;line-height:1.1;
+  overflow-wrap:anywhere;
+}
+.mr-kpi__sub{
+  font-size:.68rem;color:var(--mr-ink-3);
+  margin-top:3px;font-weight:600;
+}
+
+.mr-sec{margin-bottom:20px;}
+.mr-sec__title{
+  display:flex;align-items:center;gap:10px;
+  margin:0 0 12px;padding:0 4px;
+  font-weight:800;font-size:1rem;color:var(--mr-ink);
+}
+.mr-sec__title::before{
+  content:'';width:4px;height:20px;border-radius:2px;
+  background:linear-gradient(180deg,var(--mr-mint),var(--mr-cyan));
+}
+.mr-sec__hint{
+  font-size:.74rem;color:var(--mr-ink-3);
+  font-weight:600;margin-left:auto;
+}
+
+.mr-table-wrap{
+  background:var(--mr-surface);border:1px solid var(--mr-line);
+  border-radius:var(--mr-r-lg);overflow:hidden;
+  box-shadow:var(--mr-sh);
+}
+.mr-table{width:100%;border-collapse:collapse;font-size:.82rem;}
+.mr-table thead th{
+  text-align:left;padding:10px 14px;
+  background:var(--mr-surface-2);color:var(--mr-ink-2);
+  font-size:.6rem;font-weight:800;
+  text-transform:uppercase;letter-spacing:.8px;
+  border-bottom:1px solid var(--mr-line);
+  white-space:nowrap;
+}
+.mr-table thead th.r{text-align:right;}
+.mr-table tbody td{
+  padding:11px 14px;border-bottom:1px solid var(--mr-line);
+  color:var(--mr-ink);vertical-align:middle;
+}
+.mr-table tbody tr:last-child td{border-bottom:none;}
+.mr-table tbody tr:hover td{background:var(--mr-surface-2);}
+.mr-table tbody td.r{text-align:right;}
+.mr-table .money{
+  font-family:var(--mr-m);font-weight:700;
+  letter-spacing:-.2px;white-space:nowrap;
+}
+.mr-table .money.pos{color:var(--mr-mint);}
+.mr-table .money.neg{color:var(--mr-rose);}
+
+.mr-badge{
+  display:inline-flex;align-items:center;gap:4px;
+  padding:3px 9px;border-radius:999px;
+  font-family:var(--mr-m);font-size:.68rem;
+  font-weight:800;letter-spacing:.3px;white-space:nowrap;
+}
+.mr-badge.ok   {background:var(--mr-mint-soft);color:#047857;}
+.mr-badge.mid  {background:var(--mr-amber-soft);color:#b45309;}
+.mr-badge.bad  {background:var(--mr-rose-soft);color:#be123c;}
+
+.mr-empty{
+  padding:40px 20px;text-align:center;
+  color:var(--mr-ink-3);background:var(--mr-surface);
+  border:2px dashed var(--mr-line-2);border-radius:var(--mr-r-lg);
+}
+.mr-empty i{font-size:2rem;display:block;margin-bottom:10px;opacity:.5;}
+.mr-empty p{margin:0;font-weight:600;font-size:.86rem;}
+
+@media (max-width:900px){
+  .mr-kpis{grid-template-columns:repeat(2,1fr);}
+}
+
+@media (max-width:640px){
+  .mr-wrap{padding:10px 10px 40px;}
+  .mr-head{padding:14px 16px;border-radius:16px;}
+  .mr-head__text h2{font-size:1rem;}
+  .mr-head__text p{font-size:.72rem;}
+
+  .mr-tabs{
+    overflow-x:auto;flex-wrap:nowrap;
+    -webkit-overflow-scrolling:touch;scrollbar-width:none;
+    padding:5px;border-radius:14px;
+  }
+  .mr-tabs::-webkit-scrollbar{display:none;}
+  .mr-tab{padding:7px 12px;font-size:.72rem;flex-shrink:0;min-height:34px;}
+
+  .mr-kpis{gap:8px;margin-bottom:14px;}
+  .mr-kpi{padding:12px 14px;border-radius:10px;}
+  .mr-kpi::before{width:3px;}
+  .mr-kpi__label{font-size:.55rem;letter-spacing:.7px;}
+  .mr-kpi__value{font-size:1.05rem;}
+  .mr-kpi__sub{font-size:.62rem;}
+
+  .mr-table-wrap{
+    background:transparent;border:none;box-shadow:none;
+    border-radius:0;
+  }
+  .mr-table{display:block;font-size:.82rem;}
+  .mr-table thead{display:none;}
+  .mr-table tbody{display:block;}
+
+  .mr-table tbody tr{
+    display:grid;
+    grid-template-columns:1fr auto;
+    grid-template-areas:
+      "name    money"
+      "meta    meta"
+      "bar     bar";
+    gap:8px 10px;
+    padding:12px 14px;margin-bottom:10px;
+    background:var(--mr-surface);
+    border:1px solid var(--mr-line);
+    border-radius:12px;
+    box-shadow:0 8px 20px -18px rgba(15,23,42,.15);
+  }
+  .mr-table tbody tr:hover td{background:transparent;}
+  .mr-table tbody td{
+    padding:0;border:none;display:block;
+    overflow-wrap:anywhere;
+  }
+
+  .mr-table tbody td:nth-child(1){grid-area:name;font-weight:800;}
+  .mr-table tbody td:nth-child(2){grid-area:money;text-align:right;}
+  .mr-table tbody td:nth-child(3),
+  .mr-table tbody td:nth-child(4),
+  .mr-table tbody td:nth-child(5){grid-area:meta;display:inline-flex;margin-right:10px;font-size:.72rem;}
+  .mr-table tbody td:nth-child(6){grid-area:bar;display:flex;align-items:center;gap:6px;font-size:.72rem;}
+
+  .mr-table--clientes tbody td:nth-child(1){grid-area:name;}
+  .mr-table--clientes tbody td:nth-child(2){grid-area:meta;}
+  .mr-table--clientes tbody td:nth-child(3){grid-area:money;}
+  .mr-table--clientes tbody td:nth-child(4){grid-area:meta;}
+  .mr-table--clientes tbody td:nth-child(5){grid-area:money;}
+  .mr-table--clientes tbody td:nth-child(6){grid-area:bar;}
+}
+
+@media (max-width:420px){
+  .mr-kpis{grid-template-columns:1fr;}
+  .mr-kpi__value{font-size:1rem;}
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="mr-wrap">
+
+  <div class="mr-head">
+    <div class="mr-head__text">
+      <h2>💰 Mi Rentabilidad</h2>
+      <p>
+        {% if es_superadmin %}Vista global
+        {% elif es_banco %}Tu red de comerciales y clientes
+        {% elif es_comercial %}Tus clientes directos
+        {% endif %}
+        · {{ inicio|date:"d/m/Y" }} — {{ fin|date:"d/m/Y" }}
+      </p>
+    </div>
+  </div>
+
+  <div class="mr-tabs" role="tablist">
+    {% for key, label in periodos %}
+      <a href="?periodo={{ key }}"
+         class="mr-tab {% if key == periodo %}is-active{% endif %}">
+        {{ label }}
+      </a>
+    {% endfor %}
+  </div>
+
+  <div class="mr-kpis">
+    <div class="mr-kpi k1">
+      <div class="mr-kpi__label"><i class="fas fa-cash-register"></i> Vendido</div>
+      <div class="mr-kpi__value">${{ vendido|floatformat:2 }}</div>
+      <div class="mr-kpi__sub">{{ num_boletas }} boleta{{ num_boletas|pluralize:"s" }}</div>
+    </div>
+    <div class="mr-kpi k2">
+      <div class="mr-kpi__label"><i class="fas fa-trophy"></i> Premios pagados</div>
+      <div class="mr-kpi__value">${{ premios|floatformat:2 }}</div>
+    </div>
+    <div class="mr-kpi k3">
+      <div class="mr-kpi__label"><i class="fas fa-coins"></i> Beneficio neto</div>
+      <div class="mr-kpi__value">
+        {% if neto >= 0 %}+{% endif %}${{ neto|floatformat:2 }}
+      </div>
+    </div>
+    <div class="mr-kpi k4">
+      <div class="mr-kpi__label"><i class="fas fa-percent"></i> Margen</div>
+      <div class="mr-kpi__value">{{ margen|floatformat:2 }}%</div>
+    </div>
+  </div>
+
+  <section class="mr-sec">
+    <h3 class="mr-sec__title">
+      Por sorteo
+      <span class="mr-sec__hint">{{ por_sorteo|length }} sorteo{{ por_sorteo|length|pluralize:"s" }}</span>
+    </h3>
+
+    {% if por_sorteo %}
+      <div class="mr-table-wrap">
+        <table class="mr-table">
+          <thead>
+            <tr>
+              <th>Sorteo</th>
+              <th class="r">Vendido</th>
+              <th class="r">Premios</th>
+              <th class="r">Neto</th>
+              <th class="r">Margen</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for s in por_sorteo %}
+              <tr>
+                <td><strong>{{ s.sorteo }}</strong></td>
+                <td class="r"><span class="money">${{ s.vendido|floatformat:2 }}</span></td>
+                <td class="r"><span class="money">${{ s.premios|floatformat:2 }}</span></td>
+                <td class="r">
+                  <span class="money {% if s.neto >= 0 %}pos{% else %}neg{% endif %}">
+                    {% if s.neto >= 0 %}+{% endif %}${{ s.neto|floatformat:2 }}
+                  </span>
+                </td>
+                <td class="r">
+                  <span class="mr-badge {% if s.margen >= 40 %}ok{% elif s.margen >= 0 %}mid{% else %}bad{% endif %}">
+                    {{ s.margen|floatformat:1 }}%
+                  </span>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="mr-empty">
+        <i class="fas fa-chart-bar"></i>
+        <p>Sin datos para este período.</p>
+      </div>
+    {% endif %}
+  </section>
+
+  <section class="mr-sec">
+    <h3 class="mr-sec__title">
+      Por cliente
+      <span class="mr-sec__hint">{{ por_cliente|length }} cliente{{ por_cliente|length|pluralize:"s" }}</span>
+    </h3>
+
+    {% if por_cliente %}
+      <div class="mr-table-wrap">
+        <table class="mr-table mr-table--clientes">
+          <thead>
+            <tr>
+              <th>Cliente</th>
+              <th class="r">Boletas</th>
+              <th class="r">Vendido</th>
+              <th class="r">Premios</th>
+              <th class="r">Neto</th>
+              <th class="r">Margen</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for c in por_cliente %}
+              <tr>
+                <td><strong>{{ c.username }}</strong></td>
+                <td class="r">{{ c.boletas }}</td>
+                <td class="r"><span class="money">${{ c.vendido|floatformat:2 }}</span></td>
+                <td class="r"><span class="money">${{ c.premios|floatformat:2 }}</span></td>
+                <td class="r">
+                  <span class="money {% if c.neto >= 0 %}pos{% else %}neg{% endif %}">
+                    {% if c.neto >= 0 %}+{% endif %}${{ c.neto|floatformat:2 }}
+                  </span>
+                </td>
+                <td class="r">
+                  <span class="mr-badge {% if c.margen >= 40 %}ok{% elif c.margen >= 0 %}mid{% else %}bad{% endif %}">
+                    {{ c.margen|floatformat:1 }}%
+                  </span>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="mr-empty">
+        <i class="fas fa-users"></i>
+        <p>Sin clientes con actividad en este período.</p>
+      </div>
+    {% endif %}
+  </section>
+
+</div>
+{% endblock %}

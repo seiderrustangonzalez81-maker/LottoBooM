@@ -20,6 +20,7 @@ urlpatterns = [
     path('api/sorteos-disponibles/', views.api_sorteos_disponibles, name='api_sorteos_disponibles'),
     path('api/configuracion-sorteo/', views.api_configuracion_sorteo, name='api_configuracion_sorteo'),
     path('api/forma-pago-cliente/', views.api_forma_pago_cliente, name='api_forma_pago_cliente'),
+    path('api/sorteos-con-boleta/', views.api_sorteos_con_boleta, name='api_sorteos_con_boleta'),
     path('api/verificar-saldo/', views.api_verificar_saldo, name='api_verificar_saldo'),
     path('api/verificar-password/', views.api_verificar_password, name='api_verificar_password'),
     path('api/info-apuesta/', views.api_info_apuesta, name='api_info_apuesta'),

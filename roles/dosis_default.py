@@ -18,8 +18,14 @@ DOSIS_GLOBAL = {
     'centenas corridas': 200,
     'tripleta': 9000,
     'parlet': 1000,
+    'parfrontal': 80,
+    'par frontal': 80,
+    'par-frontal': 80,
+    'par_frontal': 80,
     'super parlet': 1500,
     'superparlet': 1500,
+    'vs': 1000,
+    'vs100': 1000,
     'vs pick2': 1000,
     'vspick2': 1000,
     'vs pf': 1000,
@@ -41,8 +47,12 @@ LIMITES_POR_FORMA = {
     'centenas corridas': 500,
     'tripleta': 100,
     'parlet': 1000,
-    'super parlet': 1000,
-    'superparlet': 1000,
+    'parfrontal': 2000,
+    'par frontal': 2000,
+    'super parlet': 200,
+    'superparlet': 200,
+    'vs': 200,
+    'vs100': 200,
     'vs pick2': 200,
     'vspick2': 200,
     'vs pf': 200,
@@ -64,11 +74,15 @@ LIMITES_GLOBAL = {
 
 
 def _normalizar(nombre):
-    # PATCH_DOSIS_CLEANUP_V1: quita acentos para que 'Posición' == 'posicion'
+    # FIX_NORM_ESPACIOS_V1: quita acentos Y espacios
+    # Asi 'Pick 3' == 'pick3' == 'PICK3' == 'P i c k 3'
     import unicodedata
     s = (nombre or '').strip().lower()
     s = unicodedata.normalize('NFD', s)
-    return ''.join(c for c in s if unicodedata.category(c) != 'Mn')
+    s = ''.join(c for c in s if unicodedata.category(c) != 'Mn')
+    s = ' '.join(s.split())   # colapsa espacios multiples
+    s = s.replace(' ', '')     # elimina TODOS los espacios
+    return s
 
 
 def get_dosis_global(forma_juego_nombre):
@@ -98,3 +112,22 @@ def get_pool_global_superadmin():
 
 def get_sobrelimite_global_superadmin():
     return LIMITES_GLOBAL['sobrelimite'] * MULTIPLICADOR_SUPERADMIN
+
+
+# ═══════════════════════════════════════════════════════════════
+# FIX_NORM_ESPACIOS_V1: versiones normalizadas de las tablas
+# ═══════════════════════════════════════════════════════════════
+DOSIS_GLOBAL_NORM = {_normalizar(k): v for k, v in DOSIS_GLOBAL.items()}
+LIMITES_POR_FORMA_NORM = {_normalizar(k): v for k, v in LIMITES_POR_FORMA.items()}
+SOBRE_POR_FORMA_NORM = {_normalizar(k): v for k, v in SOBRE_POR_FORMA.items()}
+
+# Reemplazar los getters para usar las versiones normalizadas
+def get_dosis_global(forma_juego_nombre):
+    return DOSIS_GLOBAL_NORM.get(_normalizar(forma_juego_nombre), 0)
+
+def get_limite_por_forma(forma_juego_nombre):
+    return LIMITES_POR_FORMA_NORM.get(_normalizar(forma_juego_nombre), 1000)
+
+def get_sobre_por_forma(forma_juego_nombre):
+    return SOBRE_POR_FORMA_NORM.get(_normalizar(forma_juego_nombre), 1000)
+

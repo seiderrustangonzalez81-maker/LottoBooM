@@ -166,6 +166,23 @@
                   <span style="color:#dc2626; font-weight:800;">● No leída</span>
                 {% endif %}
               </div>
+              {% if n.fondo_mostrar %}
+                <div class="ntf-fondo-info mt-2 p-2" style="border-radius:8px; background:{% if n.fondo_congelado %}#f1f5f9{% else %}#f0fdf4{% endif %}; border:1.5px solid {% if n.fondo_congelado %}#cbd5e1{% else %}#bbf7d0{% endif %}; margin-top:8px;">
+                  {% if n.fondo_congelado %}
+                    <small style="color:#64748b; font-weight:700;"><i class="fas fa-lock"></i> Fondo del cliente al leer:</small>
+                  {% else %}
+                    <small style="color:#059669; font-weight:700;"><i class="fas fa-chart-line"></i> Fondo actual del cliente:</small>
+                  {% endif %}
+                  <strong style="color:#052e16; font-size:.95rem;"> ${{ n.fondo_mostrar.total|floatformat:2 }}</strong>
+                  {% if n.fondo_mostrar.desglose %}
+                    <div style="margin-top:6px; display:flex; flex-wrap:wrap; gap:4px;">
+                      {% for fp, monto in n.fondo_mostrar.desglose.items %}
+                        <span class="badge" style="background:#e2e8f0; color:#1e293b; font-weight:800; font-size:.65rem;">{{ fp }}: ${{ monto|floatformat:2 }}</span>
+                      {% endfor %}
+                    </div>
+                  {% endif %}
+                </div>
+              {% endif %}
             </div>
             {% if not n.leido %}
               <div>

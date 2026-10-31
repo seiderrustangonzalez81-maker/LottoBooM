@@ -4,50 +4,5 @@
 {% block page_title %}📜 Historial de Movimientos{% endblock %}
 
 {% block content %}
-<div class="container py-4">
-  <h2 class="mb-4">📜 Historial de Movimientos</h2>
-
-  {% if movimientos %}
-    <div class="table-responsive">
-      <table class="table table-striped">
-        <thead>
-          <tr>
-            <th>Fecha</th>
-            <th>Tipo</th>
-            <th>Monto</th>
-            <th>Estado</th>
-            <th>Notas</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for m in movimientos %}
-            <tr>
-              <td>{{ m.fecha|date:"d/m/Y H:i" }}</td>
-              <td>{{ m.tipo|default:"—" }}</td>
-              <td class="text-end">${{ m.monto|stringformat:"0.2f" }}</td>
-              <td>{{ m.estado|default:"—" }}</td>
-              <td>{{ m.nota|default:"—"|truncatechars:60 }}</td>
-            </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-
-    {% if movimientos.has_other_pages %}
-      <nav>
-        <ul class="pagination">
-          {% if movimientos.has_previous %}
-            <li class="page-item"><a class="page-link" href="?page={{ movimientos.previous_page_number }}">Anterior</a></li>
-          {% endif %}
-          <li class="page-item disabled"><span class="page-link">Página {{ movimientos.number }} de {{ movimientos.paginator.num_pages }}</span></li>
-          {% if movimientos.has_next %}
-            <li class="page-item"><a class="page-link" href="?page={{ movimientos.next_page_number }}">Siguiente</a></li>
-          {% endif %}
-        </ul>
-      </nav>
-    {% endif %}
-  {% else %}
-    <div class="alert alert-info">No hay movimientos registrados.</div>
-  {% endif %}
-</div>
+{% include "roles/_historial_body.html" %}
 {% endblock %}

@@ -7,6 +7,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="theme-color" content="#6C3CE1">
+    <!-- FAVICON_SET_COMPLETO_V1 -->
+    <link rel="icon" type="image/x-icon" href="{% static 'pwa/favicon.ico' %}?v=20261022b">
+    <link rel="icon" type="image/png" sizes="32x32" href="{% static 'pwa/favicon-32x32.png' %}?v=20261022b">
+    <link rel="icon" type="image/png" sizes="16x16" href="{% static 'pwa/favicon-16x16.png' %}?v=20261022b">
+    <link rel="apple-touch-icon" sizes="180x180" href="{% static 'pwa/apple-touch-icon.png' %}?v=20261022b">
+    <link rel="manifest" href="{% static 'pwa/manifest.json' %}?v=20261022b">
+    <meta name="apple-mobile-web-app-title" content="LottoBooM">
+    <meta name="application-name" content="LottoBooM">
     <meta name="description" content="LottoBooM - La lotería del futuro">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -392,6 +400,42 @@
         text-decoration: none;
         cursor: pointer;
     }
+    /* FIX_LED_NUEVO_V1 (2026-10-14): efecto LED para marcar opcion nueva.
+       Se apaga automaticamente el 17/Oct/2026. */
+    @keyframes led-pulse-green {
+      0%, 100% {
+        box-shadow: 0 0 4px #00ff88, 0 0 8px #00ff88, inset 0 0 4px rgba(0,255,136,0.15);
+      }
+      50% {
+        box-shadow: 0 0 10px #00ff88, 0 0 20px #00ff88, 0 0 30px #00ff88, inset 0 0 8px rgba(0,255,136,0.25);
+      }
+    }
+    .menu-item-led-nuevo {
+      position: relative;
+      border-left: 3px solid #00ff88 !important;
+      background: linear-gradient(90deg, rgba(0,255,136,0.10) 0%, transparent 60%) !important;
+      animation: led-pulse-green 1.6s ease-in-out infinite;
+    }
+    .menu-item-led-nuevo .emoji {
+      filter: drop-shadow(0 0 4px #00ff88);
+    }
+    .menu-item-led-nuevo::after {
+      content: 'NUEVO';
+      position: absolute;
+      right: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: #00ff88;
+      color: #003300;
+      font-size: 0.55rem;
+      font-weight: 900;
+      padding: 2px 6px;
+      border-radius: 8px;
+      letter-spacing: 0.6px;
+      animation: led-pulse-green 1.6s ease-in-out infinite;
+    }
+    .sidebar.collapsed .menu-item-led-nuevo::after { display: none; }
+
     .menu-item.dropdown .dropdown-menu .dropdown-item:hover {
         background: rgba(51, 65, 85, 0.8);
         color: #ffffff;
@@ -1083,6 +1127,16 @@
         max-width: 100%;
     }
     @media (max-width: 768px) {
+        /* FIX_NOTIF_DROPDOWN_MOVIL_V1 */
+        .notif-dropdown {
+            position: fixed !important;
+            width: auto !important;
+            max-width: none !important;
+            max-height: 70vh;
+            top: 70px;
+            left: 10px;
+            right: 10px;
+        }
         .tabla-apuesta .table { min-width: 0; }
         .tabla-apuesta .table th,
         .tabla-apuesta .table td { white-space: normal; }
@@ -1314,6 +1368,9 @@
     <a href="{% url 'resultados:mis_premios' %}" class="menu-item">
         <span class="emoji">🏆</span><span class="text">Mis Premios</span>
     </a>
+    <a href="{% url 'roles:ranking_apostadores' %}" class="menu-item">
+        <span class="emoji">🏆</span><span class="text">Top Apostadores</span>
+    </a>
 
     {% if user|has_role:'cliente' %}
 
@@ -1341,6 +1398,11 @@
             <span class="emoji">💰</span><span class="text">Mis Fondos</span>
         </a>
 
+        {# FIX_D1_RECARGAR_CUENTA_V1 #}
+        <a href="{% url 'roles:vias_pago_de_mi_gestor' %}" class="menu-item">
+            <span class="emoji">💰</span><span class="text">Recargar mi cuenta</span>
+        </a>
+
         <a href="{% url 'usuarios:referidos_cliente' %}" class="menu-item">
             <span class="emoji">👥</span><span class="text">Mis Referidos</span>
         </a>
@@ -1358,6 +1420,9 @@
         <a href="{% url 'roles:cuadre_diario' %}" class="menu-item">
             <span class="emoji">📊</span><span class="text">Cuadre Diario</span>
         </a>
+        <a href="{% url 'roles:mi_rentabilidad' %}" class="menu-item">
+            <span class="emoji">💰</span><span class="text">Mi Rentabilidad</span>
+        </a>
 
         <a href="{% url 'roles:gestiones_banco' %}" class="menu-item">
             <span class="emoji">📋</span><span class="text">Gestiones</span>
@@ -1365,24 +1430,17 @@
 
         <a href="{% url 'roles:gestionar_solicitudes_todas' %}" class="menu-item">
             <span class="emoji">📨</span><span class="text">Solicitudes</span>
-        </a>
-
-        <a href="{% url 'roles:recarga_directa' %}" class="menu-item">
-            <span class="emoji">💵</span><span class="text">Recarga Directa</span>
-        </a>
-
-        <a href="#" id="sidebarLimitesLink" class="menu-item" style="cursor:pointer;">
-            <i class="fas fa-chart-bar"></i>
-            <span>Límites y dosis</span>
-        </a>
-
-        <a href="#" id="sidebarRetiroLink" class="menu-item" style="cursor:pointer;">
+        </a><a href="#" id="sidebarRetiroLink" class="menu-item" style="cursor:pointer;">
             <i class="fas fa-hand-holding-usd"></i>
             <span>Retiro rápido</span>
         </a>
         <a href="{% url 'roles:historial_movimientos' %}" class="menu-item">
           <i class="fas fa-book"></i>
           <span>Historial movimientos</span>
+        </a>
+
+        <a href="{% url 'roles:configurar_mensajes' %}" class="menu-item">
+            <span class="emoji">💬</span><span class="text">Mensajes de bienvenida</span>
         </a>
 
         <a href="{% url 'roles:lista_clientes' %}" class="menu-item">
@@ -1394,11 +1452,41 @@
             </span>
         </a>
 
+    {% if user|has_role:'comercial' %}
+        <a href="#" id="sidebarLimitesLink" class="menu-item" style="cursor:pointer;">
+            <i class="fas fa-chart-bar"></i>
+            <span>Límites y dosis</span>
+        </a>
+    {% endif %}
+
+    {% if user|has_role:'superadmin' %}
+        <a href="#" id="sidebarLimitesLinkSA" class="menu-item" style="cursor:pointer;">
+            <i class="fas fa-chart-bar"></i>
+            <span>Límites y dosis (Red)</span>
+        </a>
+    {% endif %}
+
     {% endif %}
 
     {% if user|has_any_role:'banco,superadmin' %}
 
+                <div class="menu-separator">Recursos</div>
+        <a href="{% url 'roles:asignar_recursos_banco' %}" class="menu-item">
+            <span class="emoji">🗂️</span><span class="text">Asignar Recursos</span>
+        </a>
+        <a href="{% url 'roles:asignar_recursos_limites' %}" class="menu-item">
+            <span class="emoji">🎚️</span><span class="text">Asignar Límites</span>
+        </a>
         <div class="menu-separator">Comisiones</div>
+
+        <a href="{% url 'roles:ascender_usuario' %}" class="menu-item">
+
+
+            <span class="emoji">⬆️</span><span class="text">Ascender/Descender</span>
+
+
+        </a>
+
 
         <a href="{% url 'roles:gestionar_comisiones' %}" class="menu-item">
             <span class="emoji">⚙️</span><span class="text">Comisiones</span>
@@ -2142,7 +2230,8 @@
   var modal = document.getElementById('globalLimitesModal');
   if (!modal) return;
 
-  var link = document.getElementById('sidebarLimitesLink');
+  var link   = document.getElementById('sidebarLimitesLink');
+  var linkSA = document.getElementById('sidebarLimitesLinkSA');
   var selGestor = document.getElementById('globalLimitesGestor');
   var selSorteo = document.getElementById('globalLimitesSorteo');
   var cont = document.getElementById('globalLimitesContenido');
@@ -2163,7 +2252,8 @@
     document.body.style.overflow = '';
   }
 
-  if (link) link.addEventListener('click', function(e){ e.preventDefault(); _abrir(); });
+  if (link)   link.addEventListener('click',   function(e){ e.preventDefault(); _abrir(); });
+  if (linkSA) linkSA.addEventListener('click', function(e){ e.preventDefault(); _abrir(); });
   if (btnClose) btnClose.addEventListener('click', _cerrar);
   if (btnCerrar) btnCerrar.addEventListener('click', _cerrar);
   modal.addEventListener('click', function(e){ if (e.target === modal) _cerrar(); });
@@ -2196,7 +2286,7 @@
                  + '<th style="padding:8px;text-align:left;">Forma</th>'
                  + '<th style="padding:8px;text-align:right;">Límite</th>'
                  + '<th style="padding:8px;text-align:right;">Dosis</th>'
-                 + '<th style="padding:8px;text-align:right;">Sobrelímite</th>'
+                 + '<th style="padding:8px;text-align:right;">Sobre Límites</th>'
                  + '</tr></thead><tbody>';
         formas.forEach(function(f){
           html += '<tr style="border-bottom:1px solid #e5e7eb;">'
@@ -2551,5 +2641,107 @@
   window.lottortAttachFilters = _init;
 })();
 </script>
+
+{# ═══════ Auto-recarga por versión (solo usuarios autenticados) ═══════ #}
+{% if user.is_authenticated %}
+<script id="site-version-auto-reload">
+(function(){
+  'use strict';
+  var URL_VER = "{% url 'publico:site_version' %}";
+  var INTERVAL = 45000;
+  var current = null;
+  var paused = false;
+
+  // ══════════════════════════════════════════════════════════════
+  //  CAPA 1 — Lista negra: URLs donde NUNCA auto-recargar
+  // ══════════════════════════════════════════════════════════════
+  var RUTAS_CRITICAS = [
+    /\/jugadas\/apostar/i,
+    /\/jugadas\/superparlet/i,
+    /\/jugadas\/mis-apuestas/i,
+    /\/roles\/editar/i,
+    /\/roles\/crear/i,
+    /\/roles\/registrar/i,
+    /\/roles\/agregar/i,
+    /\/usuarios\/editar/i,
+    /\/usuarios\/crear/i,
+    /edit_boleta=/i,
+    /modo_editar=/i,
+    /modo_reenviar=/i
+  ];
+
+  function enRutaCritica(){
+    var u = window.location.pathname + window.location.search;
+    for (var i = 0; i < RUTAS_CRITICAS.length; i++) {
+      if (RUTAS_CRITICAS[i].test(u)) return true;
+    }
+    return false;
+  }
+
+  // ══════════════════════════════════════════════════════════════
+  //  CAPA 2 — API global: cualquier página puede pausar/reanudar
+  // ══════════════════════════════════════════════════════════════
+  window.__autoReload = {
+    pause:  function(){ paused = true;  console.log('[autoReload] pausado'); },
+    resume: function(){ paused = false; console.log('[autoReload] reanudado'); },
+    isPaused: function(){ return paused; }
+  };
+
+  // Si ya estamos en ruta crítica → pausa automática para toda la sesión
+  if (enRutaCritica()) {
+    paused = true;
+    console.log('[autoReload] pausado por ruta crítica:', window.location.pathname);
+  }
+
+  // ══════════════════════════════════════════════════════════════
+  //  Guardas adicionales de "actividad crítica"
+  // ══════════════════════════════════════════════════════════════
+  function tieneActividadCritica(){
+    if (document.querySelector('.modal.show, .modal.in')) return true;
+    var ae = document.activeElement;
+    if (ae && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA' || ae.tagName === 'SELECT')) {
+      return true;
+    }
+    var files = document.querySelectorAll('input[type=file]');
+    for (var i = 0; i < files.length; i++) {
+      if (files[i].files && files[i].files.length) return true;
+    }
+    return false;
+  }
+
+  // ══════════════════════════════════════════════════════════════
+  //  Loop principal
+  // ══════════════════════════════════════════════════════════════
+  function check(){
+    if (paused) return;
+
+    fetch(URL_VER, {credentials:'same-origin', cache:'no-store'})
+      .then(function(r){ return r.json(); })
+      .then(function(d){
+        if (!d || !d.version) return;
+        if (current === null) { current = d.version; return; }
+        if (d.version !== current) {
+          if (paused || tieneActividadCritica()) {
+            setTimeout(check, 30000);
+            return;
+          }
+          try {
+            var bar = document.createElement('div');
+            bar.style.cssText = 'position:fixed;bottom:0;left:0;right:0;z-index:99999;background:#4f46e5;color:#fff;padding:10px 16px;font-weight:700;text-align:center;font-size:.85rem;';
+            bar.textContent = '🔄 Actualizando…';
+            document.body.appendChild(bar);
+          } catch(_) {}
+          setTimeout(function(){ location.reload(); }, 800);
+        }
+      })
+      .catch(function(){});
+  }
+
+  check();
+  setInterval(check, INTERVAL);
+})();
+</script>
+{% endif %}
+
 </body>
 </html>

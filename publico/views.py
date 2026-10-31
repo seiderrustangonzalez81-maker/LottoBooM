@@ -269,3 +269,206 @@ def charada_view(request):
     }
     return render(request, 'publico/charada.html', context)
 
+
+
+# ═══════════════════════════════════════════════════════════════
+#  HOME V3 — Broadcast Live
+# ═══════════════════════════════════════════════════════════════
+def home_v3(request):
+    """
+    Home alternativo (BROADCAST // LIVE).
+    Diseño en tiempo real, adaptativo por rol, con datos reales.
+    """
+    from django.db.models import Sum, Count
+    from sorteos.utils import get_sorteos_hoy
+
+    stats = _calcular_estadisticas()
+    ahora = timezone.now()
+    hoy = timezone.localdate()
+
+    # ── Sorteos del día (con estado calculado) ──
+    try:
+        sorteos_hoy, _totales = get_sorteos_hoy(hoy)
+    except Exception:
+        sorteos_hoy = []
+
+    # Próximo sorteo (el abierto más cercano a cerrar)
+    proximo_sorteo = None
+    for s in sorteos_hoy:
+        if getattr(s, 'estado_actual', None) == 'abierto':
+            proximo_sorteo = s
+            break
+
+    # ── Últimos resultados reales ──
+    ultimos_resultados = []
+    try:
+        from resultados.models import Resultado
+        ultimos_resultados = list(
+            Resultado.objects
+            .select_related('sorteo')
+            .order_by('-fecha', '-hora')[:8]
+        )
+    except Exception:
+        pass
+
+    # ── Live feed real (premios recientes) ──
+    premios_recientes = []
+    try:
+        from resultados.models import Premio
+        premios_recientes = list(
+            Premio.objects
+            .select_related('jugada__usuario', 'jugada__sorteo')
+            .order_by('-creado_en')[:12]
+        )
+    except Exception:
+        pass
+
+    # ── Top ganadores de hoy ──
+    top_ganadores_hoy = []
+    try:
+        from resultados.models import Premio
+        top_ganadores_hoy = list(
+            Premio.objects
+            .filter(creado_en__date=hoy)
+            .values('jugada__usuario__username')
+            .annotate(total=Sum('monto_premio'), count=Count('id'))
+            .order_by('-total')[:5]
+        )
+    except Exception:
+        pass
+
+    # ── Saldos del usuario (solo logueado) ──
+    saldos_usuario = None
+    if request.user.is_authenticated:
+        try:
+            from roles.models import Fondo, Bono, Postpago
+            fondos = Fondo.objects.filter(
+                usuario=request.user, activo=True
+            ).aggregate(t=Sum('monto'))['t'] or 0
+            bonos = Bono.objects.filter(
+                usuario=request.user, estado='activo'
+            ).aggregate(t=Sum('saldo_restante'))['t'] or 0
+            pp = Postpago.objects.filter(
+                cliente=request.user, activo=True, saldo__lt=0
+            ).aggregate(t=Sum('saldo'))['t'] or 0
+            saldos_usuario = {
+                'fondos': float(fondos),
+                'bonos': float(bonos),
+                'postpago': float(abs(pp)),
+                'total': float(fondos + bonos),
+            }
+        except Exception:
+            pass
+
+    # ── Rol del usuario (para CTAs adaptativos) ──
+    rol_actual = 'visitante'
+    if request.user.is_authenticated:
+        if request.user.is_superuser:
+            rol_actual = 'superadmin'
+        else:
+            r = request.user.roles.filter(activo=True).first()
+            rol_actual = r.tipo if r else 'cliente'
+
+    context = {
+        'fecha_actual': ahora,
+        'user_authenticated': request.user.is_authenticated,
+        'rol_actual': rol_actual,
+        **stats,
+        'sorteos_hoy': sorteos_hoy[:12],
+        'proximo_sorteo': proximo_sorteo,
+        'ultimos_resultados': ultimos_resultados,
+        'premios_recientes': premios_recientes,
+        'top_ganadores_hoy': top_ganadores_hoy,
+        'saldos_usuario': saldos_usuario,
+    }
+    return render(request, 'publico/home_v2.html', context)
+
+
+# ═══════════════════════════════════════════════════════════════
+#  HOME V3 — Broadcast Live (Light-first, Studio palette)
+# ═══════════════════════════════════════════════════════════════
+def home_v3(request):
+    from django.db.models import Sum, Count
+    from sorteos.utils import get_sorteos_hoy
+
+    stats = _calcular_estadisticas()
+    ahora = timezone.now()
+    hoy = timezone.localdate()
+
+    # Sorteos del día
+    try:
+        sorteos_hoy, _ = get_sorteos_hoy(hoy)
+    except Exception:
+        sorteos_hoy = []
+
+    proximo_sorteo = None
+    for s in sorteos_hoy:
+        if getattr(s, 'estado_actual', None) == 'abierto':
+            proximo_sorteo = s
+            break
+
+    # Últimos resultados
+    ultimos_resultados = []
+    try:
+        from resultados.models import Resultado
+        ultimos_resultados = list(
+            Resultado.objects.select_related('sorteo').order_by('-fecha', '-hora')[:8]
+        )
+    except Exception:
+        pass
+
+    # Premios recientes (live feed real)
+    premios_recientes = []
+    try:
+        from resultados.models import Premio
+        premios_recientes = list(
+            Premio.objects.select_related('jugada__usuario', 'jugada__sorteo').order_by('-creado_en')[:12]
+        )
+    except Exception:
+        pass
+
+    # Saldos del usuario
+    saldos_usuario = None
+    if request.user.is_authenticated:
+        try:
+            from roles.models import Fondo, Bono, Postpago
+            fondos = Fondo.objects.filter(usuario=request.user, activo=True).aggregate(t=Sum('monto'))['t'] or 0
+            bonos = Bono.objects.filter(usuario=request.user, estado='activo').aggregate(t=Sum('saldo_restante'))['t'] or 0
+            pp = Postpago.objects.filter(cliente=request.user, activo=True, saldo__lt=0).aggregate(t=Sum('saldo'))['t'] or 0
+            saldos_usuario = {
+                'fondos': float(fondos), 'bonos': float(bonos),
+                'postpago': float(abs(pp)), 'total': float(fondos + bonos),
+            }
+        except Exception:
+            pass
+
+    context = {
+        'fecha_actual': ahora,
+        'user_authenticated': request.user.is_authenticated,
+        **stats,
+        'sorteos_hoy': sorteos_hoy[:12],
+        'proximo_sorteo': proximo_sorteo,
+        'ultimos_resultados': ultimos_resultados,
+        'premios_recientes': premios_recientes,
+        'saldos_usuario': saldos_usuario,
+    }
+    return render(request, 'publico/home_v2.html', context)
+
+# ═══════════════════════════════════════════════════════════════
+#  SITE VERSION — para auto-recarga de clientes autenticados
+# ═══════════════════════════════════════════════════════════════
+def site_version(request):
+    """
+    Devuelve la versión actual del sitio. Los clientes autenticados
+    pollan este endpoint y, si la versión cambia, recargan la página.
+    """
+    from pathlib import Path
+    from django.conf import settings
+    from django.http import JsonResponse
+
+    v_file = Path(settings.BASE_DIR) / 'LottoBooM' / 'site_version.txt'
+    try:
+        v = v_file.read_text().strip() or '0'
+    except Exception:
+        v = '0'
+    return JsonResponse({'version': v})
