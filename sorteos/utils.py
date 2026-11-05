@@ -1,8 +1,16 @@
+from LottoBooM.utils import es_verano_cuba
 # -*- coding: utf-8 -*-
 from datetime import datetime, timedelta
 from django.utils import timezone
 from .models import Sorteo
 
+
+from datetime import timezone as _dt_tz
+
+def _tz_cuba(fecha):
+    """tzinfo con el offset correcto de Cuba según es_verano_cuba(fecha)."""
+    from LottoBooM.utils import es_verano_cuba
+    return _dt_tz(timedelta(hours=-4 if es_verano_cuba(fecha) else -5))
 
 MAPA_DIAS = {
     'monday': 'lunes',
@@ -28,7 +36,7 @@ def _fecha_local(fecha=None):
 
 def _temporada(fecha):
     """Verano: abril–octubre. Invierno: noviembre–marzo."""
-    return 'verano' if 4 <= fecha.month <= 10 else 'invierno'
+    return 'verano' if es_verano_cuba(fecha) else 'invierno'
 
 
 def obtener_hora_desde_horarios(sorteo, fecha=None):
@@ -72,8 +80,7 @@ def get_hora_cierre(sorteo, fecha=None):
     if not hora_salida:
         return None
     minutos = sorteo.minutos_cierre if sorteo.minutos_cierre is not None else 60
-    salida_dt = datetime.combine(fecha, hora_salida)
-    salida_dt = timezone.make_aware(salida_dt, timezone.get_current_timezone())
+    salida_dt = datetime.combine(fecha, hora_salida).replace(tzinfo=_tz_cuba(fecha))
     return salida_dt - timedelta(minutes=minutos)
 
 
@@ -95,7 +102,7 @@ def calcular_estado_sorteo(sorteo, ahora=None, fecha_consulta=None):
     if ahora is None:
         ahora = timezone.now()
 
-    ahora_local = timezone.localtime(ahora)
+    ahora_local = ahora.astimezone(_tz_cuba(fecha_consulta if fecha_consulta else ahora.date()))
     if fecha_consulta is None:
         fecha_consulta = ahora_local.date()
 
@@ -117,10 +124,7 @@ def calcular_estado_sorteo(sorteo, ahora=None, fecha_consulta=None):
 
     minutos_cierre = sorteo.minutos_cierre if sorteo.minutos_cierre is not None else 60
 
-    dt_salida = timezone.make_aware(
-        datetime.combine(fecha_consulta, hora_salida),
-        timezone.get_current_timezone(),
-    )
+    dt_salida = datetime.combine(fecha_consulta, hora_salida).replace(tzinfo=_tz_cuba(fecha_consulta))
     dt_cierre = dt_salida - timedelta(minutes=minutos_cierre)
 
     # ── Estado ──

@@ -1,0 +1,20 @@
+User-agent: *
+Allow: /
+Allow: /$
+
+# Bloquear rutas privadas
+Disallow: /dashboard/
+Disallow: /roles/
+Disallow: /usuarios/
+Disallow: /jugadas/
+Disallow: /resultados/
+Disallow: /sorteos/
+Disallow: /superadmin/
+Disallow: /banco/
+Disallow: /comercial/
+Disallow: /admin/
+Disallow: /api/
+Disallow: /events/
+
+# Sitemap
+Sitemap: https://lottoboom.pythonanywhere.com/sitemap.xml

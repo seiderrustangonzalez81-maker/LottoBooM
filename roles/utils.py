@@ -1038,6 +1038,19 @@ def calcular_saldos_cliente(cliente, gestor=None):
 
 
 def _aplicar_ingreso_a_fondo(cliente, gestor, forma_pago, monto, _skip_prestamos=False, _return_detalle=False, request_id=None, tipo_mov='recarga', extra_data=None):
+    # INYECCIÓN_AUTO_CLIENTE: Asignar rol de cliente al recibir su primera recarga
+    try:
+        from roles.models import Rol
+        # Verificamos si el cliente no tiene NINGÚN rol activo
+        if not Rol.objects.filter(usuario=cliente, activo=True).exists():
+            rol_obj, created = Rol.objects.get_or_create(usuario=cliente, tipo='cliente')
+            if not created and not rol_obj.activo:
+                rol_obj.activo = True
+                rol_obj.save()
+    except Exception as e:
+        import logging
+        logging.getLogger(__name__).error(f"Error asignando rol automático de cliente: {e}")
+    
     """
     Aplica un ingreso (recarga/premio) al cliente:
     1. Si hay Postpago con saldo < 0 para (gestor, forma_pago), paga la deuda.

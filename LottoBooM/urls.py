@@ -15,8 +15,33 @@ def favicon(request):
     return serve(request, "favicon.ico", os.path.dirname(path))
 
 
+
+# ═══════════════════════════════════════════════════════════════
+# SEO — robots.txt y sitemap
+# ═══════════════════════════════════════════════════════════════
+def robots_txt(request):
+    """Sirve robots.txt desde static/."""
+    from django.http import HttpResponse
+    from django.conf import settings
+    import os
+    path = os.path.join(settings.BASE_DIR, 'static', 'robots.txt')
+    try:
+        with open(path, 'r', encoding='utf-8') as f:
+            return HttpResponse(f.read(), content_type='text/plain')
+    except FileNotFoundError:
+        return HttpResponse('User-agent: *\nAllow: /\n', content_type='text/plain')
+
+
+def assetlinks_json(request):
+    """Sirve assetlinks.json placeholder (PWA deep links)."""
+    from django.http import JsonResponse
+    return JsonResponse([], safe=False)
+
+
 urlpatterns = [
     path('favicon.ico', favicon),
+    path('robots.txt', robots_txt, name='robots'),
+    path('.well-known/assetlinks.json', assetlinks_json, name='assetlinks'),
     path('admin/', admin.site.urls),
     path('', include('publico.urls')),           # tu home
 

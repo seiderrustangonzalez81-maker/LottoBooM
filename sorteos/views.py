@@ -1,3 +1,4 @@
+from LottoBooM.utils import es_verano_cuba
 # -*- coding: utf-8 -*-
 from datetime import datetime, timedelta, time
 from zoneinfo import ZoneInfo
@@ -16,6 +17,19 @@ from jugadas.models import FormaJuego
 
 
 CUBA_TZ = ZoneInfo('America/Havana')
+
+def _tz_cuba(fecha):
+    """tzinfo con el offset correcto de Cuba (respeta es_verano_cuba)."""
+    from LottoBooM.utils import es_verano_cuba
+    from datetime import timezone as _dt_tz
+    return _dt_tz(timedelta(hours=-4 if es_verano_cuba(fecha) else -5))
+
+def _ahora_cuba():
+    """datetime.now() con el offset correcto de Cuba."""
+    from datetime import timezone as _dt_tz
+    utc = datetime.now(_dt_tz.utc)
+    return utc.astimezone(_tz_cuba(utc.date()))
+
 
 
 MAPEO_FJ = {
@@ -42,7 +56,7 @@ def _formas_de_sorteo(sorteo):
 def _hora_salida_hoy(sorteo, hoy):
     dia_es = {0:'lunes',1:'martes',2:'miercoles',3:'jueves',
               4:'viernes',5:'sabado',6:'domingo'}[hoy.weekday()]
-    temp = 'verano' if 4 <= hoy.month <= 10 else 'invierno'
+    temp = 'verano' if es_verano_cuba(hoy) else 'invierno'
 
     if sorteo.horarios:
         hora_str = (sorteo.horarios.get(temp) or {}).get(dia_es)
@@ -59,7 +73,7 @@ def _hora_salida_hoy(sorteo, hoy):
 
 def _calcular_estado(sorteo, hora_salida, ahora):
     minutos = sorteo.minutos_cierre if sorteo.minutos_cierre is not None else 60
-    dt_salida = datetime.combine(ahora.date(), hora_salida, tzinfo=CUBA_TZ)
+    dt_salida = datetime.combine(ahora.date(), hora_salida, tzinfo=_tz_cuba(ahora.date()))
     dt_cierre = dt_salida - timedelta(minutes=minutos)
 
     if ahora < dt_cierre:
@@ -83,7 +97,7 @@ def _calcular_estado(sorteo, hora_salida, ahora):
 
 
 def lista_sorteos(request):
-    ahora = datetime.now(CUBA_TZ)
+    ahora = _ahora_cuba()
     hoy = ahora.date()
 
     abiertos, cerrados, salidos = [], [], []
@@ -99,6 +113,8 @@ def lista_sorteos(request):
         s.segundos_restantes = info['segundos_restantes']
         s.hora_salida_str = hora_salida.strftime('%I:%M %p')
         s.hora_cierre = info['hora_cierre']
+
+        s.hora_cierre_str = info['hora_cierre'].strftime('%I:%M %p') if info['hora_cierre'] else '—'
         s.hora_salida = hora_salida
         s.formas_filtradas = _formas_de_sorteo(s)
 
@@ -145,7 +161,7 @@ def lista_sorteos(request):
 
 def detalle_sorteo(request, sorteo_id):
     sorteo = get_object_or_404(Sorteo, id=sorteo_id, activo=True)
-    ahora = datetime.now(CUBA_TZ)
+    ahora = _ahora_cuba()
     hoy = ahora.date()
 
     hora_salida = _hora_salida_hoy(sorteo, hoy)
@@ -155,6 +171,8 @@ def detalle_sorteo(request, sorteo_id):
         sorteo.segundos_restantes = info['segundos_restantes']
         sorteo.hora_salida_str = hora_salida.strftime('%I:%M %p')
         sorteo.hora_cierre = info['hora_cierre']
+
+        sorteo.hora_cierre_str = info['hora_cierre'].strftime('%I:%M %p') if info['hora_cierre'] else '—'
     else:
         sorteo.estado_actual = 'no_programado'
         sorteo.segundos_restantes = 0
@@ -166,7 +184,7 @@ def detalle_sorteo(request, sorteo_id):
 
 
 def api_sorteos_data(request):
-    ahora = datetime.now(CUBA_TZ)
+    ahora = _ahora_cuba()
     hoy = ahora.date()
     data = {'sorteos': []}
     for s in Sorteo.objects.filter(activo=True).order_by('nombre'):
@@ -186,7 +204,7 @@ def api_sorteos_data(request):
 
 
 def api_sorteos_list(request):
-    ahora = datetime.now(CUBA_TZ)
+    ahora = _ahora_cuba()
     hoy = ahora.date()
     result = []
     for s in Sorteo.objects.filter(activo=True).order_by('nombre'):
@@ -216,7 +234,7 @@ def api_sorteo_detail(request, sorteo_id):
     except Sorteo.DoesNotExist:
         return JsonResponse({'error': 'Sorteo no encontrado'}, status=404)
 
-    ahora = datetime.now(CUBA_TZ)
+    ahora = _ahora_cuba()
     hoy = ahora.date()
     hora_salida = _hora_salida_hoy(sorteo, hoy)
 
@@ -248,7 +266,7 @@ def api_sorteo_detail(request, sorteo_id):
 def api_sorteos_by_origin(request, origen):
     if origen not in ['dominicano', 'americano', 'haitiano']:
         return JsonResponse({'error': 'Origen no válido'}, status=400)
-    ahora = datetime.now(CUBA_TZ)
+    ahora = _ahora_cuba()
     hoy = ahora.date()
     result = []
     for s in Sorteo.objects.filter(activo=True, origen=origen).order_by('nombre'):
@@ -268,7 +286,7 @@ def api_sorteos_by_origin(request, origen):
 def api_sorteos_by_status(request, estado):
     if estado not in ['abierto', 'cerrado', 'salido', 'no_programado']:
         return JsonResponse({'error': 'Estado no válido'}, status=400)
-    ahora = datetime.now(CUBA_TZ)
+    ahora = _ahora_cuba()
     hoy = ahora.date()
     result = []
     for s in Sorteo.objects.filter(activo=True).order_by('nombre'):
@@ -291,7 +309,7 @@ def api_sorteos_by_status(request, estado):
 
 
 def api_sorteos_abiertos(request):
-    ahora = datetime.now(CUBA_TZ)
+    ahora = _ahora_cuba()
     hoy = ahora.date()
     result = []
     for s in Sorteo.objects.filter(activo=True).order_by('nombre'):
@@ -312,7 +330,7 @@ def api_sorteos_abiertos(request):
 
 
 def api_proximos_sorteos(request, horas=4):
-    ahora = datetime.now(CUBA_TZ)
+    ahora = _ahora_cuba()
     hoy = ahora.date()
     limite = int(horas) * 3600
     result = []
@@ -320,7 +338,7 @@ def api_proximos_sorteos(request, horas=4):
         hora_salida = _hora_salida_hoy(s, hoy)
         if not hora_salida:
             continue
-        dt_salida = datetime.combine(hoy, hora_salida, tzinfo=CUBA_TZ)
+        dt_salida = datetime.combine(hoy, hora_salida, tzinfo=_tz_cuba(hoy))
         if dt_salida <= ahora:
             continue
         seg = int((dt_salida - ahora).total_seconds())
@@ -389,7 +407,7 @@ def api_sorteos_compartir(request):
     # FIX_TZ_CUBA_V1 (2026-10-16): usar hora Cuba explicitamente,
     # igual que lista_sorteos. Antes usaba timezone.localtime() que devuelve
     # la hora del servidor (UTC) y daba todos los sorteos como cerrados.
-    ahora = datetime.now(CUBA_TZ)
+    ahora = _ahora_cuba()
     hoy = ahora.date()
     lista = []
 
@@ -424,7 +442,7 @@ def api_sorteos_compartir(request):
         4: 'Viernes', 5: 'Sabado', 6: 'Domingo',
     }
     dia_semana = DIAS_ES.get(hoy.weekday(), hoy.strftime('%A'))
-    temporada = 'Verano' if 4 <= hoy.month <= 10 else 'Invierno'
+    temporada = 'Verano' if es_verano_cuba(hoy) else 'Invierno'
 
     lines = []
     lines.append("*LOTTOBOOM*")

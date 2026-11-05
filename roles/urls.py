@@ -56,6 +56,8 @@ urlpatterns = [
     # ============================================================
     path('ascender-usuario/', views.ascender_usuario, name='ascender_usuario'),
     path('ascender-comercial/<int:user_id>/', views.ascender_a_comercial, name='ascender_a_comercial'),
+    path('ascender-auditor/<int:user_id>/', views.ascender_a_auditor, name='ascender_a_auditor'),
+    path('descender-auditor/<int:user_id>/', views.descender_a_cliente_auditor, name='descender_a_cliente_auditor'),
     path('descender-cliente/<int:user_id>/', views.descender_a_cliente, name='descender_a_cliente'),
 
     # ============================================================
@@ -155,4 +157,9 @@ urlpatterns = [
     # ═══ A1+A3: Mensajes de bienvenida ═══
     path('mensajes-bienvenida/', views.configurar_mensajes, name='configurar_mensajes'),
     path('api/mensajes-bienvenida-pendientes/', views.api_mensajes_pendientes, name='api_mensajes_pendientes'),
+    path('mis-limites-cliente/', views.mis_limites_cliente_view, name='mis_limites_cliente'),
+    path('api/premios-pendientes/', views.api_premios_pendientes, name='api_premios_pendientes'),
+    path('api/marcar-premio-visto/<int:notif_id>/', views.api_marcar_premio_visto, name='api_marcar_premio_visto'),
+    path('top-numeros/', views.top_numeros, name='top_numeros'),
+    path('top-limites/', views.top_limites, name='top_limites'),
 ]

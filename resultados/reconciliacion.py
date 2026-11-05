@@ -109,3 +109,40 @@ def reconciliar_lote(jugadas_qs, usuario_sistema=None, limite=500):
         elif _err:
             errores += 1
     return creados, errores
+
+
+def reconciliar_lote_optimizado(jugadas_qs, resultado, usuario_sistema=None):
+    """
+    FIX_N1_V1: versión optimizada que pre-carga premios existentes
+    y evita 1 query por jugada solo para el chequeo de duplicados.
+    """
+    from resultados.models import Premio
+
+    jugadas = list(jugadas_qs.select_related(
+        'sorteo', 'forma_juego', 'forma_pago', 'usuario', 'destinatario'
+    ))
+    if not jugadas:
+        return 0, 0
+
+    jugada_ids = [j.id for j in jugadas]
+    premios_existentes = set(
+        Premio.objects.filter(jugada_id__in=jugada_ids)
+        .values_list('jugada_id', flat=True)
+    )
+
+    creados = 0
+    errores = 0
+    for j in jugadas:
+        if j.id in premios_existentes:
+            continue
+        try:
+            _, created, err = reconciliar_premio_jugada(j, resultado=resultado, usuario_sistema=usuario_sistema)
+            if created:
+                creados += 1
+            elif err:
+                errores += 1
+                logger.warning(f'reconciliar_lote_optimizado: jugada {j.id}: {err}')
+        except Exception as e:
+            errores += 1
+            logger.error(f'reconciliar_lote_optimizado: jugada {j.id}: {e}', exc_info=True)
+    return creados, errores

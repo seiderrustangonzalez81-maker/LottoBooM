@@ -55,6 +55,16 @@ class Resultado(models.Model):
 
     def __str__(self):
         return f"{self.sorteo.nombre} - {self.fecha} {self.hora}"
+    procesamiento_estado = models.CharField(
+        max_length=20, default='pendiente',
+        choices=[('pendiente','Pendiente'),('procesando','Procesando'),
+                 ('completado','Completado'),('error','Error')],
+        db_index=True, verbose_name='Estado procesamiento premios',
+    )
+    procesamiento_msg = models.CharField(max_length=255, blank=True, default='')
+    premios_generados = models.IntegerField(default=0)
+    procesamiento_inicio = models.DateTimeField(null=True, blank=True)
+    procesamiento_fin = models.DateTimeField(null=True, blank=True)
 
 
 class Premio(models.Model):

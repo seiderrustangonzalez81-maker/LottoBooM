@@ -1,94 +1,99 @@
+# -*- coding: utf-8 -*-
+"""Middlewares de la app publico."""
 from django.utils import timezone
-from django.contrib.auth.models import User
-from .models import VisitaDiaria
 
 
 class RegistrarVisitaMiddleware:
+    """Registra cada visita única por sesión/día en VisitaDiaria."""
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        try:
+            self._registrar_visita(request)
+        except Exception:
+            # Nunca romper la request por un fallo de analítica
+            pass
+        return self.get_response(request)
+
+    def _registrar_visita(self, request):
+        from .models import VisitaDiaria
+
+        # Ignorar estáticos, media, admin, favicon, APIs
+        path = request.path_info or '/'
+        if path.startswith(('/static/', '/media/', '/admin/', '/favicon.ico',
+                            '/events/', '/roles/api/')):
+            return
+
+        # Necesitamos sesión
+        if not hasattr(request, 'session'):
+            return
+        if not request.session.session_key:
+            request.session.save()
+
+        session_key = request.session.session_key
+        hoy = timezone.localdate()
+
+        usuario = request.user if getattr(request, 'user', None) and \
+            request.user.is_authenticated else None
+
+        VisitaDiaria.objects.get_or_create(
+            session_key=session_key,
+            fecha=hoy,
+            defaults={'usuario': usuario},
+        )
+
+
+class NoCacheHTMLMiddleware:
+    """Prohíbe que el navegador cachee HTML dinámico."""
+
     def __init__(self, get_response):
         self.get_response = get_response
 
     def __call__(self, request):
         response = self.get_response(request)
-
-        # 🔹 Filtro nuevo: no contar AJAX (polling de stats, guardar apuestas, etc)
-        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-            return response
-
-        rutas_excluidas = ('/static', '/media', '/admin')
-        if any(request.path.startswith(ruta) for ruta in rutas_excluidas):
-            return response
-
-        hoy = timezone.now().date()
-
-        if request.user.is_authenticated:
-            # ✅ Cambio: usar filter().first() para evitar MultipleObjectsReturned
-            existe = VisitaDiaria.objects.filter(
-                usuario=request.user, fecha=hoy
-            ).exists()
-            if not existe:
-                VisitaDiaria.objects.create(
-                    usuario=request.user,
-                    fecha=hoy,
-                    session_key=request.session.session_key or '',
-                    ip=self._get_ip(request),
-                    user_agent=request.META.get('HTTP_USER_AGENT', '')[:255],
-                )
-        else:
-            session_key = request.session.session_key
-            if not session_key:
-                request.session.save()
-                session_key = request.session.session_key
-
-            VisitaDiaria.objects.get_or_create(
-                session_key=session_key,
-                fecha=hoy,
-                defaults={
-                    'ip': self._get_ip(request),
-                    'user_agent': request.META.get('HTTP_USER_AGENT', '')[:255],
-                }
+        ct = response.get('Content-Type', '')
+        if 'text/html' in ct:
+            response['Cache-Control'] = (
+                'no-store, no-cache, must-revalidate, '
+                'max-age=0, private'
             )
-
+            response['Pragma'] = 'no-cache'
+            response['Expires'] = '0'
         return response
-
-    def _get_ip(self, request):
-        x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
-        if x_forwarded_for:
-            return x_forwarded_for.split(',')[0].strip()
-        return request.META.get('REMOTE_ADDR', '')
-
-
-# ═══════════════════════════════════════════════════════════════
-# MIDDLEWARE: Actualizar última actividad real
-# ═══════════════════════════════════════════════════════════════
-
-from django.utils import timezone
 
 
 class ActualizarUltimaActividadMiddleware:
-    """
-    Actualiza User.last_login en cada request autenticado.
-    Esto permite mostrar online/offline con base en actividad real,
-    no solo en el momento del login.
+    """Actualiza Perfil.last_activity cada N segundos del usuario autenticado."""
 
-    Optimización: solo escribe a DB si pasaron >= 30 segundos desde
-    la última actualización, para no saturar con writes.
-    """
-    INTERVALO_SEGUNDOS = 30
+    # Actualizar solo si pasó >60s desde la última (para no saturar BD)
+    INTERVALO_SEGUNDOS = 60
 
     def __init__(self, get_response):
         self.get_response = get_response
 
     def __call__(self, request):
-        # Actualizar ANTES de procesar la vista
-        if hasattr(request, 'user') and request.user.is_authenticated:
-            ahora = timezone.now()
-            ultima = request.user.last_login
-            if (not ultima) or ((ahora - ultima).total_seconds() >= self.INTERVALO_SEGUNDOS):
-                # Update directo sin signals
-                User.objects.filter(pk=request.user.pk).update(last_login=ahora)
-                # Actualizar también en memoria para que la vista lo vea
-                request.user.last_login = ahora
+        try:
+            self._actualizar(request)
+        except Exception:
+            pass
+        return self.get_response(request)
 
-        response = self.get_response(request)
-        return response
+    def _actualizar(self, request):
+        from django.utils import timezone
+        from datetime import timedelta
+        from usuarios.models import Perfil
 
+        u = getattr(request, 'user', None)
+        if not u or not u.is_authenticated:
+            return
+
+        ahora = timezone.now()
+        perfil = Perfil.objects.filter(usuario=u).only('id', 'last_activity').first()
+        if not perfil:
+            return
+
+        if perfil.last_activity is None or \
+                (ahora - perfil.last_activity) > timedelta(seconds=self.INTERVALO_SEGUNDOS):
+            Perfil.objects.filter(pk=perfil.pk).update(last_activity=ahora)

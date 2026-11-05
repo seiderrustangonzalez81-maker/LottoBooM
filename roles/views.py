@@ -1020,12 +1020,9 @@ def ascender_usuario(request):
         usuarios = usuarios_base
         bancos_disponibles = User.objects.filter(roles__tipo='banco', roles__activo=True).distinct()
     elif es_banco:
-        comerciales_subordinados_ids = Subordinacion.objects.filter(jefe=user, activo=True).values_list('subordinado_id', flat=True)
-        comerciales_subordinados = User.objects.filter(id__in=comerciales_subordinados_ids)
-        clientes_sin_gestor = User.objects.filter(roles__tipo='cliente', roles__activo=True).exclude(
-            id__in=Subordinacion.objects.filter(activo=True).values_list('subordinado_id', flat=True)
-        )
-        usuarios = (comerciales_subordinados | clientes_sin_gestor).distinct()
+        # MODIFICACIÓN: Permitir al banco ver y ascender a CUALQUIER usuario,
+        # sin importar si está o no en su red de subordinados.
+        usuarios = User.objects.filter(is_active=True).exclude(id=user.id)
         bancos_disponibles = User.objects.filter(roles__tipo='banco', roles__activo=True).exclude(id=user.id)
     else:
         usuarios = User.objects.none()
@@ -1039,7 +1036,7 @@ def ascender_usuario(request):
             Q(first_name__icontains=q) |
             Q(last_name__icontains=q) |
             Q(perfil__telefono__icontains=q) |
-            Q(clienteoffline__telefono_offline__icontains=q)
+            Q(cliente_offline__telefono_offline__icontains=q)
         )
         if str(q).isdigit():
             q_filter |= Q(id=int(q))
@@ -1066,7 +1063,8 @@ def ascender_usuario(request):
                     if rol_actual == 'cliente':
                         acciones_disponibles = [
                             {'valor': 'comercial', 'label': 'Ascender a Comercial'},
-                            {'valor': 'banco', 'label': 'Ascender a Banco'}
+                            {'valor': 'banco', 'label': 'Ascender a Banco'},
+                            {'valor': 'auditor', 'label': 'Ascender a Auditor'}
                         ]
                     elif rol_actual == 'comercial':
                         acciones_disponibles = [
@@ -1080,12 +1078,13 @@ def ascender_usuario(request):
                         ]
                 elif es_banco:
                     if rol_actual == 'cliente':
+                        acciones_disponibles = [
+                            {'valor': 'auditor', 'label': 'Ascender a Auditor'}
+                        ]
                         if not Subordinacion.objects.filter(subordinado=usuario_seleccionado, activo=True).exists():
-                            acciones_disponibles = [
-                                {'valor': 'comercial', 'label': 'Ascender a Comercial'}
-                            ]
+                            acciones_disponibles.insert(0, {'valor': 'comercial', 'label': 'Ascender a Comercial'})
                         else:
-                            messages.warning(request, "Este cliente ya tiene un gestor asignado.")
+                            messages.warning(request, "Este cliente ya tiene un gestor asignado, pero puedes ascenderlo a Auditor.")
                     elif rol_actual == 'comercial':
                         if Subordinacion.objects.filter(jefe=user, subordinado=usuario_seleccionado, activo=True).exists():
                             acciones_disponibles = [
@@ -1148,18 +1147,21 @@ def ascender_usuario(request):
                     )
                     return redirect('roles:ascender_usuario')
             elif nuevo_rol == 'cliente':
-                if rol_actual_usuario != 'comercial':
-                    messages.error(request, "Solo puedes descender a comerciales a clientes.")
+                if rol_actual_usuario not in ['comercial', 'auditor']:
+                    messages.error(request, "Solo puedes descender a comerciales o auditores a clientes.")
                     return redirect('roles:ascender_usuario')
-                if not Subordinacion.objects.filter(jefe=user, subordinado=usuario, activo=True).exists():
+                if rol_actual_usuario == 'comercial' and not Subordinacion.objects.filter(jefe=user, subordinado=usuario, activo=True).exists():
                     messages.error(request, "Este comercial no es tu subordinado.")
                     return redirect('roles:ascender_usuario')
+            elif nuevo_rol == 'auditor':
+                # El banco puede ascender a cualquier cliente a auditor
+                pass
             else:
-                messages.error(request, "Como banco, solo puedes ascender a comercial o descender a cliente.")
+                messages.error(request, "Como banco, solo puedes ascender a comercial, auditor o descender a cliente.")
                 return redirect('roles:ascender_usuario')
 
         elif es_superadmin:
-            if nuevo_rol not in ['superadmin', 'banco', 'comercial', 'cliente']:
+            if nuevo_rol not in ['superadmin', 'banco', 'comercial', 'cliente', 'auditor']:
                 messages.error(request, "Rol no válido.")
                 return redirect('roles:ascender_usuario')
             if nuevo_rol == 'superadmin' and usuario.id == user.id:
@@ -1244,6 +1246,32 @@ def ascender_usuario(request):
                 return redirect(
                     reverse('roles:gestion_limites_dosis') + "?banco=" + str(usuario.id)
                 )
+
+            elif nuevo_rol == 'auditor':
+                # Desactivar roles anteriores y crear el de auditor
+                Rol.objects.filter(usuario=usuario, activo=True).update(activo=False)
+                Rol.objects.update_or_create(
+                    usuario=usuario,
+                    tipo='auditor',
+                    defaults={'activo': True, 'banco_asignado': user if es_banco else None}
+                )
+                # Registrar la relación
+                from .models import RelacionClienteGestor
+                RelacionClienteGestor.objects.update_or_create(
+                    cliente=usuario,
+                    gestor=user,
+                    tipo_gestor='auditor',
+                    defaults={'activo': True, 'asignado_por': user}
+                )
+                # Notificar
+                crear_notificacion(
+                    usuario=usuario,
+                    tipo='sistema',
+                    mensaje=f"Has sido ascendido a auditor por {user.username}. Ahora puedes crear y modificar resultados.",
+                )
+                messages.success(request, f"✅ {usuario.username} ascendido a auditor.")
+                anular_bonos_usuario(usuario)
+                return redirect('roles:lista_clientes')
 
             elif nuevo_rol == 'comercial':
                 if rol_actual_usuario == 'banco':
@@ -1691,7 +1719,8 @@ def lista_clientes(request):
                     total_fondos += float(monto_neto)
                     total_postpago += float(_fp_entry.get('postpago') or _Dec('0'))
 
-        clientes_data.append({
+        clientes_data_tipo = 'auditor' if cliente.roles.filter(tipo='auditor', activo=True).exists() else 'cliente'
+    clientes_data.append({
             'cliente': cliente,
             'tipo': tipo,
             'telefono': getattr(getattr(cliente, 'perfil', None), 'telefono', '') or '',
@@ -4217,18 +4246,18 @@ def ascender_a_comercial(request, user_id):
     es_banco = Rol.objects.filter(usuario=usuario_actual, tipo='banco', activo=True).exists()
     if not (es_superadmin or es_banco):
         messages.error(request, "No tienes permiso para ascender usuarios.")
-        return redirect('lista_clientes')
+        return redirect('roles:lista_clientes')
     if es_banco and not es_superadmin:
         usuarios_visibles = get_usuarios_visibles(request)
         if usuario_a_ascender not in usuarios_visibles:
             messages.error(request, "No puedes ascender a este usuario porque no está en tu red.")
-            return redirect('lista_clientes')
+            return redirect('roles:lista_clientes')
     jefe = usuario_actual
     if es_banco and not es_superadmin:
         suscripcion = SuscripcionBanco.objects.filter(banco=jefe, activo=True).first()
         if suscripcion and not suscripcion.puede_ascender_comercial():
             messages.error(request, f"Has alcanzado el límite de {suscripcion.comerciales_permitidos} comerciales. Debes solicitar más cupo al superadmin.")
-            return redirect('lista_clientes')
+            return redirect('roles:lista_clientes')
     with transaction.atomic():
         RecursoAsignado.objects.filter(comercial=usuario_a_ascender).delete()
         LimiteApuesta.objects.filter(comercial=usuario_a_ascender).delete()
@@ -4277,7 +4306,113 @@ def ascender_a_comercial(request, user_id):
     anular_bonos_usuario(usuario_a_ascender)
 
     messages.success(request, f"✅ {usuario_a_ascender.username} ascendido a comercial bajo {jefe.username} con {recursos_asignados} recursos y límites/dosis heredados.")
-    return redirect('lista_clientes')
+    return redirect('roles:lista_clientes')
+
+
+def ascender_a_auditor(request, user_id):
+    """
+    El banco (o superadmin) asciende a uno de sus clientes a auditor.
+    El auditor podrá crear/modificar resultados de sorteos.
+    """
+    usuario_a_ascender = get_object_or_404(User, id=user_id)
+    usuario_actual = request.user
+
+    es_superadmin = usuario_actual.is_superuser or usuario_actual.roles.filter(tipo='superadmin', activo=True).exists()
+    es_banco = Rol.objects.filter(usuario=usuario_actual, tipo='banco', activo=True).exists()
+
+    if not (es_superadmin or es_banco):
+        messages.error(request, "No tienes permiso para ascender usuarios.")
+        return redirect('roles:lista_clientes')
+
+    # 根据业务需求，允许银行或超级管理员将任意用户晋升为审计员
+    # 因此移除“必须在同一网络”的 Subordinacion 限制
+    # (如果需要保留超级管理员的特殊豁免，可以在这里单独处理，但当前逻辑下银行已足够)
+
+    # Si ya es auditor, no hacer nada
+    if Rol.objects.filter(usuario=usuario_a_ascender, tipo='auditor', activo=True).exists():
+        messages.info(request, f"{usuario_a_ascender.username} ya es auditor.")
+        return redirect('roles:lista_clientes')
+
+    with transaction.atomic():
+        # Desactivar roles existentes (cliente, comercial, etc.) y activar auditor
+        Rol.objects.filter(usuario=usuario_a_ascender, activo=True).update(activo=False)
+        Rol.objects.create(
+            usuario=usuario_a_ascender,
+            tipo='auditor',
+            activo=True,
+            banco_asignado=usuario_actual if not es_superadmin else None,
+        )
+
+        # Registrar la relación banco → auditor
+        from .models import RelacionClienteGestor
+        RelacionClienteGestor.objects.update_or_create(
+            cliente=usuario_a_ascender,
+            gestor=usuario_actual,
+            tipo_gestor='auditor',
+            defaults={'activo': True, 'asignado_por': usuario_actual},
+        )
+
+        # Notificar al nuevo auditor
+        from .utils import crear_notificacion
+        crear_notificacion(
+            usuario=usuario_a_ascender,
+            tipo='sistema',
+            mensaje=f"Has sido ascendido a auditor por {usuario_actual.username}. Ahora puedes crear y modificar resultados de sorteos.",
+        )
+
+        # Notificar al banco
+        crear_notificacion(
+            usuario=usuario_actual,
+            tipo='sistema',
+            mensaje=f"✅ Has ascendido a {usuario_a_ascender.username} como auditor.",
+        )
+
+    messages.success(request, f"✅ {usuario_a_ascender.username} ascendido a auditor. Ahora puede crear y modificar resultados.")
+    return redirect('roles:lista_clientes')
+
+
+def descender_a_cliente_auditor(request, user_id):
+    """
+    El banco (o superadmin) revierte el rol auditor a cliente.
+    """
+    usuario_a_descender = get_object_or_404(User, id=user_id)
+    usuario_actual = request.user
+
+    es_superadmin = usuario_actual.is_superuser or usuario_actual.roles.filter(tipo='superadmin', activo=True).exists()
+    es_banco = Rol.objects.filter(usuario=usuario_actual, tipo='banco', activo=True).exists()
+
+    if not (es_superadmin or es_banco):
+        messages.error(request, "No tienes permiso para descender usuarios.")
+        return redirect('roles:lista_clientes')
+
+    if not Rol.objects.filter(usuario=usuario_a_descender, tipo='auditor', activo=True).exists():
+        messages.info(request, f"{usuario_a_descender.username} no es auditor.")
+        return redirect('roles:lista_clientes')
+
+    with transaction.atomic():
+        Rol.objects.filter(usuario=usuario_a_descender, tipo='auditor', activo=True).update(activo=False)
+        Rol.objects.get_or_create(
+            usuario=usuario_a_descender,
+            tipo='cliente',
+            defaults={'activo': True, 'banco_asignado': usuario_actual if not es_superadmin else None},
+        )
+        # Mantener la relación banco → cliente pero como 'cliente'
+        from .models import RelacionClienteGestor
+        RelacionClienteGestor.objects.update_or_create(
+            cliente=usuario_a_descender,
+            gestor=usuario_actual,
+            tipo_gestor='banco',
+            defaults={'activo': True, 'asignado_por': usuario_actual},
+        )
+        from .utils import crear_notificacion
+        crear_notificacion(
+            usuario=usuario_a_descender,
+            tipo='sistema',
+            mensaje=f"Has sido descendido a cliente por {usuario_actual.username}. Ya no puedes crear/modificar resultados.",
+        )
+
+    messages.success(request, f"✅ {usuario_a_descender.username} descendido a cliente.")
+    return redirect('roles:lista_clientes')
 
 @login_required
 @csrf_exempt
@@ -5923,3 +6058,409 @@ def api_mensajes_pendientes(request):
         })
 
     return JsonResponse({'success': True, 'mensajes': mensajes})
+
+
+# ═══════════════════════════════════════════════════════════════
+# MIS LÍMITES (CLIENTE) — límites + sobrelímites + dosis del gestor
+# ═══════════════════════════════════════════════════════════════
+MAX_ROWS_LIMITES = 200
+
+def mis_limites_cliente_view(request):
+    """Dashboard del cliente: consulta los límites / sobrelímites /
+    dosis del gestor seleccionado, por sorteo y forma de pago."""
+    from django.shortcuts import render, redirect
+    from django.http import HttpResponseForbidden
+    from django.db.models import Sum
+    from roles.templatetags.roles_extras import has_role
+    from roles.models import Rol, LimiteApuesta, DosisPago
+    from sorteos.models import Sorteo
+    from pagos.models import FormaPago
+    from usuarios.models import User
+
+    if not request.user.is_authenticated:
+        return redirect('usuarios:login')
+
+    roles_ok = ('cliente', 'comercial', 'banco', 'superadmin')
+    if not any(has_role(request.user, r) for r in roles_ok):
+        return HttpResponseForbidden("Acceso restringido")
+
+    # ── Filtros desde GET ──
+    sorteo_id = request.GET.get('sorteo') or ''
+    fp_id = request.GET.get('forma_pago') or ''
+    gestor_id = request.GET.get('gestor') or ''
+
+    # ── Dropdowns ──
+    sorteos = list(Sorteo.objects.filter(activo=True).order_by('nombre'))
+    formas_pago = list(FormaPago.objects.filter(activo=True).order_by('nombre'))
+
+    # ── Gestor asignado del cliente ──
+    cliente_rol = Rol.objects.filter(
+        usuario=request.user, tipo='cliente', activo=True
+    ).first()
+    gestor_asignado = None
+    if cliente_rol:
+        gestor_asignado = cliente_rol.comercial_asignado or cliente_rol.banco_asignado
+
+    # ── Gestores disponibles ──
+    if gestor_asignado:
+        gestores = [gestor_asignado]
+    else:
+        gestores = list(
+            User.objects.filter(
+                roles__tipo='comercial', roles__activo=True
+            ).distinct().order_by('username')
+        )
+
+    # ── Defaults si no hay filtros ──
+    if not sorteo_id and sorteos:
+        sorteo_id = str(sorteos[0].id)
+    if not fp_id and formas_pago:
+        fp_id = str(formas_pago[0].id)
+    if not gestor_id and gestores:
+        gestor_id = str(gestores[0].id)
+
+    # ── Datos (solo si hay filtros válidos) ──
+    datos = []
+    summary = {}
+    sorteo_obj = None
+    fp_obj = None
+    gestor_obj = None
+    truncado = False
+    total_rows = 0
+
+    if sorteo_id and fp_id and gestor_id:
+        try:
+            sorteo_obj = Sorteo.objects.filter(id=sorteo_id).first()
+            fp_obj = FormaPago.objects.filter(id=fp_id).first()
+            gestor_obj = User.objects.filter(id=gestor_id).first()
+        except (ValueError, TypeError):
+            pass
+
+        if sorteo_obj and fp_obj and gestor_obj:
+            limites_qs = LimiteApuesta.objects.filter(
+                comercial=gestor_obj,
+                sorteo=sorteo_obj,
+                forma_pago=fp_obj,
+                activo=True,
+            ).select_related('forma_juego').order_by('forma_juego__nombre')
+
+            total_rows = limites_qs.count()
+
+            dosis_map = {
+                d.forma_juego_id: d.monto_por_peso
+                for d in DosisPago.objects.filter(
+                    comercial=gestor_obj,
+                    sorteo=sorteo_obj,
+                    forma_pago=fp_obj,
+                    activo=True,
+                )
+            }
+
+            for lim in limites_qs[:MAX_ROWS_LIMITES]:
+                datos.append({
+                    'forma_juego': lim.forma_juego,
+                    'limite': lim.monto_maximo,
+                    'sobrelimite': lim.monto_sobrelimite,
+                    'dosis': dosis_map.get(lim.forma_juego_id, 0),
+                    'comision_extra': lim.comision_extra_porcentaje,
+                })
+
+            truncado = total_rows > MAX_ROWS_LIMITES
+
+            agg = limites_qs.aggregate(
+                total_limite=Sum('monto_maximo'),
+                total_sobrelimite=Sum('monto_sobrelimite'),
+            )
+
+            summary = {
+                'total_limite': float(agg['total_limite'] or 0),
+                'total_sobrelimite': float(agg['total_sobrelimite'] or 0),
+                'total_dosis': sum(float(v) for v in dosis_map.values()),
+                'num_formas': total_rows,
+                'comercial': gestor_obj.username,
+                'sorteo': sorteo_obj.nombre,
+                'forma_pago': fp_obj.nombre,
+                'gestor_asignado': bool(gestor_asignado),
+            }
+
+    return render(request, 'roles/mis_limites_cliente.html', {
+        'sorteos': sorteos,
+        'formas_pago': formas_pago,
+        'gestores': gestores,
+        'gestor_asignado': gestor_asignado,
+        'sorteo_id': sorteo_id,
+        'fp_id': fp_id,
+        'gestor_id': gestor_id,
+        'datos': datos,
+        'summary': summary,
+        'truncado': truncado,
+        'total_rows': total_rows,
+        'max_rows': MAX_ROWS_LIMITES,
+        'hay_filtros': bool(sorteo_obj and fp_obj and gestor_obj),
+        'sorteo_obj': sorteo_obj,
+        'fp_obj': fp_obj,
+        'gestor_obj': gestor_obj,
+    })
+
+
+# ═══════════════════════════════════════════════════════════════
+# API PREMIOS PENDIENTES (para cartel rojo oblicuo + WhatsApp)
+# ═══════════════════════════════════════════════════════════════
+def api_premios_pendientes(request):
+    from django.http import JsonResponse
+    from roles.models import Notificacion
+
+    if not request.user.is_authenticated:
+        return JsonResponse({'premios': []})
+
+    qs = Notificacion.objects.filter(
+        usuario=request.user, tipo='premio', leido=False,
+    ).order_by('-creado_en')[:5]
+
+    premios = []
+    for n in qs:
+        d = n.datos or {}
+        premios.append({
+            'id': n.id,
+            'monto': d.get('monto', '0'),
+            'monto_fmt': f"${float(d.get('monto', 0)):,.2f}" if d.get('monto') else '$0.00',
+            'sorteo': d.get('sorteo', ''),
+            'numero': d.get('numero', ''),
+            'forma_juego': d.get('forma_juego', ''),
+            'razon': d.get('razon', ''),
+            'mensaje': n.mensaje,
+        })
+    return JsonResponse({'premios': premios})
+
+
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
+from django.http import JsonResponse
+
+
+@csrf_exempt
+@require_POST
+def api_marcar_premio_visto(request, notif_id):
+    from django.utils import timezone
+    from roles.models import Notificacion
+
+    if not request.user.is_authenticated:
+        return JsonResponse({'ok': False}, status=403)
+
+    actualizado = Notificacion.objects.filter(
+        pk=notif_id, usuario=request.user, tipo='premio'
+    ).update(leido=True, leido_en=timezone.now())
+
+    return JsonResponse({'ok': bool(actualizado)})
+
+
+# ═══════════════════════════════════════════════════════════════
+# TOP · LÍMITES POR NÚMERO (disponibilidad en tiempo real)
+# ═══════════════════════════════════════════════════════════════
+@login_required
+def top_numeros(request):
+    """Muestra la disponibilidad por número para el gestor seleccionado,
+    por sorteo y forma de pago, en la fecha elegida.
+    """
+    from datetime import date, datetime
+    from decimal import Decimal
+    from django.db.models import Sum
+    from sorteos.models import Sorteo
+    from pagos.models import FormaPago
+    from jugadas.models import Jugada, FormaJuego
+    from roles.utils import get_pool_gestor
+    from roles.templatetags.roles_extras import has_role
+
+    user = request.user
+    es_cliente = has_role(user, 'cliente')
+    es_gestor = has_role(user, 'comercial') or has_role(user, 'banco') or has_role(user, 'superadmin')
+
+    # ── Filtros ──
+    sorteo_id = request.GET.get('sorteo') or ''
+    fp_id = request.GET.get('forma_pago') or ''
+    fecha_str = request.GET.get('fecha') or date.today().isoformat()
+    try:
+        fecha = datetime.strptime(fecha_str, '%Y-%m-%d').date()
+    except ValueError:
+        fecha = date.today()
+
+    # ── Gestor: para cliente se auto-detecta, para gestor se puede filtrar ──
+    gestor = None
+    gestores_disponibles = []
+
+    if es_cliente:
+        from roles.models import Rol
+        mi_rol = Rol.objects.filter(usuario=user, tipo='cliente', activo=True).first()
+        if mi_rol:
+            gestor = mi_rol.comercial_asignado or mi_rol.banco_asignado
+        if not gestor:
+            return render(request, 'roles/top_numeros.html', {
+                'sin_gestor': True,
+                'sorteos': [], 'formas_pago': [],
+                'fecha_str': fecha_str,
+            })
+    elif es_gestor:
+        gestor = user
+        # Superadmin/banco puede cambiar de gestor
+        if not has_role(user, 'comercial'):
+            gestor_id = request.GET.get('gestor')
+            if gestor_id and gestor_id.isdigit():
+                from django.contrib.auth.models import User
+                gestor = User.objects.filter(id=int(gestor_id), is_active=True).first() or user
+            # Lista de comerciales para el dropdown
+            from django.contrib.auth.models import User
+            gestores_disponibles = list(
+                User.objects.filter(roles__tipo='comercial', roles__activo=True)
+                .distinct().order_by('username')[:200]
+            )
+
+    # ── Dropdowns ──
+    sorteos = list(Sorteo.objects.filter(activo=True).order_by('nombre'))
+    formas_pago = list(FormaPago.objects.filter(activo=True).order_by('nombre'))
+
+    if not sorteo_id and sorteos:
+        sorteo_id = str(sorteos[0].id)
+    if not fp_id and formas_pago:
+        fp_id = str(formas_pago[0].id)
+
+    filas = []
+    resumen = {'total_apostado': 0.0, 'total_limite': 0.0, 'total_libre': 0.0,
+               'numeros_cerrados': 0, 'numeros_con_datos': 0}
+
+    if sorteo_id and fp_id and gestor:
+        sorteo = Sorteo.objects.filter(id=sorteo_id).first()
+        fp = FormaPago.objects.filter(id=fp_id).first()
+        if sorteo and fp:
+            for fj in FormaJuego.objects.filter(activo=True):
+                pool = get_pool_gestor(gestor, sorteo, fj, fp) or 0
+                if pool <= 0:
+                    continue
+                consumos = (Jugada.objects
+                            .filter(destinatario=gestor, sorteo=sorteo,
+                                    forma_juego=fj, forma_pago=fp,
+                                    fecha_sorteo=fecha,
+                                    estado__in=['confirmada', 'pendiente'])
+                            .values('numero')
+                            .annotate(total=Sum('monto')))
+                for c in consumos:
+                    num = (c['numero'] or '').strip()
+                    if not num:
+                        continue
+                    apostado = float(c['total'] or 0)
+                    libre = max(0.0, float(pool) - apostado)
+                    pct = (apostado / float(pool) * 100) if pool else 0
+                    filas.append({
+                        'numero': num,
+                        'forma_juego': fj.nombre,
+                        'apostado': apostado,
+                        'limite': float(pool),
+                        'libre': libre,
+                        'pct_usado': round(pct, 1),
+                        'cerrado': libre <= 0.01,
+                    })
+                    resumen['total_apostado'] += apostado
+                    resumen['total_limite'] += float(pool)
+                    resumen['numeros_con_datos'] += 1
+                    if libre <= 0.01:
+                        resumen['numeros_cerrados'] += 1
+            resumen['total_libre'] = max(0.0, resumen['total_limite'] - resumen['total_apostado'])
+
+    # Ordenar por % usado descendente (los más cerca del límite primero)
+    filas.sort(key=lambda x: (-x['pct_usado'], -x['apostado']))
+    filas = filas[:200]  # límite de filas
+
+    return render(request, 'roles/top_numeros.html', {
+        'sorteos': sorteos,
+        'formas_pago': formas_pago,
+        'gestores_disponibles': gestores_disponibles,
+        'gestor': gestor,
+        'es_cliente': es_cliente,
+        'sorteo_id': sorteo_id,
+        'fp_id': fp_id,
+        'fecha_str': fecha_str,
+        'filas': filas,
+        'resumen': resumen,
+        'total_filas': len(filas),
+    })
+
+
+# ═══════════════════════════════════════════════════════════════
+# TOP · SORTEOS AL LÍMITE (ranking por % de uso del día)
+# ═══════════════════════════════════════════════════════════════
+@login_required
+def top_limites(request):
+    """Ranking de sorteos+FP por porcentaje de límite consumido en la fecha."""
+    from datetime import date, datetime
+    from django.db.models import Sum
+    from sorteos.models import Sorteo
+    from pagos.models import FormaPago
+    from jugadas.models import Jugada, FormaJuego
+    from roles.models import LimiteApuesta
+    from roles.templatetags.roles_extras import has_role
+
+    user = request.user
+    es_gestor = has_role(user, 'comercial') or has_role(user, 'banco') or has_role(user, 'superadmin')
+
+    fecha_str = request.GET.get('fecha') or date.today().isoformat()
+    try:
+        fecha = datetime.strptime(fecha_str, '%Y-%m-%d').date()
+    except ValueError:
+        fecha = date.today()
+
+    # Gestor objetivo
+    if es_gestor:
+        gestor = user
+        if not has_role(user, 'comercial'):
+            gestor_id = request.GET.get('gestor')
+            if gestor_id and gestor_id.isdigit():
+                from django.contrib.auth.models import User
+                gestor = User.objects.filter(id=int(gestor_id), is_active=True).first() or user
+    else:
+        from roles.models import Rol
+        mi_rol = Rol.objects.filter(usuario=user, tipo='cliente', activo=True).first()
+        gestor = (mi_rol.comercial_asignado or mi_rol.banco_asignado) if mi_rol else None
+        if not gestor:
+            return render(request, 'roles/top_limites.html', {
+                'sin_gestor': True, 'ranking': [], 'fecha_str': fecha_str,
+            })
+
+    # Ranking: agrupar límites por sorteo+FP
+    limites_agg = (LimiteApuesta.objects
+                   .filter(comercial=gestor, activo=True)
+                   .values('sorteo_id', 'sorteo__nombre', 'forma_pago_id', 'forma_pago__nombre')
+                   .annotate(limite_total=Sum('monto_maximo'))
+                   .order_by('-limite_total'))
+
+    ranking = []
+    for item in limites_agg:
+        consumo = (Jugada.objects
+                   .filter(destinatario=gestor,
+                           sorteo_id=item['sorteo_id'],
+                           forma_pago_id=item['forma_pago_id'],
+                           fecha_sorteo=fecha,
+                           estado__in=['confirmada', 'pendiente'])
+                   .aggregate(s=Sum('monto'))['s'] or 0)
+        limite = float(item['limite_total'] or 0)
+        consumido = float(consumo)
+        if limite <= 0:
+            continue
+        pct = round((consumido / limite) * 100, 1)
+        ranking.append({
+            'sorteo': item['sorteo__nombre'] or '—',
+            'forma_pago': item['forma_pago__nombre'] or '—',
+            'limite': limite,
+            'consumido': consumido,
+            'libre': max(0.0, limite - consumido),
+            'pct_usado': pct,
+            'critico': pct >= 90,
+        })
+
+    ranking.sort(key=lambda x: -x['pct_usado'])
+    ranking = ranking[:50]
+
+    return render(request, 'roles/top_limites.html', {
+        'gestor': gestor,
+        'fecha_str': fecha_str,
+        'ranking': ranking,
+        'total': len(ranking),
+    })

@@ -1,0 +1,193 @@
+{% extends "base.html" %}
+{% load roles_extras humanize %}
+{% block content %}
+<style>
+.mlc-wrap{max-width:1200px;margin:0 auto;padding:24px}
+.mlc-head{margin-bottom:24px}
+.mlc-head h1{font-family:'Fredoka',system-ui;font-size:1.9rem;font-weight:700;color:#2b2d42;margin:0}
+.mlc-head h1 span{color:#ff5757}
+.mlc-head p{color:#6b7280;margin-top:6px}
+
+.mlc-filters{
+  background:#fff;border:2px solid #ffe8c2;border-radius:16px;
+  padding:20px;margin-bottom:24px;
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;
+}
+.mlc-filter{display:flex;flex-direction:column;gap:6px}
+.mlc-filter label{font-size:.78rem;text-transform:uppercase;letter-spacing:.8px;font-weight:800;color:#6b7280}
+.mlc-filter select{
+  padding:12px 14px;border-radius:10px;border:2px solid #ffe8c2;background:#fffbf2;
+  font-weight:700;color:#2b2d42;font-size:.95rem;transition:.2s;cursor:pointer;
+}
+.mlc-filter select:hover{border-color:#ffd89b}
+.mlc-filter select:focus{outline:none;border-color:#ff5757;background:#fff}
+
+.mlc-summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-bottom:24px}
+.mlc-card{background:#fff;border:2px solid #ffe8c2;border-radius:14px;padding:18px;position:relative;overflow:hidden}
+.mlc-card::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#ff5757,#ff6ec7)}
+.mlc-card:nth-child(2)::before{background:linear-gradient(90deg,#22c1c3,#4ade80)}
+.mlc-card:nth-child(3)::before{background:linear-gradient(90deg,#ffc93c,#ff5757)}
+.mlc-card:nth-child(4)::before{background:linear-gradient(90deg,#a78bfa,#ff6ec7)}
+.mlc-card .lbl{font-size:.72rem;text-transform:uppercase;letter-spacing:1px;font-weight:800;color:#6b7280;margin-bottom:4px}
+.mlc-card .val{font-family:'Fredoka',system-ui;font-size:1.5rem;font-weight:700;color:#ff5757}
+.mlc-card:nth-child(2) .val{color:#22c1c3}
+.mlc-card:nth-child(3) .val{color:#ffc93c}
+.mlc-card:nth-child(4) .val{color:#a78bfa}
+
+.mlc-info{
+  background:linear-gradient(135deg,#e0f2fe,#dbeafe);border:2px solid #93c5fd;
+  border-radius:14px;padding:18px;margin-bottom:24px;color:#1e40af;font-weight:600;
+  display:flex;align-items:flex-start;gap:12px;
+}
+.mlc-info.warn{background:linear-gradient(135deg,#fef3c7,#fde68a);border-color:#fbbf24;color:#92400e}
+.mlc-info .ico{font-size:1.4rem;flex-shrink:0}
+
+.mlc-table{width:100%;border-collapse:collapse;background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 4px 16px -8px rgba(0,0,0,.08)}
+.mlc-table thead{background:linear-gradient(135deg,#fff5e0,#ffe8c2)}
+.mlc-table th{padding:14px 16px;text-align:left;font-size:.75rem;text-transform:uppercase;letter-spacing:.8px;font-weight:800;color:#6b7280;border-bottom:2px solid #ffd89b}
+.mlc-table td{padding:13px 16px;border-bottom:1px solid #fff5e0;font-size:.92rem;color:#2b2d42}
+.mlc-table tbody tr:hover{background:#fffbf2}
+.mlc-table tbody tr:last-child td{border-bottom:none}
+.mlc-table .num{font-family:'Fredoka',system-ui;font-weight:700;color:#ff5757;font-size:1rem}
+.mlc-table .num-secondary{color:#22c1c3}
+.mlc-table .num-accent{color:#ffc93c}
+.mlc-table .right{text-align:right}
+
+.mlc-empty{padding:48px 20px;text-align:center;color:#6b7280;background:#fff;border:2px dashed #ffe8c2;border-radius:14px}
+.mlc-empty .emoji{font-size:3rem;display:block;margin-bottom:12px;opacity:.6}
+.mlc-empty p{font-size:1rem;margin:6px 0}
+.mlc-empty small{color:#9ca3af;font-size:.85rem}
+
+.mlc-context{
+  background:#fffbf2;border:2px solid #ffe8c2;border-radius:12px;
+  padding:14px 18px;margin-bottom:20px;font-size:.9rem;color:#2b2d42;
+  display:flex;flex-wrap:wrap;gap:16px;
+}
+.mlc-context strong{color:#ff5757}
+</style>
+
+<div class="mlc-wrap">
+
+  <div class="mlc-head">
+    <h1>🎚️ Mis <span>Límites</span></h1>
+    <p>Consulta los límites, sobrelímites y dosis disponibles de tu gestor por sorteo y forma de pago.</p>
+  </div>
+
+  {# ─── FILTROS ─── #}
+  <form method="get" class="mlc-filters" id="filtersForm">
+    <div class="mlc-filter">
+      <label>🎯 Sorteo</label>
+      <select name="sorteo" onchange="this.form.submit()">
+        {% for s in sorteos %}
+          <option value="{{ s.id }}" {% if sorteo_id == s.id|stringformat:'s' %}selected{% endif %}>
+            {{ s.nombre }}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="mlc-filter">
+      <label>💳 Forma de Pago</label>
+      <select name="forma_pago" onchange="this.form.submit()">
+        {% for fp in formas_pago %}
+          <option value="{{ fp.id }}" {% if fp_id == fp.id|stringformat:'s' %}selected{% endif %}>
+            {{ fp.nombre }}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="mlc-filter">
+      <label>👤 Gestor</label>
+      <select name="gestor" onchange="this.form.submit()" {% if gestor_asignado %}disabled{% endif %}>
+        {% for g in gestores %}
+          <option value="{{ g.id }}" {% if gestor_id == g.id|stringformat:'s' %}selected{% endif %}>
+            {{ g.username }}
+          </option>
+        {% endfor %}
+      </select>
+      {% if gestor_asignado %}
+        <small style="color:#6b7280;font-size:.75rem">Asignado por el banco</small>
+      {% endif %}
+    </div>
+  </form>
+
+  {% if not gestores %}
+    <div class="mlc-info warn">
+      <span class="ico">⚠️</span>
+      <div>
+        <strong>Aún no tienes un gestor asignado.</strong><br>
+        Contacta al banco para que te asigne un comercial y puedas ver tus límites de apuesta.
+      </div>
+    </div>
+  {% elif hay_filtros and datos %}
+    {# ─── CONTEXTO ─── #}
+    <div class="mlc-context">
+      <span>🎯 Sorteo: <strong>{{ summary.sorteo }}</strong></span>
+      <span>💳 Forma de Pago: <strong>{{ summary.forma_pago }}</strong></span>
+      <span>👤 Gestor: <strong>{{ summary.comercial }}</strong></span>
+    </div>
+
+    {# ─── RESUMEN ─── #}
+    <div class="mlc-summary">
+      <div class="mlc-card">
+        <div class="lbl">Límite Total</div>
+        <div class="val">${{ summary.total_limite|currency:0 }}</div>
+      </div>
+      <div class="mlc-card">
+        <div class="lbl">Sobre Límite Total</div>
+        <div class="val">${{ summary.total_sobrelimite|currency:0 }}</div>
+      </div>
+      <div class="mlc-card">
+        <div class="lbl">Dosis Total</div>
+        <div class="val">${{ summary.total_dosis|currency:0 }}</div>
+      </div>
+      <div class="mlc-card">
+        <div class="lbl">Formas de Juego</div>
+        <div class="val">{{ summary.num_formas }}</div>
+      </div>
+    </div>
+
+    {# ─── TABLA ─── #}
+    {% if truncado %}
+      <div class="mlc-info warn">
+        <span class="ico">⚠️</span>
+        <div>Mostrando las primeras <strong>{{ max_rows }}</strong> de <strong>{{ total_rows }}</strong> formas de juego. Los totales de arriba reflejan todos los registros.</div>
+      </div>
+    {% endif %}
+
+    <table class="mlc-table">
+      <thead>
+        <tr>
+          <th>Forma de Juego</th>
+          <th class="right">Límite</th>
+          <th class="right">Sobre Límite</th>
+          <th class="right">Dosis</th>
+          <th class="right">% Extra</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for d in datos %}
+        <tr>
+          <td><strong>{{ d.forma_juego.nombre|default:"—" }}</strong></td>
+          <td class="right num">{{ d.limite|currency }}</td>
+          <td class="right num num-secondary">{{ d.sobrelimite|currency }}</td>
+          <td class="right num num-accent">{{ d.dosis|currency }}</td>
+          <td class="right">{{ d.comision_extra|floatformat:2 }}%</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% elif hay_filtros %}
+    <div class="mlc-empty">
+      <span class="emoji">🔍</span>
+      <p>No hay límites configurados para esta combinación.</p>
+      <small>Prueba con otro sorteo, forma de pago o gestor.</small>
+    </div>
+  {% else %}
+    <div class="mlc-info">
+      <span class="ico">ℹ️</span>
+      <div>Selecciona un sorteo, una forma de pago y un gestor para ver sus límites disponibles.</div>
+    </div>
+  {% endif %}
+
+</div>
+{% endblock %}

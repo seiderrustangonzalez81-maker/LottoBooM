@@ -83,7 +83,8 @@ MIDDLEWARE = [
     'publico.middleware.ActualizarUltimaActividadMiddleware',   # 10) Online real
     'django.contrib.messages.middleware.MessageMiddleware',     # 11) Mensajes
     'django.middleware.clickjacking.XFrameOptionsMiddleware',   # 12) Clickjacking
-    'publico.middleware.RegistrarVisitaMiddleware',             # 13) Visitas
+    'publico.middleware.RegistrarVisitaMiddleware',             # 13) Visitas,
+    "publico.middleware.NoCacheHTMLMiddleware",
 ]
 
 # ============================================================
@@ -103,6 +104,7 @@ TEMPLATES = [
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
+                'publico.context_processors.site_info',
                 "django.template.context_processors.debug",
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
@@ -239,7 +241,7 @@ AUTHENTICATION_BACKENDS = [
 ]
 
 LOGIN_URL = "usuarios:login"
-LOGIN_REDIRECT_URL = "publico:home"
+LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = "publico:home"
 
 SITE_ID = 1
@@ -388,3 +390,5 @@ REST_FRAMEWORK = {
 #   - DATA_UPLOAD_MAX_NUMBER_FIELDS: 500000 → 5000
 #   - ALLOWED_HOSTS: añadido www.lottoboom.pythonanywhere.com
 #   - CSRF_TRUSTED_ORIGINS: añadido www.lottoboom.pythonanywhere.com
+# URL pública del sitio (para emails, notificaciones, etc.)
+SITE_URL = "https://lottoboom.pythonanywhere.com"

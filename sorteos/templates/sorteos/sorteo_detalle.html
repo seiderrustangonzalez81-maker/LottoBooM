@@ -35,7 +35,7 @@
                 <h3 style="font-size:1rem; color:#6b7280; margin-bottom:8px;">Cierre de apuestas</h3>
                 <p style="font-size:1.4rem; font-weight:600; color:#d97706;">
                     {% if sorteo.hora_cierre %}
-                        {{ sorteo.hora_cierre|time:"h:i A" }}
+                        {{ sorteo.hora_cierre_str }}
                     {% else %}
                         <span style="color:#94a3b8;">No definido</span>
                     {% endif %}

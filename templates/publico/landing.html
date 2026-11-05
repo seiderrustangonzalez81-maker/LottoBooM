@@ -1,0 +1,1169 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LottoBooM · Tu suerte empieza hoy</title>
+{% load static %}
+<link rel="icon" type="image/x-icon" href="{% static 'pwa/favicon.ico' %}?v=20261022b">
+<link rel="icon" type="image/png" sizes="32x32" href="{% static 'pwa/favicon-32x32.png' %}?v=20261022b">
+<link rel="icon" type="image/png" sizes="16x16" href="{% static 'pwa/favicon-16x16.png' %}?v=20261022b">
+<link rel="apple-touch-icon" sizes="180x180" href="{% static 'pwa/apple-touch-icon.png' %}?v=20261022b">
+<link rel="manifest" href="{% static 'pwa/manifest.json' %}?v=20261022b">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Fredoka:wght@600;700&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════════════════
+   VARIABLES — paleta clara, cálida, divertida
+   ═══════════════════════════════════════════════════════════ */
+:root{
+  --bg:#fffbf2; --bg-alt:#fff5e0; --card:#ffffff;
+  --primary:#ff5757; --primary-dark:#e64545;
+  --secondary:#22c1c3; --secondary-dark:#16a5a7;
+  --accent:#ffc93c; --accent-dark:#f0b420;
+  --purple:#a78bfa; --purple-dark:#8b6ff0;
+  --pink:#ff6ec7; --green:#4ade80;
+  --text:#2b2d42; --text-muted:#6b7280;
+  --line:#ffe8c2; --line-strong:#ffd89b;
+  --shadow-sm:0 2px 8px rgba(255,87,87,.08);
+  --shadow:0 12px 32px -8px rgba(255,87,87,.15);
+  --shadow-lg:0 24px 60px -12px rgba(255,87,87,.25);
+  --radius:20px; --radius-sm:14px;
+}
+
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  font-family:'Outfit',system-ui,sans-serif;
+  background:var(--bg);color:var(--text);
+  overflow-x:hidden;line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+  position:relative;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   FONDO — blobs suaves + emojis flotantes
+   ═══════════════════════════════════════════════════════════ */
+.blob-bg{position:fixed;inset:0;z-index:-2;overflow:hidden;pointer-events:none}
+.blob-bg::before,.blob-bg::after{
+  content:"";position:absolute;width:600px;height:600px;border-radius:50%;
+  filter:blur(120px);opacity:.25;animation:blobMove 20s ease-in-out infinite;
+}
+.blob-bg::before{background:var(--accent);top:-200px;left:-150px}
+.blob-bg::after{background:var(--pink);bottom:-200px;right:-150px;animation-delay:-10s}
+
+@keyframes blobMove{
+  0%,100%{transform:translate(0,0) scale(1)}
+  50%{transform:translate(60px,-50px) scale(1.2)}
+}
+
+/* emojis flotantes */
+.floaters{position:fixed;inset:0;z-index:-1;pointer-events:none;overflow:hidden}
+.floater{
+  position:absolute;font-size:var(--sz,2rem);opacity:.28;
+  left:var(--x);top:var(--y);
+  animation:floaty var(--s,8s) ease-in-out infinite var(--d,0s);
+  filter:blur(.3px);
+}
+@keyframes floaty{
+  0%,100%{transform:translate(0,0) rotate(0deg)}
+  33%{transform:translate(20px,-30px) rotate(20deg)}
+  66%{transform:translate(-15px,20px) rotate(-15deg)}
+}
+
+/* ═══════════════════════════════════════════════════════════
+   NAVBAR
+   ═══════════════════════════════════════════════════════════ */
+.nav{
+  position:sticky;top:0;z-index:100;
+  background:rgba(255,251,242,.85);backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--line);
+}
+.nav-inner{
+  max-width:1200px;margin:0 auto;padding:16px 24px;
+  display:flex;align-items:center;justify-content:space-between;gap:16px;
+}
+.logo{
+  font-family:'Fredoka';font-weight:700;font-size:1.5rem;
+  display:flex;align-items:center;gap:8px;
+  color:var(--text);text-decoration:none;
+  transition:transform .3s;
+}
+.logo:hover{transform:scale(1.05) rotate(-2deg)}
+.logo .bomb{font-size:1.6rem;animation:spin 6s linear infinite}
+@keyframes spin{
+  from{transform:rotate(0deg)}
+  to{transform:rotate(360deg)}
+}
+.logo span{color:var(--primary)}
+.nav-actions{display:flex;gap:10px;align-items:center}
+
+/* ═══════════════════════════════════════════════════════════
+   BOTONES
+   ═══════════════════════════════════════════════════════════ */
+.btn{
+  padding:12px 24px;border-radius:999px;font-weight:700;font-size:.95rem;
+  text-decoration:none;border:none;cursor:pointer;transition:.3s cubic-bezier(.2,1.2,.4,1);
+  display:inline-flex;align-items:center;gap:8px;white-space:nowrap;
+  position:relative;overflow:hidden;
+}
+.btn:active{transform:scale(.96)}
+.btn-ghost{color:var(--text);background:#fff;border:2px solid var(--line)}
+.btn-ghost:hover{background:var(--bg-alt);border-color:var(--line-strong);transform:translateY(-2px)}
+.btn-primary{
+  background:linear-gradient(135deg,var(--primary),var(--pink));
+  color:#fff;box-shadow:0 8px 24px -6px rgba(255,87,87,.5);
+}
+.btn-primary:hover{
+  transform:translateY(-3px);
+  box-shadow:0 12px 32px -6px rgba(255,87,87,.65);
+}
+.btn-secondary{
+  background:linear-gradient(135deg,var(--secondary),var(--green));
+  color:#fff;box-shadow:0 8px 24px -6px rgba(34,193,195,.5);
+}
+.btn-secondary:hover{transform:translateY(-3px)}
+.btn-pulse{animation:btnPulse 2.5s ease-in-out infinite}
+@keyframes btnPulse{
+  0%,100%{box-shadow:0 8px 24px -6px rgba(255,87,87,.5),0 0 0 0 rgba(255,87,87,.4)}
+  50%{box-shadow:0 8px 24px -6px rgba(255,87,87,.6),0 0 0 12px rgba(255,87,87,0)}
+}
+
+/* ═══════════════════════════════════════════════════════════
+   HERO
+   ═══════════════════════════════════════════════════════════ */
+.hero{
+  max-width:1200px;margin:0 auto;padding:72px 24px 40px;
+  display:grid;grid-template-columns:1.15fr .85fr;gap:56px;align-items:center;
+  position:relative;
+}
+.hero-left{animation:fadeUp .8s cubic-bezier(.2,1,.3,1) both}
+.hero-right{animation:fadeUp .8s .2s cubic-bezier(.2,1,.3,1) both}
+
+@keyframes fadeUp{
+  from{opacity:0;transform:translateY(30px)}
+  to{opacity:1;transform:none}
+}
+
+.badge{
+  display:inline-flex;align-items:center;gap:8px;
+  background:linear-gradient(135deg,#fff7e0,#ffe8c2);
+  border:2px solid var(--accent);
+  color:#8a5a00;padding:8px 18px;border-radius:999px;
+  font-size:.85rem;font-weight:800;letter-spacing:.3px;
+  animation:badgeWiggle 4s ease-in-out infinite;
+}
+@keyframes badgeWiggle{
+  0%,90%,100%{transform:rotate(0)}
+  93%{transform:rotate(-2deg) scale(1.02)}
+  96%{transform:rotate(2deg) scale(1.02)}
+}
+
+.hero h1{
+  font-family:'Fredoka';font-weight:700;
+  font-size:clamp(2.4rem,5.5vw,4.2rem);
+  line-height:1.02;letter-spacing:-.02em;margin:24px 0 20px;
+  color:var(--text);
+}
+.hero h1 .grad{
+  background:linear-gradient(135deg,var(--primary) 0%,var(--pink) 40%,var(--purple) 100%);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  display:inline-block;
+  animation:gradientShift 4s ease-in-out infinite;
+  background-size:200% 200%;
+}
+@keyframes gradientShift{
+  0%,100%{background-position:0% 50%}
+  50%{background-position:100% 50%}
+}
+
+.hero p{
+  color:var(--text-muted);font-size:1.15rem;max-width:540px;margin-bottom:36px;
+  font-weight: 500;
+}
+.hero-cta{display:flex;gap:14px;flex-wrap:wrap}
+
+/* ── Card último resultado ── */
+.last-card{
+  background:var(--card);border:3px solid transparent;
+  border-radius:28px;padding:32px;position:relative;
+  box-shadow:var(--shadow-lg);
+  background-clip:padding-box;
+  animation:cardFloat 6s ease-in-out infinite;
+}
+.last-card::before{
+  content:"";position:absolute;inset:-3px;border-radius:28px;
+  background:linear-gradient(135deg,var(--accent),var(--pink),var(--purple),var(--secondary));
+  z-index:-1;
+  animation:borderSpin 8s linear infinite;
+  background-size:300% 300%;
+}
+@keyframes borderSpin{
+  0%{background-position:0% 50%}
+  50%{background-position:100% 50%}
+  100%{background-position:0% 50%}
+}
+@keyframes cardFloat{
+  0%,100%{transform:translateY(0) rotate(0deg)}
+  50%{transform:translateY(-8px) rotate(.5deg)}
+}
+
+.last-card h3{
+  font-size:.8rem;letter-spacing:2px;text-transform:uppercase;
+  color:var(--primary);margin-bottom:8px;font-weight:800;
+}
+.last-card .sorteo-name{
+  font-family:'Fredoka';font-size:1.5rem;font-weight:700;margin-bottom:20px;color:var(--text);
+}
+
+.balls{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:22px}
+.ball{
+  width:64px;height:64px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Fredoka';font-weight:700;font-size:1.6rem;color:#fff;
+  box-shadow:inset 0 -6px 14px rgba(0,0,0,.15),0 8px 20px -6px rgba(255,87,87,.4);
+  animation:ballBounce .8s cubic-bezier(.2,1.4,.4,1) both,ballWiggle 3s ease-in-out infinite;
+  position:relative;
+}
+.ball:nth-child(1){background:radial-gradient(circle at 30% 25%,#ff8787,var(--primary))}
+.ball:nth-child(2){background:radial-gradient(circle at 30% 25%,#5eead4,var(--secondary));animation-delay:.15s,0s}
+.ball:nth-child(3){background:radial-gradient(circle at 30% 25%,#fde68a,var(--accent));animation-delay:.3s,0s;color:#5a3d00}
+.ball:nth-child(4){background:radial-gradient(circle at 30% 25%,#c4b5fd,var(--purple));animation-delay:.45s,0s}
+.ball:nth-child(5){background:radial-gradient(circle at 30% 25%,#f9a8d4,var(--pink));animation-delay:.6s,0s}
+
+@keyframes ballBounce{
+  from{opacity:0;transform:translateY(-40px) scale(.4)}
+  to{opacity:1;transform:none}
+}
+@keyframes ballWiggle{
+  0%,100%{transform:translateY(0) rotate(0)}
+  50%{transform:translateY(-6px) rotate(5deg)}
+}
+
+.last-card .meta{
+  display:flex;justify-content:space-between;align-items:center;
+  font-size:.9rem;color:var(--text-muted);
+  padding-top:18px;border-top:2px dashed var(--line-strong);
+}
+.last-card .meta strong{color:var(--text);font-weight:800}
+.last-card .verified{
+  background:#dcfce7;color:#166534;padding:4px 12px;
+  border-radius:999px;font-weight:800;font-size:.78rem;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   STATS
+   ═══════════════════════════════════════════════════════════ */
+.stats-bar{
+  max-width:1200px;margin:32px auto 0;padding:0 24px;
+  display:grid;grid-template-columns:repeat(4,1fr);gap:20px;
+}
+.stat{
+  background:var(--card);border:2px solid var(--line);
+  border-radius:var(--radius);padding:28px 20px;text-align:center;
+  transition:.35s cubic-bezier(.2,1.2,.4,1);
+  position:relative;overflow:hidden;
+}
+.stat::before{
+  content:"";position:absolute;top:0;left:0;right:0;height:4px;
+  background:linear-gradient(90deg,var(--primary),var(--pink));
+}
+.stat:nth-child(2)::before{background:linear-gradient(90deg,var(--secondary),var(--green))}
+.stat:nth-child(3)::before{background:linear-gradient(90deg,var(--accent),var(--primary))}
+.stat:nth-child(4)::before{background:linear-gradient(90deg,var(--purple),var(--pink))}
+.stat:hover{
+  transform:translateY(-6px) scale(1.02);
+  border-color:var(--primary);
+  box-shadow:var(--shadow);
+}
+.stat .num{
+  font-family:'Fredoka';font-size:2.1rem;font-weight:700;
+  color:var(--primary);margin-bottom:6px;
+}
+.stat:nth-child(2) .num{color:var(--secondary-dark)}
+.stat:nth-child(3) .num{color:var(--accent-dark)}
+.stat:nth-child(4) .num{color:var(--purple-dark)}
+.stat .lbl{
+  font-size:.78rem;color:var(--text-muted);
+  text-transform:uppercase;letter-spacing:1px;font-weight:700;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   TICKER
+   ═══════════════════════════════════════════════════════════ */
+.ticker-wrap{
+  overflow:hidden;margin-top:40px;padding:18px 0;
+  background:linear-gradient(135deg,#fff5e0,#ffe8c2);
+  border-top:2px solid var(--line-strong);
+  border-bottom:2px solid var(--line-strong);
+}
+.ticker{
+  display:flex;gap:40px;width:max-content;
+  animation:scroll 45s linear infinite;
+}
+.ticker:hover{animation-play-state:paused}
+@keyframes scroll{to{transform:translateX(-50%)}}
+.tick-item{
+  display:flex;align-items:center;gap:10px;
+  white-space:nowrap;font-size:.95rem;font-weight:600;
+}
+.tick-item .t-name{color:var(--text-muted)}
+.tick-item .t-num{
+  background:#fff;color:var(--primary);
+  border-radius:10px;padding:4px 12px;
+  font-family:'Fredoka';font-weight:700;font-size:.9rem;
+  box-shadow:0 2px 6px rgba(255,87,87,.15);
+  border:2px solid var(--primary);
+}
+.tick-item .t-time{color:var(--text-muted);font-weight:500}
+
+/* ═══════════════════════════════════════════════════════════
+   SECCIONES
+   ═══════════════════════════════════════════════════════════ */
+.section{max-width:1200px;margin:0 auto;padding:80px 24px}
+.section-head{text-align:center;margin-bottom:52px}
+.section-head h2{
+  font-family:'Fredoka';font-size:clamp(2rem,4vw,3rem);font-weight:700;
+  letter-spacing:-.02em;line-height:1.1;
+}
+.section-head h2 span{
+  background:linear-gradient(135deg,var(--primary),var(--pink));
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+}
+.section-head p{
+  color:var(--text-muted);margin-top:14px;font-size:1.1rem;font-weight:500;
+  max-width:600px;margin-left:auto;margin-right:auto;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   PRÓXIMOS SORTEOS
+   ═══════════════════════════════════════════════════════════ */
+.draws{
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:22px;
+}
+.draw{
+  background:var(--card);border:2px solid var(--line);
+  border-radius:var(--radius);padding:26px;position:relative;
+  transition:.35s cubic-bezier(.2,1.2,.4,1);
+  overflow:hidden;
+}
+.draw:hover{
+  transform:translateY(-8px);
+  border-color:var(--accent);
+  box-shadow:var(--shadow);
+}
+.draw .ico{
+  font-size:2rem;margin-bottom:14px;display:inline-block;
+  animation:iconBounce 3s ease-in-out infinite;
+}
+@keyframes iconBounce{
+  0%,100%{transform:translateY(0) rotate(0)}
+  50%{transform:translateY(-4px) rotate(8deg)}
+}
+.draw h4{
+  font-family:'Fredoka';font-size:1.15rem;font-weight:700;margin-bottom:8px;
+}
+.draw .when{
+  color:var(--text-muted);font-size:.9rem;margin-bottom:18px;font-weight:600;
+}
+.countdown{display:flex;gap:8px;margin-bottom:22px}
+.cd-unit{
+  flex:1;background:var(--bg-alt);border-radius:12px;padding:10px 4px;
+  text-align:center;border:2px solid var(--line);
+}
+.cd-unit .v{
+  font-family:'Fredoka';font-weight:700;font-size:1.2rem;color:var(--primary);
+}
+.cd-unit .l{
+  font-size:.65rem;color:var(--text-muted);
+  text-transform:uppercase;letter-spacing:.5px;font-weight:700;
+}
+.draw .btn{width:100%;justify-content:center}
+
+/* ═══════════════════════════════════════════════════════════
+   FORMAS DE GANAR
+   ═══════════════════════════════════════════════════════════ */
+.modes{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:22px;
+}
+.mode{
+  background:var(--card);border:3px solid var(--line);
+  border-radius:24px;padding:36px 28px;text-align:center;
+  text-decoration:none;color:var(--text);
+  transition:.4s cubic-bezier(.2,1.2,.4,1);
+  position:relative;overflow:hidden;
+}
+.mode::after{
+  content:"";position:absolute;inset:0;border-radius:24px;
+  background:linear-gradient(135deg,var(--primary),var(--pink));
+  opacity:0;transition:.4s;z-index:-1;
+}
+.mode:hover{
+  transform:translateY(-8px) rotate(-1deg);
+  border-color:transparent;
+  color:#fff;
+}
+.mode:hover::after{opacity:1}
+.mode:hover .emoji{animation:emojiParty .6s ease-in-out}
+@keyframes emojiParty{
+  0%,100%{transform:scale(1) rotate(0)}
+  25%{transform:scale(1.2) rotate(-15deg)}
+  75%{transform:scale(1.2) rotate(15deg)}
+}
+.mode .emoji{font-size:3rem;display:block;margin-bottom:16px}
+.mode h4{
+  font-family:'Fredoka';font-size:1.25rem;font-weight:700;margin-bottom:10px;
+}
+.mode p{color:var(--text-muted);font-size:.95rem;transition:.3s}
+.mode:hover p{color:rgba(255,255,255,.9)}
+
+/* ═══════════════════════════════════════════════════════════
+   TOP GANADORES
+   ═══════════════════════════════════════════════════════════ */
+.podium{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:18px;
+  align-items:end;margin-bottom:36px;
+}
+.pod{
+  background:var(--card);border:3px solid var(--line);
+  border-radius:22px;padding:26px 20px;text-align:center;
+  transition:.35s cubic-bezier(.2,1.2,.4,1);position:relative;
+}
+.pod:hover{transform:translateY(-6px)}
+.pod .medal{font-size:3rem;margin-bottom:10px;display:inline-block}
+.pod .who{font-weight:800;margin-bottom:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:1rem}
+.pod .how-much{
+  font-family:'Fredoka';font-weight:700;color:var(--primary);font-size:1.4rem;
+}
+.pod .sort{font-size:.8rem;color:var(--text-muted);margin-top:6px;font-weight:600}
+
+.pod.p1{
+  padding-top:48px;
+  border-color:var(--accent);
+  background:linear-gradient(180deg,#fff9e6,#fff);
+  box-shadow:0 20px 40px -12px rgba(255,201,60,.4);
+}
+.pod.p1::before{
+  content:"👑";position:absolute;top:-24px;left:50%;transform:translateX(-50%);
+  font-size:2.4rem;animation:crownBob 2s ease-in-out infinit
+e;
+  filter:drop-shadow(0 6px 12px rgba(255,201,60,.5));
+}
+@keyframes crownBob{
+  0%,100%{transform:translateX(-50%) rotate(-5deg)}
+  50%{transform:translateX(-50%) rotate(5deg) translateY(-4px)}
+}
+.pod.p2{margin-bottom:0;border-color:#c0c0c0}
+.pod.p3{margin-bottom:-10px;border-color:#cd7f32}
+
+.winners-table{
+  background:var(--card);border:2px solid var(--line);
+  border-radius:var(--radius);overflow:hidden;
+  box-shadow:var(--shadow-sm);
+}
+.winners-table .row{
+  display:grid;grid-template-columns:60px 1fr 1fr 1fr;
+  padding:16px 22px;border-bottom:1px solid var(--line);
+  font-size:.95rem;align-items:center;
+  transition:.2s;
+}
+.winners-table .row:not(.head):hover{background:var(--bg-alt)}
+.winners-table .row:last-child{border-bottom:none}
+.winners-table .row.head{
+  background:linear-gradient(135deg,#fff5e0,#ffe8c2);
+  color:var(--text);font-size:.78rem;
+  text-transform:uppercase;letter-spacing:1px;font-weight:800;
+}
+.winners-table .row .amount{
+  color:var(--primary);font-weight:800;font-family:'Fredoka';font-size:1.05rem;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   CÓMO FUNCIONA
+   ═══════════════════════════════════════════════════════════ */
+.steps{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:24px;counter-reset:step;
+}
+.step{
+  background:var(--card);border:2px solid var(--line);
+  border-radius:22px;padding:44px 26px 30px;position:relative;
+  transition:.3s;
+}
+.step:hover{transform:translateY(-4px);box-shadow:var(--shadow-sm)}
+.step::before{
+  counter-increment:step;content:counter(step);
+  position:absolute;top:-22px;left:26px;
+  width:52px;height:52px;border-radius:50%;
+  background:linear-gradient(135deg,var(--primary),var(--pink));
+  color:#fff;display:flex;align-items:center;justify-content:center;
+  font-family:'Fredoka';font-weight:700;font-size:1.4rem;
+  box-shadow:0 10px 24px -6px rgba(255,87,87,.5);
+}
+.step:nth-child(2)::before{background:linear-gradient(135deg,var(--secondary),var(--green))}
+.step:nth-child(3)::before{background:linear-gradient(135deg,var(--accent),var(--primary))}
+.step h4{font-family:'Fredoka';font-size:1.2rem;font-weight:700;margin:12px 0 10px}
+.step p{color:var(--text-muted);font-size:.95rem}
+
+/* ═══════════════════════════════════════════════════════════
+   CTA FINAL
+   ═══════════════════════════════════════════════════════════ */
+.cta-final{
+  max-width:920px;margin:0 auto;padding:64px 40px;text-align:center;
+  background:linear-gradient(135deg,#fff5e0 0%,#ffe8c2 50%,#fff5e0 100%);
+  border:3px solid var(--accent);
+  border-radius:32px;position:relative;overflow:hidden;
+  box-shadow:0 24px 60px -12px rgba(255,201,60,.4);
+}
+.cta-final::before,.cta-final::after{
+  content:"";position:absolute;width:200px;height:200px;border-radius:50%;
+  filter:blur(60px);opacity:.4;pointer-events:none;
+}
+.cta-final::before{background:var(--pink);top:-80px;left:-80px}
+.cta-final::after{background:var(--secondary);bottom:-80px;right:-80px}
+.cta-final h2{
+  font-family:'Fredoka';font-size:clamp(1.8rem,3.5vw,2.6rem);
+  font-weight:700;margin-bottom:16px;position:relative;
+}
+.cta-final p{color:var(--text-muted);margin-bottom:32px;font-size:1.1rem;position:relative}
+
+/* ═══════════════════════════════════════════════════════════
+   FOOTER
+   ═══════════════════════════════════════════════════════════ */
+footer{
+  border-top:2px solid var(--line);
+  padding:40px 24px;text-align:center;
+  color:var(--text-muted);font-size:.9rem;margin-top:80px;
+  font-weight:500;
+}
+footer a{color:var(--primary);text-decoration:none;font-weight:700}
+footer a:hover{text-decoration:underline}
+
+/* ═══════════════════════════════════════════════════════════
+   REVEAL / SCROLL
+   ═══════════════════════════════════════════════════════════ */
+.reveal{
+  opacity:0;transform:translateY(40px);
+  transition:.9s cubic-bezier(.2,1,.3,1);
+}
+.reveal.in{opacity:1;transform:none}
+
+/* ═══════════════════════════════════════════════════════════
+   CONFETTI
+   ═══════════════════════════════════════════════════════════ */
+.confetti-piece{
+  position:fixed;width:10px;height:10px;
+  pointer-events:none;z-index:9999;
+  border-radius:50%;
+  animation:confettiFly .9s ease-out forwards;
+}
+@keyframes confettiFly{
+  to{
+    transform:translate(var(--tx),var(--ty)) rotate(720deg);
+    opacity:0;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   RESPONSIVE
+   ═══════════════════════════════════════════════════════════ */
+@media(max-width:900px){
+  .hero{grid-template-columns:1fr;padding-top:48px;gap:36px}
+  .stats-bar{grid-template-columns:repeat(2,1fr)}
+  .podium{grid-template-columns:1fr}
+  .pod.p1,.pod.p2,.pod.p3{margin:0;padding-top:40px}
+  .pod.p1::before{top:-20px}
+  .steps{grid-template-columns:1fr}
+  .winners-table .row{grid-template-columns:50px 1fr 1fr}
+  .winners-table .row .sort{display:none}
+}
+@media(max-width:520px){
+  .nav-inner{padding:12px 16px}
+  .hero{padding:40px 16px}
+  .section{padding:56px 16px}
+  .btn{padding:11px 20px;font-size:.88rem}
+  .ball{width:52px;height:52px;font-size:1.3rem}
+  .logo{font-size:1.25rem}
+  .last-card{padding:24px}
+}
+</style>
+</head>
+<body>
+
+<!-- FONDO -->
+<div class="blob-bg"></div>
+<div class="floaters">
+  <span class="floater" style="--x:8%;--y:15%;--d:0s;--s:9s;--sz:2.2rem">🎰</span>
+  <span class="floater" style="--x:82%;--y:12%;--d:2s;--s:11s;--sz:2.6rem">🎲</span>
+  <span class="floater" style="--x:15%;--y:70%;--d:4s;--s:10s;--sz:2rem">⭐</span>
+  <span class="floater" style="--x:75%;--y:65%;--d:1s;--s:12s;--sz:2.4rem">💰</span>
+  <span class="floater" style="--x:45%;--y:85%;--d:3s;--s:11s;--sz:1.8rem">🍀</span>
+  <span class="floater" style="--x:92%;--y:45%;--d:5s;--s:13s;--sz:2.2rem">🎯</span>
+  <span class="floater" style="--x:5%;--y:45%;--d:2.5s;--s:10s;--sz:1.9rem">🏆</span>
+</div>
+
+<!-- NAVBAR -->
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="/" class="logo">
+      <span class="bomb">🎰</span>Lotto<span>BooM</span>
+    </a>
+    <div class="nav-actions">
+      {% if user.is_authenticated %}
+        <a href="/dashboard/" class="btn btn-primary">Mi panel →</a>
+      {% else %}
+        <a href="/usuarios/login/" class="btn btn-ghost">Entrar</a>
+        <a href="/usuarios/registro/" class="btn btn-primary btn-pulse confetti-btn">Registrarse gratis ✨</a>
+      {% endif %}
+    </div>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-left">
+    {% if user.is_authenticated %}
+    <span class="badge">👋 ¡Hola de nuevo, {{ user.username }}!</span>
+    {% else %}
+    <span class="badge">🔥 Gana hasta 60× tu apuesta</span>
+    {% endif %}
+    <h1>Tu suerte empieza <span class="grad">hoy mismo</span></h1>
+    <p>Juega los mejores sorteos de Georgia, Florida y Texas desde cualquier lugar. Retira rápido, gana en grande y confía en la plataforma #1.</p>
+    <div class="hero-cta">
+      {% if user.is_authenticated %}
+        <a href="/dashboard/" class="btn btn-primary btn-pulse" style="font-size:1.05rem;padding:16px 32px;">
+          🎯 Ir a mi panel →
+        </a>
+        <a href="/jugadas/apostar/" class="btn btn-secondary">
+          🎲 Apostar ahora
+        </a>
+      {% else %}
+        <a href="/usuarios/registro/" class="btn btn-primary btn-pulse confetti-btn">
+          Crear cuenta gratis →
+        </a>
+        <a href="/jugadas/apostar/" class="btn btn-secondary">
+          🎲 Ver sorteos
+        </a>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="hero-right">
+    <div class="last-card">
+      <h3>🏆 Último resultado</h3>
+      {% if ultimo_resultado %}
+        <div class="sorteo-name">{{ ultimo_resultado.sorteo.nombre|default:"Sorteo" }}</div>
+        <div class="balls">
+          {% for n in ultimo_resultado.numeros_lista %}<div class="ball">{{ n }}</div>{% endfor %}
+        </div>
+        <div class="meta">
+          <span>📅 <strong>{{ ultimo_resultado.fecha|date:"d M" }} · {{ ultimo_resultado.hora|time:"H:i" }}</strong></span>
+          <span class="verified">✓ Verificado</span>
+        </div>
+      {% else %}
+        <div class="sorteo-name">Próximamente</div>
+        <p style="color:var(--text-muted);font-size:.95rem">Aún no hay resultados publicados. ¡Sé el primero en jugar!</p>
+      {% endif %}
+    </div>
+  </div>
+</section>
+
+<!-- STATS -->
+<section class="stats-bar reveal">
+  <div class="stat"><div class="num" data-count="{{ stats.apostadores }}">0</div><div class="lbl">Apostadores</div></div>
+  <div class="stat"><div class="num" data-count="{{ stats.jugadas_hoy }}">0</div><div class="lbl">Jugadas hoy</div></div>
+  <div class="stat"><div class="num" data-count="{{ stats.sorteos_activos }}">0</div><div class="lbl">Sorteos activos</div></div>
+  <div class="stat"><div class="num" data-count="{{ stats.premios_pagados }}" data-money="1">$0</div><div class="lbl">Pagados (7d)</div></div>
+</section>
+
+<!-- TICKER -->
+{% if ultimos_resultados %}
+<div class="ticker-wrap">
+  <div class="ticker">
+    {% for r in ultimos_resultados %}
+      <div class="tick-item">
+        <span class="t-name">{{ r.sorteo.nombre|default:"Sorteo" }}</span>
+        {% for n in r.numeros_lista %}<span class="t-num">{{ n }}</span>{% endfor %}
+        <span class="t-time">· {{ r.hora|time:"H:i" }}</span>
+      </div>
+    {% endfor %}
+    {% for r in ultimos_resultados %}
+      <div class="tick-item">
+        <span class="t-name">{{ r.sorteo.nombre|default:"Sorteo" }}</span>
+        {% for n in r.numeros_lista %}<span class="t-num">{{ n }}</span>{% endfor %}
+        <span class="t-time">· {{ r.hora|time:"H:i" }}</span>
+      </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+<!-- PRÓXIMOS SORTEOS -->
+<section class="section reveal">
+  <div class="section-head">
+    <h2>Próximos <span>sorteos</span></h2>
+    <p>No dejes pasar tu oportunidad — elige tu sorteo y apuesta ahora.</p>
+  </div>
+  <div class="draws">
+    {% for s in proximos_sorteos %}
+      <div class="draw">
+        <div class="ico">🎯</div>
+        <h4>{{ s.nombre }}</h4>
+        {% if s.proximo_dt %}
+          <div class="when">{{ s.proximo_dt|date:"d M · H:i" }}</div>
+          <div class="countdown" data-target="{{ s.proximo_dt|date:'c' }}">
+            <div class="cd-unit"><div class="v">--</div><div class="l">Días</div></div>
+            <div class="cd-unit"><div class="v">--</div><div class="l">Hor</div></div>
+            <div class="cd-unit"><div class="v">--</div><div class="l">Min</div></div>
+            <div class="cd-unit"><div class="v">--</div><div class="l">Seg</div></div>
+          </div>
+        {% else %}
+          <div class="when">Ver horarios</div>
+        {% endif %}
+        <a href="/jugadas/apostar/" class="btn btn-primary">Apostar ahora</a>
+      </div>
+    {% empty %}
+      <p style="color:var(--text-muted);text-align:center;padding:40px">Cargando sorteos disponibles…</p>
+    {% endfor %}
+  </div>
+</section>
+
+<!-- FORMAS DE GANAR -->
+<section class="section reveal">
+  <div class="section-head">
+    <h2>Formas de <span>ganar</span></h2>
+    <p>Cuatro maneras, infinitas oportunidades.</p>
+  </div>
+  <div class="modes">
+    <a href="/jugadas/apostar/" class="mode">
+      <span class="emoji">🎲</span>
+      <h4>Apuestas</h4>
+      <p>Juega fijo, corrido y parlé con los mejores multiplicadores.</p>
+    </a>
+    <a href="{% url 'publico:charada' %}" class="mode">
+      <span class="emoji">🎴</span>
+      <h4>Charada</h4>
+      <p>Descubre el número ganador y multiplica tu suerte.</p>
+    </a>
+    <a href="/jugadas/apostar/" class="mode">
+      <span class="emoji">🎰</span>
+      <h4>Superparlet</h4>
+      <p>Combina varios sorteos en un solo ticket y gana en grande.</p>
+    </a>
+    <a href="#" class="mode">
+      <span class="emoji">🎟️</span>
+      <h4>Rifas</h4>
+      <p>Boletos digitales con premios fijos. Próximamente.</p>
+    </a>
+  </div>
+</section>
+
+<!-- TOP GANADORES -->
+{% if top_ganadores %}
+<section class="section reveal">
+  <div class="section-head">
+    <h2>🏆 Top <span>Ganadores</span></h2>
+    <p>Los que ya están viviendo su premio esta semana.</p>
+  </div>
+
+  <div class="podium">
+    {% for g in top_ganadores|slice:":3" %}
+      {% with loop=forloop.counter %}
+      <div class="pod p{{ loop }}">
+        <div class="medal">{% if loop == 1 %}🥇{% elif loop == 2 %}🥈{% else %}🥉{% endif %}</div>
+        <div class="who">{{ g.usuario.username|default:"Jugador" }}</div>
+        <div class="how-much">${{ g.monto_premio|floatformat:0 }}</div>
+        <div class="sort">{{ g.sorteo.nombre|default:"" }}</div>
+      </div>
+      {% endwith %}
+    {% endfor %}
+  </div>
+
+  <div class="winners-table">
+    <div class="row head"><span>#</span><span>Ganador</span><span>Sorteo</span><span>Premio</span></div>
+    {% for g in top_ganadores|slice:"3:10" %}
+      <div class="row">
+        <span>{{ forloop.counter|add:"3" }}</span>
+        <span>{{ g.usuario.username|default:"Jugador" }}</span>
+        <span>{{ g.sorteo.nombre|default:"" }}</span>
+        <span class="amount">${{ g.monto_premio|floatformat:0 }}</span>
+      </div>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+<!-- CÓMO FUNCIONA -->
+<section class="section reveal">
+  <div class="section-head">
+    <h2>Empieza en <span>3 pasos</span></h2>
+  </div>
+  <div class="steps">
+    <div class="step">
+      <h4>📝 Regístrate</h4>
+      <p>Crea tu cuenta en menos de 1 minuto. Sin letras pequeñas.</p>
+    </div>
+    <div class="step">
+      <h4>💳 Recarga</h4>
+      <p>Elige tu vía de pago preferida y acredita saldo al instante.</p>
+    </div>
+    <div class="step">
+      <h4>🎉 ¡A ganar!</h4>
+      <p>Selecciona tu sorteo, apuesta y cobra tus premios al instante.</p>
+    </div>
+  </div>
+</section>
+
+<!-- CTA FINAL -->
+<section class="section reveal">
+  <div class="cta-final">
+    <h2>¿Listo para probar tu suerte? 🍀</h2>
+    <p>Miles de personas ya están ganando. Únete hoy.</p>
+    <a href="/usuarios/registro/" class="btn btn-primary btn-pulse confetti-btn" style="font-size:1.05rem;padding:16px 32px;">
+      Crear cuenta gratis →
+    </a>
+  </div>
+</section>
+
+<footer>
+  © {% now "Y" %} <strong>LottoBooM</strong> · Juega con responsabilidad ·
+  <a href="#">Términos</a> · <a href="#">Privacidad</a>
+</footer>
+
+<script>
+/* ═══════════════════════════════════════════════════════════
+   CONTADORES ANIMADOS
+   ═══════════════════════════════════════════════════════════ */
+const fmt = n => new Intl.NumberFormat('es-CO').format(n);
+function animateCount(el){
+  const target = +el.dataset.count || 0;
+  const money = el.dataset.money === '1';
+  const dur = 1600, start = performance.now();
+  const step = t => {
+    const p = Math.min((t - start) / dur, 1);
+    const eased = 1 - Math.pow(1 - p, 3);
+    const val = Math.floor(target * eased);
+    el.textContent = money ? '$' + fmt(val) : fmt(val);
+    if (p < 1) requestAnimationFrame(step);
+    else el.textContent = money ? '$' + fmt(target) : fmt(target);
+  };
+  requestAnimationFrame(step);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   REVEAL EN SCROLL
+   ═══════════════════════════════════════════════════════════ */
+const io = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting){
+      e.target.classList.add('in');
+      e.target.querySelectorAll('[data-count]').forEach(animateCount);
+      io.unobserve(e.target);
+    }
+  });
+}, {threshold:.12});
+document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+
+/* ═══════════════════════════════════════════════════════════
+   COUNTDOWN
+   ═══════════════════════════════════════════════════════════ */
+document.querySelectorAll('.countdown').forEach(cd => {
+  const target = new Date(cd.dataset.target).getTime();
+  const units = cd.querySelectorAll('.v');
+  function tick(){
+    const diff = target - Date.now();
+    if (diff <= 0){ units.forEach(u => u.textContent = '00'); return; }
+    const d = Math.floor(diff / 864e5);
+    const h = Math.floor(diff % 864e5 / 36e5);
+    const m = Math.floor(diff % 36e5 / 6e4);
+    const s = Math.floor(diff % 6e4 / 1000);
+    [d,h,m,s].forEach((v,i) => units[i].textContent = String(v).padStart(2,'0'));
+    requestAnimationFrame(() => setTimeout(tick, 1000));
+  }
+  tick();
+});
+
+/* ═══════════════════════════════════════════════════════════
+   CONFETTI EN BOTONES CTA
+   ═══════════════════════════════════════════════════════════ */
+const CONFETTI_COLORS = ['#ff5757','#22c1c3','#ffc93c','#a78bfa','#ff6ec7','#4ade80'];
+function burstConfetti(e){
+  const x = e.clientX || (e.target.offsetLeft + e.target.offsetWidth/2);
+  const y = e.clientY || (e.target.offsetTop + e.target.offsetHeight/2);
+  const count = 24;
+  for (let i = 0; i < count; i++){
+    const p = document.createElement('div');
+    p.className = 'confetti-piece';
+    p.style.left = x + 'px';
+    p.style.top = y + 'px';
+    p.style.background = CONFETTI_COLORS[Math.floor(Math.random() * CONFETTI_COLORS.length)];
+    if (Math.random() > .5) p.style.borderRadius = '0';
+    const angle = Math.random() * Math.PI * 2;
+    const dist = 80 + Math.random() * 140;
+    p.style.setProperty('--tx', Math.cos(angle) * dist + 'px');
+    p.style.setProperty('--ty', Math.sin(angle) * dist + 'px');
+    p.style.animationDelay = (Math.random() * .1) + 's';
+    document.body.appendChild(p);
+    setTimeout(() => p.remove(), 1100);
+  }
+}
+document.querySelectorAll('.confetti-btn').forEach(btn => {
+  btn.addEventListener('click', e => {
+    burstConfetti(e);
+    // El link sigue funcionando (no preventDefault)
+  });
+});
+
+/* ═══════════════════════════════════════════════════════════
+   PARALLAX SUAVE EN HERO (solo desktop)
+   ═══════════════════════════════════════════════════════════ */
+if (window.matchMedia('(min-width: 900px)').matches){
+  const hero = document.querySelector('.hero-right');
+  window.addEventListener('scroll', () => {
+    if (!hero) return;
+    const y = Math.min(window.scrollY * .15, 60);
+    hero.style.transform = `translateY(${y}px)`;
+  }, {passive:true});
+}
+</script>
+
+{% if user.is_authenticated %}
+<!-- PREMIO_OVERLAY_LANDING -->
+<style>
+.premio-overlay{
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 999999;
+    max-width: 420px;
+    width: calc(100% - 48px);
+    display: none;
+    animation: premioIn .8s cubic-bezier(.2,1.4,.4,1);
+}
+@keyframes premioIn{
+    0%   { opacity: 0; transform: translateY(40px) rotate(15deg) scale(.6); }
+    60%  { opacity: 1; transform: translateY(-8px) rotate(-4deg) scale(1.05); }
+    100% { opacity: 1; transform: translateY(0) rotate(-2deg) scale(1); }
+}
+.premio-card{
+    background: linear-gradient(135deg, #ff3b3b 0%, #d00000 50%, #a00000 100%);
+    color: #fff;
+    padding: 28px 26px 22px;
+    border-radius: 18px;
+    box-shadow:
+        0 24px 60px rgba(208, 0, 0, .55),
+        0 0 0 3px rgba(255, 255, 255, .95),
+        0 0 0 6px rgba(255, 59, 59, .35);
+    transform: rotate(-2deg);
+    position: relative;
+    border: 2px solid rgba(255, 255, 255, .5);
+    text-align: center;
+}
+.premio-card::before{
+    content: "🎉";
+    position: absolute;
+    top: -22px;
+    left: 50%;
+    transform: translateX(-50%) rotate(2deg);
+    font-size: 2.6rem;
+    filter: drop-shadow(0 4px 10px rgba(0,0,0,.35));
+    animation: premioFloat 2.5s ease-in-out infinite;
+}
+@keyframes premioFloat{
+    0%,100%{ transform: translateX(-50%) rotate(2deg) translateY(0); }
+    50%    { transform: translateX(-50%) rotate(2deg) translateY(-6px); }
+}
+.premio-close{
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: rgba(255,255,255,.2);
+    border: none;
+    color: #fff;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 900;
+    transition: .2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.premio-close:hover{
+    background: rgba(255,255,255,.4);
+    transform: scale(1.1) rotate(90deg);
+}
+.premio-card h2{
+    font-family: 'Outfit', system-ui, sans-serif;
+    font-size: 1.35rem;
+    font-weight: 900;
+    margin: 12px 0 4px;
+    letter-spacing: -.01em;
+    text-transform: uppercase;
+    text-shadow: 0 2px 6px rgba(0,0,0,.3);
+}
+.premio-card .premio-sub{
+    font-size: .78rem;
+    opacity: .9;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 18px;
+    font-weight: 700;
+}
+.premio-card .premio-monto{
+    font-family: 'Outfit', system-ui, sans-serif;
+    font-size: 2.8rem;
+    font-weight: 900;
+    line-height: 1;
+    margin-bottom: 14px;
+    color: #fff;
+    text-shadow:
+        0 0 20px rgba(255,255,255,.5),
+        0 4px 12px rgba(0,0,0,.4);
+    letter-spacing: -.02em;
+}
+.premio-card .premio-detalle{
+    background: rgba(255,255,255,.15);
+    padding: 12px 16px;
+    border-radius: 10px;
+    font-size: .88rem;
+    line-height: 1.5;
+    margin-bottom: 18px;
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255,255,255,.2);
+}
+.premio-card .premio-detalle strong{ font-weight: 800; }
+.premio-card .premio-actions{
+    display: flex;
+    gap: 10px;
+    flex-direction: column;
+}
+.premio-btn-wa{
+    background: #25D366;
+    color: #fff;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 999px;
+    font-weight: 800;
+    font-size: .95rem;
+    cursor: pointer;
+    transition: .25s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    box-shadow: 0 4px 14px rgba(37, 211, 102, .4);
+    font-family: inherit;
+}
+.premio-btn-wa:hover{
+    background: #1fbe58;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(37, 211, 102, .55);
+}
+.premio-btn-wa:active{ transform: translateY(0) scale(.97); }
+@media(max-width:520px){
+    .premio-overlay{ bottom: 12px; right: 12px; left: 12px; width: auto; }
+    .premio-card{ padding: 24px 20px 18px; }
+    .premio-card .premio-monto{ font-size: 2.2rem; }
+    .premio-card h2{ font-size: 1.15rem; }
+}
+</style>
+
+<div id="premioOverlay" class="premio-overlay" role="alert" aria-live="polite">
+    <div class="premio-card">
+        <button class="premio-close" type="button" onclick="cerrarPremioOverlay()" aria-label="Cerrar">✕</button>
+        <h2>¡Felicitaciones!</h2>
+        <div class="premio-sub">Fuiste premiado</div>
+        <div class="premio-monto" id="premioMonto">$0.00</div>
+        <div class="premio-detalle" id="premioDetalle"></div>
+        <div class="premio-actions">
+            <button class="premio-btn-wa" type="button" onclick="compartirPremioWhatsApp()">
+                📱 Compartir por WhatsApp
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+(function(){
+    "use strict";
+    var premiosCola = [];
+    var premioActual = null;
+
+    function fetchPremios(){
+        fetch("/roles/api/premios-pendientes/", {
+            credentials: 'same-origin',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(function(r){ return r.json(); })
+        .then(function(data){
+            premiosCola = (data.premios || []).slice();
+            if (premiosCola.length > 0) mostrarSiguiente();
+        })
+        .catch(function(err){ console.warn('[premio]', err); });
+    }
+
+    function mostrarSiguiente(){
+        if (premiosCola.length === 0){ ocultarOverlay(); return; }
+        premioActual = premiosCola[0];
+        var montoEl = document.getElementById('premioMonto');
+        var detEl = document.getElementById('premioDetalle');
+        if (montoEl) montoEl.textContent = premioActual.monto_fmt;
+        if (detEl){
+            var lineas = [];
+            if (premioActual.sorteo) lineas.push('<strong>' + esc(premioActual.sorteo) + '</strong>');
+            if (premioActual.razon)  lineas.push(esc(premioActual.razon));
+            detEl.innerHTML = lineas.join('<br>');
+        }
+        var ov = document.getElementById('premioOverlay');
+        if (ov){ ov.style.display = 'block'; }
+    }
+
+    function ocultarOverlay(){
+        var ov = document.getElementById('premioOverlay');
+        if (ov) ov.style.display = 'none';
+    }
+
+    function esc(s){
+        return String(s == null ? '' : s)
+            .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+            .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+    }
+
+    window.cerrarPremioOverlay = function(){
+        if (premioActual && premioActual.id){
+            fetch('/roles/api/marcar-premio-visto/' + premioActual.id + '/', {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            }).catch(function(){});
+        }
+        premiosCola.shift();
+        if (premiosCola.length > 0) mostrarSiguiente();
+        else { ocultarOverlay(); premioActual = null; }
+    };
+
+    window.compartirPremioWhatsApp = function(){
+        if (!premioActual) return;
+        var txt = '🏆 ¡Gané ' + premioActual.monto_fmt + ' en LottoBooM! 🎰\n' +
+                  '🎯 Sorteo: ' + (premioActual.sorteo || 'N/A') + '\n' +
+                  (premioActual.razon ? '🎲 ' + premioActual.razon + '\n' : '') +
+                  '¡Únete tú también! 🍀';
+        var url = 'https://wa.me/?text=' + encodeURIComponent(txt);
+        window.open(url, '_blank', 'noopener,noreferrer');
+    };
+
+    if (document.readyState === 'loading'){
+        document.addEventListener('DOMContentLoaded', fetchPremios);
+    } else {
+        fetchPremios();
+    }
+})();
+</script>
+{% endif %}
+
+
+</body>
+</html>

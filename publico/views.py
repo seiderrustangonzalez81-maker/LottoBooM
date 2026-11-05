@@ -75,7 +75,16 @@ def _calcular_estadisticas():
 # ═══════════════════════════════════════════════════════════════
 def home(request):
     """
-    Página principal de LottoBooM.
+    Página de inicio pública.
+    SIEMPRE renderiza la landing (para todos, autenticados o no).
+    """
+    from .landing import landing as _landing
+    return _landing(request)
+
+
+def dashboard_view(request):
+    """
+    Página del dashboard (para usuarios autenticados).
     """
     stats = _calcular_estadisticas()
 
@@ -387,76 +396,6 @@ def home_v3(request):
 # ═══════════════════════════════════════════════════════════════
 #  HOME V3 — Broadcast Live (Light-first, Studio palette)
 # ═══════════════════════════════════════════════════════════════
-def home_v3(request):
-    from django.db.models import Sum, Count
-    from sorteos.utils import get_sorteos_hoy
-
-    stats = _calcular_estadisticas()
-    ahora = timezone.now()
-    hoy = timezone.localdate()
-
-    # Sorteos del día
-    try:
-        sorteos_hoy, _ = get_sorteos_hoy(hoy)
-    except Exception:
-        sorteos_hoy = []
-
-    proximo_sorteo = None
-    for s in sorteos_hoy:
-        if getattr(s, 'estado_actual', None) == 'abierto':
-            proximo_sorteo = s
-            break
-
-    # Últimos resultados
-    ultimos_resultados = []
-    try:
-        from resultados.models import Resultado
-        ultimos_resultados = list(
-            Resultado.objects.select_related('sorteo').order_by('-fecha', '-hora')[:8]
-        )
-    except Exception:
-        pass
-
-    # Premios recientes (live feed real)
-    premios_recientes = []
-    try:
-        from resultados.models import Premio
-        premios_recientes = list(
-            Premio.objects.select_related('jugada__usuario', 'jugada__sorteo').order_by('-creado_en')[:12]
-        )
-    except Exception:
-        pass
-
-    # Saldos del usuario
-    saldos_usuario = None
-    if request.user.is_authenticated:
-        try:
-            from roles.models import Fondo, Bono, Postpago
-            fondos = Fondo.objects.filter(usuario=request.user, activo=True).aggregate(t=Sum('monto'))['t'] or 0
-            bonos = Bono.objects.filter(usuario=request.user, estado='activo').aggregate(t=Sum('saldo_restante'))['t'] or 0
-            pp = Postpago.objects.filter(cliente=request.user, activo=True, saldo__lt=0).aggregate(t=Sum('saldo'))['t'] or 0
-            saldos_usuario = {
-                'fondos': float(fondos), 'bonos': float(bonos),
-                'postpago': float(abs(pp)), 'total': float(fondos + bonos),
-            }
-        except Exception:
-            pass
-
-    context = {
-        'fecha_actual': ahora,
-        'user_authenticated': request.user.is_authenticated,
-        **stats,
-        'sorteos_hoy': sorteos_hoy[:12],
-        'proximo_sorteo': proximo_sorteo,
-        'ultimos_resultados': ultimos_resultados,
-        'premios_recientes': premios_recientes,
-        'saldos_usuario': saldos_usuario,
-    }
-    return render(request, 'publico/home_v2.html', context)
-
-# ═══════════════════════════════════════════════════════════════
-#  SITE VERSION — para auto-recarga de clientes autenticados
-# ═══════════════════════════════════════════════════════════════
 def site_version(request):
     """
     Devuelve la versión actual del sitio. Los clientes autenticados
@@ -472,3 +411,45 @@ def site_version(request):
     except Exception:
         v = '0'
     return JsonResponse({'version': v})
+
+
+def api_version(request):
+    """Endpoint de diagnóstico: versión de landing + home actual."""
+    import hashlib
+    from pathlib import Path as _P
+    from django.http import JsonResponse
+    from django.conf import settings
+    from django.utils import timezone
+
+    # Hash del landing.html
+    landing_path = _P(settings.BASE_DIR) / 'templates' / 'publico' / 'landing.html'
+    if landing_path.exists():
+        content = landing_path.read_bytes()
+        landing_hash = hashlib.md5(content).hexdigest()[:12]
+        landing_size = len(content)
+        landing_mtime = timezone.datetime.fromtimestamp(
+            landing_path.stat().st_mtime
+        ).isoformat()
+    else:
+        landing_hash = 'MISSING'
+        landing_size = 0
+        landing_mtime = None
+
+    # Info de home() y dashboard_view()
+    import publico.views as pv
+    home_source = pv.home.__doc__ or ''
+    dash_source = pv.dashboard_view.__doc__ or ''
+
+    return JsonResponse({
+        'landing_html': {
+            'exists': landing_path.exists(),
+            'md5': landing_hash,
+            'size': landing_size,
+            'mtime': landing_mtime,
+        },
+        'home_doc': home_source.strip()[:200],
+        'dashboard_doc': dash_source.strip()[:200],
+        'server_time': timezone.now().isoformat(),
+        'debug': settings.DEBUG,
+        'site_url': getattr(settings, 'SITE_URL', None),
+    })

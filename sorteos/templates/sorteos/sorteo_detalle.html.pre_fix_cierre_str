@@ -1,0 +1,234 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container" style="max-width:800px; margin:auto; padding:20px;">
+    <div style="background:#ffffff; border-radius:24px; padding:32px; box-shadow:0 2px 12px rgba(0,0,0,0.04); border:1px solid #eef2f6;">
+
+        <!-- Encabezado -->
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
+            <h1 style="font-size:2rem; font-weight:700; color:#1a1a2e; margin:0;">{{ sorteo.nombre }}</h1>
+            <div>
+                {% if sorteo.estado_actual == 'abierto' %}
+                    <span style="background:#d1fae5; color:#065f46; padding:6px 16px; border-radius:20px;">🟢 Abierto</span>
+                {% elif sorteo.estado_actual == 'cerrado' %}
+                    <span style="background:#fef3c7; color:#92400e; padding:6px 16px; border-radius:20px;">🟡 Cerrado</span>
+                {% else %}
+                    <span style="background:#fee2e2; color:#991b1b; padding:6px 16px; border-radius:20px;">🔴 Ya salió</span>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Información principal -->
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:24px; margin-bottom:24px;">
+            <div>
+                <h3 style="font-size:1rem; color:#6b7280; margin-bottom:8px;">Hora de salida</h3>
+                <p style="font-size:1.4rem; font-weight:600; color:#1a1a2e;">
+                    {% if sorteo.hora_salida_str %}
+                        {{ sorteo.hora_salida_str }}
+                    {% else %}
+                        <span style="color:#94a3b8;">No definida</span>
+                    {% endif %}
+                </p>
+            </div>
+            <div>
+                <h3 style="font-size:1rem; color:#6b7280; margin-bottom:8px;">Cierre de apuestas</h3>
+                <p style="font-size:1.4rem; font-weight:600; color:#d97706;">
+                    {% if sorteo.hora_cierre %}
+                        {{ sorteo.hora_cierre|time:"h:i A" }}
+                    {% else %}
+                        <span style="color:#94a3b8;">No definido</span>
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+
+        <!-- Formas de juego admitidas -->
+        <div style="margin-bottom:24px;">
+            <h3 style="font-size:1rem; color:#6b7280; margin-bottom:10px;">Formas de juego admitidas</h3>
+            <div style="display:flex; flex-wrap:wrap; gap:8px;">
+                {% for fj in sorteo.formas_filtradas %}
+                    <span style="background:#f3e8ff; color:#6C3CE1; font-size:0.8rem; padding:6px 14px; border-radius:20px; border:1px solid #e9d5ff; font-weight:600;">
+                        {{ fj.nombre }}
+                    </span>
+                {% empty %}
+                    <span style="color:#94a3b8; font-size:0.9rem;">Sin formas de juego configuradas.</span>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Contador regresivo -->
+        <div style="background:#f8fafc; border-radius:16px; padding:24px; text-align:center; border:1px solid #eef2f6; margin-bottom:24px;">
+            <h3 style="font-size:1rem; color:#6b7280; margin-bottom:8px;" id="estadoTexto">
+                {% if sorteo.estado_actual == 'abierto' %}
+                    ⏳ Tiempo para cerrar apuestas
+                {% elif sorteo.estado_actual == 'cerrado' %}
+                    ⏳ Tiempo para la salida
+                {% else %}
+                    ✅ Sorteo finalizado
+                {% endif %}
+            </h3>
+            <div id="countdown" style="font-size:3rem; font-weight:700; color:#6C3CE1; font-variant-numeric:tabular-nums; letter-spacing:0.05em;">
+                {% if sorteo.estado_actual == 'salido' %}
+                    🎉 ¡Ya salió!
+                {% else %}
+                    <span id="countdownSegundos">{{ sorteo.segundos_restantes|default:0 }}</span>
+                {% endif %}
+            </div>
+            <div style="margin-top:12px; font-size:0.9rem; color:#6b7280;">
+                {% if sorteo.estado_actual == 'abierto' %}
+                    Las apuestas cierran en <strong id="cierreText">...</strong>
+                {% elif sorteo.estado_actual == 'cerrado' %}
+                    La salida es en <strong id="salidaText">...</strong>
+                {% else %}
+                    El sorteo ya se realizó.
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Botón de acción -->
+        <div style="text-align:center;">
+            {% if sorteo.estado_actual == 'abierto' %}
+                <a href="{% url 'jugadas:apostar' %}?sorteo_id={{ sorteo.id }}" class="btn btn-primary" style="display:inline-block; padding:12px 40px; border-radius:12px; background:#6C3CE1; color:#fff; text-decoration:none; font-weight:600;">
+                    🎯 Apostar ahora
+                </a>
+            {% else %}
+                <button class="btn btn-secondary" disabled style="display:inline-block; padding:12px 40px; border-radius:12px; background:#eef2f6; color:#94a3b8; cursor:not-allowed; border:none;">
+                    {% if sorteo.estado_actual == 'cerrado' %}⛔ Apuestas cerradas{% else %}🚫 Ya salió{% endif %}
+                </button>
+            {% endif %}
+        </div>
+
+        <!-- Enlace a admin (solo staff) -->
+        {% if request.user.is_staff %}
+        <div style="margin-top:24px; padding-top:16px; border-top:1px solid #eef2f6; text-align:right; font-size:0.85rem;">
+            <a href="{% url 'admin:sorteos_sorteo_change' sorteo.id %}" target="_blank" style="color:#6C3CE1;">✏️ Editar en administración</a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+    .btn-primary:hover {
+        background: #5a2fc9;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(108,60,225,0.3);
+    }
+    .btn-secondary {
+        background: #eef2f6;
+        color: #94a3b8;
+    }
+    .countdown-blink {
+        animation: blink 1s steps(2, start) infinite;
+        color: #dc2626;
+    }
+    @keyframes blink {
+        to { visibility: hidden; }
+    }
+</style>
+
+<script>
+(function() {
+    'use strict';
+    const sorteoId = {{ sorteo.id }};
+
+    function fmt(segundos) {
+        if (segundos <= 0) return '00:00:00';
+        const h = Math.floor(segundos / 3600);
+        const m = Math.floor((segundos % 3600) / 60);
+        const s = segundos % 60;
+        return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+    }
+
+    const countdownSegundos = document.getElementById('countdownSegundos');
+    const cierreText = document.getElementById('cierreText');
+    const salidaText = document.getElementById('salidaText');
+    const estadoTexto = document.getElementById('estadoTexto');
+    const countdownDiv = document.getElementById('countdown');
+
+    let segundos = countdownSegundos ? (parseInt(countdownSegundos.textContent) || 0) : 0;
+    let estado = '{{ sorteo.estado_actual }}';
+    let interval;
+
+    function actualizarVista(nuevoEstado, nuevosSegundos) {
+        estado = nuevoEstado;
+        segundos = nuevosSegundos;
+
+        if (estado === 'abierto') {
+            estadoTexto.textContent = '⏳ Tiempo para cerrar apuestas';
+            countdownDiv.innerHTML = `<span id="countdownSegundos">${fmt(segundos)}</span>`;
+            if (cierreText) cierreText.textContent = fmt(segundos);
+            if (salidaText) salidaText.textContent = '';
+        } else if (estado === 'cerrado') {
+            estadoTexto.textContent = '⏳ Tiempo para la salida';
+            countdownDiv.innerHTML = `<span id="countdownSegundos">${fmt(segundos)}</span>`;
+            if (salidaText) salidaText.textContent = fmt(segundos);
+            if (cierreText) cierreText.textContent = '';
+        } else {
+            estadoTexto.textContent = '✅ Sorteo finalizado';
+            countdownDiv.innerHTML = '🎉 ¡Ya salió!';
+            if (cierreText) cierreText.textContent = '';
+            if (salidaText) salidaText.textContent = '';
+            clearInterval(interval);
+            interval = null;
+            return;
+        }
+
+        if (interval) {
+            clearInterval(interval);
+            interval = null;
+        }
+
+        if (segundos > 0) {
+            interval = setInterval(() => {
+                segundos--;
+                if (segundos <= 0) {
+                    fetch(`/sorteos/api/data/`)
+                        .then(r => r.json())
+                        .then(data => {
+                            const apiSorteo = data.sorteos.find(s => s.id == sorteoId);
+                            if (apiSorteo) {
+                                actualizarVista(apiSorteo.estado, apiSorteo.segundos_restantes);
+                            }
+                        })
+                        .catch(() => {});
+                    clearInterval(interval);
+                    interval = null;
+                    return;
+                }
+                const countdownEl = document.getElementById('countdownSegundos');
+                if (countdownEl) {
+                    countdownEl.textContent = fmt(segundos);
+                    if (segundos <= 60) {
+                        countdownEl.classList.add('countdown-blink');
+                    } else {
+                        countdownEl.classList.remove('countdown-blink');
+                    }
+                }
+                if (estado === 'abierto' && cierreText) {
+                    cierreText.textContent = fmt(segundos);
+                } else if (estado === 'cerrado' && salidaText) {
+                    salidaText.textContent = fmt(segundos);
+                }
+            }, 1000);
+        }
+    }
+
+    actualizarVista(estado, segundos);
+
+    setInterval(() => {
+        fetch(`/sorteos/api/data/`)
+            .then(r => r.json())
+            .then(data => {
+                const apiSorteo = data.sorteos.find(s => s.id == sorteoId);
+                if (apiSorteo) {
+                    if (apiSorteo.estado !== estado || apiSorteo.segundos_restantes !== segundos) {
+                        actualizarVista(apiSorteo.estado, apiSorteo.segundos_restantes);
+                    }
+                }
+            })
+            .catch(() => {});
+    }, 30000);
+})();
+</script>
+{% endblock %}

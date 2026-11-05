@@ -1,0 +1,343 @@
+{% extends "base.html" %}
+{% load roles_extras humanize %}
+{% block content %}
+<style>
+.mr-wrap{padding:24px;max-width:1400px;margin:0 auto}
+.mr-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;flex-wrap:wrap;gap:12px}
+.mr-head h1{font-family:'Fredoka',system-ui;font-size:1.9rem;font-weight:700;margin:0;color:#2b2d42}
+.mr-head h1 span{color:#ff5757}
+.mr-badge{padding:8px 16px;border-radius:999px;font-weight:800;font-size:.82rem;background:linear-gradient(135deg,#ff5757,#ff6ec7);color:#fff;box-shadow:0 4px 12px -4px rgba(255,87,87,.5)}
+
+.mr-summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:28px}
+.mr-card{background:#fff;border:2px solid #ffe8c2;border-radius:16px;padding:20px;position:relative;overflow:hidden;transition:.25s}
+.mr-card:hover{transform:translateY(-3px);box-shadow:0 8px 24px -8px rgba(255,87,87,.2);border-color:#ffd89b}
+.mr-card .lbl{font-size:.72rem;text-transform:uppercase;letter-spacing:1px;font-weight:800;color:#6b7280;margin-bottom:6px}
+.mr-card .val{font-family:'Fredoka',system-ui;font-size:1.6rem;font-weight:700;color:#ff5757}
+.mr-card:nth-child(2) .val{color:#22c1c3}
+.mr-card:nth-child(3) .val{color:#ffc93c}
+.mr-card:nth-child(4) .val{color:#a78bfa}
+.mr-card:nth-child(5) .val{color:#4ade80}
+.mr-card:nth-child(6) .val{color:#ff6ec7}
+
+.mr-tabs{display:flex;gap:6px;margin-bottom:20px;border-bottom:2px solid #ffe8c2;overflow-x:auto;flex-wrap:wrap}
+.mr-tab{padding:12px 20px;background:transparent;border:none;cursor:pointer;font-weight:800;font-size:.9rem;color:#6b7280;border-bottom:3px solid transparent;margin-bottom:-2px;transition:.2s;white-space:nowrap}
+.mr-tab:hover{color:#ff5757}
+.mr-tab.active{color:#ff5757;border-bottom-color:#ff5757}
+.mr-tab .count{background:#ffe8c2;color:#8a5a00;padding:2px 8px;border-radius:999px;font-size:.72rem;margin-left:6px;font-weight:800}
+
+.mr-panel{display:none}
+.mr-panel.active{display:block}
+
+.mr-table{width:100%;border-collapse:collapse;background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 4px 16px -8px rgba(0,0,0,.08)}
+.mr-table thead{background:linear-gradient(135deg,#fff5e0,#ffe8c2)}
+.mr-table th{padding:14px 16px;text-align:left;font-size:.75rem;text-transform:uppercase;letter-spacing:.8px;font-weight:800;color:#6b7280;border-bottom:2px solid #ffd89b}
+.mr-table td{padding:12px 16px;border-bottom:1px solid #fff5e0;font-size:.9rem;color:#2b2d42}
+.mr-table tbody tr:hover{background:#fffbf2}
+.mr-table tbody tr:last-child td{border-bottom:none}
+.mr-table .num{font-family:'Fredoka',system-ui;font-weight:700;color:#ff5757;font-size:1rem}
+.mr-table .num-secondary{color:#22c1c3}
+.mr-table .badge{padding:4px 10px;border-radius:999px;font-size:.72rem;font-weight:800}
+.mr-table .badge-pendiente{background:#fef3c7;color:#92400e}
+.mr-table .badge-compensado{background:#d1fae5;color:#065f46}
+.mr-table .badge-rechazado{background:#fee2e2;color:#991b1b}
+
+.mr-empty{padding:40px 20px;text-align:center;color:#6b7280;background:#fff;border-radius:14px;border:2px dashed #ffe8c2}
+.mr-empty .emoji{font-size:3rem;display:block;margin-bottom:12px;opacity:.5}
+
+.mr-truncado{
+  background:#fef3c7;border:2px solid #fbbf24;border-radius:12px;
+  padding:14px 20px;margin-bottom:16px;color:#92400e;font-weight:600;
+  display:flex;align-items:center;gap:12px;font-size:.9rem;
+}
+.mr-truncado .ico{font-size:1.4rem}
+</style>
+
+<div class="mr-wrap">
+  <div class="mr-head">
+    <h1>⭐ Mis <span>Recursos</span></h1>
+    <span class="mr-badge">{{ comercial.username }}</span>
+  </div>
+
+  <!-- ═══════════ RESUMEN ═══════════ -->
+  <div class="mr-summary">
+    <div class="mr-card">
+      <div class="lbl">Comisión Prom.</div>
+      <div class="val">{{ comision_prom|floatformat:2 }}%</div>
+    </div>
+    <div class="mr-card">
+      <div class="lbl">Límite Total</div>
+      <div class="val">${{ total_limite|floatformat:0|intcomma }}</div>
+    </div>
+    <div class="mr-card">
+      <div class="lbl">Sobre Límite Total</div>
+      <div class="val">${{ total_sobrelimite|floatformat:0|intcomma }}</div>
+    </div>
+    <div class="mr-card">
+      <div class="lbl">Dosis Total</div>
+      <div class="val">${{ total_dosis|floatformat:0|intcomma }}</div>
+    </div>
+    <div class="mr-card">
+      <div class="lbl">Fondos</div>
+      <div class="val">${{ total_fondos|floatformat:0|intcomma }}</div>
+    </div>
+    <div class="mr-card">
+      <div class="lbl">Sobre Límites Pend.</div>
+      <div class="val">{{ num_sobrelimites_pendientes }}</div>
+    </div>
+  </div>
+
+  <!-- ═══════════ TABS ═══════════ -->
+  <div class="mr-tabs">
+    <button class="mr-tab active" data-tab="comisiones">
+      ⚙️ Comisiones <span class="count">{{ counts.comisiones }}</span>
+    </button>
+    <button class="mr-tab" data-tab="limites">
+      🎚️ Límites <span class="count">{{ counts.limites }}</span>
+    </button>
+    <button class="mr-tab" data-tab="sobrelimites">
+      🔓 Sobre Límites <span class="count">{{ counts.sobrelimites }}</span>
+    </button>
+    <button class="mr-tab" data-tab="dosis">
+      💊 Dosis <span class="count">{{ counts.dosis }}</span>
+    </button>
+    <button class="mr-tab" data-tab="recursos">
+      🗂️ Recursos <span class="count">{{ counts.recursos }}</span>
+    </button>
+    <button class="mr-tab" data-tab="fondos">
+      💰 Fondos <span class="count">{{ counts.fondos }}</span>
+    </button>
+  </div>
+
+  <!-- ═══════════ TAB: COMISIONES ═══════════ -->
+  <div class="mr-panel active" id="panel-comisiones">
+    {% if truncado.comisiones %}<div class="mr-truncado"><span class="ico">⚠️</span><span>Mostrando las primeras {{ max_rows }} de {{ counts.comisiones }} comisiones. Los totales sí reflejan todos los registros.</span></div>{% endif %}
+    
+    {% if comisiones %}
+      <table class="mr-table">
+        <thead>
+          <tr>
+            <th>Sorteo</th>
+            <th>Forma de Juego</th>
+            <th>Banco</th>
+            <th>Tipo</th>
+            <th style="text-align:right">%</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for c in comisiones %}
+          <tr>
+            <td>{{ c.sorteo.nombre|default:"—" }}</td>
+            <td>{{ c.forma_juego.nombre|default:"—" }}</td>
+            <td>{{ c.banco.username|default:"—" }}</td>
+            <td>{{ c.tipo|default:"—" }}</td>
+            <td style="text-align:right" class="num">{{ c.porcentaje|floatformat:2 }}%</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <div class="mr-empty">
+        <span class="emoji">⚙️</span>
+        <p>Aún no tienes comisiones asignadas.</p>
+      </div>
+    {% endif %}
+  </div>
+
+  <!-- ═══════════ TAB: LÍMITES ═══════════ -->
+  <div class="mr-panel" id="panel-limites">
+    {% if truncado.limites %}<div class="mr-truncado"><span class="ico">⚠️</span><span>Mostrando las primeras {{ max_rows }} de {{ counts.limites }} límites. Los totales sí reflejan todos los registros.</span></div>{% endif %}
+    
+    {% if limites %}
+      <table class="mr-table">
+        <thead>
+          <tr>
+            <th>Sorteo</th>
+            <th>Forma Juego</th>
+            <th>Forma Pago</th>
+            <th style="text-align:right">Límite</th>
+            <th style="text-align:right">Sobre Límite</th>
+            <th style="text-align:right">% Extra</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for l in limites %}
+          <tr>
+            <td>{{ l.sorteo.nombre|default:"—" }}</td>
+            <td>{{ l.forma_juego.nombre|default:"—" }}</td>
+            <td>{{ l.forma_pago.nombre|default:"—" }}</td>
+            <td style="text-align:right" class="num">${{ l.monto_maximo|floatformat:2|intcomma }}</td>
+            <td style="text-align:right" class="num num-secondary">${{ l.monto_sobrelimite|floatformat:2|intcomma }}</td>
+            <td style="text-align:right">{{ l.comision_extra_porcentaje|floatformat:2 }}%</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <div class="mr-empty">
+        <span class="emoji">🎚️</span>
+        <p>Aún no tienes límites asignados.</p>
+      </div>
+    {% endif %}
+  </div>
+
+  <!-- ═══════════ TAB: SOBRE LÍMITES ═══════════ -->
+  <div class="mr-panel" id="panel-sobrelimites">
+    {% if truncado.sobrelimites %}<div class="mr-truncado"><span class="ico">⚠️</span><span>Mostrando las primeras {{ max_rows }} de {{ counts.sobrelimites }} registros. Los totales sí reflejan todos los registros.</span></div>{% endif %}
+    
+    {% if sobrelimites %}
+      <table class="mr-table">
+        <thead>
+          <tr>
+            <th>Fecha</th>
+            <th>Banco</th>
+            <th style="text-align:right">Límite Aplicado</th>
+            <th style="text-align:right">Excedido</th>
+            <th style="text-align:right">Compensado</th>
+            <th>Estado</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for s in sobrelimites %}
+          <tr>
+            <td>{{ s.fecha|date:"d/m/Y H:i" }}</td>
+            <td>{{ s.banco.username|default:"—" }}</td>
+            <td style="text-align:right">${{ s.limite_aplicado|floatformat:2|intcomma }}</td>
+            <td style="text-align:right" class="num">${{ s.monto_excedido|floatformat:2|intcomma }}</td>
+            <td style="text-align:right">${{ s.monto_compensado|default:0|floatformat:2|intcomma }}</td>
+            <td>
+              <span class="badge badge-{{ s.estado_compensacion }}">
+                {{ s.estado_compensacion|default:"pendiente"|title }}
+              </span>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <div class="mr-empty">
+        <span class="emoji">🔓</span>
+        <p>No tienes solicitudes de sobre límites.</p>
+      </div>
+    {% endif %}
+  </div>
+
+  <!-- ═══════════ TAB: DOSIS ═══════════ -->
+  <div class="mr-panel" id="panel-dosis">
+    {% if truncado.dosis %}<div class="mr-truncado"><span class="ico">⚠️</span><span>Mostrando las primeras {{ max_rows }} de {{ counts.dosis }} dosis. Los totales sí reflejan todos los registros.</span></div>{% endif %}
+    
+    {% if dosis %}
+      <table class="mr-table">
+        <thead>
+          <tr>
+            <th>Sorteo</th>
+            <th>Forma Juego</th>
+            <th>Forma Pago</th>
+            <th style="text-align:right">Monto / Peso</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for d in dosis %}
+          <tr>
+            <td>{{ d.sorteo.nombre|default:"—" }}</td>
+            <td>{{ d.forma_juego.nombre|default:"—" }}</td>
+            <td>{{ d.forma_pago.nombre|default:"—" }}</td>
+            <td style="text-align:right" class="num">${{ d.monto_por_peso|floatformat:2|intcomma }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <div class="mr-empty">
+        <span class="emoji">💊</span>
+        <p>Aún no tienes dosis asignadas.</p>
+      </div>
+    {% endif %}
+  </div>
+
+  <!-- ═══════════ TAB: RECURSOS ═══════════ -->
+  <div class="mr-panel" id="panel-recursos">
+    {% if truncado.recursos %}<div class="mr-truncado"><span class="ico">⚠️</span><span>Mostrando las primeras {{ max_rows }} de {{ counts.recursos }} recursos. Los totales sí reflejan todos los registros.</span></div>{% endif %}
+    
+    {% if recursos %}
+      <table class="mr-table">
+        <thead>
+          <tr>
+            <th>Tipo</th>
+            <th>Sorteo</th>
+            <th>Forma Juego</th>
+            <th>Forma Pago</th>
+            <th>Banco</th>
+            <th>Asignado</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in recursos %}
+          <tr>
+            <td>{{ r.tipo|default:"—" }}</td>
+            <td>{{ r.sorteo.nombre|default:"—" }}</td>
+            <td>{{ r.forma_juego.nombre|default:"—" }}</td>
+            <td>{{ r.forma_pago.nombre|default:"—" }}</td>
+            <td>{{ r.banco.username|default:"—" }}</td>
+            <td>{{ r.fecha_asignacion|date:"d/m/Y" }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <div class="mr-empty">
+        <span class="emoji">🗂️</span>
+        <p>No tienes recursos asignados.</p>
+      </div>
+    {% endif %}
+  </div>
+
+  <!-- ═══════════ TAB: FONDOS ═══════════ -->
+  <div class="mr-panel" id="panel-fondos">
+    {% if truncado.fondos %}<div class="mr-truncado"><span class="ico">⚠️</span><span>Mostrando las primeras {{ max_rows }} de {{ counts.fondos }} fondos. Los totales sí reflejan todos los registros.</span></div>{% endif %}
+    
+    {% if fondos %}
+      <table class="mr-table">
+        <thead>
+          <tr>
+            <th>Sorteo</th>
+            <th>Forma Pago</th>
+            <th style="text-align:right">Monto</th>
+            <th>Asignado por</th>
+            <th>Fecha</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for f in fondos %}
+          <tr>
+            <td>{{ f.sorteo.nombre|default:"—" }}</td>
+            <td>{{ f.forma_pago.nombre|default:"—" }}</td>
+            <td style="text-align:right" class="num">${{ f.monto|floatformat:2|intcomma }}</td>
+            <td>{{ f.asignado_por.username|default:"—" }}</td>
+            <td>{{ f.creado_en|date:"d/m/Y" }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <div class="mr-empty">
+        <span class="emoji">💰</span>
+        <p>No tienes fondos asignados.</p>
+      </div>
+    {% endif %}
+  </div>
+
+</div>
+
+<script>
+document.querySelectorAll('.mr-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    const target = tab.dataset.tab;
+    document.querySelectorAll('.mr-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.mr-panel').forEach(p => p.classList.remove('active'));
+    tab.classList.add('active');
+    const panel = document.getElementById('panel-' + target);
+    if (panel) panel.classList.add('active');
+  });
+});
+</script>
+{% endblock %}

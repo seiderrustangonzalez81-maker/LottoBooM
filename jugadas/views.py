@@ -1,3 +1,4 @@
+from LottoBooM.utils import es_verano_cuba
 # -*- coding: utf-8 -*-
 import json
 import re
@@ -13,6 +14,7 @@ from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate
+from resultados.models import Premio
 from django.db import transaction
 from django.db.models import Q, Sum, Count
 from django.utils import timezone
@@ -3099,7 +3101,7 @@ def api_sorteos_disponibles(request):
     def _hora_salida_hoy(sorteo):
         dia_es = {0: 'lunes', 1: 'martes', 2: 'miercoles', 3: 'jueves',
                   4: 'viernes', 5: 'sabado', 6: 'domingo'}[hoy.weekday()]
-        temp = 'verano' if 4 <= hoy.month <= 10 else 'invierno'
+        temp = 'verano' if es_verano_cuba(hoy) else 'invierno'
         if sorteo.horarios:
             hora_str = (sorteo.horarios.get(temp) or {}).get(dia_es)
             if not hora_str:

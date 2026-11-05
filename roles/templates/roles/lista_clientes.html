@@ -539,7 +539,14 @@ ground:#4338ca;
                    class="lc-btn-recargar">
                   <i class="fas fa-plus"></i> Recargar
                 </a>
-              {% endif %}
+              
+
+                <form method="post" action="{% url 'roles:ascender_a_auditor' item.cliente.id %}" style="display:inline;" onsubmit="return confirm('¿Ascender a {{ item.cliente.username }} como auditor? Podrá crear/modificar resultados.');">
+                  {% csrf_token %}
+                  <button type="submit" class="lc-btn-recargar" style="background:#6366f1;color:#fff;">
+                    ⬆ Ascender a Auditor
+                  </button>
+                </form>{% endif %}
             </td>
           </tr>
           {% endfor %}

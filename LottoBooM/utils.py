@@ -1,29 +1,32 @@
-# LottoBooM/utils.py
+from zoneinfo import ZoneInfo
 from datetime import datetime, date, timedelta
 
-def es_verano_cuba(fecha):
+CUB = ZoneInfo("America/Havana")
+
+# Override: Cuba se mantiene en UTC-4 hasta el 7-nov-2026 inclusive.
+# A partir del 8-nov-2026, manda tzdata (UTC-5).
+# OVERRIDE_CUBA_2027: Cuba decidió mantener el horario de verano (UTC-4) de forma indefinida 
+# hasta el 7 de noviembre de 2027 por la crisis energética. 
+# La base de datos IANA (tzdata 2026f) confirma este cambio.
+_OVERRIDE_UTC4_HASTA = date(2027, 11, 7)
+
+
+def es_verano_cuba(fecha=None):
     """
-    Devuelve True si la fecha está en horario de verano en Cuba.
+    True si Cuba está en horario de verano (UTC-4).
     Acepta date o datetime.
     """
+    if fecha is None:
+        fecha = date.today()
+
     if isinstance(fecha, datetime):
-        fecha = fecha.date()
-    elif not isinstance(fecha, date):
-        raise TypeError("fecha debe ser date o datetime")
+        fecha_d = fecha.date()
+    else:
+        fecha_d = fecha
 
-    year = fecha.year
+    # Override explícito para el tramo 1→7 nov 2026
+    if fecha_d <= _OVERRIDE_UTC4_HASTA:
+        return True
 
-    # Segundo domingo de marzo
-    inicio = datetime(year, 3, 1)
-    while inicio.weekday() != 6:
-        inicio += timedelta(days=1)
-    inicio += timedelta(days=7)
-    inicio = inicio.date()
-
-    # Primer domingo de noviembre
-    fin = datetime(year, 11, 1)
-    while fin.weekday() != 6:
-        fin += timedelta(days=1)
-    fin = fin.date()
-
-    return inicio <= fecha <= fin
+    dt = datetime.combine(fecha_d, datetime.min.time()).replace(tzinfo=CUB)
+    return dt.dst() != timedelta(0)

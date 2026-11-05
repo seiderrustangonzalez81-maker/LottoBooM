@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.core.cache import cache
 from django.utils import timezone
 from .models import VisitaDiaria
@@ -20,3 +21,11 @@ def contadores(request):
         cache.set(cache_key, datos, 60)
 
     return datos
+
+
+def site_info(request):
+    """Expone SITE_URL y datos comunes a todos los templates."""
+    return {
+        'SITE_URL': getattr(settings, 'SITE_URL', ''),
+        'SITE_NAME': 'LottoBooM',
+    }

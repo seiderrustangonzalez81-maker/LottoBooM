@@ -1,0 +1,174 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Límites por Número{% endblock %}
+{% block page_title %}🎯 Límites por Número{% endblock %}
+{% block page_subtitle %}Cuánto queda libre para apostar por número{% endblock %}
+{% block extra_css %}
+<style>
+.tn-wrap{background:#f4f6fb;padding:14px 14px 60px;border-radius:16px;min-height:70vh}
+.tn-filters{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-bottom:16px;background:#fff;padding:14px;border-radius:12px;box-shadow:0 2px 8px rgba(15,23,42,.06);border:1px solid #e5e8f0}
+.tn-field{display:flex;flex-direction:column;gap:4px}
+.tn-field label{font-size:.68rem;font-weight:800;color:#475569;text-transform:uppercase;letter-spacing:.5px}
+.tn-field select,.tn-field input{padding:10px 12px;border:1.5px solid #d4d9e6;border-radius:8px;background:#fff;font-size:.85rem;font-weight:600;color:#0f172a;min-height:42px}
+.tn-field select:focus,.tn-field input:focus{outline:none;border-color:#4f46e5;box-shadow:0 0 0 3px rgba(79,70,229,.12)}
+.tn-summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:16px}
+.tn-card{background:#fff;border:1.5px solid #e5e8f0;border-radius:12px;padding:14px;box-shadow:0 2px 6px rgba(15,23,42,.05);position:relative;overflow:hidden}
+.tn-card::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#4f46e5,#7c3aed)}
+.tn-card.tn-danger::before{background:linear-gradient(90deg,#dc2626,#f59e0b)}
+.tn-card.tn-success::before{background:linear-gradient(90deg,#10b981,#059669)}
+.tn-card__label{font-size:.6rem;font-weight:800;color:#64748b;text-transform:uppercase;letter-spacing:.7px;margin-bottom:4px}
+.tn-card__value{font-size:1.15rem;font-weight:800;color:#0f172a;font-family:Consolas,monospace}
+.tn-card.tn-danger .tn-card__value{color:#dc2626}
+.tn-card.tn-success .tn-card__value{color:#059669}
+
+.tn-table-wrap{background:#fff;border:1.5px solid #e5e8f0;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(15,23,42,.05)}
+.tn-table{width:100%;border-collapse:collapse}
+.tn-table thead{background:linear-gradient(135deg,#eef0ff,#f5f3ff)}
+.tn-table th{padding:11px 12px;text-align:left;font-size:.65rem;font-weight:800;color:#475569;text-transform:uppercase;letter-spacing:.5px;border-bottom:1.5px solid #d4d9e6}
+.tn-table td{padding:11px 12px;border-bottom:1px solid #e5e8f0;font-size:.85rem;color:#0f172a}
+.tn-table tbody tr:hover{background:#fafbfe}
+.tn-table tbody tr:last-child td{border-bottom:none}
+.tn-num{font-family:Consolas,monospace;font-weight:800;font-size:1rem;padding:3px 8px;border-radius:6px;background:#eef2ff;color:#3730a3;display:inline-block;min-width:48px;text-align:center}
+.tn-num.tn-num-cerrado{background:#fee2e2;color:#991b1b}
+.tn-right{text-align:right;font-family:Consolas,monospace;font-weight:700}
+.tn-libre{color:#059669}
+.tn-libre.tn-cero{color:#dc2626;font-weight:800}
+.tn-bar{height:6px;border-radius:999px;background:#e5e8f0;overflow:hidden;margin-top:4px;min-width:60px}
+.tn-bar__fill{height:100%;background:linear-gradient(90deg,#10b981,#059669);border-radius:999px;transition:width .3s}
+.tn-bar__fill.tn-fill-warn{background:linear-gradient(90deg,#f59e0b,#d97706)}
+.tn-bar__fill.tn-fill-danger{background:linear-gradient(90deg,#ef4444,#dc2626)}
+.tn-badge{padding:3px 8px;border-radius:999px;font-size:.65rem;font-weight:800;text-transform:uppercase;letter-spacing:.3px}
+.tn-badge.tn-open{background:#d1fae5;color:#065f46}
+.tn-badge.tn-closed{background:#fee2e2;color:#991b1b}
+.tn-empty{padding:40px 20px;text-align:center;color:#64748b;background:#fff;border:2px dashed #d4d9e6;border-radius:12px}
+.tn-empty__icon{font-size:2.5rem;margin-bottom:8px;opacity:.6}
+
+/* Mobile: tabla → cards */
+@media (max-width:768px){
+  .tn-table thead{display:none}
+  .tn-table tbody,.tn-table tr,.tn-table td{display:block;width:100%}
+  .tn-table tbody tr{border:1px solid #e5e8f0;border-radius:10px;margin-bottom:8px;padding:10px;background:#fff}
+  .tn-table td{padding:5px 0;border:none;display:flex;justify-content:space-between;align-items:center;gap:12px;text-align:right;font-size:.82rem}
+  .tn-table td::before{content:attr(data-label);font-weight:800;font-size:.65rem;color:#64748b;text-transform:uppercase;letter-spacing:.4px;text-align:left;flex-shrink:0}
+  .tn-num{font-size:.9rem}
+  .tn-right{text-align:right}
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="tn-wrap">
+  {% if sin_gestor %}
+    <div class="tn-empty">
+      <div class="tn-empty__icon">👤</div>
+      <p><strong>Aún no tienes un gestor asignado.</strong></p>
+      <p>Contacta con tu banco para que te asigne un comercial.</p>
+    </div>
+  {% else %}
+
+  <form method="get" class="tn-filters">
+    <div class="tn-field">
+      <label>🎯 Sorteo</label>
+      <select name="sorteo" onchange="this.form.submit()">
+        {% for s in sorteos %}
+          <option value="{{ s.id }}" {% if sorteo_id == s.id|stringformat:'s' %}selected{% endif %}>{{ s.nombre }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="tn-field">
+      <label>💳 Forma de Pago</label>
+      <select name="forma_pago" onchange="this.form.submit()">
+        {% for fp in formas_pago %}
+          <option value="{{ fp.id }}" {% if fp_id == fp.id|stringformat:'s' %}selected{% endif %}>{{ fp.nombre }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="tn-field">
+      <label>📅 Fecha</label>
+      <input type="date" name="fecha" value="{{ fecha_str }}" onchange="this.form.submit()">
+    </div>
+    {% if gestores_disponibles %}
+    <div class="tn-field">
+      <label>👤 Gestor</label>
+      <select name="gestor" onchange="this.form.submit()">
+        <option value="">— Yo —</option>
+        {% for g in gestores_disponibles %}
+          <option value="{{ g.id }}" {% if gestor and gestor.id == g.id %}selected{% endif %}>{{ g.username }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    {% endif %}
+  </form>
+
+  <div class="tn-summary">
+    <div class="tn-card">
+      <div class="tn-card__label">Apostado hoy</div>
+      <div class="tn-card__value">${{ resumen.total_apostado|floatformat:0 }}</div>
+    </div>
+    <div class="tn-card">
+      <div class="tn-card__label">Límite total</div>
+      <div class="tn-card__value">${{ resumen.total_limite|floatformat:0 }}</div>
+    </div>
+    <div class="tn-card tn-success">
+      <div class="tn-card__label">Libre</div>
+      <div class="tn-card__value">${{ resumen.total_libre|floatformat:0 }}</div>
+    </div>
+    <div class="tn-card {% if resumen.numeros_cerrados > 0 %}tn-danger{% endif %}">
+      <div class="tn-card__label">Cerrados</div>
+      <div class="tn-card__value">{{ resumen.numeros_cerrados }}</div>
+    </div>
+  </div>
+
+  {% if filas %}
+  <div class="tn-table-wrap">
+    <table class="tn-table">
+      <thead>
+        <tr>
+          <th>Número</th>
+          <th>Forma</th>
+          <th class="tn-right">Apostado</th>
+          <th class="tn-right">Límite</th>
+          <th class="tn-right">Libre</th>
+          <th>Uso</th>
+          <th>Estado</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for f in filas %}
+        <tr>
+          <td data-label="Número"><span class="tn-num {% if f.cerrado %}tn-num-cerrado{% endif %}">{{ f.numero }}</span></td>
+          <td data-label="Forma">{{ f.forma_juego }}</td>
+          <td class="tn-right" data-label="Apostado">${{ f.apostado|floatformat:0 }}</td>
+          <td class="tn-right" data-label="Límite">${{ f.limite|floatformat:0 }}</td>
+          <td class="tn-right" data-label="Libre">
+            <span class="tn-libre {% if f.cerrado %}tn-cero{% endif %}">${{ f.libre|floatformat:0 }}</span>
+          </td>
+          <td data-label="Uso">
+            <div class="tn-bar">
+              <div class="tn-bar__fill {% if f.pct_usado >= 90 %}tn-fill-danger{% elif f.pct_usado >= 70 %}tn-fill-warn{% endif %}" style="width:{{ f.pct_usado }}%"></div>
+            </div>
+            <div style="font-size:.7rem;color:#64748b;margin-top:2px;text-align:right;">{{ f.pct_usado }}%</div>
+          </td>
+          <td data-label="Estado">
+            {% if f.cerrado %}
+              <span class="tn-badge tn-closed">🔒 Cerrado</span>
+            {% else %}
+              <span class="tn-badge tn-open">✓ Abierto</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="tn-empty">
+    <div class="tn-empty__icon">📭</div>
+    <p><strong>No hay apuestas registradas</strong></p>
+    <p>Prueba con otro sorteo, forma de pago o fecha.</p>
+  </div>
+  {% endif %}
+
+  {% endif %}
+</div>
+{% endblock %}

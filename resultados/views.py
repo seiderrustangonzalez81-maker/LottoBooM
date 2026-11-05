@@ -1,3 +1,4 @@
+from LottoBooM.utils import es_verano_cuba
 # resultados/views.py
 # -*- coding: utf-8 -*-
 import logging
@@ -580,7 +581,7 @@ def _split_lista(valor):
     return [p.strip() for p in _re.split(r'[\s,;]+', str(valor)) if p.strip()]
 
 
-def procesar_resultado(request, datos, resultado_existente=None):
+def procesar_resultado(request, datos, resultado_existente=None, solo_crear_resultado=False):
     sorteo = datos['sorteo']
     fecha = datos['fecha']
     hora = datos['hora']
@@ -762,6 +763,13 @@ def procesar_resultado(request, datos, resultado_existente=None):
         except Exception as _e:
             import logging
             logging.getLogger(__name__).warning(f"auto_cerrar_si_ultimo_georgia falló: {_e}")
+
+        # FIX_ASYNC_PREMIOS_V1: en modo async solo crea/actualiza el Resultado
+        if solo_crear_resultado:
+            resultado.procesamiento_estado = 'pendiente'
+            resultado.procesamiento_msg = 'En cola...'
+            resultado.save(update_fields=['procesamiento_estado', 'procesamiento_msg'])
+            return resultado, 0
 
         premios_anteriores = Premio.objects.filter(
             jugada__sorteo=resultado.sorteo,
@@ -1134,8 +1142,13 @@ def crear_resultado(request):
                     'pick2vspf': request.POST.get('pick2vspf', ''),
                 }
 
-                resultado, premios_generados = procesar_resultado(request, datos)
-                messages.success(request, f"✅ Resultado para {sorteo.nombre} creado exitosamente. {premios_generados} premios generados.")
+                # FIX_ASYNC_PREMIOS_V1
+                resultado, premios_generados = procesar_resultado(
+                    request, datos, solo_crear_resultado=True
+                )
+                from resultados.procesamiento import procesar_premios_background
+                transaction.on_commit(lambda rid=resultado.id: procesar_premios_background(rid))
+                messages.success(request, f"✅ Resultado para {sorteo.nombre} creado. Los premios se están calculando en segundo plano; recarga en unos segundos para verlos.")
                 return redirect('resultados:detalle_resultado', resultado_id=resultado.id)
 
         except ValueError as e:
@@ -2255,7 +2268,12 @@ def api_guardar_resultado(request):
                 'pick2vspf': request.POST.get('pick2vspf', ''),
             }
 
-            resultado, premios_generados = procesar_resultado(request, datos)
+            # FIX_ASYNC_PREMIOS_V1
+            resultado, premios_generados = procesar_resultado(
+                request, datos, solo_crear_resultado=True
+            )
+            from resultados.procesamiento import procesar_premios_background
+            transaction.on_commit(lambda rid=resultado.id: procesar_premios_background(rid))
 
             return JsonResponse({
                 'success': True,
@@ -2496,7 +2514,7 @@ def _hora_salida_hoy(sorteo, hoy=None):
     if not sorteo.horarios:
         return getattr(sorteo, 'hora_salida', None)
     dia_es = ['lunes','martes','miercoles','jueves','viernes','sabado','domingo'][hoy.weekday()]
-    temp = 'verano' if 4 <= hoy.month <= 10 else 'invierno'
+    temp = 'verano' if es_verano_cuba(hoy) else 'invierno'
     try:
         hora_str = (sorteo.horarios or {}).get(temp, {}).get(dia_es)
         if hora_str:
@@ -2669,3 +2687,17 @@ def api_premios_todos(request):
 
 
 
+
+
+@login_required
+def api_resultado_status(request, resultado_id):
+    """FIX_ASYNC_PREMIOS_V1: polling para saber si el cálculo terminó."""
+    resultado = get_object_or_404(Resultado, id=resultado_id)
+    return JsonResponse({
+        'success': True,
+        'estado': resultado.procesamiento_estado,
+        'msg': resultado.procesamiento_msg,
+        'premios_generados': resultado.premios_generados,
+        'inicio': resultado.procesamiento_inicio.isoformat() if resultado.procesamiento_inicio else None,
+        'fin': resultado.procesamiento_fin.isoformat() if resultado.procesamiento_fin else None,
+    })

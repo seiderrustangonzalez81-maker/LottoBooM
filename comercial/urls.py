@@ -35,4 +35,5 @@ urlpatterns = [
     # ============================================================
     path('perfil/', views.perfil_comercial, name='perfil'),
     path('configuracion/', views.configuracion_comercial, name='configuracion'),
+    path('mis-recursos/', views.mis_recursos_view, name='mis_recursos'),
 ]

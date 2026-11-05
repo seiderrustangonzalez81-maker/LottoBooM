@@ -15,11 +15,11 @@
     <link rel="manifest" href="{% static 'pwa/manifest.json' %}?v=20261022b">
     <meta name="apple-mobile-web-app-title" content="LottoBooM">
     <meta name="application-name" content="LottoBooM">
-    <meta name="description" content="LottoBooM - La lotería del futuro">
+    <meta name="description" content="LottoBooM · Juega los mejores sorteos, gana y retira rápido">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
-    <title>{% block title %}LottoBooM - Lotería del Futuro{% endblock %}</title>
+    <title>{% block title %}LottoBooM · Juega, Gana y Retira{% endblock %}</title>
 
     <link rel="preconnect" href="https://cdn.jsdelivr.net">
     <link rel="preconnect" href="https://cdnjs.cloudflare.com">
@@ -502,6 +502,7 @@
     .top-header .page-title {
         min-width: 0;
         flex: 1 1 auto;
+            overflow: hidden;
     }
     .top-header .page-title h4 {
         margin: 0;
@@ -509,9 +510,19 @@
         font-size: clamp(0.95rem, 2.2vw, 1.2rem);
         color: var(--text-primary);
         font-family: 'Orbitron', sans-serif;
-        white-space: nowrap;
+        /* 2 líneas con ellipsis al final */
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
         overflow: hidden;
         text-overflow: ellipsis;
+        line-height: 1.2;
+        max-height: calc(1.2em * 2);
+        /* Centrado horizontal */
+        text-align: center;
+        word-break: break-word;
+        overflow-wrap: break-word;
+        white-space: normal;
     }
     .top-header .page-title small {
         color: var(--text-secondary);
@@ -521,14 +532,20 @@
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
+        text-align: center;
+        margin-top: 2px;
     }
     .user-info {
         display: flex;
         align-items: center;
         gap: 12px;
-        flex-wrap: wrap;
-        flex-shrink: 1;
-        min-width: 0;
+        flex-wrap: nowrap;
+        flex-shrink: 0 !important;
+        min-width: auto !important;
+    }
+    /* Cada acción individual tampoco se encoge */
+    .user-info > * {
+        flex-shrink: 0 !important;
     }
     .user-info .avatar {
         width: 40px;
@@ -853,14 +870,15 @@
         .main-content { padding: 8px !important; }
         .top-header {
             padding: 8px 10px !important;
-            gap: 4px;
+            gap: 6px;
             border-radius: 14px;
         }
         .top-header .page-title h4 {
-            font-size: 0.85rem !important;
+            font-size: 0.78rem !important;
+            line-height: 1.15;
         }
         .top-header .page-title small {
-            font-size: 0.6rem !important;
+            font-size: 0.58rem !important;
         }
         .user-info .avatar {
             width: 30px;
@@ -1199,6 +1217,238 @@
             min-height: 40px;
         }
     }
+
+
+/* ═══════════════════════════════════════════════════════════════
+   SIDEBAR · Acordeón (solo uno abierto a la vez)
+   ═══════════════════════════════════════════════════════════════ */
+.menu-group {
+    margin: 2px 0;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.menu-group-toggle {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 11px 16px;
+    cursor: pointer;
+    font-size: .72rem;
+    font-weight: 800;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    color: #1e40af;
+    user-select: none;
+    transition: background .15s, color .15s;
+    border-radius: 8px;
+}
+
+.menu-group-toggle:hover {
+    background: rgba(30,64,175,.10);
+    color: #1e3a8a;
+}
+
+.menu-group.open > .menu-group-toggle {
+    color: #1e3a8a;
+    background: rgba(30,64,175,.12);
+    font-weight: 900;
+}
+
+.menu-group-toggle .caret {
+    font-size: .65rem;
+    transition: transform .25s ease;
+    opacity: .55;
+    display: inline-block;
+}
+
+.menu-group.open > .menu-group-toggle .caret {
+    transform: rotate(90deg);
+    opacity: 1;
+}
+
+/* OCULTO por defecto — display:none es más robusto que max-height */
+.menu-group-items {
+    display: none;
+    padding: 4px 0;
+    animation: fadeSlideIn .2s ease;
+}
+
+.menu-group.open > .menu-group-items {
+    display: block;
+}
+
+@keyframes fadeSlideIn {
+    from { opacity: 0; transform: translateY(-4px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Scroll fino en el sidebar */
+.sidebar-menu {
+    overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255,255,255,.18) transparent;
+    scroll-behavior: smooth;
+}
+.sidebar-menu::-webkit-scrollbar { width: 6px; }
+.sidebar-menu::-webkit-scrollbar-track { background: transparent; }
+.sidebar-menu::-webkit-scrollbar-thumb {
+    background: rgba(255,255,255,.18);
+    border-radius: 3px;
+}
+.sidebar-menu::-webkit-scrollbar-thumb:hover {
+    background: rgba(255,255,255,.32);
+}
+
+
+/* ═══════════════════════════════════════════════════════════════
+   TOP-HEADER · título nunca empuja los botones de acción
+   ═══════════════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+    .top-header {
+        gap: 8px !important;
+        flex-wrap: nowrap !important;
+    }
+    .top-header .page-title {
+        min-width: 0 !important;
+        flex: 1 1 auto !important;
+    }
+    .top-header .page-title h4,
+    .top-header .page-title small {
+        max-width: 100%;
+    }
+    .top-header .user-info {
+        gap: 6px !important;
+        flex-shrink: 0 !important;
+    }
+    .top-header .user-info .btn-outline-danger {
+        min-width: 36px;
+        flex-shrink: 0 !important;
+    }
+}
+
+@media (max-width: 500px) {
+    .top-header {
+        gap: 4px !important;
+        padding: 8px 10px !important;
+    }
+    .top-header .user-info {
+        gap: 4px !important;
+    }
+    /* El texto "Salir" del botón desaparece, queda solo el icono */
+    .top-header .user-info .btn-text {
+        display: none;
+    }
+    .top-header .user-info .btn-outline-danger {
+        padding: 0.25rem 0.45rem !important;
+        min-width: 32px;
+    }
+    .top-header .page-title h4 {
+        font-size: 0.88rem !important;
+    }
+}
+
+
+
+/* ═══════════════════════════════════════════════════════════════
+   TOP-HEADER · título centrado (2 líneas máx) · iconos garantizados
+   ═══════════════════════════════════════════════════════════════ */
+.top-header {
+    align-items: center !important;
+    flex-wrap: nowrap !important;
+    min-height: 60px;
+}
+
+.top-header .page-title {
+    /* Asegurar el centrado aunque el h4 sea 1 línea */
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    align-items: center !important;
+    text-align: center !important;
+    padding: 4px 8px !important;
+    min-width: 0 !important;
+    flex: 1 1 auto !important;
+}
+
+.top-header .page-title h4 {
+    /* Asegurar 2 líneas centradas con clamp */
+    display: -webkit-box !important;
+    -webkit-line-clamp: 2 !important;
+    -webkit-box-orient: vertical !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: normal !important;
+    text-align: center !important;
+    line-height: 1.2 !important;
+    max-height: calc(1.2em * 2) !important;
+    word-break: break-word !important;
+    overflow-wrap: anywhere !important;
+    width: 100% !important;
+}
+
+.top-header .page-title small {
+    text-align: center !important;
+    width: 100% !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+}
+
+/* Iconos y botones del user-info: NUNCA se encogen */
+.top-header .user-info {
+    flex-shrink: 0 !important;
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+    gap: 8px !important;
+}
+
+.top-header .user-info > * {
+    flex-shrink: 0 !important;
+}
+
+/* En móvil: botón Salir solo con icono (ya está) pero garantizar tamaño */
+@media (max-width: 640px) {
+    .top-header .page-title h4 {
+        font-size: 0.82rem !important;
+    }
+    .top-header .user-info .btn-outline-danger {
+        min-width: 36px;
+        min-height: 36px;
+        padding: 6px !important;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .top-header .user-info .avatar {
+        width: 34px;
+        height: 34px;
+        flex-shrink: 0;
+    }
+    .top-header .notif-badge {
+        min-width: 36px;
+        min-height: 36px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+}
+
+@media (max-width: 400px) {
+    .top-header .page-title h4 {
+        font-size: 0.75rem !important;
+    }
+    .top-header .user-info {
+        gap: 4px !important;
+    }
+    .top-header .user-info .btn-outline-danger,
+    .top-header .user-info .notif-badge {
+        min-width: 32px;
+        min-height: 32px;
+    }
+}
+
 </style>
 
 {% block extra_css %}{% endblock %}
@@ -1249,250 +1499,187 @@
 
 <nav class="sidebar-menu">
 
-<a href="{% url 'publico:home' %}" class="menu-item"
-   style="border-bottom: 2px solid #e9ecef; margin-bottom: 8px;">
-    <span class="emoji">🏠</span><span class="text">Inicio</span>
-</a>
-
-<a href="{% url 'roles:notificaciones' %}" class="menu-item">
-    <span class="emoji">🔔</span><span class="text">Notificaciones</span>
-</a>
-
-<a href="{% url 'usuarios:perfil_cliente' %}" class="menu-item">
-    <span class="emoji">👤</span><span class="text">Mi Perfil</span>
-</a>
-
-<a href="{% url 'publico:faq' %}" class="menu-item">
-    <span class="emoji">❓</span><span class="text">Preguntas Frecuentes</span>
-</a>
-<a href="{% url 'publico:charada' %}" class="menu-item"><i class="fas fa-magic"></i> La Charada</a>
-
-{# ═══════════════════════════════════════════════════════════════════ #}
-{# AUDITOR — Menú de supervisión, sin escritura (excepto crear resultado) #}
-{# ═══════════════════════════════════════════════════════════════════ #}
 {% if user|has_role:'auditor' %}
-
-    <div class="menu-separator">Auditoría</div>
-
-    <a href="{% url 'jugadas:mis_apuestas' %}" class="menu-item">
-        <span class="emoji">📋</span><span class="text">Apuestas de la Red</span>
-    </a>
-    <a href="{% url 'usuarios:mis_movimientos' %}" class="menu-item">
-      <i class="fas fa-book"></i>
-      <span>Mis movimientos</span>
-    </a>
-
-
-    <a href="{% url 'roles:historial_movimientos' %}" class="menu-item">
-        <span class="emoji">💸</span><span class="text">Movimientos</span>
-    </a>
-
-    <a href="{% url 'roles:historial_cuadres' %}" class="menu-item">
-        <span class="emoji">📊</span><span class="text">Cuadres Diarios</span>
-    </a>
-
-    <div class="menu-separator">Resultados</div>
-
-    <a href="{% url 'resultados:resultados' %}" class="menu-item">
-        <span class="emoji">📊</span><span class="text">Resultados</span>
-    </a>
-
-    <a href="{% url 'resultados:todos_los_ganadores' %}" class="menu-item">
-        <span class="emoji">🏅</span><span class="text">Todos los Ganadores</span>
-    </a>
-
-    <a href="{% url 'resultados:crear_resultado' %}" class="menu-item">
-        <span class="emoji">📝</span><span class="text">Crear Resultado</span>
-    </a>
-
+  <div class="menu-group">
+    <div class="menu-group-toggle"><span class="group-emoji">🏠</span><span>Principal</span><span class="caret">▶</span></div>
+    <div class="menu-group-items">
+      <a href="/" class="menu-item"><span class="emoji">🏠</span><span class="text">Inicio</span></a>
+      <a href="{% url 'roles:notificaciones' %}" class="menu-item"><span class="emoji">🔔</span><span class="text">Notificaciones</span></a>
+      <a href="{% url 'usuarios:perfil_cliente' %}" class="menu-item"><span class="emoji">👤</span><span class="text">Mi Perfil</span></a>
+      <a href="{% url 'publico:faq' %}" class="menu-item"><span class="emoji">❓</span><span class="text">Preguntas Frecuentes</span></a>
+      <a href="{% url 'publico:charada' %}" class="menu-item"><span class="emoji">🎴</span><span class="text">La Charada</span></a>
+    </div>
+  </div>
+  <div class="menu-group">
+    <div class="menu-group-toggle"><span class="group-emoji">🔍</span><span>Auditoría</span><span class="caret">▶</span></div>
+    <div class="menu-group-items">
+      <a href="{% url 'jugadas:mis_apuestas' %}" class="menu-item"><span class="emoji">📋</span><span class="text">Apuestas de la Red</span></a>
+      <a href="{% url 'usuarios:mis_movimientos' %}" class="menu-item"><span class="emoji">📒</span><span class="text">Mis Movimientos</span></a>
+      <a href="{% url 'roles:historial_movimientos' %}" class="menu-item"><span class="emoji">💸</span><span class="text">Movimientos</span></a>
+      <a href="{% url 'roles:historial_cuadres' %}" class="menu-item"><span class="emoji">📊</span><span class="text">Cuadres Diarios</span></a>
+    </div>
+  </div>
+  <div class="menu-group">
+    <div class="menu-group-toggle"><span class="group-emoji">📊</span><span>Resultados</span><span class="caret">▶</span></div>
+    <div class="menu-group-items">
+      <a href="{% url 'resultados:resultados' %}" class="menu-item"><span class="emoji">📊</span><span class="text">Resultados</span></a>
+      <a href="{% url 'resultados:todos_los_ganadores' %}" class="menu-item"><span class="emoji">🏅</span><span class="text">Todos los Ganadores</span></a>
+      <a href="{% url 'resultados:crear_resultado' %}" class="menu-item"><span class="emoji">📝</span><span class="text">Crear Resultado</span></a>
+    </div>
+  </div>
 {% else %}
 
-    {# ═══════════════════════════════════════════════════════════════ #}
-    {# SECCIÓN JUGAR — para todos los demás roles #}
-    {# ═══════════════════════════════════════════════════════════════ #}
-    <div class="menu-separator">Jugar</div>
-
-    <a href="{% url 'sorteos:lista_sorteos' %}" class="menu-item">
-        <span class="emoji">🎯</span><span class="text">Sorteos</span>
-    </a>
-
-    <div class="menu-item dropdown">
-        <a class="dropdown-toggle" href="#" id="menuJugar" role="button"
-           onclick="event.preventDefault(); event.stopPropagation(); toggleDropdownJugar(event);">
-            <span class="emoji">🎮</span>
-            <span class="text">Apostar</span>
-            <span class="caret">▼</span>
-        </a>
-        <ul class="dropdown-menu dropdown-menu-dark" id="dropdownJugar">
-            <li>
-                <a href="{% url 'jugadas:apostar' %}" class="dropdown-item">
-                    <span class="emoji">🎲</span> Apostar
-                </a>
-            </li>
-            <li>
-                <a href="{% url 'jugadas:superparlet' %}" class="dropdown-item">
-                    <span class="emoji">⭐</span> Superparlet
-                </a>
-            </li>
-        </ul>
+  <div class="menu-group">
+    <div class="menu-group-toggle"><span class="group-emoji">🏠</span><span>Principal</span><span class="caret">▶</span></div>
+    <div class="menu-group-items">
+      <a href="/" class="menu-item"><span class="emoji">🏠</span><span class="text">Inicio</span></a>
+      <a href="{% url 'roles:notificaciones' %}" class="menu-item"><span class="emoji">🔔</span><span class="text">Notificaciones</span></a>
+      <a href="{% url 'usuarios:perfil_cliente' %}" class="menu-item"><span class="emoji">👤</span><span class="text">Mi Perfil</span></a>
+      <a href="{% url 'publico:faq' %}" class="menu-item"><span class="emoji">❓</span><span class="text">Preguntas Frecuentes</span></a>
+      <a href="{% url 'publico:charada' %}" class="menu-item"><span class="emoji">🎴</span><span class="text">La Charada</span></a>
+      <a href="{% url 'publico:contacto' %}" class="menu-item"><span class="emoji">📞</span><span class="text">Contacto</span></a>
+      <span class="menu-item" style="opacity:.55;cursor:not-allowed;"><span class="emoji">📊</span><span class="text">Estadísticas <small>(próx.)</small></span></span>
     </div>
+  </div>
 
-    <a href="{% url 'jugadas:mis_apuestas' %}" class="menu-item">
-        <span class="emoji">📋</span><span class="text">Mis Apuestas</span>
-    </a>
-    <a href="{% url 'usuarios:mis_movimientos' %}" class="menu-item">
-      <i class="fas fa-book"></i>
-      <span>Mis movimientos</span>
-    </a>
+  <div class="menu-group">
+    <div class="menu-group-toggle"><span class="group-emoji">🎲</span><span>Jugar</span><span class="caret">▶</span></div>
+    <div class="menu-group-items">
+      <a href="{% url 'jugadas:apostar' %}" class="menu-item"><span class="emoji">🎲</span><span class="text">Apostar</span></a>
+      <a href="{% url 'jugadas:superparlet' %}" class="menu-item"><span class="emoji">⭐</span><span class="text">Superparlet</span></a>
+      <span class="menu-item" style="opacity:.55;cursor:not-allowed;"><span class="emoji">🎟️</span><span class="text">Rifas <small>(próx.)</small></span></span>
+      <a href="{% url 'jugadas:mis_apuestas' %}" class="menu-item"><span class="emoji">📋</span><span class="text">Mis Apuestas</span></a>
+    </div>
+  </div>
 
-    {% if user|has_any_role:'banco,superadmin,supervisor,auditor' %}
-        <a href="{% url 'resultados:crear_resultado' %}" class="menu-item">
-            <span class="emoji">📝</span><span class="text">Crear Resultado</span>
-        </a>
-    {% endif %}
+  <div class="menu-group">
+    <div class="menu-group-toggle"><span class="group-emoji">💰</span><span>Finanzas</span><span class="caret">▶</span></div>
+    <div class="menu-group-items">
+      {% if user|has_role:'cliente' %}
+        <a href="{% url 'resultados:mis_premios' %}" class="menu-item"><span class="emoji">🏆</span><span class="text">Mis Premios</span></a>
+        <a href="{% url 'jugadas:mis_apuestas' %}" class="menu-item"><span class="emoji">📋</span><span class="text">Mis Apuestas</span></a>
+        <a href="{% url 'usuarios:mis_movimientos' %}" class="menu-item"><span class="emoji">📒</span><span class="text">Mis Movimientos</span></a>
+        <a href="{% url 'roles:mis_solicitudes_todas' %}" class="menu-item"><span class="emoji">📨</span><span class="text">Mis Solicitudes</span></a>
+        <a href="{% url 'roles:solicitar' 'retiro' %}" class="menu-item"><span class="emoji">💸</span><span class="text">Solicitar Retiro</span></a>
+        <a href="{% url 'roles:mis_postpagos' %}" class="menu-item"><span class="emoji">💳</span><span class="text">Mis Postpagos</span></a>
+        <a href="{% url 'roles:mis_prestamos' %}" class="menu-item"><span class="emoji">🏦</span><span class="text">Mis Préstamos</span></a>
+        <a href="{% url 'usuarios:mis_fondos' %}" class="menu-item"><span class="emoji">💰</span><span class="text">Mis Fondos</span></a>
+        <a href="{% url 'roles:vias_pago_de_mi_gestor' %}" class="menu-item"><span class="emoji">💵</span><span class="text">Recargar Cuenta</span></a>
+        <a href="{% url 'publico:promociones' %}" class="menu-item"><span class="emoji">🎁</span><span class="text">Promociones</span></a>
+        <a href="{% url 'usuarios:referidos_cliente' 
+%}" class="menu-item"><span class="emoji">👥</span><span class="text">Mis Referidos</span></a>
+        
+      {% endif %}
 
-    {% if user|has_role:'superadmin' %}
-        <a href="{% url 'sorteos:sorteo_crear' %}" class="menu-item">
-            <span class="emoji">➕</span><span class="text">Crear Sorteo</span>
-        </a>
-    {% endif %}
-
-    <a href="{% url 'resultados:resultados' %}" class="menu-item">
-        <span class="emoji">📊</span><span class="text">Resultados</span>
-    </a>
-
-    <a href="{% url 'resultados:todos_los_ganadores' %}" class="menu-item">
-        <span class="emoji">🏅</span><span class="text">Todos los Ganadores</span>
-    </a>
-
-    <a href="{% url 'resultados:mis_premios' %}" class="menu-item">
-        <span class="emoji">🏆</span><span class="text">Mis Premios</span>
-    </a>
-    <a href="{% url 'roles:ranking_apostadores' %}" class="menu-item">
-        <span class="emoji">🏆</span><span class="text">Top Apostadores</span>
-    </a>
-
-    {% if user|has_role:'cliente' %}
-
-        <div class="menu-separator">Mis Finanzas</div>
-
-        <a href="{% url 'roles:mis_solicitudes_todas' %}" class="menu-item">
-            <span class="emoji">📨</span><span class="text">Mis Solicitudes</span>
-        </a>
-
-        <a href="{% url 'roles:solicitar' 'retiro' %}" class="menu-item">
-            <span class="emoji">💸</span><span class="text">Solicitar Retiro</span>
-        </a>
-
-        <a href="{% url 'roles:mis_postpagos' %}" class="menu-item">
-            <span class="emoji">💳</span><span class="text">Mis Postpagos</span>
-        </a>
-
-        {% if mostrar_link_prestamos %}
-        <a href="{% url 'roles:mis_prestamos' %}" class="menu-item menu-prestamos-link {% if not perfil_prestamo_badge_visto %}menu-item-nuevo{% endif %}">
-            <i class="fas fa-hand-holding-usd"></i> <span class="text">Préstamos</span>
-            {% if not perfil_prestamo_badge_visto %}<span class="badge-nuevo">Nuevo</span>{% endif %}
-        </a>
+      {% if user|has_any_role:'comercial,banco,superadmin' %}
+        <a href="{% url 'roles:cuadre_diario' %}" class="menu-item"><span class="emoji">📊</span><span class="text">Cuadre Diario</span></a>
+        <a href="{% url 'roles:mi_rentabilidad' %}" class="menu-item"><span class="emoji">💰</span><span class="text">Mi Rentabilidad</span></a>
+        <a href="{% url 'roles:historial_movimientos' %}" class="menu-item"><span class="emoji">📒</span><span class="text">Historial Movimientos</span></a>
+        
+        
+        <a href="{% url 'resultados:mis_premios' %}" class="menu-item"><span class="emoji">🏆</span><span class="text">Mis Premios</span></a>
+        {% if user|has_role:'comercial' %}
+          
+          
+          
         {% endif %}
-        <a href="{% url 'usuarios:mis_fondos' %}" class="menu-item">
-            <span class="emoji">💰</span><span class="text">Mis Fondos</span>
-        </a>
+      {% endif %}
+    </div>
+  </div>
 
-        {# FIX_D1_RECARGAR_CUENTA_V1 #}
-        <a href="{% url 'roles:vias_pago_de_mi_gestor' %}" class="menu-item">
-            <span class="emoji">💰</span><span class="text">Recargar mi cuenta</span>
-        </a>
+  <div class="menu-group">
+    <div class="menu-group-toggle"><span class="group-emoji">📋</span><span>Gestiones</span><span class="caret">▶</span></div>
+    <div class="menu-group-items">
+      {% if user|has_role:'cliente' %}
+        <a href="{% url 'roles:mis_vias_pago' %}" class="menu-item"><span class="emoji">💳</span><span class="text">Mis Vías de Pago</span></a>
+        <a href="{% url 'roles:mis_solicitudes_todas' %}" class="menu-item"><span class="emoji">📨</span><span class="text">Mis Solicitudes</span></a>
+      {% endif %}
 
-        <a href="{% url 'usuarios:referidos_cliente' %}" class="menu-item">
-            <span class="emoji">👥</span><span class="text">Mis Referidos</span>
-        </a>
-
-        <a href="{% url 'publico:promociones' %}" class="menu-item">
-            <span class="emoji">🎁</span><span class="text">Promociones</span>
-        </a>
-
-    {% endif %}
-
-    {% if user|has_any_role:'comercial,banco,superadmin' %}
-
-        <div class="menu-separator">Operaciones</div>
-
-        <a href="{% url 'roles:cuadre_diario' %}" class="menu-item">
-            <span class="emoji">📊</span><span class="text">Cuadre Diario</span>
-        </a>
-        <a href="{% url 'roles:mi_rentabilidad' %}" class="menu-item">
-            <span class="emoji">💰</span><span class="text">Mi Rentabilidad</span>
-        </a>
-
-        <a href="{% url 'roles:gestiones_banco' %}" class="menu-item">
-            <span class="emoji">📋</span><span class="text">Gestiones</span>
-        </a>
-
-        <a href="{% url 'roles:gestionar_solicitudes_todas' %}" class="menu-item">
-            <span class="emoji">📨</span><span class="text">Solicitudes</span>
-        </a><a href="#" id="sidebarRetiroLink" class="menu-item" style="cursor:pointer;">
-            <i class="fas fa-hand-holding-usd"></i>
-            <span>Retiro rápido</span>
-        </a>
-        <a href="{% url 'roles:historial_movimientos' %}" class="menu-item">
-          <i class="fas fa-book"></i>
-          <span>Historial movimientos</span>
-        </a>
-
-        <a href="{% url 'roles:configurar_mensajes' %}" class="menu-item">
-            <span class="emoji">💬</span><span class="text">Mensajes de bienvenida</span>
-        </a>
-
+      {% if user|has_any_role:'comercial,banco,superadmin' %}
+        <a href="{% url 'roles:gestiones_banco' %}" class="menu-item"><span class="emoji">📋</span><span class="text">Gestiones</span></a>
+        <a href="{% url 'roles:gestionar_solicitudes_todas' %}" class="menu-item"><span class="emoji">📨</span><span class="text">Solicitudes</span></a>
+        
+        
+        
+        <a href="#" id="sidebarRetiroLink" class="menu-item" style="cursor:pointer;"><span class="emoji">💸</span><span class="text">Retiro Rápido</span></a>
+        <a href="{% url 'roles:configurar_mensajes' %}" class="menu-item"><span class="emoji">💬</span><span class="text">Mensajes Bienvenida</span></a>
         <a href="{% url 'roles:lista_clientes' %}" class="menu-item">
-            <span class="emoji">👥</span>
-            <span class="text">
-                {% if user|has_role:'superadmin' %}Usuarios
-                {% elif user|has_role:'banco' %}Clientes y Comerciales
-                {% else %}Mis Clientes{% endif %}
-            </span>
+          <span class="emoji">👥</span>
+          <span class="text">{% if user|has_role:'superadmin' %}Usuarios{% elif user|has_role:'banco' %}Clientes y Comerciales{% else %}Mis Clientes{% endif %}</span>
         </a>
+        {% if user|has_role:'comercial' %}
+          
+        {% endif %}
+      {% endif %}
+    </div>
+  </div>
 
-    {% if user|has_role:'comercial' %}
-        <a href="#" id="sidebarLimitesLink" class="menu-item" style="cursor:pointer;">
-            <i class="fas fa-chart-bar"></i>
-            <span>Límites y dosis</span>
-        </a>
-    {% endif %}
+  {% if user|has_any_role:'banco,superadmin,supervisor' %}
+  <div class="menu-group">
+    <div class="menu-group-toggle"><span class="group-emoji">🎯</span><span>Sorteos</span><span class="caret">▶</span></div>
+    <div class="menu-group-items">
+      <a href="{% url 'sorteos:lista_sorteos' %}" class="menu-item"><span class="emoji">🎯</span><span class="text">Sorteos</span></a>
+      <a href="{% url 'resultados:crear_resultado' %}" class="menu-item"><span class="emoji">📝</span><span class="text">Crear Resultado</span></a>
+      <a href="{% url 'resultados:resultados' %}" class="menu-item"><span class="emoji">📊</span><span class="text">Resultados</span></a>
+      <a href="{% url 'resultados:todos_los_ganadores' %}" class="menu-item"><span class="emoji">🏅</span><span class="text">Todos Ganadores</span></a>
+      {% if user|has_role:'superadmin' %}
+      <a href="{% url 'sorteos:sorteo_crear' %}" class="menu-item"><span class="emoji">➕</span><span class="text">Crear Sorteo</span></a>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
 
-    {% if user|has_role:'superadmin' %}
-        <a href="#" id="sidebarLimitesLinkSA" class="menu-item" style="cursor:pointer;">
-            <i class="fas fa-chart-bar"></i>
-            <span>Límites y dosis (Red)</span>
-        </a>
-    {% endif %}
+  {% if user|has_role:'comercial' %}
+  <div class="menu-group">
+    <div class="menu-group-toggle"><span class="group-emoji">🗂️</span><span>Recursos</span><span class="caret">▶</span></div>
+    <div class="menu-group-items">
+      <a href="{% url 'comercial:mis_recursos' %}" class="menu-item"><span class="emoji">⭐</span><span class="text">Mis Recursos</span></a>
+    </div>
+  </div>
+  {% endif %}
 
-    {% endif %}
+  {% if user|has_any_role:'banco,superadmin' %}
+  <div class="menu-group">
+    <div class="menu-group-toggle"><span class="group-emoji">🎚️</span><span>Recursos y Límites</span><span class="caret">▶</span></div>
+    <div class="menu-group-items">
+      <a href="{% url 'roles:ascender_usuario' %}" class="menu-item"><span class="emoji">⬆️</span><span class="text">Ascender / Descender</span></a>
+      <a href="{% url 'roles:asignar_recursos_banco' %}" class="menu-item"><span class="emoji">🗂️</span><span class="text">Asignar Recursos</span></a>
+      <a href="{% url 'roles:asignar_recursos_limites' %}" class="menu-item"><span class="emoji">🎚️</span><span class="text">Asignar Límites</span></a>
+      <a href="{% url 'banco:gestion_limites' %}" class="menu-item"><span class="emoji">📊</span><span class="text">Gestión Límites</span></a>
+      <a href="{% url 'banco:gestion_dosis' %}" class="menu-item"><span class="emoji">💊</span><span class="text">Gestión Dosis</span></a>
+      <a href="#" id="sidebarLimitesLinkSA" class="menu-item" style="cursor:pointer;">
+        <span class="emoji">🎚️</span>
+        <span class="text">{% if user|has_role:'superadmin' %}Límites y Dosis (Red){% else %}Límites y Dosis{% endif %}</span>
+      </a>
+      <a href="{% url 'roles:panel_sobrelimites' %}" class="menu-item"><span class="emoji">🔓</span><span class="text">Sobre Límites</span></a>
+      <a href="{% url 'roles:gestionar_comisiones' %}" class="menu-item"><span class="emoji">⚙️</span><span class="text">Comisiones</span></a>
+    </div>
+  </div>
+  {% endif %}
 
-    {% if user|has_any_role:'banco,superadmin' %}
+  {% if user|has_any_role:'banco,superadmin' %}
+  <div class="menu-group">
+    <div class="menu-group-toggle"><span class="group-emoji">📈</span><span>Reportes</span><span class="caret">▶</span></div>
+    <div class="menu-group-items">
+      <a href="{% url 'banco:reporte_ventas' %}" class="menu-item"><span class="emoji">📊</span><span class="text">Reporte Ventas</span></a>
+      <a href="{% url 'banco:resumen_rentabilidad' %}" class="menu-item"><span class="emoji">💰</span><span class="text">Resumen Rentabilidad</span></a>
+      {% if user|has_role:'superadmin' %}
+      
+      {% endif %}
+      
+    </div>
+  </div>
+  {% endif %}
 
-                <div class="menu-separator">Recursos</div>
-        <a href="{% url 'roles:asignar_recursos_banco' %}" class="menu-item">
-            <span class="emoji">🗂️</span><span class="text">Asignar Recursos</span>
-        </a>
-        <a href="{% url 'roles:asignar_recursos_limites' %}" class="menu-item">
-            <span class="emoji">🎚️</span><span class="text">Asignar Límites</span>
-        </a>
-        <div class="menu-separator">Comisiones</div>
-
-        <a href="{% url 'roles:ascender_usuario' %}" class="menu-item">
-
-
-            <span class="emoji">⬆️</span><span class="text">Ascender/Descender</span>
-
-
-        </a>
-
-
-        <a href="{% url 'roles:gestionar_comisiones' %}" class="menu-item">
-            <span class="emoji">⚙️</span><span class="text">Comisiones</span>
-        </a>
-
-    {% endif %}
+  <div class="menu-group">
+    <div class="menu-group-toggle"><span class="group-emoji">🏆</span><span>Tops</span><span class="caret">▶</span></div>
+    <div class="menu-group-items">
+      <a href="{% url 'roles:ranking_apostadores' %}" class="menu-item"><span class="emoji">🏆</span><span class="text">Ranking Apostadores</span></a>
+      <a href="{% url 'resultados:todos_los_ganadores' %}" class="menu-item"><span class="emoji">🥇</span><span class="text">Ganadores</span></a>
+      <a href="{% url 'roles:top_numeros' %}" class="menu-item"><span class="emoji">🎯</span><span class="text">Límites por Número</span></a>
+      <a href="{% url 'roles:top_limites' %}" class="menu-item"><span class="emoji">⚠️</span><span class="text">Sorteos al Límite</span></a>
+    </div>
+  </div>
 
 {% endif %}
 
@@ -2742,6 +2929,513 @@
 })();
 </script>
 {% endif %}
+
+
+{% if user.is_authenticated %}
+<!-- PREMIO_OVERLAY_V1 -->
+<style>
+.premio-overlay{
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 999999;
+    max-width: 420px;
+    width: calc(100% - 48px);
+    display: none;
+    animation: premioIn .8s cubic-bezier(.2,1.4,.4,1);
+}
+@keyframes premioIn{
+    0%   { opacity: 0; transform: translateY(40px) rotate(15deg) scale(.6); }
+    60%  { opacity: 1; transform: translateY(-8px) rotate(-4deg) scale(1.05); }
+    100% { opacity: 1; transform: translateY(0) rotate(-2deg) scale(1); }
+}
+.premio-card{
+    background: linear-gradient(135deg, #ff3b3b 0%, #d00000 50%, #a00000 100%);
+    color: #fff;
+    padding: 28px 26px 22px;
+    border-radius: 18px;
+    box-shadow:
+        0 24px 60px rgba(208, 0, 0, .55),
+        0 0 0 3px rgba(255, 255, 255, .95),
+        0 0 0 6px rgba(255, 59, 59, .35);
+    transform: rotate(-2deg);
+    position: relative;
+    border: 2px solid rgba(255, 255, 255, .5);
+    text-align: center;
+}
+.premio-card::before{
+    content: "🎉";
+    position: absolute;
+    top: -22px;
+    left: 50%;
+    transform: translateX(-50%) rotate(2deg);
+    font-size: 2.6rem;
+    filter: drop-shadow(0 4px 10px rgba(0,0,0,.35));
+    animation: premioFloat 2.5s ease-in-out infinite;
+}
+@keyframes premioFloat{
+    0%,100%{ transform: translateX(-50%) rotate(2deg) translateY(0); }
+    50%    { transform: translateX(-50%) rotate(2deg) translateY(-6px); }
+}
+.premio-close{
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: rgba(255,255,255,.2);
+    border: none;
+    color: #fff;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 900;
+    transition: .2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.premio-close:hover{
+    background: rgba(255,255,255,.4);
+    transform: scale(1.1) rotate(90deg);
+}
+.premio-card h2{
+    font-family: 'Outfit', system-ui, sans-serif;
+    font-size: 1.35rem;
+    font-weight: 900;
+    margin: 12px 0 4px;
+    letter-spacing: -.01em;
+    text-transform: uppercase;
+    text-shadow: 0 2px 6px rgba(0,0,0,.3);
+}
+.premio-card .premio-sub{
+    font-size: .78rem;
+    opacity: .9;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 18px;
+    font-weight: 700;
+}
+.premio-card .premio-monto{
+    font-family: 'Outfit', system-ui, sans-serif;
+    font-size: 2.8rem;
+    font-weight: 900;
+    line-height: 1;
+    margin-bottom: 14px;
+    color: #fff;
+    text-shadow:
+        0 0 20px rgba(255,255,255,.5),
+        0 4px 12px rgba(0,0,0,.4);
+    letter-spacing: -.02em;
+}
+.premio-card .premio-detalle{
+    background: rgba(255,255,255,.15);
+    padding: 12px 16px;
+    border-radius: 10px;
+    font-size: .88rem;
+    line-height: 1.5;
+    margin-bottom: 18px;
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255,255,255,.2);
+}
+.premio-card .premio-detalle strong{ font-weight: 800; }
+.premio-card .premio-actions{
+    display: flex;
+    gap: 10px;
+    flex-direction: column;
+}
+.premio-btn-wa{
+    background: #25D366;
+    color: #fff;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 999px;
+    font-weight: 800;
+    font-size: .95rem;
+    cursor: pointer;
+    transition: .25s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    box-shadow: 0 4px 14px rgba(37, 211, 102, .4);
+    font-family: inherit;
+}
+.premio-btn-wa:hover{
+    background: #1fbe58;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(37, 211, 102, .55);
+}
+.premio-btn-wa:active{ transform: translateY(0) scale(.97); }
+@media(max-width:520px){
+    .premio-overlay{ bottom: 12px; right: 12px; left: 12px; width: auto; }
+    .premio-card{ padding: 24px 20px 18px; }
+    .premio-card .premio-monto{ font-size: 2.2rem; }
+    .premio-card h2{ font-size: 1.15rem; }
+}
+
+
+/* ═══════════════════════════════════════════════════════════════
+   EMOJIS ANIMADOS · coloridos · sidebar
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Base: todos los emojis del sidebar tienen transición y sombra de color */
+.sidebar-menu .menu-item .emoji {
+    display: inline-block;
+    font-size: 1.15em;
+    line-height: 1;
+    transition: transform .3s cubic-bezier(.2,1.4,.4,1), filter .3s ease;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,.15));
+    will-change: transform;
+}
+
+/* Hover del item → emoji salta y brilla */
+.sidebar-menu .menu-item:hover .emoji {
+    transform: scale(1.25) translateY(-2px);
+    filter: drop-shadow(0 0 8px rgba(251,191,36,.8))
+            drop-shadow(0 2px 4px rgba(0,0,0,.2));
+}
+
+/* Item ACTIVO (la página actual) → emoji con animación continua + glow */
+.sidebar-menu .menu-item.active .emoji,
+.sidebar-menu .menu-item[aria-current="page"] .emoji {
+    animation: emojiPulse 2s ease-in-out infinite;
+    filter: drop-shadow(0 0 10px rgba(251,191,36,.9))
+            drop-shadow(0 2px 6px rgba(251,191,36,.5));
+}
+
+@keyframes emojiPulse {
+    0%, 100% { transform: scale(1) rotate(0deg); }
+    25%      { transform: scale(1.1) rotate(-6deg); }
+    75%      { transform: scale(1.1) rotate(6deg); }
+}
+
+/* Algunos emojis con flotación suave continua (para dar vida sin saturar) */
+.sidebar-menu .menu-item:nth-child(odd) .emoji {
+    animation: emojiFloat 4s ease-in-out infinite;
+}
+
+@keyframes emojiFloat {
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(-2px); }
+}
+
+/* Pausar la flotación cuando hay hover (para que el bounce se vea limpio) */
+.sidebar-menu .menu-item:hover .emoji {
+    animation: emojiBounce .5s cubic-bezier(.2,1.4,.4,1);
+}
+
+@keyframes emojiBounce {
+    0%   { transform: scale(1) translateY(0); }
+    40%  { transform: scale(1.3) translateY(-5px) rotate(-8deg); }
+    70%  { transform: scale(1.15) translateY(-2px) rotate(4deg); }
+    100% { transform: scale(1.25) translateY(-2px) rotate(0); }
+}
+
+/* Emojis de los grupos colapsables (caret / títulos) con brillo */
+.menu-group-toggle:hover .caret {
+    color: #fbbf24;
+    text-shadow: 0 0 8px rgba(251,191,36,.7);
+    transform: scale(1.2) rotate(90deg) !important;
+}
+
+/* Cuando el grupo está abierto, el título tiene un pequeño brillo */
+.menu-group.open > .menu-group-toggle {
+    text-shadow: 0 0 6px rgba(30,64,175,.3);
+}
+
+/* En móvil, animaciones más sutiles (ahorrar batería) */
+@media (max-width: 768px) {
+    .sidebar-menu .menu-item .emoji {
+        animation: none !important;
+    }
+    .sidebar-menu .menu-item:hover .emoji,
+    .sidebar-menu .menu-item.active .emoji {
+        transform: scale(1.1);
+        filter: drop-shadow(0 0 6px rgba(251,191,36,.7));
+    }
+}
+
+/* Respeta usuarios con "reduce motion" (accesibilidad) */
+@media (prefers-reduced-motion: reduce) {
+    .sidebar-menu .menu-item .emoji,
+    .sidebar-menu .menu-item:hover .emoji,
+    .sidebar-menu .menu-item.active .emoji {
+        animation: none !important;
+        transform: none !important;
+    }
+}
+
+
+/* ═══════════════════════════════════════════════════════════════
+   EMOJI DE GRUPO · título colapsable
+   ═══════════════════════════════════════════════════════════════ */
+
+.menu-group-toggle .group-emoji {
+    display: inline-block;
+    font-size: 1.15em;
+    line-height: 1;
+    filter: drop-shadow(0 1px 3px rgba(0,0,0,.15));
+    transition: transform .3s cubic-bezier(.2,1.4,.4,1), filter .3s ease;
+    will-change: transform;
+}
+
+/* Caret alineado a la derecha (por si quitamos space-between) */
+.menu-group-toggle .caret {
+    margin-left: auto;
+}
+
+/* Hover en la cabecera del grupo → emoji salta y brilla */
+.menu-group-toggle:hover .group-emoji {
+    transform: scale(1.25) translateY(-2px) rotate(-6deg);
+    filter: drop-shadow(0 0 8px rgba(251,191,36,.85))
+            drop-shadow(0 1px 3px rgba(0,0,0,.2));
+}
+
+/* Grupo abierto → emoji con pulso suave continuo + glow dorado */
+.menu-group.open > .menu-group-toggle .group-emoji {
+    animation: groupEmojiPulse 2.5s ease-in-out infinite;
+    filter: drop-shadow(0 0 8px rgba(251,191,36,.7))
+            drop-shadow(0 1px 3px rgba(0,0,0,.2));
+}
+
+@keyframes groupEmojiPulse {
+    0%, 100% { transform: scale(1) rotate(0deg); }
+    50%      { transform: scale(1.15) rotate(5deg); }
+}
+
+/* Cuando el grupo está abierto, el emoji queda destacado */
+.menu-group.open > .menu-group-toggle {
+    gap: 10px;
+}
+
+/* Móvil: sin animación continua (batería) */
+@media (max-width: 768px) {
+    .menu-group.open > .menu-group-toggle .group-emoji {
+        animation: none;
+        filter: drop-shadow(0 1px 3px rgba(0,0,0,.2));
+    }
+}
+
+/* Accesibilidad */
+@media (prefers-reduced-motion: reduce) {
+    .menu-group-toggle .group-emoji,
+    .menu-group.open > .menu-group-toggle .group-emoji {
+        animation: none !important;
+        transform: none !important;
+    }
+}
+</style>
+
+<div id="premioOverlay" class="premio-overlay" role="alert" aria-live="polite">
+    <div class="premio-card">
+        <button class="premio-close" type="button" onclick="cerrarPremioOverlay()" aria-label="Cerrar">✕</button>
+        <h2>¡Felicitaciones!</h2>
+        <div class="premio-sub">Fuiste premiado</div>
+        <div class="premio-monto" id="premioMonto">$0.00</div>
+        <div class="premio-detalle" id="premioDetalle"></div>
+        <div class="premio-actions">
+            <button class="premio-btn-wa" type="button" onclick="compartirPremioWhatsApp()">
+                📱 Compartir por WhatsApp
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+(function(){
+    "use strict";
+    var premiosCola = [];
+    var premioActual = null;
+
+    function fetchPremios(){
+        fetch("{% url 'roles:api_premios_pendientes' %}", {
+            credentials: 'same-origin',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(function(r){ return r.json(); })
+        .then(function(data){
+            premiosCola = (data.premios || []).slice();
+            if (premiosCola.length > 0) mostrarSiguiente();
+        })
+        .catch(function(err){ console.warn('[premio]', err); });
+    }
+
+    function mostrarSiguiente(){
+        if (premiosCola.length === 0){ ocultarOverlay(); return; }
+        premioActual = premiosCola[0];
+        var montoEl = document.getElementById('premioMonto');
+        var detEl = document.getElementById('premioDetalle');
+        if (montoEl) montoEl.textContent = premioActual.monto_fmt;
+        if (detEl){
+            var lineas = [];
+            if (premioActual.sorteo) lineas.push('<strong>' + esc(premioActual.sorteo) + '</strong>');
+            if (premioActual.razon)  lineas.push(esc(premioActual.razon));
+            detEl.innerHTML = lineas.join('<br>');
+        }
+        var ov = document.getElementById('premioOverlay');
+        if (ov){ ov.style.display = 'block'; }
+    }
+
+    function ocultarOverlay(){
+        var ov = document.getElementById('premioOverlay');
+        if (ov) ov.style.display = 'none';
+    }
+
+    function esc(s){
+        return String(s == null ? '' : s)
+            .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+            .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+    }
+
+    window.cerrarPremioOverlay = function(){
+        if (premioActual && premioActual.id){
+            fetch('/roles/api/marcar-premio-visto/' + premioActual.id + '/', {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            }).catch(function(){});
+        }
+        premiosCola.shift();
+        if (premiosCola.length > 0) mostrarSiguiente();
+        else { ocultarOverlay(); premioActual = null; }
+    };
+
+    window.compartirPremioWhatsApp = function(){
+        if (!premioActual) return;
+        var txt = '🏆 ¡Gané ' + premioActual.monto_fmt + ' en LottoBooM! 🎰\n' +
+                  '🎯 Sorteo: ' + (premioActual.sorteo || 'N/A') + '\n' +
+                  (premioActual.razon ? '🎲 ' + premioActual.razon + '\n' : '') +
+                  '¡Únete tú también! 🍀';
+        var url = 'https://wa.me/?text=' + encodeURIComponent(txt);
+        window.open(url, '_blank', 'noopener,noreferrer');
+    };
+
+    if (document.readyState === 'loading'){
+        document.addEventListener('DOMContentLoaded', fetchPremios);
+    } else {
+        fetchPremios();
+    }
+})();
+</script>
+{% endif %}
+
+
+
+
+
+<script>
+/* ═══════════════════════════════════════════════════════════════
+   SIDEBAR · Acordeón estricto (solo UN grupo abierto a la vez)
+   ═══════════════════════════════════════════════════════════════ */
+(function(){
+    'use strict';
+    var STORAGE_KEY = 'sidebar_acordeon_v2';
+    var grupos = Array.prototype.slice.call(document.querySelectorAll('.menu-group'));
+
+    if (grupos.length === 0) return;
+
+    // ── 1. Cerrar TODOS por defecto ──
+    grupos.forEach(function(g){
+        g.classList.remove('open');
+    });
+
+    // ── 2. Auto-abrir SOLO el grupo que contiene el link exacto activo ──
+    var path = window.location.pathname;
+    var abiertoAutomatico = null;
+
+    // Buscar link cuyo pathname coincida EXACTAMENTE con la URL actual
+    var links = document.querySelectorAll('.menu-group-items a.menu-item');
+    for (var i = 0; i < links.length; i++) {
+        var a = links[i];
+        try {
+            var href = a.getAttribute('href');
+            if (!href || href === '#' || href.charAt(0) === '{') continue;
+            if (a.pathname === path) {
+                var g = a.closest('.menu-group');
+                if (g) {
+                    abiertoAutomatico = g;
+                    break;
+                }
+            }
+        } catch(e) {}
+    }
+
+    if (abiertoAutomatico) {
+        abiertoAutomatico.classList.add('open');
+    }
+
+    // ── 3. Handler de click: acordeón ──
+    grupos.forEach(function(g){
+        var toggle = g.querySelector(':scope > .menu-group-toggle');
+        if (!toggle) return;
+
+        toggle.addEventListener('click', function(e){
+            e.preventDefault();
+            e.stopPropagation();
+
+            var yaAbierto = g.classList.contains('open');
+
+            // Cerrar TODOS
+            grupos.forEach(function(otro){
+                otro.classList.remove('open');
+            });
+
+            // Si estaba cerrado → abrir solo este
+            if (!yaAbierto) {
+                g.classList.add('open');
+                try {
+                    localStorage.setItem(STORAGE_KEY, g.dataset.gid || '');
+                } catch(e) {}
+            } else {
+                try {
+                    localStorage.removeItem(STORAGE_KEY);
+                } catch(e) {}
+            }
+        });
+    });
+
+    // ── 4. Asignar gid a cada grupo (para persistencia) ──
+    grupos.forEach(function(g, i){
+        if (!g.dataset.gid) g.dataset.gid = 'g' + i;
+    });
+
+    // ── 5. Restaurar estado guardado (opcional, solo si NO hay auto-open) ──
+    if (!abiertoAutomatico) {
+        try {
+            var saved = localStorage.getItem(STORAGE_KEY);
+            if (saved) {
+                grupos.forEach(function(g){
+                    if (g.dataset.gid === saved) g.classList.add('open');
+                });
+            }
+        } catch(e) {}
+    }
+})();
+</script>
+
+
+
+<script>
+/* EMOJI-ACTIVE: marcar el link del sidebar que corresponde a la URL actual */
+(function(){
+    var path = window.location.pathname;
+    var links = document.querySelectorAll('.sidebar-menu .menu-item[href]');
+    for (var i = 0; i < links.length; i++) {
+        try {
+            var a = links[i];
+            var href = a.getAttribute('href');
+            if (!href || href === '#' || href.charAt(0) === '{') continue;
+            // Coincidencia exacta
+            if (a.pathname === path) {
+                a.classList.add('active');
+                a.setAttribute('aria-current', 'page');
+                break;
+            }
+        } catch(e) {}
+    }
+})();
+</script>
 
 </body>
 </html>

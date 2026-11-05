@@ -12,7 +12,6 @@ from jugadas.models import Jugada
 from roles.models import Subordinacion, Comision, Fondo, MovimientoFondo, Notificacion
 from pagos.models import FormaPago
 
-
 # ============================================================
 # DECORADOR PARA COMERCIAL
 # ============================================================
@@ -29,7 +28,6 @@ def comercial_required(view_func):
             return redirect('publico:home')
         return view_func(request, *args, **kwargs)
     return wrapper
-
 
 # ============================================================
 # DASHBOARD DEL COMERCIAL
@@ -67,7 +65,6 @@ def dashboard_comercial(request):
         'bonos_activos': bonos_activos,
     }
     return render(request, 'comercial/dashboard_comercial.html', context)
-
 
 # ============================================================
 # RESUMEN DE VENTAS DEL COMERCIAL
@@ -125,7 +122,6 @@ def resumen_ventas_comercial(request):
         'fecha_referencia': fecha_referencia,
     }
     return render(request, 'comercial/resumen_ventas.html', context)
-
 
 # ============================================================
 # RECARGAR USUARIO (CLIENTE) POR PARTE DEL COMERCIAL
@@ -243,9 +239,6 @@ def recargar_usuario(request):
     # Usamos el mismo template que para superadmin/banco (puedes cambiarlo si quieres)
     return render(request, 'superadmin/recargar_usuario.html', context)
 
-
-
-
 # Agrega estas funciones al final de comercial/views.py
 
 @login_required
@@ -258,7 +251,6 @@ def lista_clientes(request):
     ).distinct().order_by('username')
     return render(request, 'comercial/lista_clientes.html', {'clientes': clientes})
 
-
 @login_required
 @comercial_required
 def historial_recargas(request):
@@ -269,14 +261,12 @@ def historial_recargas(request):
     ).select_related('receptor', 'forma_pago').order_by('-fecha')
     return render(request, 'comercial/historial_recargas.html', {'recargas': recargas})
 
-
 @login_required
 @comercial_required
 def mis_comisiones(request):
     """Vista para ver las comisiones del comercial."""
     comisiones = Comision.objects.filter(comercial=request.user).order_by('-periodo')
     return render(request, 'comercial/mis_comisiones.html', {'comisiones': comisiones})
-
 
 @login_required
 @comercial_required
@@ -285,16 +275,93 @@ def resumen_financiero(request):
     # Lógica para calcular ingresos, gastos, etc.
     return render(request, 'comercial/resumen_financiero.html', {})
 
-
 @login_required
 @comercial_required
 def perfil_comercial(request):
     """Perfil del comercial."""
     return render(request, 'comercial/perfil.html', {'user': request.user})
 
-
 @login_required
 @comercial_required
 def configuracion_comercial(request):
     """Configuración del comercial."""
     return render(request, 'comercial/configuracion.html', {})
+
+# ═══════════════════════════════════════════════════════════════
+# MIS RECURSOS — vista consolidada (comerciales) — OPTIMIZADA
+# ═══════════════════════════════════════════════════════════════
+MAX_ROWS = 200  # por pestaña, evita respuestas gigantes
+
+# ═══════════════════════════════════════════════════════════════
+# MIS RECURSOS — consolidado comercial (OPTIMIZADO v3)
+# ═══════════════════════════════════════════════════════════════
+MAX_ROWS = 200
+
+def mis_recursos_view(request):
+    from django.shortcuts import render
+    from django.http import HttpResponseForbidden
+    from django.db.models import Avg, Sum, Count
+    from roles.templatetags.roles_extras import has_role
+    from roles.models import (
+        Comision, LimiteApuesta, Sobrelimite, DosisPago,
+        RecursoAsignado, Fondo,
+    )
+
+    if not request.user.is_authenticated:
+        return HttpResponseForbidden("Autenticación requerida")
+
+    u = request.user
+    if not (has_role(u, 'comercial') or has_role(u, 'banco') or has_role(u, 'superadmin')):
+        return HttpResponseForbidden("Acceso restringido")
+
+    com_qs = Comision.objects.filter(comercial=u, activo=True)
+    lim_qs = LimiteApuesta.objects.filter(comercial=u, activo=True)
+    dos_qs = DosisPago.objects.filter(comercial=u, activo=True)
+    sob_qs = Sobrelimite.objects.filter(comercial=u)
+    rec_qs = RecursoAsignado.objects.filter(comercial=u, activo=True)
+    fon_qs = Fondo.objects.filter(usuario=u, activo=True)
+
+    counts = {
+        'comisiones': com_qs.count(),
+        'limites': lim_qs.count(),
+        'dosis': dos_qs.count(),
+        'sobrelimites': sob_qs.count(),
+        'recursos': rec_qs.count(),
+        'fondos': fon_qs.count(),
+    }
+
+    comision_prom = float(com_qs.aggregate(a=Avg('porcentaje'))['a'] or 0)
+    total_limite = float(lim_qs.aggregate(s=Sum('monto_maximo'))['s'] or 0)
+    total_sobrelimite = float(lim_qs.aggregate(s=Sum('monto_sobrelimite'))['s'] or 0)
+    total_dosis = float(dos_qs.aggregate(s=Sum('monto_por_peso'))['s'] or 0)
+    total_fondos = float(fon_qs.aggregate(s=Sum('monto'))['s'] or 0)
+
+    sl_stats = sob_qs.values('estado_compensacion').annotate(n=Count('id'))
+    sl_por_estado = {row['estado_compensacion'] or 'pendiente': row['n'] for row in sl_stats}
+
+    comisiones = list(com_qs.select_related('sorteo', 'forma_juego', 'banco').order_by('sorteo__nombre')[:MAX_ROWS])
+    limites = list(lim_qs.select_related('sorteo', 'forma_juego', 'forma_pago').order_by('sorteo__nombre')[:MAX_ROWS])
+    dosis = list(dos_qs.select_related('sorteo', 'forma_juego', 'forma_pago').order_by('sorteo__nombre')[:MAX_ROWS])
+    sobrelimites = list(sob_qs.select_related('jugada', 'banco', 'banco_solicitado').order_by('-fecha')[:MAX_ROWS])
+    recursos = list(rec_qs.select_related('sorteo', 'forma_juego', 'forma_pago', 'banco').order_by('sorteo__nombre')[:MAX_ROWS])
+    fondos = list(fon_qs.select_related('sorteo', 'forma_pago').order_by('sorteo__nombre')[:MAX_ROWS])
+
+    return render(request, 'comercial/mis_recursos.html', {
+        'comercial': u,
+        'comisiones': comisiones,
+        'limites': limites,
+        'dosis': dosis,
+        'sobrelimites': sobrelimites,
+        'recursos': recursos,
+        'fondos': fondos,
+        'counts': counts,
+        'max_rows': MAX_ROWS,
+        'truncado': {k: v > MAX_ROWS for k, v in counts.items()},
+        'comision_prom': comision_prom,
+        'total_limite': total_limite,
+        'total_sobrelimite': total_sobrelimite,
+        'total_dosis': total_dosis,
+        'total_fondos': total_fondos,
+        'num_sobrelimites_pendientes': sl_por_estado.get('pendiente', 0),
+        'sl_por_estado': sl_por_estado,
+    })

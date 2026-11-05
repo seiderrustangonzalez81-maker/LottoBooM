@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Sorteos al Límite{% endblock %}
+{% block page_title %}⚠️ Sorteos al Límite{% endblock %}
+{% block page_subtitle %}Ranking por % de límite consumido{% endblock %}
+{% block extra_css %}
+<style>
+.tl-wrap{background:#f4f6fb;padding:14px 14px 60px;border-radius:16px;min-height:70vh}
+.tl-head{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;background:#fff;padding:14px;border-radius:12px;box-shadow:0 2px 8px rgba(15,23,42,.06);border:1px solid #e5e8f0}
+.tl-field{display:flex;flex-direction:column;gap:4px;min-width:200px}
+.tl-field label{font-size:.68rem;font-weight:800;color:#475569;text-transform:uppercase;letter-spacing:.5px}
+.tl-field input{padding:10px 12px;border:1.5px solid #d4d9e6;border-radius:8px;background:#fff;font-size:.85rem;font-weight:600;min-height:42px}
+.tl-list{background:#fff;border:1.5px solid #e5e8f0;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(15,23,42,.05)}
+.tl-item{display:grid;grid-template-columns:auto 1fr auto;gap:14px;align-items:center;padding:14px 18px;border-bottom:1px solid #e5e8f0;transition:background .15s}
+.tl-item:last-child{border-bottom:none}
+.tl-item:hover{background:#fafbfe}
+.tl-item.tl-critico{background:linear-gradient(90deg,#fef2f2,transparent 60%);border-left:4px solid #dc2626}
+.tl-rank{width:44px;height:44px;border-radius:10px;background:#eef2ff;color:#4f46e5;display:grid;place-items:center;font-weight:800;font-family:Consolas,monospace;font-size:1rem;flex-shrink:0}
+.tl-item.tl-critico .tl-rank{background:#fee2e2;color:#dc2626}
+.tl-info{min-width:0}
+.tl-name{font-weight:800;font-size:.9rem;color:#0f172a;margin:0 0 3px}
+.tl-meta{font-size:.75rem;color:#64748b;margin-bottom:6px}
+.tl-bar{height:8px;background:#e5e8f0;border-radius:999px;overflow:hidden;max-width:400px}
+.tl-bar__fill{height:100%;background:linear-gradient(90deg,#10b981,#059669);border-radius:999px;transition:width .4s}
+.tl-bar__fill.tl-warn{background:linear-gradient(90deg,#f59e0b,#d97706)}
+.tl-bar__fill.tl-danger{background:linear-gradient(90deg,#ef4444,#dc2626)}
+.tl-val{text-align:right;font-family:Consolas,monospace;font-weight:800;font-size:1.05rem;color:#0f172a;white-space:nowrap}
+.tl-val.tl-val-danger{color:#dc2626}
+.tl-empty{padding:40px 20px;text-align:center;color:#64748b;background:#fff;border:2px dashed #d4d9e6;border-radius:12px}
+.tl-empty__icon{font-size:2.5rem;margin-bottom:8px;opacity:.6}
+@media (max-width:640px){
+  .tl-item{grid-template-columns:auto 1fr;gap:10px;padding:12px 14px}
+  .tl-val{grid-column:1 / -1;text-align:left;font-size:.95rem}
+  .tl-bar{max-width:100%}
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="tl-wrap">
+  {% if sin_gestor %}
+    <div class="tl-empty">
+      <div class="tl-empty__icon">👤</div>
+      <p><strong>Sin gestor asignado.</strong></p>
+    </div>
+  {% else %}
+  <form method="get" class="tl-head">
+    <div class="tl-field">
+      <label>📅 Fecha</label>
+      <input type="date" name="fecha" value="{{ fecha_str }}" onchange="this.form.submit()">
+    </div>
+  </form>
+
+  {% if ranking %}
+  <div class="tl-list">
+    {% for r in ranking %}
+    <div class="tl-item {% if r.critico %}tl-critico{% endif %}">
+      <div class="tl-rank">{{ forloop.counter }}</div>
+      <div class="tl-info">
+        <div class="tl-name">{{ r.sorteo }}</div>
+        <div class="tl-meta">💳 {{ r.forma_pago }} · Libre: ${{ r.libre|floatformat:0 }}</div>
+        <div class="tl-bar">
+          <div class="tl-bar__fill {% if r.pct_usado >= 90 %}tl-danger{% elif r.pct_usado >= 70 %}tl-warn{% endif %}" style="width:{{ r.pct_usado }}%"></div>
+        </div>
+      </div>
+      <div class="tl-val {% if r.critico %}tl-val-danger{% endif %}">{{ r.pct_usado }}%</div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="tl-empty">
+    <div class="tl-empty__icon">📭</div>
+    <p><strong>Sin límites configurados</strong></p>
+    <p>Prueba con otra fecha o contacta al banco.</p>
+  </div>
+  {% endif %}
+  {% endif %}
+</div>
+{% endblock %}
