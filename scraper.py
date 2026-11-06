@@ -1,14 +1,11 @@
 import json
 import re
+import traceback
 from datetime import datetime
-import requests
 from bs4 import BeautifulSoup
+from playwright.sync_api import sync_playwright
 
 URL_CONECTATE = "https://www.conectate.com.do/loterias/pagina/ultimos-resultados"
-HEADERS = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-                  "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36"
-}
 
 def extraer_picks(texto):
     nums = re.findall(r"\b\d{1,5}\b", texto)
@@ -16,24 +13,37 @@ def extraer_picks(texto):
     return nums
 
 def scrape_conectate():
-    print("Descargando Conectate...")
-    resp = requests.get(URL_CONECTATE, headers=HEADERS, timeout=30)
-    resp.raise_for_status()
-
-    with open("debug_conectate.html", "w", encoding="utf-8") as f:
-        f.write(resp.text)
-
-    soup = BeautifulSoup(resp.text, "html.parser")
+    print("Iniciando Playwright...")
     resultados = []
+    
+    with sync_playwright() as p:
+        browser = p.chromium.launch(headless=True)
+        page = browser.new_page()
+        
+        print("Entrando a la página...")
+        page.goto(URL_CONECTATE, wait_until="domcontentloaded", timeout=60000)
+        page.wait_for_timeout(8000) 
+        
+        print("Extrayendo HTML renderizado...")
+        html = page.content()
+        
+        with open("debug_conectate.html", "w", encoding="utf-8") as f:
+            f.write(html)
+            
+        browser.close()
+
+    soup = BeautifulSoup(html, "html.parser")
 
     for tabla in soup.find_all("table"):
         caption = tabla.find("caption")
         encabezados = tabla.find_all("th")
         nombre = None
+        
         if caption:
             nombre = caption.get_text(strip=True)
         elif encabezados:
             nombre = encabezados[0].get_text(strip=True)
+            
         if not nombre:
             continue
 
@@ -41,8 +51,10 @@ def scrape_conectate():
             celdas = [c.get_text(" ", strip=True) for c in fila.find_all("td")]
             if not celdas:
                 continue
+                
             texto_fila = " ".join(celdas)
             nums = extraer_picks(texto_fila)
+            
             if len(nums) < 2:
                 continue
 
@@ -76,7 +88,8 @@ def main():
     try:
         todos.extend(scrape_conectate())
     except Exception as e:
-        print(f"Error Conectate: {e}")
+        print("❌ OCURRIÓ UN ERROR:")
+        print(traceback.format_exc())
 
     with open("resultados.json", "w", encoding="utf-8") as f:
         json.dump(todos, f, ensure_ascii=False, indent=2)
