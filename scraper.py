@@ -1,119 +1,60 @@
 import json
 import re
-import traceback
 from datetime import datetime
 from playwright.sync_api import sync_playwright
 
 URL_CONECTATE = "https://www.conectate.com.do/loterias/pagina/ultimos-resultados"
-URL_TEXAS = "https://www.lotteryusa.com/texas/"
-URL_TENNESSEE = "https://www.lotteryusa.com/tennessee/"
-URL_NEW_JERSEY = "https://www.lotteryusa.com/new-jersey/"
-
-def extraer_puros(texto):
-    # Extrae solo números de 1 o 2 dígitos limpios
-    return re.findall(r"(?<![A-Za-z0-9$])\d{1,2}(?![A-Za-z0-9$])", texto)
-
-def scrape_conectate(page):
-    print("🔍 Buscando en Conectate (Dominicanas)...")
-    resultados = []
-    try:
-        page.goto(URL_CONECTATE, wait_until="domcontentloaded", timeout=30000)
-        page.wait_for_timeout(8000)
-        lineas = page.inner_text("body").split("\n")
-        
-        # Mapeo directo a los nombres de tu base de datos
-        juegos = ["Leidsa", "Loteka", "Nacional", "Primera", "Quinielón", "Anguila"]
-        
-        for juego in juegos:
-            for i, linea in enumerate(lineas):
-                if juego.lower() in linea.lower():
-                    # Leemos las siguientes 3 líneas para atrapar los números
-                    bloque = " ".join(lineas[i:i+3])
-                    nums = extraer_puros(bloque)
-                    if len(nums) >= 2:
-                        resultados.append({
-                            "sorteo_nombre": juego,
-                            "numeros": nums[:3], # Tomamos 3 números
-                            "fecha": datetime.now().strftime("%Y-%m-%d"),
-                            "fuente": "conectate"
-                        })
-                    break
-    except Exception as e:
-        print(f"⚠️ Conectate falló: {e}")
-    return resultados
-
-def scrape_estado(page, url, estado, juegos_buscar):
-    print(f"🔍 Buscando en {estado}...")
-    resultados = []
-    try:
-        page.goto(url, wait_until="domcontentloaded", timeout=30000)
-        page.wait_for_timeout(5000)
-        lineas = page.inner_text("body").split("\n")
-        
-        for juego in juegos_buscar:
-            for i, linea in enumerate(lineas):
-                if juego.lower() in linea.lower():
-                    # Buscamos si es Midday, Evening o Night en las cercanías
-                    contexto = " ".join(lineas[i:i+3]).lower()
-                    turno = ""
-                    if "midday" in contexto: turno = "Midday"
-                    elif "evening" in contexto: turno = "Evening"
-                    elif "night" in contexto: turno = "Night"
-                    elif "morning" in contexto: turno = "Morning"
-                    
-                    bloque = " ".join(lineas[i:i+3])
-                    nums = extraer_puros(bloque)
-                    
-                    if len(nums) >= 3:
-                        resultados.append({
-                            "sorteo_nombre": f"{estado} {juego} {turno}".strip(),
-                            "numeros": nums[:4],
-                            "fecha": datetime.now().strftime("%Y-%m-%d"),
-                            "fuente": estado.lower()
-                        })
-                    break
-    except Exception as e:
-        print(f"⚠️ {estado} falló: {e}")
-    return resultados
 
 def main():
-    todos = []
+    resultados = []
+    print("🔍 Iniciando búsqueda SOLO de Anguila en Conectate...")
+    
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
         page = browser.new_page()
-        page.set_default_timeout(30000)
         
-        # 1. Dominicanas
-        try: todos.extend(scrape_conectate(page))
-        except Exception as e: print(e)
-        
-        # 2. Texas (Pick 3, Pick 4, Cash 5)
-        try: todos.extend(scrape_estado(page, URL_TEXAS, "Texas", ["Pick 3", "Pick 4", "Cash 5"]))
-        except Exception as e: print(e)
-        
-        # 3. Tennessee (Cash 3, Cash 4)
-        try: todos.extend(scrape_estado(page, URL_TENNESSEE, "Tennessee", ["Cash 3", "Cash 4"]))
-        except Exception as e: print(e)
-
-        # 4. New Jersey (Pick 3, Pick 4)
-        try: todos.extend(scrape_estado(page, URL_NEW_JERSEY, "New Jersey", ["Pick 3", "Pick 4"]))
-        except Exception as e: print(e)
-        
+        try:
+            page.goto(URL_CONECTATE, wait_until="domcontentloaded", timeout=30000)
+            page.wait_for_timeout(8000) # Esperar a que carguen los números
+            
+            # Buscamos todas las filas de la tabla
+            filas = page.locator("tr").all()
+            for fila in filas:
+                try:
+                    texto = fila.inner_text().strip()
+                    # Si la fila menciona Anguila
+                    if "Anguila" in texto:
+                        lineas = [l.strip() for l in texto.split("\n") if l.strip()]
+                        nombre = lineas[0] # Ej: "Anguila 8 AM"
+                        
+                        # Buscamos los códigos (Ej: F41, C184, C247) o números puros
+                        # Esta regex captura 1 letra seguida de números, o números solos de 1 a 3 dígitos
+                        nums = re.findall(r'[A-Z]\d{1,3}|\b\d{1,3}\b', texto)
+                        
+                        # Filtramos la fecha (que suele tener 4 dígitos o barras) y la hora
+                        nums_limpios = [n for n in nums if not (len(n) == 4 and n.startswith("20")) and ":" not in n]
+                        
+                        # Si encontramos al menos 3 resultados (Fijo, Corrida 1, Corrida 2)
+                        if len(nums_limpios) >= 3:
+                            resultados.append({
+                                "sorteo_nombre": nombre,
+                                "numeros": nums_limpios[-3:], # Tomamos los últimos 3
+                                "fecha": datetime.now().strftime("%Y-%m-%d"),
+                                "fuente": "conectate"
+                            })
+                except Exception as e:
+                    pass # Ignorar filas vacías o con error
+                    
+        except Exception as e:
+            print(f"❌ Error: {e}")
+            
         browser.close()
 
-    # Limpieza de duplicados
-    vistos = set()
-    limpios = []
-    for r in todos:
-        if r['numeros']:
-            firma = f"{r['sorteo_nombre']}-{'-'.join(r['numeros'])}"
-            if firma not in vistos:
-                vistos.add(firma)
-                limpios.append(r)
-
+    # Guardar el archivo
     with open("resultados.json", "w", encoding="utf-8") as f:
-        json.dump(limpios, f, ensure_ascii=False, indent=2)
-    print(f"💾 Guardados {len(limpios)} resultados reales.")
+        json.dump(resultados, f, ensure_ascii=False, indent=2)
+        
+    print(f"💾 Guardados {len(resultados)} resultados de Anguila.")
 
 if __name__ == "__main__":
     main()
