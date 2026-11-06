@@ -2,7 +2,6 @@ import json
 import re
 import traceback
 from datetime import datetime
-from bs4 import BeautifulSoup
 from playwright.sync_api import sync_playwright
 
 URL_CONECTATE = "https://www.conectate.com.do/loterias/pagina/ultimos-resultados"
@@ -10,35 +9,35 @@ URL_FLORIDA = "https://www.flalottery.com/winningNumbers.do"
 URL_GEORGIA = "https://www.lotteryusa.com/georgia/"
 
 def limpiar_numeros(lista_nums):
-    # Filtra para quedarnos solo con números de 1 o 2 dígitos
     return [n for n in lista_nums if n.isdigit() and len(n) <= 2]
 
 def scrape_conectate(page):
     print("🔍 Buscando en Conectate...")
     resultados = []
     page.goto(URL_CONECTATE, wait_until="domcontentloaded", timeout=60000)
-    page.wait_for_timeout(8000)
-    soup = BeautifulSoup(page.content(), "html.parser")
+    page.wait_for_timeout(10000) # Esperar a que carguen los números (JavaScript)
 
-    # Conectate usa tablas para mostrar los resultados
-    for tabla in soup.find_all("table"):
-        texto_tabla = tabla.get_text(" ", strip=True)
-        # Verificamos si la tabla es de un sorteo conocido
-        if any(k in texto_tabla for k in ["Leidsa", "Loteka", "Nacional", "Primera", "Quinielón"]):
-            for fila in tabla.find_all("tr"):
-                celdas = [c.get_text(" ", strip=True) for c in fila.find_all("td")]
-                if len(celdas) >= 2:
-                    nombre = celdas[0]
-                    # Buscamos números en las celdas de resultados
-                    nums = limpiar_numeros(re.findall(r"\b\d{1,2}\b", " ".join(celdas[1:])))
-                    if len(nums) >= 2:
-                        resultados.append({
-                            "sorteo_nombre": nombre,
-                            "fecha": datetime.now().strftime("%Y-%m-%d"),
-                            "hora": datetime.now().strftime("%H:%M:%S"),
-                            "numeros": nums[:3], # Pick 3
-                            "fuente": "conectate",
-                        })
+    # Buscamos todas las filas de tabla (tr) en la página
+    filas = page.locator("tr").all()
+    for fila in filas:
+        try:
+            texto = fila.inner_text().strip()
+            # Si la fila contiene el nombre de una lotería dominicana
+            if any(k in texto for k in ["Leidsa", "Loteka", "Nacional", "Primera", "Quinielón", "Real"]):
+                # Extraemos el nombre (primera palabra o frase)
+                nombre = texto.split("\n")[0].strip()
+                # Buscamos números en el texto de la fila
+                nums = limpiar_numeros(re.findall(r"\b\d{1,2}\b", texto))
+                if len(nums) >= 2:
+                    resultados.append({
+                        "sorteo_nombre": nombre,
+                        "fecha": datetime.now().strftime("%Y-%m-%d"),
+                        "hora": datetime.now().strftime("%H:%M:%S"),
+                        "numeros": nums[:3], # Guardamos máximo 3 números
+                        "fuente": "conectate",
+                    })
+        except:
+            pass
     print(f"✅ Conectate: {len(resultados)} resultados.")
     return resultados
 
@@ -47,25 +46,25 @@ def scrape_florida(page):
     resultados = []
     page.goto(URL_FLORIDA, wait_until="domcontentloaded", timeout=60000)
     page.wait_for_timeout(10000)
-    soup = BeautifulSoup(page.content(), "html.parser")
 
-    # La página de Florida tiene tablas con la clase 'winning-numbers'
-    for tabla in soup.find_all("table", class_=re.compile("winning-numbers", re.I)):
-        for fila in tabla.find_all("tr"):
-            celdas = [c.get_text(" ", strip=True) for c in fila.find_all("td")]
-            if len(celdas) >= 2:
-                nombre = celdas[0]
-                if "PICK" in nombre.upper():
-                    cant = 3 if "3" in nombre else (4 if "4" in nombre else (5 if "5" in nombre else 2))
-                    nums = limpiar_numeros(re.findall(r"\b\d{1,2}\b", " ".join(celdas[1:])))
-                    if len(nums) >= cant:
-                        resultados.append({
-                            "sorteo_nombre": nombre,
-                            "fecha": datetime.now().strftime("%Y-%m-%d"),
-                            "hora": datetime.now().strftime("%H:%M:%S"),
-                            "numeros": nums[:cant],
-                            "fuente": "florida",
-                        })
+    filas = page.locator("tr").all()
+    for fila in filas:
+        try:
+            texto = fila.inner_text().strip()
+            if "PICK" in texto.upper():
+                nombre = texto.split("\n")[0].strip()
+                cant = 3 if "3" in nombre else (4 if "4" in nombre else (5 if "5" in nombre else 2))
+                nums = limpiar_numeros(re.findall(r"\b\d{1,2}\b", texto))
+                if len(nums) >= cant:
+                    resultados.append({
+                        "sorteo_nombre": nombre,
+                        "fecha": datetime.now().strftime("%Y-%m-%d"),
+                        "hora": datetime.now().strftime("%H:%M:%S"),
+                        "numeros": nums[:cant],
+                        "fuente": "florida",
+                    })
+        except:
+            pass
     print(f"✅ Florida: {len(resultados)} resultados.")
     return resultados
 
@@ -74,27 +73,25 @@ def scrape_georgia(page):
     resultados = []
     page.goto(URL_GEORGIA, wait_until="domcontentloaded", timeout=60000)
     page.wait_for_timeout(6000)
-    soup = BeautifulSoup(page.content(), "html.parser")
 
-    # LotteryUSA usa cajas con la clase 'game-card'
-    for tarjeta in soup.find_all("div", class_=re.compile("game-card", re.I)):
-        titulo = tarjeta.find("h3")
-        if not titulo: continue
-        
-        nombre_juego = titulo.get_text(strip=True)
-        if any(k in nombre_juego for k in ["Cash 3", "Cash 4", "Georgia Five", "Fantasy 5"]):
-            # Los números están en una lista <ul> con clase 'numbers'
-            lista_nums = tarjeta.find("ul", class_=re.compile("numbers", re.I))
-            if lista_nums:
-                nums = [li.get_text(strip=True) for li in lista_nums.find_all("li")]
-                if nums:
+    filas = page.locator("tr").all()
+    for fila in filas:
+        try:
+            texto = fila.inner_text().strip()
+            if any(k in texto for k in ["Cash 3", "Cash 4", "Georgia Five", "Fantasy 5"]):
+                nombre = texto.split("\n")[0].strip()
+                cant = 5 if "Five" in nombre or "Fantasy" in nombre else (4 if "4" in nombre else 3)
+                nums = limpiar_numeros(re.findall(r"\b\d{1,2}\b", texto))
+                if len(nums) >= cant:
                     resultados.append({
-                        "sorteo_nombre": nombre_juego,
+                        "sorteo_nombre": nombre,
                         "fecha": datetime.now().strftime("%Y-%m-%d"),
                         "hora": datetime.now().strftime("%H:%M:%S"),
-                        "numeros": nums,
+                        "numeros": nums[:cant],
                         "fuente": "georgia",
                     })
+        except:
+            pass
     print(f"✅ Georgia: {len(resultados)} resultados.")
     return resultados
 
