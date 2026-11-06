@@ -12,12 +12,12 @@ def scrape_enloteria(page):
     
     try:
         page.goto(URL_ENLOTERIA, wait_until="domcontentloaded", timeout=30000)
-        page.wait_for_timeout(5000) # Esperamos a que la página cargue completa
+        page.wait_for_timeout(5000) # Esperamos 5 segundos a que cargue la página completa
         
         html = page.content()
         soup = BeautifulSoup(html, "html.parser")
         
-        # Buscamos todas las tarjetas de sorteos (tienen el atributo data-lottery-name)
+        # Buscamos todas las tarjetas de sorteos
         tarjetas = soup.find_all("div", attrs={"data-lottery-name": True})
         
         for tarjeta in tarjetas:
@@ -27,7 +27,7 @@ def scrape_enloteria(page):
             bolas = tarjeta.find_all("div", class_="result-number")
             numeros = [b.get_text(strip=True) for b in bolas]
             
-            # Si la tarjeta tiene números (es decir, el sorteo ya salió), los guardamos
+            # Si la tarjeta tiene números (es decir, el sorteo ya salió)
             if numeros:
                 resultados.append({
                     "sorteo_nombre": nombre_raw,
@@ -57,7 +57,7 @@ def main():
             
         browser.close()
 
-    # Guardar en JSON
+    # Guardar los resultados en el archivo JSON
     with open("resultados.json", "w", encoding="utf-8") as f:
         json.dump(todos, f, ensure_ascii=False, indent=2)
     print(f"💾 Archivo resultados.json guardado con {len(todos)} sorteos.")
