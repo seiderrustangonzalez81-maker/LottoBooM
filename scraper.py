@@ -24,61 +24,34 @@ def scrape_conectate():
         page.goto(URL_CONECTATE, wait_until="domcontentloaded", timeout=60000)
         page.wait_for_timeout(8000) 
         
-        print("Extrayendo HTML renderizado...")
         html = page.content()
-        
         with open("debug_conectate.html", "w", encoding="utf-8") as f:
             f.write(html)
-            
         browser.close()
 
     soup = BeautifulSoup(html, "html.parser")
 
-    for tabla in soup.find_all("table"):
-        caption = tabla.find("caption")
-        encabezados = tabla.find_all("th")
-        nombre = None
+    # Buscar todos los enlaces que contengan resultados
+    for enlace in soup.find_all("a"):
+        texto = enlace.get_text(" ", strip=True)
         
-        if caption:
-            nombre = caption.get_text(strip=True)
-        elif encabezados:
-            nombre = encabezados[0].get_text(strip=True)
-            
-        if not nombre:
-            continue
-
-        for fila in tabla.find_all("tr"):
-            celdas = [c.get_text(" ", strip=True) for c in fila.find_all("td")]
-            if not celdas:
-                continue
+        # Verificar si el texto tiene un patrón de fecha y números (ej: "Lotería Nacional 20-12-2025 21:05 72 38 25")
+        if re.search(r"\d{2}-\d{2}-\d{4}\s+\d{2}:\d{2}", texto):
+            nums = extraer_picks(texto)
+            if len(nums) >= 2:
+                # El nombre del sorteo es la parte del texto antes de la fecha
+                nombre_juego = re.split(r"\d{2}-\d{2}-\d{4}", texto)[0].strip()
                 
-            texto_fila = " ".join(celdas)
-            nums = extraer_picks(texto_fila)
-            
-            if len(nums) < 2:
-                continue
-
-            picks = {"pick2": None, "pick3": None, "pick4": None, "pick5": None}
-            for n in nums:
-                if len(n) == 2 and not picks["pick2"]:
-                    picks["pick2"] = n
-                elif len(n) == 3 and not picks["pick3"]:
-                    picks["pick3"] = n
-                elif len(n) == 4 and not picks["pick4"]:
-                    picks["pick4"] = n
-                elif len(n) == 5 and not picks["pick5"]:
-                    picks["pick5"] = n
-
-            resultados.append({
-                "sorteo_nombre": nombre,
-                "fecha": datetime.now().strftime("%Y-%m-%d"),
-                "hora": datetime.now().strftime("%H:%M:%S"),
-                "pick2": picks["pick2"],
-                "pick3": picks["pick3"],
-                "pick4": picks["pick4"],
-                "pick5": picks["pick5"],
-                "fuente": "conectate",
-            })
+                resultados.append({
+                    "sorteo_nombre": nombre_juego,
+                    "fecha": datetime.now().strftime("%Y-%m-%d"),
+                    "hora": datetime.now().strftime("%H:%M:%S"),
+                    "pick2": nums[0] if len(nums) > 0 else None,
+                    "pick3": nums[1] if len(nums) > 1 else None,
+                    "pick4": nums[2] if len(nums) > 2 else None,
+                    "pick5": nums[3] if len(nums) > 3 else None,
+                    "fuente": "conectate",
+                })
 
     print(f"Resultados extraidos: {len(resultados)}")
     return resultados
