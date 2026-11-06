@@ -1,51 +1,32 @@
 [
   {
-    "sorteo_nombre": "Georgia 12:30 PM",
+    "sorteo_nombre": "Texas Pick 3 Evening",
     "numeros": [
       "3",
-      "3",
-      "4"
-    ],
-    "fecha": "2026-11-06",
-    "fuente": "georgia"
-  },
-  {
-    "sorteo_nombre": "Georgia 7 PM",
-    "numeros": [
-      "3",
-      "4",
-      "4"
-    ],
-    "fecha": "2026-11-06",
-    "fuente": "georgia"
-  },
-  {
-    "sorteo_nombre": "Georgia 11:34 PM",
-    "numeros": [
-      "4",
-      "4",
-      "4"
-    ],
-    "fecha": "2026-11-06",
-    "fuente": "georgia"
-  },
-  {
-    "sorteo_nombre": "Florida 1:35 PM",
-    "numeros": [
       "3",
       "3"
     ],
     "fecha": "2026-11-06",
-    "fuente": "florida"
+    "fuente": "texas"
   },
   {
-    "sorteo_nombre": "Florida 1:35 PM",
+    "sorteo_nombre": "Tennessee Cash 3 Midday",
+    "numeros": [
+      "3",
+      "3",
+      "3"
+    ],
+    "fecha": "2026-11-06",
+    "fuente": "tennessee"
+  },
+  {
+    "sorteo_nombre": "Tennessee Cash 4 Midday",
     "numeros": [
       "4",
       "4",
-      "5"
+      "4"
     ],
     "fecha": "2026-11-06",
-    "fuente": "florida"
+    "fuente": "tennessee"
   }
 ]
