@@ -5,91 +5,116 @@ from datetime import datetime
 from playwright.sync_api import sync_playwright
 
 URL_CONECTATE = "https://www.conectate.com.do/loterias/pagina/ultimos-resultados"
-URL_FLORIDA = "https://www.flalottery.com/winningNumbers.do"
+URL_FLORIDA = "https://www.lotteryusa.com/florida/"
 URL_GEORGIA = "https://www.lotteryusa.com/georgia/"
 
-def scrape_conectate(page):
-    print("🔍 Buscando en Conectate...")
+def extraer_puros(texto):
+    # Solo extrae números de 1 o 2 dígitos que NO estén pegados a letras o $.
+    return re.findall(r"(?<![A-Za-z0-9$])\d{1,2}(?![A-Za-z0-9$])", texto)
+
+def scrape_georgia(page):
+    print("🔍 Georgia...")
     resultados = []
     try:
-        page.goto(URL_CONECTATE, wait_until="domcontentloaded", timeout=25000)
+        page.goto(URL_GEORGIA, wait_until="domcontentloaded", timeout=30000)
         page.wait_for_timeout(5000)
-        # Buscamos los enlaces que tengan los resultados
-        enlaces = page.locator("a").all()
-        for enlace in enlaces:
-            texto = enlace.inner_text().strip()
-            if any(k in texto for k in ["Leidsa", "Loteka", "Nacional", "Primera"]):
-                nums = re.findall(r"\b\d{1,2}\b", texto)
-                if len(nums) >= 3:
-                    resultados.append({
-                        "sorteo_nombre": texto.split("\n")[0].strip(),
-                        "fecha": datetime.now().strftime("%Y-%m-%d"),
-                        "numeros": nums[:3],
-                        "fuente": "conectate",
-                    })
+        lineas = page.inner_text("body").split("\n")
+        
+        reglas = [
+            ("Cash 3 Midday", "Georgia 12:30 PM", 3, True),
+            ("Cash 4 Midday", "Georgia 12:30 PM", 4, True),
+            ("Cash 3 Evening", "Georgia 7 PM", 3, True),
+            ("Cash 4 Evening", "Georgia 7 PM", 4, True),
+            ("Cash 3 Night", "Georgia 11:34 PM", 3, True),
+            ("Cash 4 Night", "Georgia 11:34 PM", 4, True)
+        ]
+        
+        for buscar, nombre_db, cant, quitar_primer in reglas:
+            for i, linea in enumerate(lineas):
+                if buscar in linea:
+                    bloque = " ".join(lineas[i:i+5])
+                    nums = extraer_puros(bloque)
+                    if quitar_primer and len(nums) > 0 and nums[0] == str(cant):
+                        nums = nums[1:]
+                    if len(nums) >= cant:
+                        resultados.append({
+                            "sorteo_nombre": nombre_db,
+                            "numeros": nums[:cant],
+                            "fecha": datetime.now().strftime("%Y-%m-%d"),
+                            "fuente": "georgia"
+                        })
+                    break
     except Exception as e:
-        print(f"⚠️ Conectate falló: {e}")
-    print(f"✅ Conectate: {len(resultados)} resultados.")
+        print(f"⚠️ Georgia falló: {e}")
     return resultados
 
 def scrape_florida(page):
-    print("🔍 Buscando en Florida Lottery...")
+    print("🔍 Florida...")
     resultados = []
     try:
-        page.goto(URL_FLORIDA, wait_until="domcontentloaded", timeout=25000)
+        page.goto(URL_FLORIDA, wait_until="domcontentloaded", timeout=30000)
         page.wait_for_timeout(5000)
-        # Buscamos los contenedores de resultados
-        bloques = page.locator("div.winning-numbers, table").all()
-        for bloque in bloques:
-            texto = bloque.inner_text().strip()
-            if "PICK" in texto.upper():
-                cant = 3 if "3" in texto else (4 if "4" in texto else 2)
-                nums = re.findall(r"(?<![A-Za-z$])\b\d{1,2}\b(?![A-Za-z$])", texto)
-                if len(nums) >= cant:
-                    nombre = "PICK 3" if "3" in texto else ("PICK 4" if "4" in texto else "PICK 2")
-                    resultados.append({
-                        "sorteo_nombre": nombre,
-                        "fecha": datetime.now().strftime("%Y-%m-%d"),
-                        "numeros": nums[:cant],
-                        "fuente": "florida",
-                    })
+        lineas = page.inner_text("body").split("\n")
+        
+        # Buscamos Pick 3, Pick 4, etc. en cualquier parte de la página
+        reglas = [
+            ("Pick 2", "Florida 1:35 PM", 2, True),
+            ("Pick 3", "Florida 1:35 PM", 3, True),
+            ("Pick 4", "Florida 1:35 PM", 4, True),
+            ("Pick 5", "Florida 1:35 PM", 5, True)
+        ]
+        
+        for buscar, nombre_db, cant, quitar_primer in reglas:
+            for i, linea in enumerate(lineas):
+                if buscar.lower() in linea.lower() and "midday" not in linea.lower():
+                    bloque = " ".join(lineas[i:i+5])
+                    nums = extraer_puros(bloque)
+                    if quitar_primer and len(nums) > 0 and nums[0] == str(cant):
+                        nums = nums[1:]
+                    if len(nums) >= cant:
+                        resultados.append({
+                            "sorteo_nombre": nombre_db,
+                            "numeros": nums[:cant],
+                            "fecha": datetime.now().strftime("%Y-%m-%d"),
+                            "fuente": "florida"
+                        })
+                    break
     except Exception as e:
         print(f"⚠️ Florida falló: {e}")
-    print(f"✅ Florida: {len(resultados)} resultados.")
     return resultados
 
-def scrape_georgia(page):
-    print("🔍 Buscando en Georgia Lottery...")
+def scrape_conectate(page):
+    print("🔍 Conectate...")
     resultados = []
     try:
-        page.goto(URL_GEORGIA, wait_until="domcontentloaded", timeout=25000)
-        page.wait_for_timeout(5000)
+        page.goto(URL_CONECTATE, wait_until="domcontentloaded", timeout=30000)
+        page.wait_for_timeout(8000)
+        lineas = page.inner_text("body").split("\n")
         
-        # ESTA ES LA MAGIA: Buscamos las tarjetas de juego (game-card)
-        tarjetas = page.locator("div.game-card").all()
-        for tarjeta in tarjetas:
-            try:
-                titulo_elem = tarjeta.locator("h3").first
-                if not titulo_elem.is_visible(): continue
-                titulo = titulo_elem.inner_text().strip()
-                
-                if any(k in titulo for k in ["Cash 3", "Cash 4", "Georgia Five"]):
-                    # Buscamos SOLO los elementos de lista <li> que son las bolitas de números
-                    numeros_bolitas = tarjeta.locator("ul li").all_inner_texts()
-                    nums = [n.strip() for n in numeros_bolitas if n.strip().isdigit()]
-                    
-                    if len(nums) > 0:
+        reglas = [
+            ("Leidsa", "Leidsa 8:55 PM", 3),
+            ("Loteka", "Loteka 7:55 PM", 3),
+            ("Nacional", "Nacional", 3),
+            ("Primera", "Primera", 3),
+            ("Quinielón", "Quinielón", 3),
+            ("Real", "Lotería Real 12:55 PM", 3),
+        ]
+        
+        for buscar, nombre_db, cant in reglas:
+            for i, linea in enumerate(lineas):
+                if buscar.lower() in linea.lower():
+                    bloque = " ".join(lineas[i:i+5])
+                    nums = extraer_puros(bloque)
+                    if len(nums) >= cant:
                         resultados.append({
-                            "sorteo_nombre": titulo,
+                            "sorteo_nombre": nombre_db,
+                            "numeros": nums[:cant],
                             "fecha": datetime.now().strftime("%Y-%m-%d"),
-                            "numeros": nums,
-                            "fuente": "georgia",
+                            "fuente": "conectate"
                         })
-            except:
-                pass
+                    break
     except Exception as e:
-        print(f"⚠️ Georgia falló: {e}")
-    print(f"✅ Georgia: {len(resultados)} resultados.")
+        print(f"⚠️ Conectate falló: {e}")
     return resultados
 
 def main():
@@ -97,20 +122,17 @@ def main():
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
         page = browser.new_page()
-        page.set_default_timeout(25000) 
+        page.set_default_timeout(30000)
         
-        # Ponemos Georgia primero para asegurar que atrapamos sus números
-        for funcion in [scrape_georgia, scrape_florida, scrape_conectate]: 
+        for funcion in [scrape_georgia, scrape_florida, scrape_conectate]:
             try: todos.extend(funcion(page))
-            except Exception as e: print(f"❌ Error general: {e}")
+            except Exception as e: print(f"❌ Error: {e}")
         browser.close()
 
-    # Limpieza de duplicados exactos
     vistos = set()
     limpios = []
     for r in todos:
-        # Solo agregamos si tiene números válidos y el nombre no está vacío
-        if r['numeros'] and r['sorteo_nombre']:
+        if r['numeros']:
             firma = f"{r['sorteo_nombre']}-{'-'.join(r['numeros'])}"
             if firma not in vistos:
                 vistos.add(firma)
