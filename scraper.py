@@ -5,116 +5,75 @@ from datetime import datetime
 from playwright.sync_api import sync_playwright
 
 URL_CONECTATE = "https://www.conectate.com.do/loterias/pagina/ultimos-resultados"
-URL_FLORIDA = "https://www.lotteryusa.com/florida/"
-URL_GEORGIA = "https://www.lotteryusa.com/georgia/"
+URL_TEXAS = "https://www.lotteryusa.com/texas/"
+URL_TENNESSEE = "https://www.lotteryusa.com/tennessee/"
+URL_NEW_JERSEY = "https://www.lotteryusa.com/new-jersey/"
 
 def extraer_puros(texto):
-    # Solo extrae números de 1 o 2 dígitos que NO estén pegados a letras o $.
+    # Extrae solo números de 1 o 2 dígitos limpios
     return re.findall(r"(?<![A-Za-z0-9$])\d{1,2}(?![A-Za-z0-9$])", texto)
 
-def scrape_georgia(page):
-    print("🔍 Georgia...")
-    resultados = []
-    try:
-        page.goto(URL_GEORGIA, wait_until="domcontentloaded", timeout=30000)
-        page.wait_for_timeout(5000)
-        lineas = page.inner_text("body").split("\n")
-        
-        reglas = [
-            ("Cash 3 Midday", "Georgia 12:30 PM", 3, True),
-            ("Cash 4 Midday", "Georgia 12:30 PM", 4, True),
-            ("Cash 3 Evening", "Georgia 7 PM", 3, True),
-            ("Cash 4 Evening", "Georgia 7 PM", 4, True),
-            ("Cash 3 Night", "Georgia 11:34 PM", 3, True),
-            ("Cash 4 Night", "Georgia 11:34 PM", 4, True)
-        ]
-        
-        for buscar, nombre_db, cant, quitar_primer in reglas:
-            for i, linea in enumerate(lineas):
-                if buscar in linea:
-                    bloque = " ".join(lineas[i:i+5])
-                    nums = extraer_puros(bloque)
-                    if quitar_primer and len(nums) > 0 and nums[0] == str(cant):
-                        nums = nums[1:]
-                    if len(nums) >= cant:
-                        resultados.append({
-                            "sorteo_nombre": nombre_db,
-                            "numeros": nums[:cant],
-                            "fecha": datetime.now().strftime("%Y-%m-%d"),
-                            "fuente": "georgia"
-                        })
-                    break
-    except Exception as e:
-        print(f"⚠️ Georgia falló: {e}")
-    return resultados
-
-def scrape_florida(page):
-    print("🔍 Florida...")
-    resultados = []
-    try:
-        page.goto(URL_FLORIDA, wait_until="domcontentloaded", timeout=30000)
-        page.wait_for_timeout(5000)
-        lineas = page.inner_text("body").split("\n")
-        
-        # Buscamos Pick 3, Pick 4, etc. en cualquier parte de la página
-        reglas = [
-            ("Pick 2", "Florida 1:35 PM", 2, True),
-            ("Pick 3", "Florida 1:35 PM", 3, True),
-            ("Pick 4", "Florida 1:35 PM", 4, True),
-            ("Pick 5", "Florida 1:35 PM", 5, True)
-        ]
-        
-        for buscar, nombre_db, cant, quitar_primer in reglas:
-            for i, linea in enumerate(lineas):
-                if buscar.lower() in linea.lower() and "midday" not in linea.lower():
-                    bloque = " ".join(lineas[i:i+5])
-                    nums = extraer_puros(bloque)
-                    if quitar_primer and len(nums) > 0 and nums[0] == str(cant):
-                        nums = nums[1:]
-                    if len(nums) >= cant:
-                        resultados.append({
-                            "sorteo_nombre": nombre_db,
-                            "numeros": nums[:cant],
-                            "fecha": datetime.now().strftime("%Y-%m-%d"),
-                            "fuente": "florida"
-                        })
-                    break
-    except Exception as e:
-        print(f"⚠️ Florida falló: {e}")
-    return resultados
-
 def scrape_conectate(page):
-    print("🔍 Conectate...")
+    print("🔍 Buscando en Conectate (Dominicanas)...")
     resultados = []
     try:
         page.goto(URL_CONECTATE, wait_until="domcontentloaded", timeout=30000)
         page.wait_for_timeout(8000)
         lineas = page.inner_text("body").split("\n")
         
-        reglas = [
-            ("Leidsa", "Leidsa 8:55 PM", 3),
-            ("Loteka", "Loteka 7:55 PM", 3),
-            ("Nacional", "Nacional", 3),
-            ("Primera", "Primera", 3),
-            ("Quinielón", "Quinielón", 3),
-            ("Real", "Lotería Real 12:55 PM", 3),
-        ]
+        # Mapeo directo a los nombres de tu base de datos
+        juegos = ["Leidsa", "Loteka", "Nacional", "Primera", "Quinielón", "Anguila"]
         
-        for buscar, nombre_db, cant in reglas:
+        for juego in juegos:
             for i, linea in enumerate(lineas):
-                if buscar.lower() in linea.lower():
-                    bloque = " ".join(lineas[i:i+5])
+                if juego.lower() in linea.lower():
+                    # Leemos las siguientes 3 líneas para atrapar los números
+                    bloque = " ".join(lineas[i:i+3])
                     nums = extraer_puros(bloque)
-                    if len(nums) >= cant:
+                    if len(nums) >= 2:
                         resultados.append({
-                            "sorteo_nombre": nombre_db,
-                            "numeros": nums[:cant],
+                            "sorteo_nombre": juego,
+                            "numeros": nums[:3], # Tomamos 3 números
                             "fecha": datetime.now().strftime("%Y-%m-%d"),
                             "fuente": "conectate"
                         })
                     break
     except Exception as e:
         print(f"⚠️ Conectate falló: {e}")
+    return resultados
+
+def scrape_estado(page, url, estado, juegos_buscar):
+    print(f"🔍 Buscando en {estado}...")
+    resultados = []
+    try:
+        page.goto(url, wait_until="domcontentloaded", timeout=30000)
+        page.wait_for_timeout(5000)
+        lineas = page.inner_text("body").split("\n")
+        
+        for juego in juegos_buscar:
+            for i, linea in enumerate(lineas):
+                if juego.lower() in linea.lower():
+                    # Buscamos si es Midday, Evening o Night en las cercanías
+                    contexto = " ".join(lineas[i:i+3]).lower()
+                    turno = ""
+                    if "midday" in contexto: turno = "Midday"
+                    elif "evening" in contexto: turno = "Evening"
+                    elif "night" in contexto: turno = "Night"
+                    elif "morning" in contexto: turno = "Morning"
+                    
+                    bloque = " ".join(lineas[i:i+3])
+                    nums = extraer_puros(bloque)
+                    
+                    if len(nums) >= 3:
+                        resultados.append({
+                            "sorteo_nombre": f"{estado} {juego} {turno}".strip(),
+                            "numeros": nums[:4],
+                            "fecha": datetime.now().strftime("%Y-%m-%d"),
+                            "fuente": estado.lower()
+                        })
+                    break
+    except Exception as e:
+        print(f"⚠️ {estado} falló: {e}")
     return resultados
 
 def main():
@@ -124,11 +83,25 @@ def main():
         page = browser.new_page()
         page.set_default_timeout(30000)
         
-        for funcion in [scrape_georgia, scrape_florida, scrape_conectate]:
-            try: todos.extend(funcion(page))
-            except Exception as e: print(f"❌ Error: {e}")
+        # 1. Dominicanas
+        try: todos.extend(scrape_conectate(page))
+        except Exception as e: print(e)
+        
+        # 2. Texas (Pick 3, Pick 4, Cash 5)
+        try: todos.extend(scrape_estado(page, URL_TEXAS, "Texas", ["Pick 3", "Pick 4", "Cash 5"]))
+        except Exception as e: print(e)
+        
+        # 3. Tennessee (Cash 3, Cash 4)
+        try: todos.extend(scrape_estado(page, URL_TENNESSEE, "Tennessee", ["Cash 3", "Cash 4"]))
+        except Exception as e: print(e)
+
+        # 4. New Jersey (Pick 3, Pick 4)
+        try: todos.extend(scrape_estado(page, URL_NEW_JERSEY, "New Jersey", ["Pick 3", "Pick 4"]))
+        except Exception as e: print(e)
+        
         browser.close()
 
+    # Limpieza de duplicados
     vistos = set()
     limpios = []
     for r in todos:
