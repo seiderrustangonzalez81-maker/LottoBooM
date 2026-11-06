@@ -9,8 +9,9 @@ URL_FLORIDA = "https://www.flalottery.com/winningNumbers.do"
 URL_GEORGIA = "https://www.lotteryusa.com/georgia/"
 
 def extraer_numeros_puros(texto, cantidad):
-    # Solo extrae números de 1 o 2 dígitos que NO estén pegados a letras (ignora P23, $45, etc.)
-    nums = re.findall(r"(?<![A-Za-z$])\b\d{1,2}\b(?![A-Za-z$])", texto)
+    # Solo extrae números de 1 o 2 dígitos que NO estén pegados a letras o números (evita P24, $312, etc.)
+    # Esta es la clave para que no vuelva a pasar lo de "P24 P312"
+    nums = re.findall(r"(?<![A-Za-z0-9$])\d{1,2}(?![A-Za-z0-9$])", texto)
     if len(nums) >= cantidad:
         return nums[:cantidad]
     return []
@@ -31,10 +32,11 @@ def scrape_conectate(page):
                     resultados.append({
                         "sorteo_nombre": nombre,
                         "fecha": datetime.now().strftime("%Y-%m-%d"),
-                        "numeros": nums[:3],
+                        "numeros": nums,
                         "fuente": "conectate",
                     })
         except: pass
+    print(f"✅ Conectate: {len(resultados)} resultados.")
     return resultados
 
 def scrape_florida(page):
@@ -58,6 +60,7 @@ def scrape_florida(page):
                         "fuente": "florida",
                     })
         except: pass
+    print(f"✅ Florida: {len(resultados)} resultados.")
     return resultados
 
 def scrape_georgia(page):
@@ -65,15 +68,20 @@ def scrape_georgia(page):
     resultados = []
     page.goto(URL_GEORGIA, wait_until="domcontentloaded", timeout=60000)
     page.wait_for_timeout(6000)
-    filas = page.locator("tr").all()
-    for fila in filas:
+    
+    # En LotteryUSA los datos están en tarjetas con clase 'game-card'
+    tarjetas = page.locator("div[class*='game-card']").all()
+    for tarjeta in tarjetas:
         try:
-            texto = fila.inner_text().strip()
-            if any(k in texto for k in ["Cash 3", "Cash 4", "Georgia Five", "Fantasy 5"]):
-                nombre = texto.split("\n")[0].strip()
-                cant = 5 if "Five" in nombre or "Fantasy" in nombre else (4 if "4" in nombre else 3)
-                nums = extraer_numeros_puros(texto, cant)
-                if len(nums) == cant:
+            titulo = tarjeta.locator("h3").all_inner_texts()
+            if not titulo: continue
+            nombre = titulo[0].strip()
+            
+            if any(k in nombre for k in ["Cash 3", "Cash 4", "Georgia Five", "Fantasy 5"]):
+                # Extraemos SOLO los <li> de la lista de números (ignoramos los premios)
+                nums = tarjeta.locator("ul li").all_inner_texts()
+                nums = [n.strip() for n in nums if n.strip().isdigit()]
+                if nums:
                     resultados.append({
                         "sorteo_nombre": nombre,
                         "fecha": datetime.now().strftime("%Y-%m-%d"),
@@ -81,6 +89,7 @@ def scrape_georgia(page):
                         "fuente": "georgia",
                     })
         except: pass
+    print(f"✅ Georgia: {len(resultados)} resultados.")
     return resultados
 
 def main():
@@ -93,7 +102,6 @@ def main():
             except Exception as e: print(f"❌ Error: {traceback.format_exc()}")
         browser.close()
 
-    # Limpieza de duplicados exactos
     vistos = set()
     limpios = []
     for r in todos:
