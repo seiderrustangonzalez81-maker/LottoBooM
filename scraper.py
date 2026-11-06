@@ -15,7 +15,9 @@ def extraer_pagina_especifica(page, url, nombre_forzado):
         soup = BeautifulSoup(page.content(), "html.parser")
         bolas = soup.find_all("div", class_="result-number")
         numeros = [b.get_text(strip=True) for b in bolas]
-        if numeros:
+        # FIX: Solo los 3 primeros números (los ganadores), no toda la tabla de premios
+        numeros = numeros[:3]
+        if len(numeros) == 3:
             return [{"sorteo_nombre": nombre_forzado, "numeros": numeros, "fecha": datetime.now().strftime("%Y-%m-%d"), "fuente": "enloteria"}]
     except Exception as e:
         print(f"⚠️ Error en {nombre_forzado}: {e}")
