@@ -1,93 +1,37 @@
-import json
-import re
-from datetime import datetime
-from bs4 import BeautifulSoup
-from playwright.sync_api import sync_playwright
+name: Scrape Loterias
+on:
+  push:
+  schedule:
+    - cron: '0 */1 * * *'
+  workflow_dispatch:
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
 
-URL_CONECTATE = "https://www.conectate.com.do/loterias/pagina/ultimos-resultados"
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
 
-def extraer_picks(texto):
-    nums = re.findall(r"\b\d{1,5}\b", texto)
-    nums = [n for n in nums if not (len(n) == 4 and n.startswith("20"))]
-    return nums
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install beautifulsoup4 playwright
+          playwright install --with-deps chromium
 
-def scrape_conectate():
-    print("Abriendo Conectate con Playwright (esto tarda unos segundos)...")
-    resultados = []
-    
-    with sync_playwright() as p:
-        # Abrimos un navegador invisible
-        browser = p.chromium.launch(headless=True)
-        page = browser.new_page()
-        
-        # Entramos a la página y esperamos a que la red se calme (cargue los números)
-        page.goto(URL_CONECTATE, wait_until="networkidle", timeout=60000)
-        
-        # Guardamos el HTML ya renderizado (con los números dentro) para depurar
-        html = page.content()
-        with open("debug_conectate.html", "w", encoding="utf-8") as f:
-            f.write(html)
-            
-        browser.close()
+      - name: Run scraper
+        run: python scraper.py
 
-    soup = BeautifulSoup(html, "html.parser")
-
-    # Estrategia: buscar tablas
-    for tabla in soup.find_all("table"):
-        caption = tabla.find("caption")
-        encabezados = tabla.find_all("th")
-        nombre = None
-        if caption:
-            nombre = caption.get_text(strip=True)
-        elif encabezados:
-            nombre = encabezados[0].get_text(strip=True)
-        if not nombre:
-            continue
-
-        for fila in tabla.find_all("tr"):
-            celdas = [c.get_text(" ", strip=True) for c in fila.find_all("td")]
-            if not celdas:
-                continue
-            texto_fila = " ".join(celdas)
-            nums = extraer_picks(texto_fila)
-            if len(nums) < 2:
-                continue
-
-            picks = {"pick2": None, "pick3": None, "pick4": None, "pick5": None}
-            for n in nums:
-                if len(n) == 2 and not picks["pick2"]:
-                    picks["pick2"] = n
-                elif len(n) == 3 and not picks["pick3"]:
-                    picks["pick3"] = n
-                elif len(n) == 4 and not picks["pick4"]:
-                    picks["pick4"] = n
-                elif len(n) == 5 and not picks["pick5"]:
-                    picks["pick5"] = n
-
-            resultados.append({
-                "sorteo_nombre": nombre,
-                "fecha": datetime.now().strftime("%Y-%m-%d"),
-                "hora": datetime.now().strftime("%H:%M:%S"),
-                "pick2": picks["pick2"],
-                "pick3": picks["pick3"],
-                "pick4": picks["pick4"],
-                "pick5": picks["pick5"],
-                "fuente": "conectate",
-            })
-
-    print(f"Resultados extraidos: {len(resultados)}")
-    return resultados
-
-def main():
-    todos = []
-    try:
-        todos.extend(scrape_conectate())
-    except Exception as e:
-        print(f"Error Conectate: {e}")
-
-    with open("resultados.json", "w", encoding="utf-8") as f:
-        json.dump(todos, f, ensure_ascii=False, indent=2)
-    print(f"Guardados {len(todos)} en resultados.json")
-
-if __name__ == "__main__":
-    main()
+      - name: Commit and push if changes
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          touch resultados.json debug_conectate.html
+          git add resultados.json debug_conectate.html
+          git diff --staged --quiet || git commit -m "Actualizar resultados [skip ci]"
+          git push
