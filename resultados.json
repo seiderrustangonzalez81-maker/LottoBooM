@@ -2,7 +2,6 @@
   {
     "sorteo_nombre": "Cash 3 Midday",
     "fecha": "2026-11-06",
-    "hora": "18:54:15",
     "numeros": [
       "3",
       "06",
@@ -13,7 +12,6 @@
   {
     "sorteo_nombre": "Cash 3 Evening",
     "fecha": "2026-11-06",
-    "hora": "18:54:15",
     "numeros": [
       "3",
       "05",
@@ -24,7 +22,6 @@
   {
     "sorteo_nombre": "Cash 3 Night",
     "fecha": "2026-11-06",
-    "hora": "18:54:15",
     "numeros": [
       "3",
       "05",
@@ -35,11 +32,10 @@
   {
     "sorteo_nombre": "Cash 4 Midday",
     "fecha": "2026-11-06",
-    "hora": "18:54:15",
     "numeros": [
       "4",
       "06",
-      "5",
+      "3",
       "3"
     ],
     "fuente": "georgia"
@@ -47,11 +43,10 @@
   {
     "sorteo_nombre": "Cash 4 Evening",
     "fecha": "2026-11-06",
-    "hora": "18:54:15",
     "numeros": [
       "4",
       "05",
-      "5",
+      "9",
       "9"
     ],
     "fuente": "georgia"
@@ -59,19 +54,17 @@
   {
     "sorteo_nombre": "Cash 4 Night",
     "fecha": "2026-11-06",
-    "hora": "18:54:15",
     "numeros": [
       "4",
       "05",
       "5",
-      "5"
+      "2"
     ],
     "fuente": "georgia"
   },
   {
     "sorteo_nombre": "Fantasy 5",
     "fecha": "2026-11-06",
-    "hora": "18:54:15",
     "numeros": [
       "5",
       "05",
@@ -84,7 +77,6 @@
   {
     "sorteo_nombre": "Cash 3 Midday\tTop Prize\t3 from 0–9",
     "fecha": "2026-11-06",
-    "hora": "18:54:15",
     "numeros": [
       "3",
       "3",
@@ -95,7 +87,6 @@
   {
     "sorteo_nombre": "Cash 3 Evening\tTop Prize\t3 from 0–9",
     "fecha": "2026-11-06",
-    "hora": "18:54:15",
     "numeros": [
       "3",
       "3",
@@ -106,7 +97,6 @@
   {
     "sorteo_nombre": "Cash 3 Night\tTop Prize\t3 from 0–9",
     "fecha": "2026-11-06",
-    "hora": "18:54:15",
     "numeros": [
       "3",
       "3",
@@ -117,7 +107,6 @@
   {
     "sorteo_nombre": "Cash 4 Midday\tTop Prize\t4 from 0–9",
     "fecha": "2026-11-06",
-    "hora": "18:54:15",
     "numeros": [
       "4",
       "4",
@@ -129,7 +118,6 @@
   {
     "sorteo_nombre": "Cash 4 Evening\tTop Prize\t4 from 0–9",
     "fecha": "2026-11-06",
-    "hora": "18:54:15",
     "numeros": [
       "4",
       "4",
@@ -141,7 +129,6 @@
   {
     "sorteo_nombre": "Cash 4 Night\tTop Prize\t4 from 0–9",
     "fecha": "2026-11-06",
-    "hora": "18:54:15",
     "numeros": [
       "4",
       "4",
@@ -153,7 +140,6 @@
   {
     "sorteo_nombre": "Cash 3 Midday\t12:29 p.m.\t12:29 p.m.\t12:29 p.m.\t12:29 p.m.\t12:29 p.m.\t12:29 p.m.\t12:29 p.m.",
     "fecha": "2026-11-06",
-    "hora": "18:54:15",
     "numeros": [
       "3",
       "12",
@@ -164,7 +150,6 @@
   {
     "sorteo_nombre": "Cash 3 Evening\t6:59 p.m.\t6:59 p.m.\t6:59 p.m.\t6:59 p.m.\t6:59 p.m.\t6:59 p.m.\t6:59 p.m.",
     "fecha": "2026-11-06",
-    "hora": "18:54:15",
     "numeros": [
       "3",
       "6",
@@ -175,7 +160,6 @@
   {
     "sorteo_nombre": "Cash 3 Night\t11:34 p.m.\t11:34 p.m.\t11:34 p.m.\t11:34 p.m.\t11:34 p.m.\t11:34 p.m.\t11:34 p.m.",
     "fecha": "2026-11-06",
-    "hora": "18:54:15",
     "numeros": [
       "3",
       "11",
@@ -187,7 +171,6 @@
   {
     "sorteo_nombre": "Cash 4 Midday\t12:29 p.m.\t12:29 p.m.\t12:29 p.m.\t12:29 p.m.\t12:29 p.m.\t12:29 p.m.\t12:29 p.m.",
     "fecha": "2026-11-06",
-    "hora": "18:54:15",
     "numeros": [
       "4",
       "12",
@@ -199,7 +182,6 @@
   {
     "sorteo_nombre": "Cash 4 Evening\t6:59 p.m.\t6:59 p.m.\t6:59 p.m.\t6:59 p.m.\t6:59 p.m.\t6:59 p.m.\t6:59 p.m.",
     "fecha": "2026-11-06",
-    "hora": "18:54:15",
     "numeros": [
       "4",
       "6",
@@ -211,7 +193,6 @@
   {
     "sorteo_nombre": "Cash 4 Night\t11:34 p.m.\t11:34 p.m.\t11:34 p.m.\t11:34 p.m.\t11:34 p.m.\t11:34 p.m.\t11:34 p.m.",
     "fecha": "2026-11-06",
-    "hora": "18:54:15",
     "numeros": [
       "4",
       "11",
@@ -223,7 +204,6 @@
   {
     "sorteo_nombre": "Fantasy 5\t11:34 p.m.\t11:34 p.m.\t11:34 p.m.\t11:34 p.m.\t11:34 p.m.\t11:34 p.m.\t11:34 p.m.",
     "fecha": "2026-11-06",
-    "hora": "18:54:15",
     "numeros": [
       "5",
       "11",
@@ -236,7 +216,6 @@
   {
     "sorteo_nombre": "Cash 3 Midday",
     "fecha": "2026-11-06",
-    "hora": "18:54:15",
     "numeros": [
       "3",
       "12",
@@ -247,7 +226,6 @@
   {
     "sorteo_nombre": "Cash 3 Evening",
     "fecha": "2026-11-06",
-    "hora": "18:54:15",
     "numeros": [
       "3",
       "6",
@@ -258,7 +236,6 @@
   {
     "sorteo_nombre": "Cash 3 Night",
     "fecha": "2026-11-06",
-    "hora": "18:54:15",
     "numeros": [
       "3",
       "10",
@@ -269,7 +246,6 @@
   {
     "sorteo_nombre": "Cash 4 Midday",
     "fecha": "2026-11-06",
-    "hora": "18:54:15",
     "numeros": [
       "4",
       "12",
@@ -281,7 +257,6 @@
   {
     "sorteo_nombre": "Cash 4 Evening",
     "fecha": "2026-11-06",
-    "hora": "18:54:15",
     "numeros": [
       "4",
       "6",
@@ -293,7 +268,6 @@
   {
     "sorteo_nombre": "Cash 4 Night",
     "fecha": "2026-11-06",
-    "hora": "18:54:15",
     "numeros": [
       "4",
       "10",
@@ -305,7 +279,6 @@
   {
     "sorteo_nombre": "Fantasy 5",
     "fecha": "2026-11-06",
-    "hora": "18:54:15",
     "numeros": [
       "5",
       "10",
