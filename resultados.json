@@ -240,6 +240,26 @@
     "fuente": "enloteria"
   },
   {
+    "sorteo_nombre": "Anguilla 6PM",
+    "numeros": [
+      "08",
+      "20",
+      "53"
+    ],
+    "fecha": "2026-11-06",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "La Suerte 6PM",
+    "numeros": [
+      "20",
+      "17",
+      "17"
+    ],
+    "fecha": "2026-11-06",
+    "fuente": "enloteria"
+  },
+  {
     "sorteo_nombre": "El Quemaito Mayor",
     "numeros": [
       "10",
