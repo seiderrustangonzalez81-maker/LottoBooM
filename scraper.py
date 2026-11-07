@@ -1,12 +1,19 @@
 import json
 import traceback
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 from bs4 import BeautifulSoup
 from playwright.sync_api import sync_playwright
+
+# Zona horaria Cuba (UTC-4 hasta nov 2027)
+CUBA_TZ = timezone(timedelta(hours=-4))
 
 URL_MAIN = "https://enloteria.com/resultados-loterias-hoy"
 URL_QUEMAITO = "https://enloteria.com/resultados-el-quemaito-mayor-hoy"
 URL_QUINIELON = "https://enloteria.com/resultados-el-quinielon-dia-hoy"
+
+
+def fecha_cuba():
+    return datetime.now(CUBA_TZ).strftime("%Y-%m-%d")
 
 
 def scrape_principal(page):
@@ -14,8 +21,6 @@ def scrape_principal(page):
     resultados = []
     page.goto(URL_MAIN, wait_until="domcontentloaded", timeout=60000)
     page.wait_for_timeout(8000)
-
-    # Scroll para forzar carga de tarjetas nocturnas (lazy loading)
     try:
         page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
         page.wait_for_timeout(3000)
@@ -40,7 +45,7 @@ def scrape_principal(page):
                 resultados.append({
                     "sorteo_nombre": nombre,
                     "numeros": numeros,
-                    "fecha": datetime.now().strftime("%Y-%m-%d"),
+                    "fecha": fecha_cuba(),
                     "fuente": "enloteria"
                 })
                 print(f"  OK {nombre} -> {', '.join(numeros)}")
@@ -58,13 +63,13 @@ def scrape_especifica(page, url, nombre_forzado):
         soup = BeautifulSoup(page.content(), "html.parser")
         bolas = soup.find_all("div", class_="result-number")
         numeros = [b.get_text(strip=True) for b in bolas if b.get_text(strip=True)]
-        numeros = numeros[:4]
+        numeros = numeros[:3]  # FIX: solo 3 numeros (Fijo, Corrido 1, Corrido 2)
         if numeros and len(numeros) >= 2:
             print(f"  OK {nombre_forzado} -> {', '.join(numeros)}")
             return [{
                 "sorteo_nombre": nombre_forzado,
                 "numeros": numeros,
-                "fecha": datetime.now().strftime("%Y-%m-%d"),
+                "fecha": fecha_cuba(),
                 "fuente": "enloteria"
             }]
         else:
@@ -111,8 +116,7 @@ def main():
         json.dump(limpios, f, ensure_ascii=False, indent=2)
 
     print(f"Total guardados: {len(limpios)} sorteos")
-    con_numeros = [r for r in limpios if r.get("numeros")]
-    print(f"Con numeros: {len(con_numeros)}")
+    print(f"Fecha aplicada: {fecha_cuba()}")
 
 
 if __name__ == "__main__":
