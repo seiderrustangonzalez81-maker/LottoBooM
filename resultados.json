@@ -1,5 +1,65 @@
 [
   {
+    "sorteo_nombre": "Anguilla 8AM",
+    "numeros": [
+      "06",
+      "75",
+      "67"
+    ],
+    "fecha": "2026-11-07",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Anguilla 9AM",
+    "numeros": [
+      "39",
+      "23",
+      "90"
+    ],
+    "fecha": "2026-11-07",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Anguilla 10AM",
+    "numeros": [
+      "37",
+      "30",
+      "23"
+    ],
+    "fecha": "2026-11-07",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Haiti Bolet 9:30 AM",
+    "numeros": [
+      "73",
+      "43",
+      "46"
+    ],
+    "fecha": "2026-11-07",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Anguilla 11AM",
+    "numeros": [
+      "76",
+      "85",
+      "27"
+    ],
+    "fecha": "2026-11-07",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Haiti Bolet 10:30 AM",
+    "numeros": [
+      "53",
+      "42",
+      "01"
+    ],
+    "fecha": "2026-11-07",
+    "fuente": "enloteria"
+  },
+  {
     "sorteo_nombre": "El Quemaito Mayor",
     "numeros": [
       "10",
