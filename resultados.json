@@ -350,6 +350,46 @@
     "fuente": "enloteria"
   },
   {
+    "sorteo_nombre": "Haiti Bolet 7:30 PM",
+    "numeros": [
+      "26",
+      "92",
+      "68"
+    ],
+    "fecha": "2026-11-06",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Leidsa",
+    "numeros": [
+      "56",
+      "38",
+      "67"
+    ],
+    "fecha": "2026-11-06",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Anguilla 9PM",
+    "numeros": [
+      "23",
+      "94",
+      "09"
+    ],
+    "fecha": "2026-11-06",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Nacional Noche",
+    "numeros": [
+      "11",
+      "29",
+      "82"
+    ],
+    "fecha": "2026-11-06",
+    "fuente": "enloteria"
+  },
+  {
     "sorteo_nombre": "El Quemaito Mayor",
     "numeros": [
       "10",
