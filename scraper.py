@@ -32,9 +32,13 @@ def scrape_principal(page):
     resultados = []
     try:
         page.goto(URL_MAIN, wait_until="domcontentloaded", timeout=60000)
-        page.wait_for_timeout(8000)
-        page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
-        page.wait_for_timeout(3000)
+        page.wait_for_timeout(15000) # Espera 15 segundos a que cargue
+        
+        # Hacemos scroll hacia abajo 3 veces para forzar la carga de todas las tarjetas
+        for _ in range(3):
+            page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
+            page.wait_for_timeout(3000)
+            
         page.evaluate("window.scrollTo(0, 0)")
         page.wait_for_timeout(2000)
     except Exception as e:
