@@ -1,8 +1,9 @@
-from LottoBooM.utils import es_verano_cuba
 # resultados/views.py
 # -*- coding: utf-8 -*-
 import logging
 import re
+import os
+import threading
 from decimal import Decimal
 from datetime import datetime, timedelta
 
@@ -16,6 +17,7 @@ from django.http import JsonResponse
 from django.core.paginator import Paginator
 from django.views.decorators.http import require_POST
 from django.contrib.auth.models import User
+from django.core.management import call_command
 
 try:
     from django_eventstream import send_event
@@ -81,9 +83,6 @@ def crear_notificacion(usuario, tipo, mensaje, datos=None):
 # ============================================================
 
 def obtener_configuracion_por_nombre(sorteo):
-    """
-    Devuelve la config del sorteo con las claves que usa procesar_resultado.
-    """
     if not isinstance(sorteo, Sorteo):
         try:
             sorteo = Sorteo.objects.get(nombre__iexact=sorteo, activo=True)
@@ -238,7 +237,6 @@ def generar_derivaciones_desde_campos(pick2, pick3, pick4, pick5, fijo, corrido_
 # ============================================================
 
 def jugada_es_ganadora(jugada, resultado):
-    # FIX_VALIDA_SORTEO_V1: jugada y resultado DEBEN ser del mismo sorteo y fecha
     if not jugada or not resultado:
         return False, 0
     if jugada.sorteo_id != resultado.sorteo_id:
@@ -248,7 +246,6 @@ def jugada_es_ganadora(jugada, resultado):
 
     forma_raw = (jugada.forma_juego.nombre if jugada.forma_juego else '').strip().lower()
     import unicodedata as _ud
-    # FIX_NORM_ACENTOS_V1: quitar acentos antes de normalizar ('Posición' -> 'posicion')
     _sa = ''.join(c for c in _ud.normalize('NFD', forma_raw) if _ud.category(c) != 'Mn')
     forma = re.sub(r'[^a-z0-9]', '', _sa)
     numero = str(jugada.numero or '').strip().strip(',;: ')
@@ -272,7 +269,6 @@ def jugada_es_ganadora(jugada, resultado):
         return False, 0
 
     def n(v):
-        # FIX_PARLET_COMMA_V1: limpiar comas, punto y coma, dos puntos, espacios
         if v is None:
             return ''
         s = str(v).strip()
@@ -303,13 +299,9 @@ def jugada_es_ganadora(jugada, resultado):
     centena_1_val = n(derivados.get('centena_corrida_1'))
     centena_2_val = n(derivados.get('centena_corrida_2'))
 
-    # ─── FIJO ───
     if forma in ('fijo', 'fijos'):
         if numero == fijo_val or numero in fijos_list:
             return True, multiplicador
-        # FIX_FIJO_PAGA_COMO_CORRIDO_V1: mirror del bonus de la rama corridos.
-        # Si el fijo apostado cae en corrido_1/2 y el gestor tiene el flag,
-        # paga con el multiplicador de CORRIDOS (no de fijo).
         if numero and (numero == corrido_1_val or numero == corrido_2_val):
             try:
                 from roles.utils import gestor_paga_fijo_como_corrido, get_dosis_gestor as _gd
@@ -328,20 +320,14 @@ def jugada_es_ganadora(jugada, resultado):
                 logger.exception('FIX_FIJO_PAGA_COMO_CORRIDO_V1 err jugada #%s', jugada.id)
         return False, 0
 
-    # ─── CORRIDOS ───
     if forma in ('corridos', 'corrido1', 'corrido2', 'corrido'):
-        # FIX_CORRIDOS_CONTEO_V1: paga multiplicado por cuantas veces coincide.
-        # Si el numero == c1 y tambien == c2 → paga doble.
-        # Si solo coincide con c1 O con c2 → paga simple.
         if numero:
             count = 0
             if corrido_1_val and numero == corrido_1_val:
                 count += 1
             if corrido_2_val and numero == corrido_2_val:
                 count += 1
-            # Compatibilidad con corridos_list (si tuviera mas de 2)
             count_lista = corridos_list.count(numero) if numero in corridos_list else 0
-            # Usar el mayor para no doble-contar
             total_coincidencias = max(count, count_lista)
             if total_coincidencias > 0:
                 return True, multiplicador * total_coincidencias
@@ -363,49 +349,41 @@ def jugada_es_ganadora(jugada, resultado):
 
         return False, 0
 
-    # ─── PICK 2 ───
     if forma in ('pick2',):
         if numero == pick2_val:
             return True, multiplicador
         return False, 0
 
-    # ─── PICK 3 ───
     if forma in ('pick3',):
         if numero == pick3_val:
             return True, multiplicador
         return False, 0
 
-    # ─── PICK 4 ───
     if forma in ('pick4',):
         if numero == pick4_val:
             return True, multiplicador
         return False, 0
 
-    # ─── PICK 5 ───
     if forma in ('pick5',):
         if numero == pick5_val:
             return True, multiplicador
         return False, 0
 
-    # ─── PF ───
     if forma in ('pf',):
         if numero == pf_val:
             return True, multiplicador
         return False, 0
 
-    # ─── PARLET (y candado) ───
     if forma in ('parlet', 'candado'):
         if numero in parlet_list:
             return True, multiplicador
         return False, 0
 
-    # ─── SUPER PARLET ───
     if forma in ('superparlet',):
         if numero in superparlet_list:
             return True, multiplicador
         return False, 0
 
-    # ─── POSICIÓN (FIX_POSICION_V1: respeta la posición apostada) ───
     if forma in ('posicion', 'posiciones'):
         meta = jugada.metadata or {}
         orig = meta.get('original') or {}
@@ -415,7 +393,7 @@ def jugada_es_ganadora(jugada, resultado):
 
         if pos_apostada is not None:
             try:
-                idx = int(pos_apostada) - 1  # 1-based -> 0-based
+                idx = int(pos_apostada) - 1
             except (ValueError, TypeError):
                 logger.warning(f'[FIX_POSICION_V1] jugada #{jugada.id} posicion invalida: {pos_apostada!r}')
                 return False, 0
@@ -425,39 +403,32 @@ def jugada_es_ganadora(jugada, resultado):
                 return True, multiplicador
             return False, 0
 
-        # Fallback legacy (sin metadata de posicion)
         logger.warning(f'[FIX_POSICION_V1] jugada #{jugada.id} sin metadata de posicion — fallback legacy')
         if numero in posicion_list:
             return True, multiplicador
         return False, 0
 
-    # ─── TRIPLETA ───
     if forma in ('tripleta',):
         if numero in tripleta_list:
             return True, multiplicador
         return False, 0
 
-    # ─── VS PF ───
     if forma in ('vspf',):
         if numero in vspf_list:
             return True, multiplicador
         return False, 0
 
-    # ─── VS PICK2 ───
     if forma in ('vspick2',):
         if numero in vspick2_list:
             return True, multiplicador
         return False, 0
 
-    # ─── PICK2 VS PF ───
     if forma in ('pick2vspf',):
         if numero in pick2vspf_list:
             return True, multiplicador
         return False, 0
 
-    # ─── CENTENAS CORRIDAS ───
     if forma in ('centenacorrida', 'centenacorrida1', 'centenacorrida2', 'centenascorridas'):
-        # FIX_CENTENAS_DOBLE_V1: paga ×2 si coincide con AMBAS centenas
         if numero:
             _c = 0
             if centena_1_val and numero == centena_1_val: _c += 1
@@ -466,9 +437,6 @@ def jugada_es_ganadora(jugada, resultado):
                 return True, multiplicador * _c
         return False, 0
 
-    # ─── VS100 ───
-    # Formato interno: "NNxMM" (número apostado x oponente 00-99).
-    # Gana si AMBOS números están en el resultado. Cada sub-jugada paga 1 parlet.
     if forma in ('vs100',):
         if not numero or 'x' not in numero.lower():
             return False, 0
@@ -489,7 +457,6 @@ def jugada_es_ganadora(jugada, resultado):
         if len(resultado_nums) < 3:
             return False, 0
 
-        # VS100_FIX: si n1 == n2 necesitamos DOS ocurrencias; si son distintos, una de cada uno.
         if n1 == n2:
             if resultado_nums.count(n1) >= 2:
                 return True, multiplicador
@@ -504,23 +471,7 @@ def jugada_es_ganadora(jugada, resultado):
 # PROCESAR RESULTADO
 # ============================================================
 
-
-
-# ═══════════════════════════════════════════════════════════════
-# FIX_SUPERPARLET_PAGO_V1 — Evaluación de SuperParlets
-# ═══════════════════════════════════════════════════════════════
 def _superparlet_evaluar(jugada, resultado_A, resultado_B):
-    """
-    Evalúa si un SuperParlet gana comparando los 'fijo' de 2 sorteos.
-
-    Reglas:
-      - Formato: "12x13 14x15" (pares separados por espacios).
-      - 12x13 (distintos): gana si {12, 13} == {fijo_A, fijo_B}.
-      - 12x12 (dobles):    gana si fijo_A == fijo_B == 12.
-      - Multi-par: cada par se evalúa por separado.
-
-    Devuelve: (es_ganadora: bool, monto_premio: Decimal, multiplicador: int, pares_ganadores: int)
-    """
     from decimal import Decimal as _D
 
     fijo_A = (resultado_A.derivados or {}).get('fijo') or resultado_A.fijo or ''
@@ -556,11 +507,9 @@ def _superparlet_evaluar(jugada, resultado_A, resultado_B):
             continue
         a, b = partes[0].strip(), partes[1].strip()
         if a == b:
-            # Doble: gana si el número sale en AMBOS sorteos
             if fijo_A == a and fijo_B == a:
                 pares_ganadores += 1
         else:
-            # Distintos: gana si {a, b} == {fijo_A, fijo_B}
             if {a, b} == {fijo_A, fijo_B}:
                 pares_ganadores += 1
 
@@ -574,7 +523,6 @@ def _superparlet_evaluar(jugada, resultado_A, resultado_B):
 
 
 def _split_lista(valor):
-    """FIX_PARLET_SPLIT_V1: split por espacios O comas O punto-y-coma."""
     import re as _re
     if not valor:
         return []
@@ -756,7 +704,6 @@ def procesar_resultado(request, datos, resultado_existente=None, solo_crear_resu
             )
 
 
-        # FIX_CIERRE_AUTO_V1: cerrar cuadres de comerciales si es último Georgia del día
         try:
             from roles.cuadre_cascade import auto_cerrar_si_ultimo_georgia
             auto_cerrar_si_ultimo_georgia(resultado)
@@ -764,7 +711,6 @@ def procesar_resultado(request, datos, resultado_existente=None, solo_crear_resu
             import logging
             logging.getLogger(__name__).warning(f"auto_cerrar_si_ultimo_georgia falló: {_e}")
 
-        # FIX_ASYNC_PREMIOS_V1: en modo async solo crea/actualiza el Resultado
         if solo_crear_resultado:
             resultado.procesamiento_estado = 'pendiente'
             resultado.procesamiento_msg = 'En cola...'
@@ -785,14 +731,12 @@ def procesar_resultado(request, datos, resultado_existente=None, solo_crear_resu
                         activo=True,
                     ).first()
                     if f_ant:
-                        # FIX_RACE_FONDO_V1 (2026-10-15): resta atomica via F()
-                        # Evita perder montos en reversiones concurrentes.
                         saldo_ant_r = f_ant.monto
                         Fondo.objects.filter(pk=f_ant.pk).update(
                             monto=F('monto') - p_ant.monto_premio
                         )
                         f_ant.refresh_from_db()
-                        saldo_ant_r = f_ant.monto + p_ant.monto_premio  # valor previo real
+                        saldo_ant_r = f_ant.monto + p_ant.monto_premio
                         try:
                             MovimientoFondo.objects.create(
                                 emisor=None,
@@ -815,7 +759,6 @@ def procesar_resultado(request, datos, resultado_existente=None, solo_crear_resu
             except Exception as e:
                 logger.warning(f"No se pudo revertir Fondo del premio #{p_ant.id}: {e}")
 
-            # FIX_RECTIF_REPAGO_V1: resetear estado para que se re-evalúe con el nuevo resultado
             try:
                 if p_ant.jugada and p_ant.jugada.estado == 'ganadora':
                     _j = p_ant.jugada
@@ -868,7 +811,6 @@ def procesar_resultado(request, datos, resultado_existente=None, solo_crear_resu
                             'jugada_id': jugada.id,
                             'sorteo': resultado.sorteo.nombre,
                         }
-                        # FIX_DOBLE_REGISTRO_V1 (2026-10-17): _aplicar ya crea el MovimientoFondo
                         monto_al_fondo, descuento_postpago = _aplicar_ingreso_a_fondo(
                             cliente=cliente,
                             gestor=gestor,
@@ -904,18 +846,14 @@ def procesar_resultado(request, datos, resultado_existente=None, solo_crear_resu
                     )
 
 
-        # FIX_PERDEDORAS_V1: marcar como perdedora toda jugada no ganadora
         Jugada.objects.filter(
             sorteo=resultado.sorteo,
             fecha_sorteo=resultado.fecha,
             estado__in=['confirmada', 'pendiente'],
-        ).update(estado='perdedora')  # FIX_RECTIF_REPAGO_V1: solo perdedoras las no-ganadoras
+        ).update(estado='perdedora')
 
-        # FIX_SUPERPARLET_PAGO_V1: evaluar SuperParlets que crucen este sorteo
         try:
             from decimal import Decimal as _DSup
-            # FIX_SQLITE_JSON_CONTAINS_V1: SQLite no soporta metadata__contains
-            # Obtenemos las candidatas por SQL simple y filtramos sorteos en Python
             super_jugadas_candidatas = Jugada.objects.filter(
                 forma_juego__nombre__iexact='superparlet',
                 fecha_sorteo=resultado.fecha,
@@ -1142,7 +1080,6 @@ def crear_resultado(request):
                     'pick2vspf': request.POST.get('pick2vspf', ''),
                 }
 
-                # FIX_ASYNC_PREMIOS_V1
                 resultado, premios_generados = procesar_resultado(
                     request, datos, solo_crear_resultado=True
                 )
@@ -1173,6 +1110,27 @@ def crear_resultado(request):
             })
 
 def resultados_view(request):
+    # --- INICIO ACTUALIZACIÓN DINÁMICA ---
+    def actualizar_en_segundo_plano():
+        try:
+            call_command('load_results')
+        except Exception as e:
+            logger.error(f"Error en actualización dinámica: {e}")
+
+    archivo_lock = '/tmp/ultima_actualizacion_loteria.txt'
+    necesita_actualizar = True
+
+    if os.path.exists(archivo_lock):
+        ultima_mod = os.path.getmtime(archivo_lock)
+        if timezone.now().timestamp() - ultima_mod < 300:
+            necesita_actualizar = False
+
+    if necesita_actualizar:
+        with open(archivo_lock, 'w') as f:
+            f.write(str(timezone.now()))
+        threading.Thread(target=actualizar_en_segundo_plano).start()
+    # --- FIN ACTUALIZACIÓN DINÁMICA ---
+
     resultados = Resultado.objects.all().select_related('sorteo').order_by('fecha', 'sorteo__hora_salida', 'hora')
 
     sorteo_id = request.GET.get('sorteo')
@@ -1372,7 +1330,6 @@ def eliminar_resultado(request, resultado_id):
     if request.method == 'POST':
         sorteo_nombre = resultado.sorteo.nombre
         with transaction.atomic():
-            # FIX_RECTIF_REPAGO_V1: revertir MovimientoFondo y resetear jugadas antes de borrar
             premios = Premio.objects.filter(
                 jugada__sorteo=resultado.sorteo,
                 metadata__resultado_id=resultado.id,
@@ -1408,7 +1365,6 @@ def eliminar_resultado(request, resultado_id):
                             )
                         except Exception as _e:
                             logger.warning(f'No se pudo crear MovimientoFondo de reversion #{p.id}: {_e}')
-                # Resetear estado de la jugada
                 if p.jugada and p.jugada.estado == 'ganadora':
                     p.jugada.estado = 'pendiente'
                     p.jugada.monto_premio = Decimal('0')
@@ -1662,7 +1618,6 @@ def mis_premios(request):
         'es_comercial': es_comercial,
         'es_cliente': es_cliente,
     }
-    # FIX_M2_CARTEL_PREMIO_V1: carteles rojos de premios no vistos
     try:
         from roles.models import Notificacion as _NotifM2
         context['carteles_premio'] = list(_NotifM2.objects.filter(
@@ -1813,8 +1768,6 @@ def todos_los_ganadores(request):
     fecha_desde_str = request.GET.get('fecha_desde')
     fecha_hasta_str = request.GET.get('fecha_hasta')
     mostrando_hoy = False
-    # FIX_GANADORES_FECHA_V1 (2026-10-17): filtrar por la FECHA DEL SORTEO,
-    # no por la fecha en que se inserto el resultado en el sistema.
     if not fecha_desde_str and not fecha_hasta_str:
         fecha_desde_str = hoy.strftime('%Y-%m-%d')
         fecha_hasta_str = hoy.strftime('%Y-%m-%d')
@@ -2195,7 +2148,6 @@ def api_resumen_resultado(request, resultado_id):
     lines.append(f"🎯 *{resultado.sorteo.nombre}* · {hora}")
     lines.append("")
 
-    # FIX_WA_RESULTADO_V1 (2026-10-16): logica condicional de campos
     principales = []
     if resultado.pick2:
         principales.append(f"Pick2: *{resultado.pick2}*")
@@ -2268,7 +2220,6 @@ def api_guardar_resultado(request):
                 'pick2vspf': request.POST.get('pick2vspf', ''),
             }
 
-            # FIX_ASYNC_PREMIOS_V1
             resultado, premios_generados = procesar_resultado(
                 request, datos, solo_crear_resultado=True
             )
@@ -2474,18 +2425,11 @@ def api_premios_sorteo(request):
 
     return JsonResponse({'success': True, 'resumen': "\n".join(lineas)})
 
-
-
-# ═══════════════════════════════════════════════════════════════
-# API · Compartir premios · formato elegante WhatsApp
-# ═══════════════════════════════════════════════════════════════
-
 _EMOJI_FP = {
     'tarjeta': '💳', 'saldo': '📱', 'efectivo': '💵', 'cash': '💵',
     'transferencia': '🏦', 'bono': '🎁', 'postpago': '📌',
     'zelle': '💸', 'paypal': '🅿️', 'cripto': '₿', 'usdt': '₿', 'bitcoin': '₿',
 }
-
 
 def _emoji_fp(nombre):
     if not nombre:
@@ -2496,16 +2440,13 @@ def _emoji_fp(nombre):
             return v
     return '💰'
 
-
 def _fmt_m(v):
-    """Solo el numero, sin simbolo $. Enteros sin decimales."""
     if v is None:
         return '0'
     d = Decimal(str(v))
     if d == d.to_integral_value():
         return f"{int(d):,}"
     return f"{d:,.2f}"
-
 
 def _hora_salida_hoy(sorteo, hoy=None):
     from datetime import time as _time
@@ -2607,7 +2548,7 @@ def api_premios_todos(request):
         if cid not in g['clientes']:
             g['clientes'][cid] = {
                 'cliente': j.usuario,
-                'fp_totales': {},  # fp_id -> {'nombre': ..., 'total': Decimal}
+                'fp_totales': {},
                 'total': Decimal('0.00'),
             }
         cl = g['clientes'][cid]
@@ -2634,7 +2575,6 @@ def api_premios_todos(request):
         return JsonResponse({'success': False, 'error': 'No hay premios para compartir.'})
 
     lineas = []
-    # ─── Encabezado ───
     lineas.append("*🏆 MIS PREMIOS*")
     lineas.append("_━━━━━━━━━━━━━━━━━━━━_")
     lineas.append("_LottoBooM_ · _" + hoy.strftime('%d/%m/%Y') + "_")
@@ -2642,7 +2582,6 @@ def api_premios_todos(request):
     lineas.append("💰 *Total: " + _fmt_m(total_general) + "*")
     lineas.append("")
 
-    # ─── Bloques por sorteo ───
     for sid in sorted_sids:
         g = grupos[sid]
         s = g['sorteo']
@@ -2658,14 +2597,12 @@ def api_premios_todos(request):
         clientes_lista.sort(key=lambda x: -float(x['total']))
         for cl in clientes_lista:
             nombre = cl['cliente'].username if cl['cliente'] else '—'
-            # Forma de pago dominante
             if cl['fp_totales']:
                 fp_dom = max(cl['fp_totales'].values(), key=lambda x: x['total'])
                 emoji = _emoji_fp(fp_dom['nombre'])
             else:
                 emoji = '💰'
             lineas.append("   _" + nombre + "_  " + emoji + "  " + _fmt_m(cl['total']))
-        # sin linea vacia
 
     lineas.append("━━━━━━━━━━━━━━━━━━━━")
     lineas.append("")
@@ -2685,13 +2622,8 @@ def api_premios_todos(request):
         'sorteos': len(sorted_sids),
     })
 
-
-
-
-
 @login_required
 def api_resultado_status(request, resultado_id):
-    """FIX_ASYNC_PREMIOS_V1: polling para saber si el cálculo terminó."""
     resultado = get_object_or_404(Resultado, id=resultado_id)
     return JsonResponse({
         'success': True,

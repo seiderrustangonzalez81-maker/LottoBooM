@@ -85,6 +85,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',   # 12) Clickjacking
     'publico.middleware.RegistrarVisitaMiddleware',             # 13) Visitas,
     "publico.middleware.NoCacheHTMLMiddleware",
+    'resultados.middleware.ActualizadorResultadosMiddleware',
 ]
 
 # ============================================================

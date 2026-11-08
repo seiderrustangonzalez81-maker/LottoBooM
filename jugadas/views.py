@@ -1,12 +1,14 @@
-from LottoBooM.utils import es_verano_cuba
 # -*- coding: utf-8 -*-
 import json
 import re
 import logging
 import traceback
+import os
+import threading
 from decimal import Decimal
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, time
 from collections import defaultdict
+from zoneinfo import ZoneInfo
 
 import pytz
 from django.conf import settings
@@ -14,7 +16,6 @@ from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate
-from resultados.models import Premio
 from django.db import transaction
 from django.db.models import Q, Sum, Count
 from django.utils import timezone
@@ -24,25 +25,76 @@ from django.views.decorators.csrf import csrf_exempt
 from django.db.models.functions import TruncDate
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
-from roles.models import Rol
-from .models import (
-    Jugada, FormaJuego, Boleta,
-    ClienteOffline,
-)
-from roles.models import (
-    Fondo, Bono, Subordinacion,
-    Notificacion, MovimientoFondo, NumeroRestringido,
-)
+from django.core.management import call_command
+
+from LottoBooM.utils import es_verano_cuba
+from resultados.models import Premio
+from roles.models import Rol, Fondo, Bono, Subordinacion, Notificacion, MovimientoFondo, NumeroRestringido
 from sorteos.models import Sorteo
 from sorteos.utils import get_sorteos_abiertos, calcular_estado_sorteo, get_hora_salida
 from sorteos.utils import segundos_hasta_proximo as _seg_hasta_prox
 from pagos.models import FormaPago
 from roles.utils import get_pool_gestor, get_dosis_gestor, get_sobrelimite_gestor
 from jugadas.utils import consumir_postpago, liquidar_postpago, otorgar_postpago
+from .models import Jugada, FormaJuego, Boleta, ClienteOffline
 
 logger = logging.getLogger(__name__)
 
+# ═══════════════════════════════════════════════════════════════
+# FIX URGENTE: FORZAR ZONA HORARIA DE CUBA (UTC-4)
+# ═══════════════════════════════════════════════════════════════
+def _obtener_sorteos_cuba_estricto():
+    """
+    Calcula la hora real en Cuba y devuelve solo los sorteos abiertos.
+    """
+    try:
+        CUBA_TZ = ZoneInfo('America/Havana')
+    except Exception:
+        CUBA_TZ = pytz.timezone('America/Havana')
 
+    ahora_cuba = timezone.now().astimezone(CUBA_TZ)
+    fecha_cuba = ahora_cuba.date()
+
+    sorteos_validos = []
+
+    for s in Sorteo.objects.filter(activo=True).order_by('hora_salida'):
+        temp = 'verano' if es_verano_cuba(fecha_cuba) else 'invierno'
+        dia_es = {0: 'lunes', 1: 'martes', 2: 'miercoles', 3: 'jueves', 4: 'viernes', 5: 'sabado', 6: 'domingo'}[fecha_cuba.weekday()]
+
+        hora_salida = None
+        if s.horarios and temp in s.horarios and dia_es in s.horarios[temp]:
+            hora_str = s.horarios[temp][dia_es]
+            try:
+                hh, mm = hora_str.split(':')
+                hora_salida = time(int(hh), int(mm))
+            except Exception:
+                pass
+
+        if not hora_salida:
+            hora_salida = s.hora_salida
+
+        if not hora_salida:
+            continue
+
+        # Calcular salida y cierre en hora Cuba
+        dt_salida = datetime.combine(fecha_cuba, hora_salida).replace(tzinfo=CUBA_TZ)
+
+        # Si la hora de salida es de madrugada, pertenece al día siguiente.
+        if hora_salida.hour < 6:
+            dt_salida += timedelta(days=1)
+
+        minutos_cierre = s.minutos_cierre if s.minutos_cierre is not None else 60
+        dt_cierre = dt_salida - timedelta(minutes=minutos_cierre)
+
+        # ¿Estamos antes del cierre?
+        if ahora_cuba < dt_cierre:
+            s.estado_actual = 'abierto'
+            s.hora_salida = hora_salida
+            s.hora_cierre = dt_cierre
+            s.hora_salida_str = hora_salida.strftime('%I:%M %p').lstrip('0')
+            sorteos_validos.append(s)
+
+    return sorteos_validos
 
 # ═══════════════════════════════════════════════════════════════
 # Helper · Detecta si una BOLETA completa ya existe en BD
@@ -935,6 +987,31 @@ def _do_cancelar_boleta(boleta, user, motivo=''):
     detalle['total'] = reintegr_total
     return True, detalle, None
 
+# ═══════════════════════════════════════════════════════════════
+# ACTUALIZACIÓN DINÁMICA DE RESULTADOS (Sin Tasks, sin Tarpit)
+# ═══════════════════════════════════════════════════════════════
+def _intentar_actualizar_loteria():
+    archivo_lock = '/tmp/ultima_actualizacion_loteria.txt'
+    necesita_actualizar = True
+
+    # Candado de 5 minutos
+    if os.path.exists(archivo_lock):
+        ultima_mod = os.path.getmtime(archivo_lock)
+        if timezone.now().timestamp() - ultima_mod < 300:
+            necesita_actualizar = False
+
+    if necesita_actualizar:
+        with open(archivo_lock, 'w') as f:
+            f.write(str(timezone.now()))
+
+        def actualizar():
+            try:
+                call_command('load_results')
+            except Exception as e:
+                logger.error(f"Error en actualización dinámica: {e}")
+
+        # Hilo en segundo plano para que la página cargue rápido
+        threading.Thread(target=actualizar).start()
 
 # ============================================================
 # VISTAS
@@ -951,13 +1028,7 @@ def superparlet(request):
     clientes = _construir_clientes_visibles(user)
 
     formas_pago = FormaPago.objects.filter(activo=True)
-    fecha_actual = timezone.localdate()
-    ahora = timezone.now()
-    sorteos_con_estado = []
-    for s in Sorteo.objects.filter(activo=True).order_by('hora_salida'):
-        s = calcular_estado_sorteo(s, ahora, fecha_actual)
-        sorteos_con_estado.append(s)
-    sorteos_disponibles = sorteos_con_estado
+    sorteos_disponibles = _obtener_sorteos_cuba_estricto()
 
     if es_autorizador:
         total_fondos = 0
@@ -988,7 +1059,7 @@ def superparlet(request):
 @login_required
 def apostar(request):
     user = request.user
-
+    _intentar_actualizar_loteria() # <--- AGREGA ESTA LÍNEA AQUÍ
     # ═══════════════════════════════════════════════════════════════
     # BLOQUEO PARA AUDITORES: no pueden apostar, solo supervisar
     # ═══════════════════════════════════════════════════════════════
@@ -1123,7 +1194,7 @@ def apostar(request):
             })
 
     fecha_actual = timezone.localdate()
-    sorteos_disponibles = get_sorteos_abiertos(fecha_actual)
+    sorteos_disponibles = _obtener_sorteos_cuba_estricto()
 
     formas_juego = FormaJuego.objects.filter(activo=True)
     formas_pago = FormaPago.objects.filter(activo=True)
@@ -1325,7 +1396,6 @@ def _log_400_apuesta(view_func):
         return response
     return wrapper
 
-
 @_log_400_apuesta
 def _guardar_apuesta_impl(request):
     # ─── (cuerpo sin cambios, se mantiene tal cual lo tenías) ───
@@ -1350,7 +1420,17 @@ def _guardar_apuesta_impl(request):
         except ValueError:
             return JsonResponse({'success': False, 'message': 'Formato de fecha inválido. Use YYYY-MM-DD.'}, status=400)
 
-        hoy = timezone.localdate()
+        # ═══ FIX ZONA HORARIA CUBA (Para evitar que clientes de España envíen fecha de mañana) ═══
+        CUBA_TZ = ZoneInfo('America/Havana')
+        ahora_cuba = timezone.now().astimezone(CUBA_TZ)
+        hoy = ahora_cuba.date()
+
+        # Si la fecha enviada por el navegador es el día de hoy o mañana (por el desfase),
+        # la forzamos a la fecha real de Cuba.
+        if abs((fecha_apuesta - hoy).days) <= 1:
+            fecha_apuesta = hoy
+        # ══════════════════════════════════════════════════════════════════════════════════════
+
         limite_futuro = hoy + timedelta(days=365)  # FIX_FUTURO_1ANO_V1
 
         # FIX_FUTURO_1ANO_V1 + FIX_USUARIO_URGENTE_V1
@@ -1390,36 +1470,46 @@ def _guardar_apuesta_impl(request):
         if items_super and (len(super_sorteos_ids) < 2 or not all(super_sorteos_ids)):
             return JsonResponse({'success': False, 'message': 'Superparlet requiere dos sorteos'}, status=400)
 
-        # ═══ FIX_CIERRE_SORTEO_V1 (2026-10-15) ═══
-        # Antes de procesar nada: verificar que TODOS los sorteos del carrito
-        # estén abiertos (hora Cuba). Banco/superadmin pueden saltar (C2).
-        _es_banco_o_super = (
-            request.user.is_superuser
-            or request.user.roles.filter(tipo__in=['superadmin','banco'], activo=True).exists()
-        )
-        if not _es_banco_o_super:
-            from sorteos.utils import calcular_estado_sorteo as _ces
+        # ═══ VALIDACIÓN ESTRICTA DE CIERRE (ZONA HORARIA CUBA) ═══
+        try:
+            CUBA_TZ = ZoneInfo('America/Havana')
+            ahora_cuba = timezone.now().astimezone(CUBA_TZ)
+            
             _todos_ids = list(set(list(sorteos_ids) + list(super_sorteos_ids)))
             _cerrados = []
+            
             for _sid in _todos_ids:
-                try:
-                    _sorteo_chk = Sorteo.objects.filter(id=int(_sid)).first()
-                    if not _sorteo_chk:
-                        continue
-                    _estado_chk = _ces(_sorteo_chk, timezone.now(), fecha_apuesta)
-                    if getattr(_estado_chk, 'estado_actual', 'cerrado') != 'abierto':
-                        _cerrados.append(_sorteo_chk.nombre)
-                except Exception as _ecs:
-                    logger.warning(f'[FIX_CIERRE_SORTEO_V1] error verificando sorteo {_sid}: {_ecs}')
-
+                _sorteo_chk = Sorteo.objects.filter(id=int(_sid)).first()
+                if not _sorteo_chk: continue
+                
+                temp_chk = 'verano' if es_verano_cuba(fecha_apuesta) else 'invierno'
+                dia_chk = {0: 'lunes', 1: 'martes', 2: 'miercoles', 3: 'jueves', 4: 'viernes', 5: 'sabado', 6: 'domingo'}[fecha_apuesta.weekday()]
+                
+                hs_chk = _sorteo_chk.hora_salida
+                if _sorteo_chk.horarios and temp_chk in _sorteo_chk.horarios and dia_chk in _sorteo_chk.horarios[temp_chk]:
+                    hh, mm = _sorteo_chk.horarios[temp_chk][dia_chk].split(':')
+                    hs_chk = time(int(hh), int(mm))
+                
+                dt_sal = datetime.combine(fecha_apuesta, hs_chk).replace(tzinfo=CUBA_TZ)
+                
+                if hs_chk.hour < 6: 
+                    dt_sal += timedelta(days=1)
+                
+                dt_cie = dt_sal - timedelta(minutes=(_sorteo_chk.minutos_cierre or 60))
+                
+                if ahora_cuba >= dt_cie:
+                    _cerrados.append(_sorteo_chk.nombre)
+                    
             if _cerrados:
                 return JsonResponse({
                     'success': False,
                     'sorteo_cerrado': True,
                     'sorteos_cerrados': _cerrados,
-                    'message': 'La jugada no sera recibida porque el sorteo ya cerro: ' + ', '.join(_cerrados),
+                    'message': '⛔ Operación rechazada. El sorteo ya cerró en Cuba: ' + ', '.join(_cerrados),
                 }, status=400)
-        # ═══ FIN FIX_CIERRE_SORTEO_V1 ═══
+        except Exception as e:
+            logger.error(f"Error validando cierre estricto: {e}")
+        # ═══ FIN VALIDACIÓN ESTRICTA ═══
 
         usuario = request.user
         try:
@@ -1561,9 +1651,6 @@ def _guardar_apuesta_impl(request):
         if not destinatario:
             return JsonResponse({'success': False, 'message': 'No se encontró un gestor para este cliente.'}, status=400)
 
-
-
-
         es_edicion_pura = bool(jugada_id) and modo_edicion not in ('duplicar', 'editar_boleta')
         es_edicion_boleta = (
             modo_edicion == 'editar_boleta'
@@ -1571,7 +1658,6 @@ def _guardar_apuesta_impl(request):
         )
 
         # Validar suma igual si modo_operacion == 'editar'
-        modo_operacion = request.POST.get('modo_operacion', '')
         modo_operacion = request.POST.get('modo_operacion', '')
 
         es_solo_editar = (es_edicion_boleta and modo_operacion == 'editar')
@@ -1648,12 +1734,8 @@ def _guardar_apuesta_impl(request):
 
         with transaction.atomic():
 
-
             # Asegurar que 'boleta' este siempre definida
-
-
             boleta = None
-
 
             if es_edicion_boleta:
                 orig = Boleta.objects.select_for_update().filter(id=int(boleta_origen_id)).first()
@@ -1680,7 +1762,6 @@ def _guardar_apuesta_impl(request):
                     boleta = orig
                 else:
                     # FIX_REENVIAR_Y_BANCO_EDIT_V1: Reenviar NO cancela la original.
-                    pass
                     boleta = Boleta.objects.create(
                         usuario=cliente,
                         destinatario=destinatario,
@@ -1694,9 +1775,6 @@ def _guardar_apuesta_impl(request):
                             'boleta_origen_id': int(boleta_origen_id),
                         },
                     )
-
-            # Ya se manejo en el bloque anterior si es edicion_boleta
-
 
             # FIX_1_BOLETA_POR_SORTEO_V1: preparar diccionarios de boletas
             # (se crearán bajo demanda en el loop para no dejar boletas huérfanas)
@@ -1759,8 +1837,6 @@ def _guardar_apuesta_impl(request):
                         # FIX_VENTANA_BANCO_V2 (2026-10-14):
                         # - superadmin y banco: pueden cargar fuera de tiempo sin limite.
                         # - resto: bloqueado.
-                        # Decision de negocio: el banco es jefe de su sector y responde
-                        # por sus actos. El premio se calcula normal via reconciliar_premio_jugada.
                         permitido = es_superadmin_ or es_banco_
                         if not permitido:
                             advertencias.append(
@@ -2030,9 +2106,7 @@ def _guardar_apuesta_impl(request):
 
             # En modo editar NO se recobra (el dinero ya esta pagado)
 
-
             if (not es_solo_editar) and forma_pago and total_apostado > 0:
-
 
                 monto_restante = total_apostado
 
@@ -2169,18 +2243,13 @@ def _guardar_apuesta_impl(request):
 
             if boleta:
 
-
                 if es_solo_editar:
-
 
                     # Modo editar: preservar metadata de pago original (no toca metadata['pago'])
 
-
                     pass
 
-
                 else:
-
 
                     boleta.metadata['pago'] = {
                     'fondo': str(monto_fondo_consumido),
@@ -2371,7 +2440,7 @@ def mis_apuestas(request):
             jefe=user, activo=True
         ).values_list('subordinado_id', flat=True).distinct())
         todos_clientes_ids = list(clientes_ids | sub_ids)
-        
+
         base_qs = Jugada.objects.filter(
             Q(usuario__in=todos_clientes_ids) | Q(usuario=user) | Q(destinatario=user)
         )
@@ -2769,7 +2838,7 @@ def api_crear_cliente(request):
                 from roles.utils import verificar_recarga_duplicada
                 if verificar_recarga_duplicada(user, nuevo, recarga_fp, recarga_monto, segundos=60):
                     # Es un cliente nuevo, si falla es un error de la red, pero lo blindamos
-                    pass 
+                    pass
                 # FASE1_POSTPAGO_V1: helper (aunque un cliente nuevo no debería tener postpago)
                 from roles.utils import _aplicar_ingreso_a_fondo
                 _aplicar_ingreso_a_fondo(
@@ -2981,7 +3050,7 @@ def api_verificar_saldo(request):
             else:
                 postpagos_sin_fp += monto_p
         postpago_pendiente = sum(postpagos_por_fp.values()) + postpagos_sin_fp
-        
+
         # FIX_POSTPAGO_TARJETA_V1 (2026-10-18): Si Tarjeta > 0, ocultar postpago
         from pagos.models import FormaPago
         fp_tarjeta = FormaPago.objects.filter(nombre__iexact='Tarjeta').first()
@@ -3035,7 +3104,7 @@ def api_forma_pago_cliente(request):
 
         formas_pago = []
         visto = set()
-        
+
         # 1. Agregar las FPs de los fondos existentes
         for f in fondos_qs:
             if not f.forma_pago:
@@ -3050,7 +3119,7 @@ def api_forma_pago_cliente(request):
                 'gestor_id': f.asignado_por_id,
                 'gestor_username': f.asignado_por.username if f.asignado_por else None,
             })
-            
+
         # 2. FIX_FP_NUEVAS_V1 (2026-10-18): Si el usuario es gestor, agregar las FPs que tiene asignadas
         if not (es_superadmin or user.id == seleccionado.id):
             from roles.models import RecursoAsignado
@@ -3060,7 +3129,7 @@ def api_forma_pago_cliente(request):
                 tipo='forma_pago',
                 activo=True
             ).select_related('forma_pago')
-            
+
             for r in recursos_qs:
                 if not r.forma_pago:
                     continue
