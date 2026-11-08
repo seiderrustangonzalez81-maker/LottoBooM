@@ -38,6 +38,9 @@ from roles.utils import get_pool_gestor, get_dosis_gestor, get_sobrelimite_gesto
 from jugadas.utils import consumir_postpago, liquidar_postpago, otorgar_postpago
 from .models import Jugada, FormaJuego, Boleta, ClienteOffline
 
+import os
+import threading
+from django.core.management import call_command
 logger = logging.getLogger(__name__)
 
 # ═══════════════════════════════════════════════════════════════

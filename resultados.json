@@ -18,5 +18,45 @@
     ],
     "fecha": "2026-11-08",
     "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Anguilla 8AM",
+    "numeros": [
+      "43",
+      "36",
+      "31"
+    ],
+    "fecha": "2026-11-08",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Anguilla 9AM",
+    "numeros": [
+      "43",
+      "38",
+      "14"
+    ],
+    "fecha": "2026-11-08",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Anguilla 10AM",
+    "numeros": [
+      "07",
+      "67",
+      "11"
+    ],
+    "fecha": "2026-11-08",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Haiti Bolet 9:30 AM",
+    "numeros": [
+      "66",
+      "30",
+      "46"
+    ],
+    "fecha": "2026-11-08",
+    "fuente": "enloteria"
   }
 ]

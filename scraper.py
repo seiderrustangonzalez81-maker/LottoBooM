@@ -16,6 +16,17 @@ ARCHIVO_JSON = "resultados.json"
 def fecha_cuba():
     return datetime.now(CUBA_TZ).strftime("%Y-%m-%d")
 
+def extraer_numeros_validos(tarjeta_o_soup):
+    """Extrae solo números válidos, ignorando guiones o textos vacíos."""
+    bolas = tarjeta_o_soup.find_all("div", class_="result-number")
+    numeros_validos = []
+    for b in bolas:
+        texto = b.get_text(strip=True)
+        # Solo agregar si el texto es un número (isdigit) y tiene 2 o más dígitos
+        if texto.isdigit() and len(texto) >= 2:
+            numeros_validos.append(texto)
+    return numeros_validos[:4] # Máximo 4 números
+
 def scrape_principal(page):
     print("Extrayendo pagina principal...")
     resultados = []
@@ -37,8 +48,9 @@ def scrape_principal(page):
         try:
             nombre = tarjeta.get("data-lottery-name", "").strip()
             if not nombre: continue
-            bolas = tarjeta.find_all("div", class_="result-number")
-            numeros = [b.get_text(strip=True) for b in bolas if b.get_text(strip=True)][:4]
+            
+            numeros = extraer_numeros_validos(tarjeta)
+            
             if numeros and len(numeros) >= 2:
                 resultados.append({
                     "sorteo_nombre": nombre,
@@ -47,6 +59,8 @@ def scrape_principal(page):
                     "fuente": "enloteria"
                 })
                 print(f"  OK {nombre} -> {', '.join(numeros)}")
+            else:
+                print(f"  Omitido (sin numeros validos): {nombre}")
         except Exception as e:
             print(f"  Error en tarjeta: {e}")
     return resultados
@@ -56,8 +70,10 @@ def scrape_especifica(page, url, nombre_forzado):
         page.goto(url, wait_until="domcontentloaded", timeout=30000)
         page.wait_for_timeout(4000)
         soup = BeautifulSoup(page.content(), "html.parser")
-        bolas = soup.find_all("div", class_="result-number")
-        numeros = [b.get_text(strip=True) for b in bolas if b.get_text(strip=True)][:3]
+        
+        numeros = extraer_numeros_validos(soup)
+        numeros = numeros[:3]  # Fijo, Corrido 1, Corrido 2
+        
         if numeros and len(numeros) >= 2:
             print(f"  OK {nombre_forzado} -> {', '.join(numeros)}")
             return [{
@@ -66,6 +82,8 @@ def scrape_especifica(page, url, nombre_forzado):
                 "fecha": fecha_cuba(),
                 "fuente": "enloteria"
             }]
+        else:
+            print(f"  Omitido (sin numeros validos): {nombre_forzado}")
     except Exception as e:
         print(f"  Error en {nombre_forzado}: {e}")
     return []
@@ -92,7 +110,6 @@ def main():
         browser.close()
 
     # --- LÓGICA DE ACUMULACIÓN ---
-    # 1. Leer el JSON existente
     resultados_guardados = []
     if os.path.exists(ARCHIVO_JSON):
         try:
@@ -101,18 +118,16 @@ def main():
         except Exception:
             resultados_guardados = []
 
-    # 2. Organizar en un diccionario para evitar duplicados (usando nombre+fecha como clave)
     diccionario_datos = {}
     for r in resultados_guardados:
         llave = f"{r['sorteo_nombre']}|{r['fecha']}"
         diccionario_datos[llave] = r
 
-    # 3. Agregar los nuevos resultados. Si uno ya existía, no se duplica, solo se actualiza.
+    # Agregar o actualizar solo con los nuevos válidos
     for nuevo in todos_nuevos:
         llave = f"{nuevo['sorteo_nombre']}|{nuevo['fecha']}"
         diccionario_datos[llave] = nuevo
 
-    # 4. Guardar todo en el JSON
     resultados_finales = list(diccionario_datos.values())
     with open(ARCHIVO_JSON, "w", encoding="utf-8") as f:
         json.dump(resultados_finales, f, ensure_ascii=False, indent=2)
