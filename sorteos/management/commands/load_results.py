@@ -90,11 +90,19 @@ class Command(BaseCommand):
                 fecha = parse_date(item.get("fecha", ""))
                 if not fecha: continue
 
+                # ═══ BLOQUEO ESTRICTO DE FECHAS FUTURAS ═══
+                # Evita que se carguen resultados falsos con fechas del futuro
+                if fecha > hoy_cuba:
+                    self.stdout.write(self.style.WARNING(f"⚠️ Saltando {nombre_db}: Fecha futura ({fecha})."))
+                    continue
+                # ═══════════════════════════════════════════
+
                 numeros = item.get("numeros", [])
                 if not numeros or len(numeros) < 2: continue
 
                 fuente = item.get("fuente", "")
 
+                # Validación extra para LotteryUSA (evita cargar resultados de ayer si hoy aún no han salido)
                 if fuente == "lotteryusa" and fecha != hoy_cuba:
                     self.stdout.write(self.style.WARNING(f"⚠️ Saltando {nombre_db} de LotteryUSA: la fecha {fecha} no es hoy."))
                     continue
