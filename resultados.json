@@ -2,9 +2,9 @@
   {
     "sorteo_nombre": "El Quemaito Mayor",
     "numeros": [
+      "86",
       "95",
-      "10",
-      "08"
+      "10"
     ],
     "fecha": "2026-11-08",
     "fuente": "enloteria"
@@ -12,9 +12,9 @@
   {
     "sorteo_nombre": "El Quinielon Dia",
     "numeros": [
+      "09",
       "97",
-      "65",
-      "69"
+      "65"
     ],
     "fecha": "2026-11-08",
     "fuente": "enloteria"
@@ -75,6 +75,86 @@
       "57",
       "77",
       "90"
+    ],
+    "fecha": "2026-11-08",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Anguilla 12PM",
+    "numeros": [
+      "60",
+      "72",
+      "60"
+    ],
+    "fecha": "2026-11-08",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "La Primera",
+    "numeros": [
+      "60",
+      "30",
+      "75"
+    ],
+    "fecha": "2026-11-08",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "LoteDom",
+    "numeros": [
+      "66",
+      "55",
+      "12"
+    ],
+    "fecha": "2026-11-08",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Haiti Bolet 11:30 AM",
+    "numeros": [
+      "39",
+      "44",
+      "51"
+    ],
+    "fecha": "2026-11-08",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "King Lottery Día",
+    "numeros": [
+      "43",
+      "12",
+      "76"
+    ],
+    "fecha": "2026-11-08",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "La Suerte",
+    "numeros": [
+      "47",
+      "64",
+      "69"
+    ],
+    "fecha": "2026-11-08",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Real",
+    "numeros": [
+      "59",
+      "08",
+      "17"
+    ],
+    "fecha": "2026-11-08",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Anguilla 1PM",
+    "numeros": [
+      "98",
+      "20",
+      "63"
     ],
     "fecha": "2026-11-08",
     "fuente": "enloteria"
