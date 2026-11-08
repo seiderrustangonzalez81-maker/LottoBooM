@@ -40,6 +40,9 @@ from pagos.models import FormaPago
 from roles.utils import get_pool_gestor, get_dosis_gestor, get_sobrelimite_gestor
 from jugadas.utils import consumir_postpago, liquidar_postpago, otorgar_postpago
 
+import os
+import threading
+from django.core.management import call_command
 logger = logging.getLogger(__name__)
 
 
@@ -935,6 +938,31 @@ def _do_cancelar_boleta(boleta, user, motivo=''):
     detalle['total'] = reintegr_total
     return True, detalle, None
 
+# ═══════════════════════════════════════════════════════════════
+# ACTUALIZACIÓN DINÁMICA DE RESULTADOS (Sin Tasks, sin Tarpit)
+# ═══════════════════════════════════════════════════════════════
+def _intentar_actualizar_loteria():
+    archivo_lock = '/tmp/ultima_actualizacion_loteria.txt'
+    necesita_actualizar = True
+
+    # Candado de 5 minutos
+    if os.path.exists(archivo_lock):
+        ultima_mod = os.path.getmtime(archivo_lock)
+        if timezone.now().timestamp() - ultima_mod < 300:
+            necesita_actualizar = False
+
+    if necesita_actualizar:
+        with open(archivo_lock, 'w') as f:
+            f.write(str(timezone.now()))
+
+        def actualizar():
+            try:
+                call_command('load_results')
+            except Exception as e:
+                logger.error(f"Error en actualización dinámica: {e}")
+
+        # Hilo en segundo plano para que la página cargue rápido
+        threading.Thread(target=actualizar).start()
 
 # ============================================================
 # VISTAS
@@ -988,7 +1016,7 @@ def superparlet(request):
 @login_required
 def apostar(request):
     user = request.user
-
+    _intentar_actualizar_loteria() # <--- AGREGA ESTA LÍNEA AQUÍ
     # ═══════════════════════════════════════════════════════════════
     # BLOQUEO PARA AUDITORES: no pueden apostar, solo supervisar
     # ═══════════════════════════════════════════════════════════════
@@ -2371,7 +2399,7 @@ def mis_apuestas(request):
             jefe=user, activo=True
         ).values_list('subordinado_id', flat=True).distinct())
         todos_clientes_ids = list(clientes_ids | sub_ids)
-        
+
         base_qs = Jugada.objects.filter(
             Q(usuario__in=todos_clientes_ids) | Q(usuario=user) | Q(destinatario=user)
         )
@@ -2769,7 +2797,7 @@ def api_crear_cliente(request):
                 from roles.utils import verificar_recarga_duplicada
                 if verificar_recarga_duplicada(user, nuevo, recarga_fp, recarga_monto, segundos=60):
                     # Es un cliente nuevo, si falla es un error de la red, pero lo blindamos
-                    pass 
+                    pass
                 # FASE1_POSTPAGO_V1: helper (aunque un cliente nuevo no debería tener postpago)
                 from roles.utils import _aplicar_ingreso_a_fondo
                 _aplicar_ingreso_a_fondo(
@@ -2981,7 +3009,7 @@ def api_verificar_saldo(request):
             else:
                 postpagos_sin_fp += monto_p
         postpago_pendiente = sum(postpagos_por_fp.values()) + postpagos_sin_fp
-        
+
         # FIX_POSTPAGO_TARJETA_V1 (2026-10-18): Si Tarjeta > 0, ocultar postpago
         from pagos.models import FormaPago
         fp_tarjeta = FormaPago.objects.filter(nombre__iexact='Tarjeta').first()
@@ -3035,7 +3063,7 @@ def api_forma_pago_cliente(request):
 
         formas_pago = []
         visto = set()
-        
+
         # 1. Agregar las FPs de los fondos existentes
         for f in fondos_qs:
             if not f.forma_pago:
@@ -3050,7 +3078,7 @@ def api_forma_pago_cliente(request):
                 'gestor_id': f.asignado_por_id,
                 'gestor_username': f.asignado_por.username if f.asignado_por else None,
             })
-            
+
         # 2. FIX_FP_NUEVAS_V1 (2026-10-18): Si el usuario es gestor, agregar las FPs que tiene asignadas
         if not (es_superadmin or user.id == seleccionado.id):
             from roles.models import RecursoAsignado
@@ -3060,7 +3088,7 @@ def api_forma_pago_cliente(request):
                 tipo='forma_pago',
                 activo=True
             ).select_related('forma_pago')
-            
+
             for r in recursos_qs:
                 if not r.forma_pago:
                     continue
