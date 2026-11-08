@@ -1,4 +1,5 @@
 import requests
+import unicodedata
 from django.core.management.base import BaseCommand
 from django.utils.dateparse import parse_date
 from django.contrib.auth.models import User
@@ -43,6 +44,13 @@ MAPEO_NOMBRES = {
     "New Jersey Tarde": "New Jersey 12:50 PM", "New Jersey Noche": "New Jersey 10:50 PM",
 }
 
+def normalizar_texto(texto):
+    """Quita acentos y pasa a minúsculas para comparar de forma segura."""
+    if not texto: return ""
+    texto = unicodedata.normalize('NFD', str(texto))
+    texto = ''.join(c for c in texto if unicodedata.category(c) != 'Mn')
+    return texto.lower().strip()
+
 class FakeRequest:
     def __init__(self, user): self.user = user
 
@@ -64,12 +72,23 @@ class Command(BaseCommand):
             return
         req = FakeRequest(admin)
 
+        # Creamos un diccionario auxiliar normalizado para búsquedas sin acentos
+        mapeo_normalizado = {normalizar_texto(k): v for k, v in MAPEO_NOMBRES.items()}
+
         creados = actualizados = errores = premios_ok = premios_err = 0
         for item in data:
             try:
                 nombre_web = item.get("sorteo_nombre", "").strip()
+                
+                # 1. Búsqueda exacta
                 nombre_db = MAPEO_NOMBRES.get(nombre_web)
-                if not nombre_db: continue
+                
+                # 2. Si falla, búsqueda normalizada (sin acentos)
+                if not nombre_db:
+                    nombre_db = mapeo_normalizado.get(normalizar_texto(nombre_web))
+                    
+                if not nombre_db:
+                    continue
 
                 sorteo = Sorteo.objects.filter(nombre__iexact=nombre_db).first()
                 if not sorteo:
@@ -116,7 +135,6 @@ class Command(BaseCommand):
                         'centena_corrida_2': obj.centena_corrida_2 or '',
                     }
                     resultado_obj, premios_count = procesar_resultado(req, datos, resultado_existente=obj)
-                    # FIX: persistir en la BD
                     obj.premios_generados = premios_count
                     obj.procesamiento_estado = 'completado'
                     obj.save(update_fields=['premios_generados', 'procesamiento_estado'])
