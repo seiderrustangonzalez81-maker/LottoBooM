@@ -270,41 +270,21 @@
     "fuente": "lotteryusa"
   },
   {
-    "sorteo_nombre": "New York 2:30 PM",
-    "numeros": [
-      "1",
-      "8",
-      "4"
-    ],
-    "fecha": "2026-11-07",
-    "fuente": "lotteryusa"
-  },
-  {
-    "sorteo_nombre": "New Jersey 12:50 PM",
-    "numeros": [
-      "4",
-      "7",
-      "4"
-    ],
-    "fecha": "2026-11-07",
-    "fuente": "lotteryusa"
-  },
-  {
-    "sorteo_nombre": "Georgia 12:30 PM",
-    "numeros": [
-      "7",
-      "5",
-      "6"
-    ],
-    "fecha": "2026-11-07",
-    "fuente": "lotteryusa"
-  },
-  {
     "sorteo_nombre": "Anguilla 5PM",
     "numeros": [
       "13",
       "67",
       "13"
+    ],
+    "fecha": "2026-11-08",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Anguilla 6PM",
+    "numeros": [
+      "03",
+      "84",
+      "42"
     ],
     "fecha": "2026-11-08",
     "fuente": "enloteria"
