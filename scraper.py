@@ -38,19 +38,19 @@ URLS_USA = {
 
     # ── NEW YORK ──
     "New York 2:30 PM":  "https://www.lotteryusa.com/new-york/midday-numbers/",
-    "New York 10:30 PM": "https://www.lotteryusa.com/new-york/evening-numbers/",
+    "New York 10:30 PM": "https://www.lotteryusa.com/new-york/numbers/",
 
     # ── NEW JERSEY ──
-    "New Jersey 12:50 PM": "https://www.lotteryusa.com/new-jersey/pick-3-midday/",
+    "New Jersey 12:50 PM": "https://www.lotteryusa.com/new-jersey/midday-pick-3/",
     "New Jersey 10:57 PM": "https://www.lotteryusa.com/new-jersey/pick-3/",
 
     # ── GEORGIA ──
-    "Georgia 12:30 PM": "https://www.lotteryusa.com/georgia/cash-3-midday/",
+    "Georgia 12:30 PM": "https://www.lotteryusa.com/georgia/midday-3/",
     "Georgia 11:34 PM": "https://www.lotteryusa.com/georgia/cash-3-evening/",
 
     # ── TENNESSEE ──
-    "Tennessee 1:20 PM": "https://www.lotteryusa.com/tennessee/cash-3-midday/",
-    "Tennessee 6:30 PM": "https://www.lotteryusa.com/tennessee/cash-3-evening/",
+    "Tennessee 1:20 PM": "https://www.lotteryusa.com/tennessee/midday-cash-3/",
+    "Tennessee 6:30 PM": "https://www.lotteryusa.com/tennessee/cash-3/",
 }
 
 # ═══════════════════════════════════════════════════════════════
