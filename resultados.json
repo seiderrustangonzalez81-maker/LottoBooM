@@ -438,5 +438,25 @@
     ],
     "fecha": "2026-11-08",
     "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Florida Noche",
+    "numeros": [
+      "14",
+      "93",
+      "65"
+    ],
+    "fecha": "2026-11-08",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Georgia 11:34 PM",
+    "numeros": [
+      "1",
+      "5",
+      "8"
+    ],
+    "fecha": "2026-11-08",
+    "fuente": "lotteryusa"
   }
 ]
