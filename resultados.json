@@ -458,5 +458,35 @@
     ],
     "fecha": "2026-11-08",
     "fuente": "lotteryusa"
+  },
+  {
+    "sorteo_nombre": "New York Noche",
+    "numeros": [
+      "45",
+      "22",
+      "14"
+    ],
+    "fecha": "2026-11-08",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Florida 9:45 PM",
+    "numeros": [
+      "6",
+      "1",
+      "4"
+    ],
+    "fecha": "2026-11-08",
+    "fuente": "lotteryusa"
+  },
+  {
+    "sorteo_nombre": "New York 2:30 PM",
+    "numeros": [
+      "8",
+      "3",
+      "1"
+    ],
+    "fecha": "2026-11-08",
+    "fuente": "lotteryusa"
   }
 ]
