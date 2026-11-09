@@ -1,55 +1,131 @@
 import json
 import os
 import time
+import re
 import requests
 from datetime import datetime, timezone, timedelta
+from zoneinfo import ZoneInfo
 from bs4 import BeautifulSoup
 from playwright.sync_api import sync_playwright
 
-# Zona horaria Cuba (UTC-4 hasta nov 2027)
-CUBA_TZ = timezone(timedelta(hours=-4))
+# ═══════════════════════════════════════════════════════════════
+# ZONAS HORARIAS
+#   Cuba: UTC-4 hasta 07/11/2027 (America/Havana)
+#   Este EE.UU.: UTC-5 en invierno, UTC-4 en verano (America/New_York)
+# ═══════════════════════════════════════════════════════════════
+TZ_CUBA = ZoneInfo("America/Havana")
+TZ_ESTE = ZoneInfo("America/New_York")
 
 URL_MAIN = "https://enloteria.com/resultados-loterias-hoy"
 URL_QUEMAITO = "https://enloteria.com/resultados-el-quemaito-mayor-hoy"
 URL_QUINIELON = "https://enloteria.com/resultados-el-quinielon-dia-hoy"
 ARCHIVO_JSON = "resultados.json"
 
-# Mapeo de URLs de EE. UU. en LotteryUSA
+# ═══════════════════════════════════════════════════════════════
+# URLs LOTTERYUSA (mediodía + noche)
+#   NOTA: si alguna URL de noche devuelve 404, el log lo dirá
+#   como "❌ Error intento X: 404 Client Error". Ajustar la ruta.
+# ═══════════════════════════════════════════════════════════════
 URLS_USA = {
+    # Texas
     "Texas 1:20 PM": "https://www.lotteryusa.com/texas/pick-3-day/",
+    "Texas 10:12 PM": "https://www.lotteryusa.com/texas/pick-3-evening/",
+    # Florida
     "Florida 1:35 PM": "https://www.lotteryusa.com/florida/midday-pick-3/",
+    "Florida 9:45 PM": "https://www.lotteryusa.com/florida/evening-pick-3/",
+    # New York
     "New York 2:30 PM": "https://www.lotteryusa.com/new-york/numbers-midday/",
+    "New York 10:30 PM": "https://www.lotteryusa.com/new-york/numbers-evening/",
+    # New Jersey
     "New Jersey 12:50 PM": "https://www.lotteryusa.com/new-jersey/pick-3-midday/",
+    "New Jersey 10:57 PM": "https://www.lotteryusa.com/new-jersey/pick-3-evening/",
+    # Georgia
     "Georgia 12:30 PM": "https://www.lotteryusa.com/georgia/cash-3-midday/",
-    "Tennessee 1:20 PM": "https://www.lotteryusa.com/tennessee/cash-3-midday/"
+    "Georgia 11:34 PM": "https://www.lotteryusa.com/georgia/cash-3-evening/",
+    # Tennessee
+    "Tennessee 1:20 PM": "https://www.lotteryusa.com/tennessee/cash-3-midday/",
+    "Tennessee 6:30 PM": "https://www.lotteryusa.com/tennessee/cash-3-evening/",
 }
+
+# ═══════════════════════════════════════════════════════════════
+# UTILIDADES DE FECHA/HORA
+# ═══════════════════════════════════════════════════════════════
 def fecha_cuba():
-    return datetime.now(CUBA_TZ).strftime("%Y-%m-%d")
+    return datetime.now(TZ_CUBA).strftime("%Y-%m-%d")
+
+def fecha_este():
+    return datetime.now(TZ_ESTE).strftime("%Y-%m-%d")
+
+# Palabras clave para sorteos sin hora explícita (hora aproximada)
+HORAS_POR_PALABRA = {
+    'MADRUGADA': 3,
+    'DIA': 12, 'DÍA': 12, 'MEDIODIA': 12, 'MEDIODÍA': 12,
+    'TARDE': 15,
+    'NOCHE': 21,
+    'MAYOR': 21,
+}
+
+def parsear_hora_sorteo(nombre):
+    """Extrae la hora del sorteo del nombre. Retorna (hora, minuto) o None."""
+    # 1) AM/PM explícito: "8AM", "6:30 PM", "11:34 PM"
+    m = re.search(r'(\d{1,2})(?::(\d{2}))?\s*(AM|PM)', nombre, re.IGNORECASE)
+    if m:
+        hora = int(m.group(1))
+        minuto = int(m.group(2)) if m.group(2) else 0
+        ampm = m.group(3).upper()
+        if ampm == 'PM' and hora != 12:
+            hora += 12
+        elif ampm == 'AM' and hora == 12:
+            hora = 0
+        return (hora, minuto)
+    # 2) Palabra clave: "Tarde", "Noche", "Día", "Mayor"
+    nombre_upper = nombre.upper()
+    for palabra, hora in HORAS_POR_PALABRA.items():
+        if palabra in nombre_upper:
+            return (hora, 0)
+    return None
+
+def calcular_fecha_sorteo_enloteria(nombre):
+    """Calcula la fecha correcta del sorteo en enloteria según su hora."""
+    ahora_cuba = datetime.now(TZ_CUBA)
+    hora_sorteo = parsear_hora_sorteo(nombre)
+
+    if hora_sorteo:
+        hora, minuto = hora_sorteo
+        hoy_sorteo = ahora_cuba.replace(hour=hora, minute=minuto, second=0, microsecond=0)
+        if ahora_cuba >= hoy_sorteo:
+            return ahora_cuba.strftime("%Y-%m-%d")
+        else:
+            return (ahora_cuba - timedelta(days=1)).strftime("%Y-%m-%d")
+
+    # Sin hora parseable: heurística (antes de las 6 AM = de ayer)
+    if ahora_cuba.hour < 6:
+        return (ahora_cuba - timedelta(days=1)).strftime("%Y-%m-%d")
+    return ahora_cuba.strftime("%Y-%m-%d")
 
 def extraer_numeros_validos(tarjeta_o_soup):
     bolas = tarjeta_o_soup.find_all("div", class_="result-number")
-    numeros_validos = []
+    numeros = []
     for b in bolas:
         texto = b.get_text(strip=True)
         if texto.isdigit() and len(texto) >= 2:
-            numeros_validos.append(texto)
-    return numeros_validos[:4]
+            numeros.append(texto)
+    return numeros[:4]
 
 # ═══════════════════════════════════════════════════════════════
-# 1. SCRAPING ENLOTERIA (CON SCROLL DINÁMICO)
+# 1. SCRAPING ENLOTERIA (scroll dinámico)
 # ═══════════════════════════════════════════════════════════════
 def scroll_hasta_estabilizar(page, max_intentos=20, pausa_ms=3000):
-    """Baja la página hasta que el número de tarjetas deje de crecer."""
-    tarjetas_previas = 0
-    for intento in range(max_intentos):
-        tarjetas_actuales = page.locator('div[data-lottery-name]').count()
-        if tarjetas_actuales == tarjetas_previas:
-            print(f"  ✅ Scroll completado. Tarjetas: {tarjetas_actuales}")
+    previas = 0
+    for _ in range(max_intentos):
+        actuales = page.locator('div[data-lottery-name]').count()
+        if actuales == previas:
+            print(f"  ✅ Scroll completado. Tarjetas: {actuales}")
             return
-        tarjetas_previas = tarjetas_actuales
+        previas = actuales
         page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
         page.wait_for_timeout(pausa_ms)
-    print(f"  ⚠️ Máximo de scrolls alcanzado. Tarjetas: {tarjetas_previas}")
+    print(f"  ⚠️ Máximo de scrolls alcanzado. Tarjetas: {previas}")
 
 def scrape_principal(page):
     print("Extrayendo enloteria (principal)...")
@@ -65,21 +141,23 @@ def scrape_principal(page):
 
     soup = BeautifulSoup(page.content(), "html.parser")
     tarjetas = soup.find_all("div", attrs={"data-lottery-name": True})
-    
+    print(f"  Tarjetas encontradas: {len(tarjetas)}")
+
     for tarjeta in tarjetas:
         try:
             nombre = tarjeta.get("data-lottery-name", "").strip()
-            if not nombre: continue
+            if not nombre:
+                continue
             numeros = extraer_numeros_validos(tarjeta)
             if numeros and len(numeros) >= 2:
                 resultados.append({
                     "sorteo_nombre": nombre,
                     "numeros": numeros,
-                    "fecha": fecha_cuba(),
-                    "fuente": "enloteria"
+                    "fecha": calcular_fecha_sorteo_enloteria(nombre),
+                    "fuente": "enloteria",
                 })
-        except Exception:
-            pass
+        except Exception as e:
+            print(f"  Error procesando tarjeta: {e}")
     return resultados
 
 def scrape_especifica(page, url, nombre_forzado):
@@ -92,129 +170,199 @@ def scrape_especifica(page, url, nombre_forzado):
             return [{
                 "sorteo_nombre": nombre_forzado,
                 "numeros": numeros,
-                "fecha": fecha_cuba(),
-                "fuente": "enloteria"
+                "fecha": calcular_fecha_sorteo_enloteria(nombre_forzado),
+                "fuente": "enloteria",
             }]
-    except Exception:
-        pass
+    except Exception as e:
+        print(f"  Error en scrape_especifica {nombre_forzado}: {e}")
     return []
 
 # ═══════════════════════════════════════════════════════════════
-# 2. SCRAPING LOTTERYUSA (CON CACHE BUSTER Y VALIDACIÓN)
+# 2. SCRAPING LOTTERYUSA (retry + fallbacks + log detallado)
 # ═══════════════════════════════════════════════════════════════
+def _extraer_tarjeta_lotteryusa(soup):
+    """Prueba varios selectores para encontrar la tarjeta del sorteo."""
+    tarjeta = soup.find('tr', class_='c-draw-card')
+    if tarjeta:
+        return tarjeta
+    for sel in [
+        {'name': 'tr', 'attrs': {'class': lambda c: c and 'c-draw-card' in c}},
+        {'name': 'div', 'attrs': {'class': lambda c: c and 'c-draw-card' in c}},
+        {'name': 'tr', 'attrs': {'class': lambda c: c and 'draw-card' in c}},
+        {'name': 'div', 'attrs': {'class': lambda c: c and 'draw-card' in c}},
+    ]:
+        tarjeta = soup.find(**sel)
+        if tarjeta:
+            return tarjeta
+    return None
+
+def _extraer_fecha_lotteryusa(tarjeta, nombre_db):
+    fecha_nodo = tarjeta.find('time', class_='c-draw-card__draw-date')
+    if not fecha_nodo:
+        fecha_nodo = tarjeta.find('time')
+    if not fecha_nodo:
+        for tag in tarjeta.find_all(['span', 'div', 'p']):
+            if re.search(r'[A-Z][a-z]{2}\s+\d{1,2},\s+\d{4}', tag.get_text(strip=True)):
+                fecha_nodo = tag
+                break
+    if not fecha_nodo:
+        return None
+
+    fecha_texto = fecha_nodo.get_text(strip=True)
+    for dia in ['Sunday,', 'Monday,', 'Tuesday,', 'Wednesday,',
+                'Thursday,', 'Friday,', 'Saturday,']:
+        fecha_texto = fecha_texto.replace(dia, '').strip()
+    try:
+        return datetime.strptime(fecha_texto, '%b %d, %Y').strftime('%Y-%m-%d')
+    except ValueError:
+        print(f"  ⚠️ Fecha inválida '{fecha_texto}' en {nombre_db}")
+        return None
+
+def _extraer_numeros_lotteryusa(tarjeta):
+    nodos = tarjeta.select('ul.c-result.c-draw-card__ball-list > li.c-ball')
+    if nodos:
+        return [n.get_text(strip=True) for n in nodos]
+    for sel in ['li.c-ball', 'li.c-result__ball', '.c-ball', '.ball']:
+        nodos = tarjeta.select(sel)
+        if nodos:
+            return [n.get_text(strip=True) for n in nodos]
+    return []
+
 def scrape_lotteryusa():
     print("Extrayendo USA (lotteryusa.com)...")
     resultados = []
     headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) '
+                      'AppleWebKit/537.36 (KHTML, like Gecko) '
+                      'Chrome/120.0.0.0 Safari/537.36'
     }
-    hoy_iso = fecha_cuba()
-    
+    hoy_este_iso = fecha_este()
+    print(f"  Fecha actual Este (EE.UU.): {hoy_este_iso}")
+    print(f"  Fecha actual Cuba: {fecha_cuba()}")
+
     for nombre_db, url in URLS_USA.items():
-        try:
-            # Cache Buster: agregamos timestamp para forzar datos frescos
-            url_fresca = f"{url}?nocache={int(time.time())}"
-            resp = requests.get(url_fresca, headers=headers, timeout=15)
-            resp.raise_for_status()
-            soup = BeautifulSoup(resp.text, 'html.parser')
-            
-            tarjeta = soup.find('tr', class_='c-draw-card')
-            if not tarjeta: 
-                print(f"  ⚠️ Sin tarjeta: {nombre_db}")
-                continue
-                
-            fecha_nodo = tarjeta.find('time', class_='c-draw-card__draw-date')
-            if not fecha_nodo: continue
-            fecha_texto = fecha_nodo.get_text(strip=True)
-            
-            for dia in ['Sunday,', 'Monday,', 'Tuesday,', 'Wednesday,', 'Thursday,', 'Friday,', 'Saturday,']:
-                fecha_texto = fecha_texto.replace(dia, '').strip()
-                
+        exito = False
+        for intento in range(1, 4):
             try:
-                fecha_dt = datetime.strptime(fecha_texto, '%b %d, %Y')
-                fecha_iso = fecha_dt.strftime('%Y-%m-%d')
-            except ValueError:
-                print(f"  ⚠️ Fecha inválida en {nombre_db}: {fecha_texto}")
-                continue
-            
-            # Validación interna: solo agregar si es de hoy
-            if fecha_iso != hoy_iso:
-                print(f"  ⏭️ Saltando {nombre_db}: fecha {fecha_iso} != hoy ({hoy_iso})")
-                continue
-            
-            numeros_nodos = tarjeta.select('ul.c-result.c-draw-card__ball-list > li.c-ball')
-            numeros = [n.get_text(strip=True) for n in numeros_nodos]
-            
-            if numeros:
+                resp = requests.get(f"{url}?nocache={int(time.time())}",
+                                    headers=headers, timeout=20)
+                resp.raise_for_status()
+                soup = BeautifulSoup(resp.text, 'html.parser')
+
+                tarjeta = _extraer_tarjeta_lotteryusa(soup)
+                if not tarjeta:
+                    print(f"  ⚠️ [{nombre_db}] Sin tarjeta (intento {intento})")
+                    time.sleep(2)
+                    continue
+
+                fecha_iso = _extraer_fecha_lotteryusa(tarjeta, nombre_db)
+                if not fecha_iso:
+                    print(f"  ⚠️ [{nombre_db}] Sin fecha parseable")
+                    exito = True
+                    break
+
+                if fecha_iso != hoy_este_iso:
+                    print(f"  ⏭️ [{nombre_db}] Fecha {fecha_iso} != hoy Este {hoy_este_iso}")
+                    exito = True
+                    break
+
+                numeros = _extraer_numeros_lotteryusa(tarjeta)
+                if not numeros:
+                    print(f"  ⚠️ [{nombre_db}] Sin números en la tarjeta")
+                    exito = True
+                    break
+
                 resultados.append({
                     "sorteo_nombre": nombre_db,
                     "numeros": numeros,
                     "fecha": fecha_iso,
-                    "fuente": "lotteryusa"
+                    "fuente": "lotteryusa",
                 })
                 print(f"  ✅ OK {nombre_db} -> {', '.join(numeros)}")
-                
-        except Exception as e:
-            print(f"  ❌ Error en {nombre_db}: {e}")
-            
+                exito = True
+                break
+            except Exception as e:
+                print(f"  ❌ [{nombre_db}] Error intento {intento}: {e}")
+                time.sleep(2)
+        if not exito:
+            print(f"  ❌ [{nombre_db}] Falló tras 3 intentos")
     return resultados
 
 # ═══════════════════════════════════════════════════════════════
-# 3. MAIN (UNIFICACIÓN Y GUARDADO)
+# 3. MAIN (unificación y guardado)
 # ═══════════════════════════════════════════════════════════════
 def main():
     todos_nuevos = []
-    
-    # --- Scraping con Playwright (enloteria) ---
+    hoy_cuba = fecha_cuba()
+    ayer_cuba = (datetime.now(TZ_CUBA) - timedelta(days=1)).strftime("%Y-%m-%d")
+
+    print("=== INICIO SCRAPER ===")
+    print(f"Fecha Cuba: {hoy_cuba}")
+    print(f"Fecha Este: {fecha_este()}")
+
+    # --- Playwright (enloteria) ---
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
         context = browser.new_context(
-            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                       "AppleWebKit/537.36 (KHTML, like Gecko) "
+                       "Chrome/120.0.0.0 Safari/537.36"
         )
         page = context.new_page()
         page.set_default_timeout(60000)
-        
-        try: todos_nuevos.extend(scrape_principal(page))
-        except Exception as e: print(f"Error principal: {e}")
-        try: todos_nuevos.extend(scrape_especifica(page, URL_QUEMAITO, "El Quemaito Mayor"))
-        except Exception as e: pass
-        try: todos_nuevos.extend(scrape_especifica(page, URL_QUINIELON, "El Quinielon Dia"))
-        except Exception as e: pass
-        
+        try:
+            res = scrape_principal(page)
+            print(f"  → {len(res)} sorteos de principal")
+            todos_nuevos.extend(res)
+        except Exception as e:
+            print(f"Error principal: {e}")
+        try:
+            res = scrape_especifica(page, URL_QUEMAITO, "El Quemaito Mayor")
+            if res:
+                print("  → El Quemaito Mayor OK")
+            todos_nuevos.extend(res)
+        except Exception as e:
+            print(f"Error Quemaito: {e}")
+        try:
+            res = scrape_especifica(page, URL_QUINIELON, "El Quinielon Dia")
+            if res:
+                print("  → El Quinielon Dia OK")
+            todos_nuevos.extend(res)
+        except Exception as e:
+            print(f"Error Quinielon: {e}")
         browser.close()
 
-    # --- Scraping con Requests (lotteryusa) ---
-    try: 
-        todos_nuevos.extend(scrape_lotteryusa())
+    # --- Requests (lotteryusa) ---
+    try:
+        res = scrape_lotteryusa()
+        print(f"  → {len(res)} sorteos de lotteryusa")
+        todos_nuevos.extend(res)
     except Exception as e:
         print(f"Error en lotteryusa: {e}")
 
-    # --- Lógica de acumulación en JSON ---
-    resultados_guardados = []
+    # --- Acumulación en JSON (conserva hoy y ayer) ---
+    guardados = []
     if os.path.exists(ARCHIVO_JSON):
         try:
             with open(ARCHIVO_JSON, "r", encoding="utf-8") as f:
-                resultados_guardados = json.load(f)
+                guardados = json.load(f)
         except Exception:
-            resultados_guardados = []
+            guardados = []
 
-    diccionario_datos = {}
-    for r in resultados_guardados:
-        # Solo conservamos los de la fecha de hoy para evitar arrastrar basura de días anteriores
-        if r.get("fecha") == fecha_cuba():
-            llave = f"{r['sorteo_nombre']}|{r['fecha']}"
-            diccionario_datos[llave] = r
+    dic = {}
+    for r in guardados:
+        if r.get("fecha") in (hoy_cuba, ayer_cuba):
+            dic[f"{r['sorteo_nombre']}|{r['fecha']}"] = r
+    for n in todos_nuevos:
+        dic[f"{n['sorteo_nombre']}|{n['fecha']}"] = n
 
-    for nuevo in todos_nuevos:
-        llave = f"{nuevo['sorteo_nombre']}|{nuevo['fecha']}"
-        diccionario_datos[llave] = nuevo
-
-    resultados_finales = list(diccionario_datos.values())
+    finales = list(dic.values())
     with open(ARCHIVO_JSON, "w", encoding="utf-8") as f:
-        json.dump(resultados_finales, f, ensure_ascii=False, indent=2)
+        json.dump(finales, f, ensure_ascii=False, indent=2)
 
-    print(f"\nTotal sorteos en JSON: {len(resultados_finales)}")
-    print(f"Fecha de hoy: {fecha_cuba()}")
+    print("\n=== RESUMEN ===")
+    print(f"Total sorteos en JSON: {len(finales)}")
+    print(f"Fecha Cuba: {hoy_cuba}")
 
 if __name__ == "__main__":
     main()
