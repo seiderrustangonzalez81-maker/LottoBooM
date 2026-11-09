@@ -49,6 +49,15 @@ MAPEO_NOMBRES = {
     "New Jersey 12:50 PM": "New Jersey 12:50 PM",
     "Georgia 12:30 PM": "Georgia 12:30 PM",
     "Tennessee 1:20 PM": "Tennessee 1:20 PM",
+
+    # ─── USA (desde Enloteria - nombres alternativos) ───
+    "Georgia Día": "Georgia 12:30 PM",
+    "Georgia Tarde": "Georgia 7 PM",
+    "New York Tarde": "New York 2:30 PM",
+    "New Jersey Tarde": "New Jersey 12:50 PM",
+    "Florida Tarde": "Florida 1:35 PM",
+    "Texas Tarde": "Texas 1:20 PM",
+    "Tennessee Día": "Tennessee 1:20 PM",
 }
 
 def normalizar_texto(texto):
@@ -108,29 +117,36 @@ class Command(BaseCommand):
 
                 fuente = item.get("fuente", "")
 
-                # Validación extra para LotteryUSA
+                # Validación extra para LotteryUSA (evita resultados de ayer)
                 if fuente == "lotteryusa" and fecha != hoy_cuba:
                     self.stdout.write(self.style.WARNING(f"⚠️ Saltando {nombre_db} de LotteryUSA: la fecha {fecha} no es hoy."))
                     continue
 
+                # ═══ DEFINIR FORMAS E INICIALIZAR VARIABLES ═══
                 formas = [str(f).lower().strip() for f in (sorteo.formas_juego or [])]
                 pick2_val = pick3_val = pick4_val = pick5_val = ''
                 fijo_val = corrido1_val = corrido2_val = ''
 
                 if fuente == "lotteryusa":
-                    # Lógica exclusiva para USA (Pick 3, 4, etc.)
+                    # Lógica exclusiva para USA: llenar TODAS las formas disponibles
+                    if len(numeros) >= 2:
+                        if 'pick2' in formas:
+                            pick2_val = "".join(numeros[:2])
+                        if 'fijo' in formas:
+                            fijo_val = numeros[0]
+                        if 'corridos' in formas and len(numeros) >= 3:
+                            corrido1_val = numeros[1]
+                            corrido2_val = numeros[2]
                     if 'pick3' in formas and len(numeros) >= 3:
                         pick3_val = "".join(numeros[:3])
                     elif 'pick4' in formas and len(numeros) >= 4:
                         pick4_val = "".join(numeros[:4])
-                    elif 'pick2' in formas and len(numeros) >= 2:
-                        pick2_val = "".join(numeros[:2])
                 else:
                     # Lógica para Enloteria (Fijo y Corridos SIEMPRE se llenan)
                     fijo_val = numeros[0] if len(numeros) > 0 else ''
                     corrido1_val = numeros[1] if len(numeros) > 1 else ''
                     corrido2_val = numeros[2] if len(numeros) > 2 else ''
-                    # NOTA: NO concatenamos pick3 aquí porque Enloteria usa Fijo/Corridos
+                # ═══════════════════════════════════════════════
 
                 resultado_existente = Resultado.objects.filter(sorteo=sorteo, fecha=fecha).first()
 
