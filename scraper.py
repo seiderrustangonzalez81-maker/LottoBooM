@@ -205,9 +205,9 @@ def scrape_principal(page):
     print(f"  DEBUG class='result-number' (cualquier tag): {total_result_number}")
     if tarjetas:
         primera = tarjetas[0]
-        print(f"  DEBUG primera tarjeta: '{primera.get('data-lottery-name', '?')}'")
-        print(f"  DEBUG HTML COMPLETO primera tarjeta:")
-        print(str(primera))  # <-- Sin recortar
+            print(f"  DEBUG HTML COMPLETO primera tarjeta:")
+    print(str(primera))
+       print(str(primera))  # <-- Sin recortar
     # ─── FIN DEBUG TEMPORAL ───
 
     for tarjeta in tarjetas:
