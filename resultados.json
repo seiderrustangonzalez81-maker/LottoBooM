@@ -398,5 +398,45 @@
     ],
     "fecha": "2026-11-08",
     "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "La Suerte 6PM",
+    "numeros": [
+      "06",
+      "79",
+      "09"
+    ],
+    "fecha": "2026-11-08",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Anguilla 9PM",
+    "numeros": [
+      "64",
+      "57",
+      "72"
+    ],
+    "fecha": "2026-11-08",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Anguilla 10PM",
+    "numeros": [
+      "79",
+      "27",
+      "06"
+    ],
+    "fecha": "2026-11-08",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "LoteDom Noche",
+    "numeros": [
+      "07",
+      "34",
+      "34"
+    ],
+    "fecha": "2026-11-08",
+    "fuente": "enloteria"
   }
 ]
