@@ -488,5 +488,55 @@
     ],
     "fecha": "2026-11-08",
     "fuente": "lotteryusa"
+  },
+  {
+    "sorteo_nombre": "New York 10:30 PM",
+    "numeros": [
+      "2",
+      "4",
+      "5"
+    ],
+    "fecha": "2026-11-08",
+    "fuente": "lotteryusa"
+  },
+  {
+    "sorteo_nombre": "New Jersey 12:50 PM",
+    "numeros": [
+      "1",
+      "0",
+      "3"
+    ],
+    "fecha": "2026-11-08",
+    "fuente": "lotteryusa"
+  },
+  {
+    "sorteo_nombre": "New Jersey 10:57 PM",
+    "numeros": [
+      "4",
+      "5",
+      "5"
+    ],
+    "fecha": "2026-11-08",
+    "fuente": "lotteryusa"
+  },
+  {
+    "sorteo_nombre": "Georgia 12:30 PM",
+    "numeros": [
+      "9",
+      "5",
+      "7"
+    ],
+    "fecha": "2026-11-08",
+    "fuente": "lotteryusa"
+  },
+  {
+    "sorteo_nombre": "Tennessee 6:30 PM",
+    "numeros": [
+      "3",
+      "2",
+      "9"
+    ],
+    "fecha": "2026-11-08",
+    "fuente": "lotteryusa"
   }
 ]
