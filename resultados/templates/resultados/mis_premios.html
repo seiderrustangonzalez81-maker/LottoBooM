@@ -461,31 +461,47 @@ function compartirTodosPremios(){
   var originalHtml = btn ? btn.innerHTML : '';
   if (btn){ btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Preparando...'; }
 
+  var win = window.open('', '_blank');
+
   fetch('/resultados/api/premios-todos/?' + params.toString())
     .then(function(r){ return r.json(); })
     .then(function(d){
       if (btn){ btn.disabled = false; btn.innerHTML = originalHtml; }
-      if (!d.success){ alert(d.error || 'No hay premios.'); return; }
-
+      if (!d.success){
+        if (win) win.close();
+        alert(d.error || 'No hay premios.');
+        return;
+      }
       var msgs = d.mensajes || [];
-      if (msgs.length === 0){ alert('No hay premios.'); return; }
-
-      window.open('https://wa.me/?text=' + encodeURIComponent(msgs[0]), '_blank');
-
+      if (msgs.length === 0){
+        if (win) win.close();
+        alert('No hay premios.');
+        return;
+      }
+      if (win) {
+        win.location = 'https://wa.me/?text=' + encodeURIComponent(msgs[0]);
+      } else {
+        window.location.href = 'https://wa.me/?text=' + encodeURIComponent(msgs[0]);
+      }
       if (msgs.length > 1){
-        var resto = msgs.slice(1).join('\n\n─────────────\n\n');
+        var resto = msgs.slice(1).join('
+
+─────────────
+
+');
         if (navigator.clipboard && navigator.clipboard.writeText){
           navigator.clipboard.writeText(resto).then(function(){
-            alert('✅ Mensaje 1/' + msgs.length + ' abierto en WhatsApp.\n\nLos bloques 2 al ' + msgs.length + ' fueron copiados al portapapeles.');
+            alert('OK Mensaje 1/' + msgs.length + ' abierto. Los bloques 2 al ' + msgs.length + ' fueron copiados.');
           }).catch(function(){
-            alert('⚠️ Abierto bloque 1. Los siguientes bloques deben compartirse manualmente.');
+            alert('Abierto bloque 1.');
           });
         } else {
-          alert('⚠️ Abierto bloque 1 de ' + msgs.length + '.');
+          alert('Abierto bloque 1 de ' + msgs.length + '.');
         }
       }
     })
     .catch(function(e){
+      if (win) win.close();
       if (btn){ btn.disabled = false; btn.innerHTML = originalHtml; }
       alert('Error: ' + e.message);
     });
