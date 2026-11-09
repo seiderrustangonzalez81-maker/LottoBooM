@@ -149,13 +149,12 @@ def normalizar_nombre(nombre):
 def extraer_numeros_validos(tarjeta_o_soup):
     """
     Extrae números de una tarjeta de enloteria.
-
-    Antes solo buscaba <div class="result-number">, pero enloteria puede
-    cambiar el tag a <span>, <li> o similares. Ahora acepta cualquier tag
-    con la clase y, si no encuentra, prueba variantes comunes.
+    ...
     """
+    # ─── OPCIÓN PRINCIPAL ───
     bolas = tarjeta_o_soup.find_all(class_="result-number")
 
+    # ─── FALLBACK (plan B) ─── ESTO ES LO QUE YA ESTÁ
     if not bolas:
         for clase in ("result-number__ball", "draw-result-number",
                       "result__number", "numero-resultado"):
