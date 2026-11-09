@@ -2,9 +2,9 @@
   {
     "sorteo_nombre": "El Quemaito Mayor",
     "numeros": [
+      "66",
       "86",
-      "95",
-      "10"
+      "95"
     ],
     "fecha": "2026-11-08",
     "fuente": "enloteria"
@@ -172,9 +172,9 @@
   {
     "sorteo_nombre": "Loteka Tarde",
     "numeros": [
-      "34",
-      "31",
-      "97"
+      "11",
+      "12",
+      "44"
     ],
     "fecha": "2026-11-08",
     "fuente": "enloteria"
@@ -222,9 +222,9 @@
   {
     "sorteo_nombre": "Anguilla 3PM",
     "numeros": [
-      "36",
-      "80",
-      "42"
+      "30",
+      "07",
+      "73"
     ],
     "fecha": "2026-11-08",
     "fuente": "enloteria"
@@ -537,6 +537,226 @@
       "9"
     ],
     "fecha": "2026-11-08",
+    "fuente": "lotteryusa"
+  },
+  {
+    "sorteo_nombre": "Anguilla 8AM",
+    "numeros": [
+      "19",
+      "46",
+      "71"
+    ],
+    "fecha": "2026-11-09",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Anguilla 9AM",
+    "numeros": [
+      "69",
+      "07",
+      "15"
+    ],
+    "fecha": "2026-11-09",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Anguilla 10AM",
+    "numeros": [
+      "94",
+      "95",
+      "23"
+    ],
+    "fecha": "2026-11-09",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Haiti Bolet 9:30 AM",
+    "numeros": [
+      "06",
+      "99",
+      "81"
+    ],
+    "fecha": "2026-11-09",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Anguilla 11AM",
+    "numeros": [
+      "00",
+      "63",
+      "18"
+    ],
+    "fecha": "2026-11-09",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Haiti Bolet 10:30 AM",
+    "numeros": [
+      "40",
+      "38",
+      "52"
+    ],
+    "fecha": "2026-11-09",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Anguilla 12PM",
+    "numeros": [
+      "80",
+      "91",
+      "56"
+    ],
+    "fecha": "2026-11-09",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "La Primera",
+    "numeros": [
+      "22",
+      "08",
+      "64"
+    ],
+    "fecha": "2026-11-09",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "LoteDom",
+    "numeros": [
+      "95",
+      "88",
+      "77"
+    ],
+    "fecha": "2026-11-09",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Haiti Bolet 11:30 AM",
+    "numeros": [
+      "42",
+      "02",
+      "33"
+    ],
+    "fecha": "2026-11-09",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "King Lottery Día",
+    "numeros": [
+      "10",
+      "74",
+      "28"
+    ],
+    "fecha": "2026-11-09",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "La Suerte",
+    "numeros": [
+      "65",
+      "96",
+      "05"
+    ],
+    "fecha": "2026-11-09",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Real",
+    "numeros": [
+      "48",
+      "55",
+      "27"
+    ],
+    "fecha": "2026-11-09",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Anguilla 1PM",
+    "numeros": [
+      "48",
+      "29",
+      "48"
+    ],
+    "fecha": "2026-11-09",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Anguilla 2PM",
+    "numeros": [
+      "05",
+      "76",
+      "93"
+    ],
+    "fecha": "2026-11-09",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Nacional Gana Más",
+    "numeros": [
+      "68",
+      "73",
+      "46"
+    ],
+    "fecha": "2026-11-09",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "El Quinielon Dia",
+    "numeros": [
+      "71",
+      "09",
+      "97"
+    ],
+    "fecha": "2026-11-09",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Texas 1:20 PM",
+    "numeros": [
+      "2",
+      "4",
+      "6"
+    ],
+    "fecha": "2026-11-09",
+    "fuente": "lotteryusa"
+  },
+  {
+    "sorteo_nombre": "Florida 1:35 PM",
+    "numeros": [
+      "3",
+      "1",
+      "0"
+    ],
+    "fecha": "2026-11-09",
+    "fuente": "lotteryusa"
+  },
+  {
+    "sorteo_nombre": "New Jersey 12:50 PM",
+    "numeros": [
+      "8",
+      "7",
+      "1"
+    ],
+    "fecha": "2026-11-09",
+    "fuente": "lotteryusa"
+  },
+  {
+    "sorteo_nombre": "Georgia 12:30 PM",
+    "numeros": [
+      "9",
+      "6",
+      "4"
+    ],
+    "fecha": "2026-11-09",
+    "fuente": "lotteryusa"
+  },
+  {
+    "sorteo_nombre": "Tennessee 1:20 PM",
+    "numeros": [
+      "5",
+      "3",
+      "6"
+    ],
+    "fecha": "2026-11-09",
     "fuente": "lotteryusa"
   }
 ]
