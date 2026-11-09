@@ -22,10 +22,7 @@ URL_QUINIELON = "https://enloteria.com/resultados-el-quinielon-dia-hoy"
 ARCHIVO_JSON = "resultados.json"
 
 # ═══════════════════════════════════════════════════════════════
-# URLs LOTTERYUSA (CORREGIDAS - 12 rutas válidas)
-#   Regla general:
-#     - Mediodía: /midday-<juego>/ o /<juego>-midday/
-#     - Noche: /<juego>/ (sin "evening")
+# URLs LOTTERYUSA (12 rutas validadas)
 # ═══════════════════════════════════════════════════════════════
 URLS_USA = {
     # ── TEXAS ──
@@ -55,8 +52,6 @@ URLS_USA = {
 
 # ═══════════════════════════════════════════════════════════════
 # NOMBRES DE ENLOTERIA-USA A IGNORAR
-#   lotteryusa es la fuente oficial; estos nombres de enloteria
-#   contaminarían el JSON con datos no oficiales.
 # ═══════════════════════════════════════════════════════════════
 NOMBRES_IGNORADOS = {
     "Georgia Día", "Georgia Tarde",
@@ -76,7 +71,6 @@ def fecha_cuba():
 def fecha_este():
     return datetime.now(TZ_ESTE).strftime("%Y-%m-%d")
 
-# Palabras clave para sorteos sin hora explícita (hora aproximada)
 HORAS_POR_PALABRA = {
     'MADRUGADA': 3,
     'DIA': 12, 'DÍA': 12, 'MEDIODIA': 12, 'MEDIODÍA': 12,
@@ -87,7 +81,6 @@ HORAS_POR_PALABRA = {
 
 def parsear_hora_sorteo(nombre):
     """Extrae la hora del sorteo del nombre. Retorna (hora, minuto) o None."""
-    # 1) AM/PM explícito: "8AM", "6:30 PM", "11:34 PM"
     m = re.search(r'(\d{1,2})(?::(\d{2}))?\s*(AM|PM)', nombre, re.IGNORECASE)
     if m:
         hora = int(m.group(1))
@@ -98,7 +91,6 @@ def parsear_hora_sorteo(nombre):
         elif ampm == 'AM' and hora == 12:
             hora = 0
         return (hora, minuto)
-    # 2) Palabra clave: "Tarde", "Noche", "Día", "Mayor"
     nombre_upper = nombre.upper()
     for palabra, hora in HORAS_POR_PALABRA.items():
         if palabra in nombre_upper:
@@ -118,10 +110,37 @@ def calcular_fecha_sorteo_enloteria(nombre):
         else:
             return (ahora_cuba - timedelta(days=1)).strftime("%Y-%m-%d")
 
-    # Sin hora parseable: heurística (antes de las 6 AM = de ayer)
     if ahora_cuba.hour < 6:
         return (ahora_cuba - timedelta(days=1)).strftime("%Y-%m-%d")
     return ahora_cuba.strftime("%Y-%m-%d")
+
+def calcular_fecha_esperada_usa(nombre_db):
+    """
+    Calcula la fecha del sorteo en la zona Eastern basándose en la hora
+    programada del nombre.
+
+    Motivo: para sorteos nocturnos (ej. Georgia 11:34 PM), la tarjeta de
+    lotteryusa muestra el PRÓXIMO sorteo, no el último resultado. Si se
+    confía en esa fecha, un resultado del 7 de noviembre se archivaría
+    como 8 de noviembre. Con este cálculo, la fecha asignada es siempre
+    la del día en que ocurrió realmente el sorteo.
+
+    Regla:
+      - Si en el Este ya pasó la hora del sorteo hoy -> hoy
+      - Si aún no ha pasado -> ayer
+    """
+    hora_sorteo = parsear_hora_sorteo(nombre_db)
+    if not hora_sorteo:
+        return fecha_este()
+
+    ahora_este = datetime.now(TZ_ESTE)
+    hora, minuto = hora_sorteo
+    hoy_sorteo = ahora_este.replace(hour=hora, minute=minuto, second=0, microsecond=0)
+
+    if ahora_este >= hoy_sorteo:
+        return ahora_este.strftime("%Y-%m-%d")
+    else:
+        return (ahora_este - timedelta(days=1)).strftime("%Y-%m-%d")
 
 def normalizar_nombre(nombre):
     """Normaliza espacios múltiples y recorta."""
@@ -207,7 +226,6 @@ def scrape_especifica(page, url, nombre_forzado):
 # 2. SCRAPING LOTTERYUSA (retry + fallbacks + log detallado)
 # ═══════════════════════════════════════════════════════════════
 def _extraer_tarjeta_lotteryusa(soup):
-    """Prueba varios selectores para encontrar la tarjeta del sorteo."""
     tarjeta = soup.find('tr', class_='c-draw-card')
     if tarjeta:
         return tarjeta
@@ -262,12 +280,12 @@ def scrape_lotteryusa():
                       'AppleWebKit/537.36 (KHTML, like Gecko) '
                       'Chrome/120.0.0.0 Safari/537.36'
     }
-    hoy_este_iso = fecha_este()
-    print(f"  Fecha actual Este (EE.UU.): {hoy_este_iso}")
+    print(f"  Fecha actual Este (EE.UU.): {fecha_este()}")
     print(f"  Fecha actual Cuba: {fecha_cuba()}")
 
     for nombre_db, url in URLS_USA.items():
         exito = False
+        fecha_esperada = calcular_fecha_esperada_usa(nombre_db)
         for intento in range(1, 4):
             try:
                 resp = requests.get(f"{url}?nocache={int(time.time())}",
@@ -281,14 +299,18 @@ def scrape_lotteryusa():
                     time.sleep(2)
                     continue
 
-                fecha_iso = _extraer_fecha_lotteryusa(tarjeta, nombre_db)
-                if not fecha_iso:
-                    print(f"  ⚠️ [{nombre_db}] Sin fecha parseable")
+                fecha_tarjeta = _extraer_fecha_lotteryusa(tarjeta, nombre_db)
+                if not fecha_tarjeta:
+                    print(f"  ⚠️ [{nombre_db}] Sin fecha parseable en tarjeta")
                     exito = True
                     break
 
-                if fecha_iso != hoy_este_iso:
-                    print(f"  ⏭️ [{nombre_db}] Fecha {fecha_iso} != hoy Este {hoy_este_iso}")
+                # Solo aceptar si la tarjeta muestra la fecha esperada.
+                # Esto evita guardar resultados viejos bajo fecha nueva
+                # cuando lotteryusa aún no se ha actualizado tras el sorteo.
+                if fecha_tarjeta != fecha_esperada:
+                    print(f"  ⏭️ [{nombre_db}] Tarjeta={fecha_tarjeta} "
+                          f"esperado={fecha_esperada} (aún no actualizado)")
                     exito = True
                     break
 
@@ -301,10 +323,10 @@ def scrape_lotteryusa():
                 resultados.append({
                     "sorteo_nombre": nombre_db,
                     "numeros": numeros,
-                    "fecha": fecha_iso,
+                    "fecha": fecha_esperada,
                     "fuente": "lotteryusa",
                 })
-                print(f"  ✅ OK {nombre_db} -> {', '.join(numeros)}")
+                print(f"  ✅ OK {nombre_db} [{fecha_esperada}] -> {', '.join(numeros)}")
                 exito = True
                 break
             except Exception as e:
