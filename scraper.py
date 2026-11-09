@@ -147,7 +147,22 @@ def normalizar_nombre(nombre):
     return " ".join(nombre.split())
 
 def extraer_numeros_validos(tarjeta_o_soup):
-    bolas = tarjeta_o_soup.find_all("div", class_="result-number")
+    """
+    Extrae números de una tarjeta de enloteria.
+
+    Antes solo buscaba <div class="result-number">, pero enloteria puede
+    cambiar el tag a <span>, <li> o similares. Ahora acepta cualquier tag
+    con la clase y, si no encuentra, prueba variantes comunes.
+    """
+    bolas = tarjeta_o_soup.find_all(class_="result-number")
+
+    if not bolas:
+        for clase in ("result-number__ball", "draw-result-number",
+                      "result__number", "numero-resultado"):
+            bolas = tarjeta_o_soup.find_all(class_=clase)
+            if bolas:
+                break
+
     numeros = []
     for b in bolas:
         texto = b.get_text(strip=True)
@@ -185,6 +200,16 @@ def scrape_principal(page):
     soup = BeautifulSoup(page.content(), "html.parser")
     tarjetas = soup.find_all("div", attrs={"data-lottery-name": True})
     print(f"  Tarjetas encontradas: {len(tarjetas)}")
+
+    # ─── DEBUG: por qué no se extraen números ───
+    total_result_number = len(soup.find_all(class_="result-number"))
+    print(f"  DEBUG class='result-number' (cualquier tag): {total_result_number}")
+    if tarjetas:
+        primera = tarjetas[0]
+        print(f"  DEBUG primera tarjeta: '{primera.get('data-lottery-name', '?')}'")
+        print(f"  DEBUG HTML primera tarjeta (800 chars):")
+        print(f"  {str(primera)[:800]}")
+    # ─── FIN DEBUG ───
 
     for tarjeta in tarjetas:
         try:
