@@ -288,5 +288,95 @@
     ],
     "fecha": "2026-11-08",
     "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Nacional Noche",
+    "numeros": [
+      "08",
+      "73",
+      "11"
+    ],
+    "fecha": "2026-11-08",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Haiti Bolet 5:30 PM",
+    "numeros": [
+      "72",
+      "21",
+      "51"
+    ],
+    "fecha": "2026-11-08",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Anguilla 7PM",
+    "numeros": [
+      "22",
+      "39",
+      "33"
+    ],
+    "fecha": "2026-11-08",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "La Primera Noche",
+    "numeros": [
+      "19",
+      "84",
+      "35"
+    ],
+    "fecha": "2026-11-08",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Haiti Bolet 6:30 PM",
+    "numeros": [
+      "23",
+      "23",
+      "56"
+    ],
+    "fecha": "2026-11-08",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "King Lottery Noche",
+    "numeros": [
+      "42",
+      "36",
+      "55"
+    ],
+    "fecha": "2026-11-08",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Loteka",
+    "numeros": [
+      "30",
+      "41",
+      "78"
+    ],
+    "fecha": "2026-11-08",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Georgia Tarde",
+    "numeros": [
+      "58",
+      "20",
+      "29"
+    ],
+    "fecha": "2026-11-08",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Anguilla 8PM",
+    "numeros": [
+      "63",
+      "24",
+      "63"
+    ],
+    "fecha": "2026-11-08",
+    "fuente": "enloteria"
   }
 ]
