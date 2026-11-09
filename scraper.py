@@ -23,7 +23,6 @@ URLS_USA = {
     "Georgia 12:30 PM": "https://www.lotteryusa.com/georgia/cash-3-midday/",
     "Tennessee 1:20 PM": "https://www.lotteryusa.com/tennessee/cash-3-midday/"
 }
-
 def fecha_cuba():
     return datetime.now(CUBA_TZ).strftime("%Y-%m-%d")
 
