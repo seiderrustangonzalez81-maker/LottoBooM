@@ -18,9 +18,9 @@ ARCHIVO_JSON = "resultados.json"
 URLS_USA = {
     "Texas 1:20 PM": "https://www.lotteryusa.com/texas/pick-3-day/",
     "Florida 1:35 PM": "https://www.lotteryusa.com/florida/midday-pick-3/",
-    "New York 2:30 PM": "https://www.lotteryusa.com/new-york/numbers/",
-    "New Jersey 12:50 PM": "https://www.lotteryusa.com/new-jersey/pick-3/",
-    "Georgia 12:30 PM": "https://www.lotteryusa.com/georgia/cash-3/",
+    "New York 2:30 PM": "https://www.lotteryusa.com/new-york/numbers-midday/",
+    "New Jersey 12:50 PM": "https://www.lotteryusa.com/new-jersey/pick-3-midday/",
+    "Georgia 12:30 PM": "https://www.lotteryusa.com/georgia/cash-3-midday/",
     "Tennessee 1:20 PM": "https://www.lotteryusa.com/tennessee/cash-3-midday/"
 }
 
