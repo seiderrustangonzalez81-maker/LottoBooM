@@ -190,20 +190,22 @@ def generar_derivaciones_desde_campos(pick2, pick3, pick4, pick5, fijo, corrido_
             parlets.add(f"{corridos[j]}x{corridos[i]}")
     derivaciones['parlet_general'] = sorted(list(parlets))
 
-    vspf = []
+    # ═══ FIX 1: Usar set para eliminar duplicados en VS ═══
+    vspf = set()
     pf = derivaciones.get('pf')
     if pf:
-        for num in fijos + corridos:
+        for num in set(fijos + corridos):
             if pf != num:
-                vspf.append(f"{pf}x{num}")
+                vspf.add(f"{pf}x{num}")
     derivaciones['vspf'] = sorted(vspf)
 
-    vspick2 = []
+    vspick2 = set()
     if pick2:
-        for num in fijos + corridos:
+        for num in set(fijos + corridos):
             if pick2 != num:
-                vspick2.append(f"{pick2}x{num}")
+                vspick2.add(f"{pick2}x{num}")
     derivaciones['vspick2'] = sorted(vspick2)
+    # ═════════════════════════════════════════════════════
 
     if pf and pick2 and pf != pick2:
         derivaciones['pick2vspf'] = [f"{pf}x{pick2}"]
@@ -585,10 +587,12 @@ def procesar_resultado(request, datos, resultado_existente=None, solo_crear_resu
 
     derivaciones = generar_derivaciones_desde_campos(pick2, pick3, pick4, pick5, fijo, corrido_1, corrido_2)
 
+    # ═══ FIX 2: Mantener el pf derivado ═══
     if pf and (pick2 or pick3):
         derivaciones['pf'] = pf
-    else:
+    elif not (pick2 or pick3):
         derivaciones.pop('pf', None)
+    # ═══════════════════════════════════════
 
     if fijo:
         derivaciones['fijo'] = fijo
@@ -1137,7 +1141,11 @@ def resultados_view(request):
     if sorteo_id:
         resultados = resultados.filter(sorteo_id=sorteo_id)
 
-    fecha_actual = timezone.localtime(timezone.now()).date()
+    # ═══ FIX: Usar zona horaria de Cuba explícitamente ═══
+    CUBA_TZ = ZoneInfo('America/Havana')
+    fecha_actual = timezone.now().astimezone(CUBA_TZ).date()
+    # ═══════════════════════════════════════════════════════
+
     fecha_desde_str = request.GET.get('fecha_desde')
     fecha_hasta_str = request.GET.get('fecha_hasta')
 
@@ -1165,9 +1173,14 @@ def resultados_view(request):
                 fecha_hasta_obj = None
         mostrando_hoy = False
 
-    paginator = Paginator(resultados, 20)
-    page = request.GET.get('page')
-    resultados_page = paginator.get_page(page)
+    # ═══ FIX: SIN PAGINACIÓN (tabla tipo Excel) ═══
+    resultados_lista = list(resultados)
+    # ═══════════════════════════════════════════════
+
+    # ═══ Pre-calcular todos los campos para cada resultado ═══
+    for r in resultados_lista:
+        r.todos_campos = r.get_todos_los_campos()
+    # ══════════════════════════════════════════════════════
 
     sorteos = Sorteo.objects.filter(activo=True).order_by('id')
 
@@ -1180,14 +1193,14 @@ def resultados_view(request):
         puede_eliminar = False
 
     context = {
-        'resultados': resultados_page,
+        'resultados': resultados_lista,
         'sorteos': sorteos,
         'sorteo_seleccionado': sorteo_id,
         'fecha_desde': fecha_desde_obj.strftime('%Y-%m-%d') if fecha_desde_obj else '',
         'fecha_hasta': fecha_hasta_obj.strftime('%Y-%m-%d') if fecha_hasta_obj else '',
         'fecha_actual': fecha_actual,
         'tiene_filtro_fecha': tiene_filtro_fecha,
-        'total_resultados': resultados.count(),
+        'total_resultados': len(resultados_lista),
         'mostrando_hoy': mostrando_hoy,
         'puede_editar': puede_editar,
         'puede_eliminar': puede_eliminar,
@@ -1499,17 +1512,26 @@ def mis_premios(request):
     total_historico = premios_base.aggregate(t=Sum('monto_premio'))['t'] or 0
     cantidad_hoy = premios_base.filter(jugada__fecha_sorteo=hoy).count()
 
+    # ═══ FIX 3: Agrupar por (sorteo, cliente) ═══
     sorteos_dict = OrderedDict()
     for p in premios.order_by('-jugada__fecha_sorteo', 'jugada__sorteo__nombre', 'jugada__usuario__username'):
         sid = p.jugada.sorteo_id
-        if sid not in sorteos_dict:
-            sorteos_dict[sid] = {
+        cid = p.jugada.usuario_id
+        key = (sid, cid)
+
+        if key not in sorteos_dict:
+            sorteos_dict[key] = {
                 'sorteo': p.jugada.sorteo,
+                'cliente': p.jugada.usuario,
                 'fecha_sorteo': p.jugada.fecha_sorteo,
                 'lineas': [],
+                'total_premio': Decimal('0.00'),
+                'total_apuesta': Decimal('0.00'),
+                'formas': [],
             }
-        sorteos_dict[sid]['lineas'].append({
-            'cliente': p.jugada.usuario.username,
+
+        g = sorteos_dict[key]
+        g['lineas'].append({
             'numero': p.jugada.numero,
             'forma_juego': p.jugada.forma_juego.nombre if p.jugada.forma_juego else '—',
             'forma_pago': p.jugada.forma_pago.nombre if p.jugada.forma_pago else '—',
@@ -1517,24 +1539,19 @@ def mis_premios(request):
             'premio': p.monto_premio or Decimal('0.00'),
             'cobrado': p.cobrado,
         })
-
-    from collections import OrderedDict as _OD
-    _sort_ids = set()
-    _fechas = set()
-    for _sid, _g in sorteos_dict.items():
-        _sort_ids.add(_sid)
-        if _g.get('fecha_sorteo'):
-            _fechas.add(_g['fecha_sorteo'])
-    _res_map = {}
-    if _sort_ids and _fechas:
-        for _r in Resultado.objects.filter(sorteo_id__in=_sort_ids, fecha__in=_fechas):
-            _res_map[(_r.sorteo_id, _r.fecha)] = _r
+        g['total_premio'] += p.monto_premio or Decimal('0.00')
+        g['total_apuesta'] += p.jugada.monto or Decimal('0.00')
+        if p.jugada.forma_juego:
+            g['formas'].append(p.jugada.forma_juego.nombre)
 
     grupos_lista = []
-    for _k, g in sorteos_dict.items():
-        g['total_sorteo'] = sum((l['premio'] for l in g['lineas']), Decimal('0.00'))
+    for g in sorteos_dict.values():
         g['cantidad_premios'] = len(g['lineas'])
-        g['resultado'] = _res_map.get((_k, g.get('fecha_sorteo')))
+        g['formas_unicas'] = list(set(g['formas']))
+        g['total_sorteo'] = g['total_premio']
+        g['resultado'] = Resultado.objects.filter(
+            sorteo=g['sorteo'], fecha=g['fecha_sorteo']
+        ).first()
 
         _nums_prem = set()
         for _l in g['lineas']:
@@ -1548,28 +1565,14 @@ def mis_premios(request):
                             _nums_prem.add(_part)
         g['numeros_premiados'] = _nums_prem
 
-        _gan = _OD()
-        for _l in g['lineas']:
-            _cid = _l.get('cliente_id') or _l.get('cliente')
-            if _cid not in _gan:
-                _gan[_cid] = {
-                    'cliente': _l.get('cliente'),
-                    'formas': [],
-                    'total_premio': Decimal('0.00'),
-                    'total_apuesta': Decimal('0.00'),
-                }
-            _gan[_cid]['formas'].append({
-                'forma_juego': _l.get('forma_juego'),
-                'forma_pago': _l.get('forma_pago'),
-                'numero': _l.get('numero'),
-                'apuesta': _l.get('apuesta') or Decimal('0.00'),
-                'premio': _l.get('premio') or Decimal('0.00'),
-            })
-            _gan[_cid]['total_premio'] += (_l.get('premio') or Decimal('0.00'))
-            _gan[_cid]['total_apuesta'] += (_l.get('apuesta') or Decimal('0.00'))
-        g['ganadores'] = list(_gan.values())
+        g['ganadores'] = [{
+            'cliente': g['cliente'].username,
+            'formas': g['lineas'],
+            'total_premio': g['total_premio'],
+            'total_apuesta': g['total_apuesta'],
+        }]
 
-        _tf = _OD()
+        _tf = {}
         for _l in g['lineas']:
             _fp = _l.get('forma_pago') or 'Sin FP'
             _tf[_fp] = _tf.get(_fp, Decimal('0.00')) + (_l.get('premio') or Decimal('0.00'))

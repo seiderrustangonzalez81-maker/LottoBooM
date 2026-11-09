@@ -1,4 +1,3 @@
-<!-- resultados/resultados.html -->
 {% extends "base.html" %}
 {% load static %}
 
@@ -6,191 +5,141 @@
 
 {% block content %}
 <style>
-  /* ── Chips del Número Ganador — se ajustan al contenido y hacen wrap ── */
-  .num-ganador-cell {
+/* ═══ TABLA EXCEL-LIKE ═══ */
+.tabla-excel {
+    border-collapse: collapse;
+    width: 100%;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 13px;
+    background: #fff;
+}
+.tabla-excel th, .tabla-excel td {
+    border: 1px solid #d0d0d0;
+    padding: 8px 10px;
     vertical-align: top;
-    max-width: 340px;
-    min-width: 180px;
-  }
-  .num-ganador-wrap {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 4px;
-    min-width: 0;
-  }
-  .num-chip {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    padding: 3px 8px;
-    border-radius: 8px;
-    background: linear-gradient(135deg, #f8fafc, #eef2ff);
-    border: 1px solid #cbd5e1;
-    font-family: 'SF Mono', 'Courier New', monospace;
-    font-size: 0.82rem;
-    font-weight: 800;
-    color: #1e293b;
-    white-space: nowrap;
-    line-height: 1.3;
-    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
-    transition: all 0.15s;
-  }
-  .num-chip:hover {
-    border-color: #94a3b8;
-    background: linear-gradient(135deg, #ffffff, #e0e7ff);
-    transform: translateY(-1px);
-    box-shadow: 0 4px 10px -4px rgba(15, 23, 42, 0.2);
-  }
-  .num-chip .num-lbl {
-    font-size: 0.55rem;
-    font-weight: 900;
-    color: #64748b;
-    letter-spacing: 0.4px;
-    text-transform: uppercase;
-    padding: 1px 4px;
+    text-align: left;
+}
+.tabla-excel th {
+    background: #f2f2f2;
+    font-weight: 700;
+    color: #333;
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    text-align: center;
+}
+.tabla-excel tr:nth-child(even) { background: #fafafa; }
+.tabla-excel tr:hover { background: #e9f5ee; }
+
+.badge-campo {
+    display: inline-block;
+    background: #e9f5ee;
+    color: #1a5d3a;
     border-radius: 4px;
-    background: rgba(148, 163, 184, 0.18);
-  }
-  .num-chip.num-empty {
-    background: #f1f5f9;
-    border-style: dashed;
-    color: #94a3b8;
-    font-style: italic;
-  }
-
-  @media (max-width: 768px) {
-    .num-ganador-cell { max-width: 100%; min-width: 0; }
-    .num-chip { font-size: 0.75rem; padding: 2px 6px; }
-    .num-chip .num-lbl { font-size: 0.5rem; padding: 1px 3px; }
-  }
-
-
-    .filtros .row, .filtros .grid, form .row { 
-        display: grid !important; 
-        grid-template-columns: 1fr 1fr !important; 
-        gap: 10px !important; 
-    }
-    .filtros .col-md-4, .filtros .col-md-3, .filtros .col-lg-2, .filtros .col { 
-        width: 100% !important; 
-        max-width: 100% !important; 
-        margin-bottom: 0 !important;
-    }
-    /* El botón de buscar/filtrar ocupa toda la fila */
-    .filtros .col-12, .filtros button[type="submit"] { 
-        grid-column: 1 / -1 !important; 
-    }
-
-    /* 2. Tabla con scroll horizontal y texto sin cortes */
-    .table-responsive { 
-        width: 100% !important; 
-        overflow-x: auto !important; 
-        -webkit-overflow-scrolling: touch !important; 
-        border: 1px solid #e5e7eb; 
-        border-radius: 8px;
-    }
-    table.table, table {
-        min-width: 800px !important; /* Fuerza el ancho para que aparezca el scroll */
-        width: 100% !important;
-        margin-bottom: 0 !important;
-    }
-    th, td { 
-        white-space: nowrap !important; /* Evita que el texto se rompa o apile */
-        vertical-align: middle !important; 
-        font-size: 0.78rem !important; 
-        padding: 8px 12px !important; 
-    }
-    th {
-        text-align: center !important;
-        background: #f8f9fa;
-    }
-    td {
-        text-align: center !important;
-    }
-    /* Alinear el nombre del sorteo a la izquierda para mejor lectura */
-    th:nth-child(2), td:nth-child(2) {
-        text-align: left !important;
-    }
+    padding: 2px 6px;
+    margin: 1px;
+    font-size: 11px;
+    white-space: nowrap;
+    font-weight: 600;
+}
+.badge-campo strong {
+    color: #26b57d;
+    font-weight: 900;
+}
+.campos-count {
+    display: inline-block;
+    background: #cbd5e1;
+    color: #1e293b;
+    border-radius: 999px;
+    padding: 2px 8px;
+    font-size: 10px;
+    font-weight: 800;
+    margin-left: 4px;
 }
 
-
-/* FIX_RESULTADOS_TABLA_V2: 2 columnas en filtros y scroll en tabla */
+/* ═══ MOBILE: Cards ═══ */
 @media (max-width: 768px) {
-    /* 1. Forzar el formulario de filtros a Grid de 2 columnas */
-    form[method="get"].row {
-        display: grid !important;
-        grid-template-columns: 1fr 1fr !important;
-        gap: 10px !important;
+    .tabla-excel { display: block; width: 100%; }
+    .tabla-excel thead { display: none; }
+    .tabla-excel tbody, .tabla-excel tr, .tabla-excel td { display: block; width: 100%; }
+    .tabla-excel tbody tr {
+        background: #fff;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 12px;
+        margin-bottom: 12px;
+        box-shadow: 0 1px 3px rgba(0,0,0,.06);
     }
-    /* Forzar a las columnas de Bootstrap a ocupar el 100% de su celda grid */
-    form[method="get"].row > div {
-        width: 100% !important;
-        max-width: 100% !important;
-        flex: none !important;
-        margin-bottom: 0 !important;
+    .tabla-excel tbody td {
+        padding: 4px 0 !important;
+        border: none !important;
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 12px;
+        text-align: right;
+        font-size: 0.85rem;
     }
-    /* Si hay un botón de buscar o la última columna, que ocupe toda la fila */
-    form[method="get"].row > div:last-child {
-        grid-column: 1 / -1 !important;
+    .tabla-excel tbody td::before {
+        content: attr(data-label);
+        font-weight: 800;
+        font-size: 0.65rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: #64748b;
+        flex-shrink: 0;
+        padding-top: 2px;
     }
-
-    /* 2. Tabla con scroll horizontal y textos sin romperse */
-    .table-responsive {
+    .tabla-excel tbody td[data-label="Campos"] {
         display: block !important;
-        width: 100% !important;
-        overflow-x: auto !important;
-        -webkit-overflow-scrolling: touch !important;
+        text-align: left;
+        padding-top: 8px !important;
+        border-top: 1px dashed #cbd5e1 !important;
+        margin-top: 4px;
     }
-    .table-responsive table {
-        min-width: 900px !important; /* Fuerza el scroll en móvil */
-        width: 100% !important;
+    .tabla-excel tbody td[data-label="Campos"]::before {
+        display: block;
+        margin-bottom: 6px;
     }
-    .table-responsive th, 
-    .table-responsive td {
-        white-space: nowrap !important; /* Evita que el texto se apile */
-        vertical-align: middle !important;
-        text-align: center !important;
+    .tabla-excel tbody td[data-label="Acciones"] {
+        display: block !important;
+        text-align: center;
+        padding-top: 8px !important;
     }
-    /* Alinear el nombre del sorteo a la izquierda para que se lea mejor */
-    .table-responsive th:nth-child(2), 
-    .table-responsive td:nth-child(2) {
-        text-align: left !important;
-    }
+    .tabla-excel tbody td[data-label="Acciones"]::before { display: none; }
+    .badge-campo { font-size: 10px; padding: 2px 5px; }
 }
-
 </style>
 
 <div class="container-fluid py-4">
-    <!-- Encabezado -->
     <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
         <h1 class="h3">📊 Resultados de Sorteos</h1>
-        <div>
+        <div class="d-flex flex-wrap gap-2">
             {% if user.is_authenticated and perms.resultados.add_resultado %}
-            <a href="{% url 'resultados:crear_resultado' %}" class="btn btn-primary">
-                <i class="fas fa-plus-circle"></i> Crear Resultado
+            <a href="{% url 'resultados:crear_resultado' %}" class="btn btn-primary btn-sm">
+                <i class="fas fa-plus-circle"></i> Crear
             </a>
             {% endif %}
             {% if user.is_authenticated %}
-            <a href="{% url 'resultados:mis_premios' %}" class="btn btn-outline-success">
+            <a href="{% url 'resultados:mis_premios' %}" class="btn btn-outline-success btn-sm">
                 <i class="fas fa-trophy"></i> Mis Premios
             </a>
             {% endif %}
-            <a href="{% url 'resultados:todos_los_ganadores' %}" class="btn btn-outline-warning">
-                <i class="fas fa-trophy"></i> Todos los Ganadores
+            <a href="{% url 'resultados:todos_los_ganadores' %}" class="btn btn-outline-warning btn-sm">
+                <i class="fas fa-trophy"></i> Ganadores
             </a>
         </div>
     </div>
 
-    <!-- Mensajes -->
     {% if messages %}
         {% for message in messages %}
             <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
                 {{ message }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
         {% endfor %}
     {% endif %}
 
-    <!-- Filtros -->
     <div class="card shadow-sm mb-4">
         <div class="card-body">
             <form method="get" class="row g-3">
@@ -213,238 +162,128 @@
                     <label for="fecha_hasta" class="form-label">Fecha Hasta</label>
                     <input onchange="this.form.submit()" type="date" name="fecha_hasta" id="fecha_hasta" class="form-control" value="{{ fecha_hasta }}">
                 </div>
-                <div class="col-md-3 d-flex align-items-end gap-2">
-                    <button type="button" id="btn-compartir-todos" class="btn btn-success w-100" title="Compartir todos los resultados visibles">
-                        <i class="fab fa-whatsapp"></i> Compartir todos
+                <div class="col-md-3 d-flex align-items-end">
+                    <button type="button" id="btn-compartir-todos" class="btn btn-success w-100">
+                        <i class="fab fa-whatsapp"></i> Compartir
                     </button>
                 </div>
             </form>
         </div>
-        <div class="card-footer text-muted d-flex justify-content-between align-items-center">
-            <span>
-                {% if mostrando_hoy %}
-                    <i class="fas fa-calendar-day"></i> Mostrando resultados de hoy: <strong>{{ fecha_actual|date:"d/m/Y" }}</strong>
-                {% else %}
-                    <i class="fas fa-calendar-alt"></i> Mostrando del <strong>{{ fecha_desde|date:"d/m/Y"|default:"inicio" }}</strong> al <strong>{{ fecha_hasta|date:"d/m/Y"|default:"fin" }}</strong>
-                {% endif %}
-                | Total: <strong>{{ total_resultados }}</strong> resultados
-            </span>
+        <div class="card-footer text-muted small">
+            {% if mostrando_hoy %}
+                📅 Hoy: <strong>{{ fecha_actual|date:"d/m/Y" }}</strong>
+            {% else %}
+                📅 Del <strong>{{ fecha_desde|date:"d/m/Y"|default:"inicio" }}</strong> al <strong>{{ fecha_hasta|date:"d/m/Y"|default:"fin" }}</strong>
+            {% endif %}
+            | Total: <strong>{{ total_resultados }}</strong> resultados
         </div>
     </div>
 
-    <!-- Tabla -->
     <div class="card shadow-sm">
         <div class="card-body p-0">
-            <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0">
-                    <thead class="table-light">
-                        <tr>
-                            <th>#</th>
-                            <th>Sorteo</th>
-                            <th>Fecha</th>
-                            <th>Hora</th>
-                            <th>Número Ganador</th>
-                            <th class="text-center">Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for resultado in resultados %}
-                        <tr>
-                            <td>{{ resultado.id }}</td>
-                            <td>{{ resultado.sorteo.nombre }}</td>
-                            <td>{{ resultado.fecha|date:"d/m/Y" }}</td>
-                            <td>{{ resultado.hora|time:"H:i" }}</td>
-                            <td class="num-ganador-cell">
-                                <div class="num-ganador-wrap">
-                                    {% if resultado.pick2 %}<span class="num-chip"><span class="num-lbl">P2</span>{{ resultado.pick2 }}</span>{% endif %}
-                                    {% if resultado.pick3 %}<span class="num-chip"><span class="num-lbl">P3</span>{{ resultado.pick3 }}</span>{% endif %}
-                                    {% if resultado.pick4 %}<span class="num-chip"><span class="num-lbl">P4</span>{{ resultado.pick4 }}</span>{% endif %}
-                                    {% if resultado.pick5 %}<span class="num-chip"><span class="num-lbl">P5</span>{{ resultado.pick5 }}</span>{% endif %}
-                                    {% if resultado.pf %}<span class="num-chip"><span class="num-lbl">PF</span>{{ resultado.pf }}</span>{% endif %}
-                                    {% if resultado.fijo %}<span class="num-chip"><span class="num-lbl">F</span>{{ resultado.fijo }}</span>{% endif %}
-                                    {% if resultado.corrido_1 %}<span class="num-chip"><span class="num-lbl">C1</span>{{ resultado.corrido_1 }}</span>{% endif %}
-                                    {% if resultado.corrido_2 %}<span class="num-chip"><span class="num-lbl">C2</span>{{ resultado.corrido_2 }}</span>{% endif %}
-
-                                    {% if not resultado.pick2 and not resultado.pick3 and not resultado.pick4 and not resultado.pick5 and not resultado.pf and not resultado.fijo and not resultado.corrido_1 and not resultado.corrido_2 %}
-                                        <span class="num-chip num-empty">—</span>
-                                    {% endif %}
-                                </div>
-                            </td>
-                            <td class="text-center">
-                                <div class="btn-group" role="group">
-                                    <button class="btn btn-sm btn-success btn-compartir" data-id="{{ resultado.id }}" title="Compartir por WhatsApp">
-                                        <i class="fab fa-whatsapp"></i>
-                                    </button>
-                                    <a href="{% url 'resultados:detalle_resultado' resultado.id %}" class="btn btn-sm btn-outline-info" title="Ver detalle">
-                                        <i class="fas fa-eye"></i>
-                                    </a>
-                                    {% if puede_editar %}
-                                    <a href="{% url 'resultados:editar_resultado' resultado.id %}" class="btn btn-sm btn-warning" title="Editar resultado">
-                                        <i class="fas fa-edit"></i>
-                                    </a>
-                                    {% endif %}
-                                    {% if puede_eliminar %}
-                                    <a href="{% url 'resultados:eliminar_resultado' resultado.id %}" class="btn btn-sm btn-outline-danger" title="Eliminar">
-                                        <i class="fas fa-trash-alt"></i>
-                                    </a>
-                                    {% endif %}
-                                </div>
-                            </td>
-                        </tr>
-                        {% empty %}
-                        <tr>
-                            <td colspan="6" class="text-center py-4 text-muted">
-                                <i class="fas fa-inbox fa-2x d-block mb-2"></i>
-                                No hay resultados para mostrar.
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <!-- Paginación -->
-        {% if resultados.paginator.num_pages > 1 %}
-        <div class="card-footer d-flex justify-content-between align-items-center">
-            <span class="text-muted small">
-                Mostrando {{ resultados.start_index }} - {{ resultados.end_index }} de {{ resultados.paginator.count }} resultados
-            </span>
-            <nav>
-                <ul class="pagination pagination-sm mb-0">
-                    {% if resultados.has_previous %}
-                        <li class="page-item"><a class="page-link" href="?page=1{% if request.GET.urlencode %}&{{ request.GET.urlencode }}{% endif %}">&laquo;&laquo;</a></li>
-                        <li class="page-item"><a class="page-link" href="?page={{ resultados.previous_page_number }}{% if request.GET.urlencode %}&{{ request.GET.urlencode }}{% endif %}">&laquo;</a></li>
-                    {% else %}
-                        <li class="page-item disabled"><span class="page-link">&laquo;&laquo;</span></li>
-                        <li class="page-item disabled"><span class="page-link">&laquo;</span></li>
-                    {% endif %}
-
-                    {% for num in resultados.paginator.page_range %}
-                        {% if num == resultados.number %}
-                            <li class="page-item active"><span class="page-link">{{ num }}</span></li>
-                        {% elif num > resultados.number|add:'-3' and num < resultados.number|add:'3' %}
-                            <li class="page-item"><a class="page-link" href="?page={{ num }}{% if request.GET.urlencode %}&{{ request.GET.urlencode }}{% endif %}">{{ num }}</a></li>
-                        {% endif %}
+            <table class="tabla-excel">
+                <thead>
+                    <tr>
+                        <th style="width:60px;">#</th>
+                        <th>Sorteo</th>
+                        <th style="width:110px;">Fecha</th>
+                        <th style="width:70px;">Hora</th>
+                        <th>Campos / Formas</th>
+                        <th style="width:130px;">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for resultado in resultados %}
+                    <tr>
+                        <td data-label="#">{{ resultado.id }}</td>
+                        <td data-label="Sorteo"><strong>{{ resultado.sorteo.nombre }}</strong></td>
+                        <td data-label="Fecha">{{ resultado.fecha|date:"d/m/Y" }}</td>
+                        <td data-label="Hora">{{ resultado.hora|time:"H:i" }}</td>
+                        <td data-label="Campos">
+                            {% with total=resultado.todos_campos|length %}
+                            {% if total > 0 %}
+                                {% for nombre, valor in resultado.todos_campos %}
+                                    <span class="badge-campo"><strong>{{ nombre }}:</strong> {{ valor }}</span>
+                                {% endfor %}
+                                <span class="campos-count">{{ total }}</span>
+                            {% else %}
+                                <span class="text-muted">— sin campos —</span>
+                            {% endif %}
+                            {% endwith %}
+                        </td>
+                        <td data-label="Acciones">
+                            <div class="btn-group btn-group-sm">
+                                <button class="btn btn-sm btn-success btn-compartir" data-id="{{ resultado.id }}" title="Compartir">
+                                    <i class="fab fa-whatsapp"></i>
+                                </button>
+                                <a href="{% url 'resultados:detalle_resultado' resultado.id %}" class="btn btn-sm btn-outline-info" title="Ver detalle">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                {% if puede_editar %}
+                                <a href="{% url 'resultados:editar_resultado' resultado.id %}" class="btn btn-sm btn-warning" title="Editar">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                {% endif %}
+                                {% if puede_eliminar %}
+                                <a href="{% url 'resultados:eliminar_resultado' resultado.id %}" class="btn btn-sm btn-outline-danger" title="Eliminar">
+                                    <i class="fas fa-trash-alt"></i>
+                                </a>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center py-4 text-muted">
+                            <i class="fas fa-inbox fa-2x d-block mb-2"></i>
+                            No hay resultados para mostrar.
+                        </td>
+                    </tr>
                     {% endfor %}
-
-                    {% if resultados.has_next %}
-                        <li class="page-item"><a class="page-link" href="?page={{ resultados.next_page_number }}{% if request.GET.urlencode %}&{{ request.GET.urlencode }}{% endif %}">&raquo;</a></li>
-                        <li class="page-item"><a class="page-link" href="?page={{ resultados.paginator.num_pages }}{% if request.GET.urlencode %}&{{ request.GET.urlencode }}{% endif %}">&raquo;&raquo;</a></li>
-                    {% else %}
-                        <li class="page-item disabled"><span class="page-link">&raquo;</span></li>
-                        <li class="page-item disabled"><span class="page-link">&raquo;&raquo;</span></li>
-                    {% endif %}
-                </ul>
-            </nav>
+                </tbody>
+            </table>
         </div>
-        {% endif %}
     </div>
 </div>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Compartir individual
     document.querySelectorAll('.btn-compartir').forEach(function(btn) {
         btn.addEventListener('click', function(e) {
             e.preventDefault();
             const id = this.dataset.id;
+            const originalHTML = this.innerHTML;
             this.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
             this.disabled = true;
             fetch(`/resultados/api/resumen/${id}/`)
-                .then(response => response.json())
+                .then(r => r.json())
                 .then(data => {
-                    if (data.success) {
-                        const mensaje = encodeURIComponent(data.resumen);
-                        window.open(`https://wa.me/?text=${mensaje}`, '_blank');
-                    } else {
-                        alert('❌ Error al obtener el resumen.');
-                    }
+                    if (data.success) window.open(`https://wa.me/?text=${encodeURIComponent(data.resumen)}`, '_blank');
+                    else alert('❌ Error al obtener el resumen.');
                 })
-                .catch(error => {
-                    console.error(error);
-                    alert('❌ Error de conexión.');
-                })
-                .finally(() => {
-                    this.innerHTML = '<i class="fab fa-whatsapp"></i>';
-                    this.disabled = false;
-                });
+                .catch(() => alert('❌ Error de conexión.'))
+                .finally(() => { this.innerHTML = originalHTML; this.disabled = false; });
         });
     });
 
-    // Compartir todos
-    document.getElementById('btn-compartir-todos').addEventListener('click', function(e) {
-        e.preventDefault();
-        const btn = this;
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Cargando...';
-        btn.disabled = true;
-        const params = new URLSearchParams(window.location.search);
-        params.delete('page');
-        fetch(`/resultados/api/resumen-filtrado/?${params.toString()}`)
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    const mensaje = encodeURIComponent(data.resumen);
-                    window.open(`https://wa.me/?text=${mensaje}`, '_blank');
-                } else {
-                    alert('❌ Error al obtener el resumen filtrado.');
-                }
-            })
-            .catch(error => {
-                console.error(error);
-                alert('❌ Error de conexión.');
-            })
-            .finally(() => {
-                btn.innerHTML = '<i class="fab fa-whatsapp"></i> Compartir todos';
-                btn.disabled = false;
-            });
-    });
+    const btnTodos = document.getElementById('btn-compartir-todos');
+    if (btnTodos) {
+        btnTodos.addEventListener('click', function(e) {
+            e.preventDefault();
+            const originalHTML = this.innerHTML;
+            this.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            this.disabled = true;
+            const params = new URLSearchParams(window.location.search);
+            fetch(`/resultados/api/resumen-filtrado/?${params.toString()}`)
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) window.open(`https://wa.me/?text=${encodeURIComponent(data.resumen)}`, '_blank');
+                    else alert('❌ Error al obtener el resumen.');
+                })
+                .catch(() => alert('❌ Error de conexión.'))
+                .finally(() => { this.innerHTML = originalHTML; this.disabled = false; });
+        });
+    }
 });
 </script>
-{% endblock %}
-
-{% block extra_css %}
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-
-<style>
-/* FIX_RESULTADOS_DEFINITIVO_V3: Solución forzada para móviles */
-@media (max-width: 768px) {
-    /* 1. Filtros en 2 columnas exactas */
-    form.row {
-        display: grid !important;
-        grid-template-columns: 1fr 1fr !important;
-        gap: 10px !important;
-    }
-    /* Anular el ancho y flex de Bootstrap en las columnas */
-    form.row > div {
-        width: auto !important;
-        max-width: none !important;
-        flex: 1 1 auto !important;
-        margin-bottom: 0 !important;
-        padding: 0 !important;
-    }
-
-    /* 2. Tabla con scroll horizontal real */
-    .table-responsive {
-        display: block !important;
-        width: 100% !important;
-        overflow-x: auto !important;
-        -webkit-overflow-scrolling: touch !important;
-        border: 1px solid #ddd;
-    }
-    .table-responsive > .table {
-        min-width: 900px !important; /* Fuerza a que la tabla sea ancha */
-        width: max-content !important; /* Evita que se aplaste */
-        margin-bottom: 0 !important;
-    }
-    /* 3. Textos en una sola línea */
-    .table-responsive th, 
-    .table-responsive td {
-        white-space: nowrap !important; /* No permite saltos de línea */
-        vertical-align: middle !important;
-        padding: 10px 15px !important;
-    }
-}
-</style>
-
 {% endblock %}

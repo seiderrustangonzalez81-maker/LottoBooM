@@ -1211,6 +1211,50 @@ document.addEventListener('DOMContentLoaded', function() {
     // ---------- INICIALIZACIÓN ----------
     derivar();
     pick2.focus();
+
+        // ═══ DINAMIC VISIBILITY (según config del sorteo) ═══
+    const fieldConfigMap = {
+        'pick2': 'pick2', 'pick3': 'pick3', 'pick4': 'pick4', 'pick5': 'pick5',
+        'fijo': 'fijo', 'corrido1': 'corridos', 'corrido2': 'corridos',
+        'pf': 'pf', 'centena1': 'centenas corridas', 'centena2': 'centenas corridas',
+        'parlet': 'parlet', 'posicion': 'posicion', 'tripleta': 'tripleta',
+        'vspf': 'vspf', 'vspick2': 'vspick2', 'pick2vspf': 'pick2vspf',
+    };
+
+    async function actualizarVisibilidadSorteo() {
+        const sorteoId = sorteoSelect.value;
+        if (!sorteoId) return;
+        try {
+            const r = await fetch(`{% url 'jugadas:api_configuracion_sorteo' %}?sorteo_id=${sorteoId}`);
+            const data = await r.json();
+            if (!data.success) return;
+
+            const config = data.config || {};
+            document.querySelectorAll('.field-card[data-field]').forEach(card => {
+                const field = card.dataset.field;
+                const configKey = fieldConfigMap[field];
+                const visible = configKey ? config[configKey] === true : false;
+                const input = card.querySelector('input');
+
+                if (visible) {
+                    card.style.display = '';
+                    if (input) input.disabled = false;
+                } else {
+                    card.style.display = 'none';
+                    if (input) {
+                        input.disabled = true;
+                        input.value = '';
+                    }
+                }
+            });
+        } catch (e) {
+            console.warn('[editar_resultado] error visibilidad:', e);
+        }
+    }
+
+    // Llamar al cargar y al cambiar sorteo
+    actualizarVisibilidadSorteo();
+    sorteoSelect.addEventListener('change', actualizarVisibilidadSorteo);
 });
 </script>
 {% endblock %}

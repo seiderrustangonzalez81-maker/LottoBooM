@@ -1473,45 +1473,51 @@ def _guardar_apuesta_impl(request):
         if items_super and (len(super_sorteos_ids) < 2 or not all(super_sorteos_ids)):
             return JsonResponse({'success': False, 'message': 'Superparlet requiere dos sorteos'}, status=400)
 
-        # ═══ VALIDACIÓN ESTRICTA DE CIERRE (ZONA HORARIA CUBA) ═══
-        try:
-            CUBA_TZ = ZoneInfo('America/Havana')
-            ahora_cuba = timezone.now().astimezone(CUBA_TZ)
-            
-            _todos_ids = list(set(list(sorteos_ids) + list(super_sorteos_ids)))
-            _cerrados = []
-            
-            for _sid in _todos_ids:
-                _sorteo_chk = Sorteo.objects.filter(id=int(_sid)).first()
-                if not _sorteo_chk: continue
-                
-                temp_chk = 'verano' if es_verano_cuba(fecha_apuesta) else 'invierno'
-                dia_chk = {0: 'lunes', 1: 'martes', 2: 'miercoles', 3: 'jueves', 4: 'viernes', 5: 'sabado', 6: 'domingo'}[fecha_apuesta.weekday()]
-                
-                hs_chk = _sorteo_chk.hora_salida
-                if _sorteo_chk.horarios and temp_chk in _sorteo_chk.horarios and dia_chk in _sorteo_chk.horarios[temp_chk]:
-                    hh, mm = _sorteo_chk.horarios[temp_chk][dia_chk].split(':')
-                    hs_chk = time(int(hh), int(mm))
-                
-                dt_sal = datetime.combine(fecha_apuesta, hs_chk).replace(tzinfo=CUBA_TZ)
-                
-                if hs_chk.hour < 6: 
-                    dt_sal += timedelta(days=1)
-                
-                dt_cie = dt_sal - timedelta(minutes=(_sorteo_chk.minutos_cierre or 60))
-                
-                if ahora_cuba >= dt_cie:
-                    _cerrados.append(_sorteo_chk.nombre)
-                    
-            if _cerrados:
-                return JsonResponse({
-                    'success': False,
-                    'sorteo_cerrado': True,
-                    'sorteos_cerrados': _cerrados,
-                    'message': '⛔ Operación rechazada. El sorteo ya cerró en Cuba: ' + ', '.join(_cerrados),
-                }, status=400)
-        except Exception as e:
-            logger.error(f"Error validando cierre estricto: {e}")
+                # ═══ VALIDACIÓN ESTRICTA DE CIERRE (ZONA HORARIA CUBA) ═══
+        # Excepción: bancos y superadmins pueden saltarse el cierre para cargar jugadas retroactivas
+        _es_banco_o_super = (
+            request.user.is_superuser
+            or request.user.roles.filter(tipo__in=['superadmin','banco'], activo=True).exists()
+        )
+        if not _es_banco_o_super:
+            try:
+                CUBA_TZ = ZoneInfo('America/Havana')
+                ahora_cuba = timezone.now().astimezone(CUBA_TZ)
+
+                _todos_ids = list(set(list(sorteos_ids) + list(super_sorteos_ids)))
+                _cerrados = []
+
+                for _sid in _todos_ids:
+                    _sorteo_chk = Sorteo.objects.filter(id=int(_sid)).first()
+                    if not _sorteo_chk: continue
+
+                    temp_chk = 'verano' if es_verano_cuba(fecha_apuesta) else 'invierno'
+                    dia_chk = {0: 'lunes', 1: 'martes', 2: 'miercoles', 3: 'jueves', 4: 'viernes', 5: 'sabado', 6: 'domingo'}[fecha_apuesta.weekday()]
+
+                    hs_chk = _sorteo_chk.hora_salida
+                    if _sorteo_chk.horarios and temp_chk in _sorteo_chk.horarios and dia_chk in _sorteo_chk.horarios[temp_chk]:
+                        hh, mm = _sorteo_chk.horarios[temp_chk][dia_chk].split(':')
+                        hs_chk = time(int(hh), int(mm))
+
+                    dt_sal = datetime.combine(fecha_apuesta, hs_chk).replace(tzinfo=CUBA_TZ)
+
+                    if hs_chk.hour < 6:
+                        dt_sal += timedelta(days=1)
+
+                    dt_cie = dt_sal - timedelta(minutes=(_sorteo_chk.minutos_cierre or 60))
+
+                    if ahora_cuba >= dt_cie:
+                        _cerrados.append(_sorteo_chk.nombre)
+
+                if _cerrados:
+                    return JsonResponse({
+                        'success': False,
+                        'sorteo_cerrado': True,
+                        'sorteos_cerrados': _cerrados,
+                        'message': '⛔ Operación rechazada. El sorteo ya cerró en Cuba: ' + ', '.join(_cerrados),
+                    }, status=400)
+            except Exception as e:
+                logger.error(f"Error validando cierre estricto: {e}")
         # ═══ FIN VALIDACIÓN ESTRICTA ═══
 
         usuario = request.user
