@@ -12,7 +12,11 @@ from resultados.views import procesar_resultado
 URL_JSON = "https://raw.githubusercontent.com/seiderrustangonzalez81-maker/LottoBooM/main/resultados.json"
 
 MAPEO_NOMBRES = {
+<<<<<<< HEAD
     # ─── ANGUILA Y HAITI ───
+=======
+    # ANGUILA / HAITI
+>>>>>>> aa72afbd50503c647806e2625a06ca76ea98758a
     "Anguilla 8AM": "Anguila 8 AM", "Anguilla 9AM": "Anguila 9 AM",
     "Anguilla 10AM": "Anguila 10 AM", "Anguilla 11AM": "Anguila 11 AM",
     "Anguilla 12PM": "Anguila 12 PM", "Anguilla 1PM": "Anguila 1 PM",
@@ -27,8 +31,12 @@ MAPEO_NOMBRES = {
     "Haiti Bolet 5:30 PM": "Haiti Bolet 5:30 PM",
     "Haiti Bolet 6:30 PM": "Haiti Bolet 6:30 PM",
     "Haiti Bolet 7:30 PM": "Haiti Bolet 7:30 PM",
+<<<<<<< HEAD
 
     # ─── DOMINICANAS ───
+=======
+    # DOMINICANAS
+>>>>>>> aa72afbd50503c647806e2625a06ca76ea98758a
     "Nacional Gana Más": "Nacional Gana Más", "Nacional Noche": "Nacional Noche",
     "Leidsa": "Leidsa 8:55 PM",
     "Loteka Tarde": "Loteka 1:30 PM", "Loteka": "Loteka 7:55 PM",
@@ -36,6 +44,7 @@ MAPEO_NOMBRES = {
     "La Suerte": "La Suerte", "La Suerte 6PM": "La Suerte 6PM",
     "LoteDom": "Lotedom", "LoteDom Noche": "Lotedom Noche",
     "King Lottery Día": "King Lottery 12:30 PM", "King Lottery Noche": "King Lottery 7:30 PM",
+<<<<<<< HEAD
 
     # ─── VENEZOLANAS/OTRAS ───
     "El Quemaito Mayor": "El Quemaito Mayor", "El Quemaito Mayor Noche": "El Quemaito Mayor Noche",
@@ -43,14 +52,32 @@ MAPEO_NOMBRES = {
     "Real": "Real", "Real Noche": "Real Noche",
 
     # ─── USA (SOLO desde LotteryUSA - fuente oficial) ───
+=======
+    # OTRAS
+    "El Quemaito Mayor": "El Quemaito Mayor", "El Quemaito Mayor Noche": "El Quemaito Mayor Noche",
+    "El Quinielón Día": "El Quinielón Día", "El Quinielón Noche": "El Quinielón Noche",
+    "Real": "Real", "Real Noche": "Real Noche",
+    # USA (LotteryUSA)
+>>>>>>> aa72afbd50503c647806e2625a06ca76ea98758a
     "Texas 1:20 PM": "Texas 1:20 PM",
     "Florida 1:35 PM": "Florida 1:35 PM",
     "New York 2:30 PM": "New York 2:30 PM",
     "New Jersey 12:50 PM": "New Jersey 12:50 PM",
     "Georgia 12:30 PM": "Georgia 12:30 PM",
     "Tennessee 1:20 PM": "Tennessee 1:20 PM",
+<<<<<<< HEAD
     # ❌ REMOVIDO: "Georgia Día", "New York Tarde", etc. de Enloteria
     # para evitar contaminación con datos no oficiales
+=======
+    # USA (desde Enloteria)
+    "Georgia Día": "Georgia 12:30 PM",
+    "Georgia Tarde": "Georgia 7 PM",
+    "New York Tarde": "New York 2:30 PM",
+    "New Jersey Tarde": "New Jersey 12:50 PM",
+    "Florida Tarde": "Florida 1:35 PM",
+    "Texas Tarde": "Texas 1:20 PM",
+    "Tennessee Día": "Tennessee 1:20 PM",
+>>>>>>> aa72afbd50503c647806e2625a06ca76ea98758a
 }
 
 def normalizar_texto(texto):
@@ -99,29 +126,46 @@ class Command(BaseCommand):
                 fecha = parse_date(item.get("fecha", ""))
                 if not fecha: continue
 
+<<<<<<< HEAD
                 # ═══ BLOQUEO ESTRICTO DE FECHAS FUTURAS ═══
+=======
+                # ═══ BLOQUEO DE FECHAS FUTURAS ═══
+>>>>>>> aa72afbd50503c647806e2625a06ca76ea98758a
                 if fecha > hoy_cuba:
-                    self.stdout.write(self.style.WARNING(f"⚠️ Saltando {nombre_db}: Fecha futura ({fecha})."))
+                    self.stdout.write(self.style.WARNING(f"⚠️ Saltando {nombre_db}: Fecha futura."))
                     continue
-                # ═══════════════════════════════════════════
+                # ══════════════════════════════════
 
                 numeros = item.get("numeros", [])
                 if not numeros or len(numeros) < 2: continue
 
                 fuente = item.get("fuente", "")
 
+<<<<<<< HEAD
                 # Validación extra para LotteryUSA (evita resultados de ayer)
                 if fuente == "lotteryusa" and fecha != hoy_cuba:
                     self.stdout.write(self.style.WARNING(f"⚠️ Saltando {nombre_db}: fecha {fecha} != hoy ({hoy_cuba})."))
                     continue
 
                 # ═══ INICIALIZAR VARIABLES ═══
+=======
+                # Validación extra para LotteryUSA
+                if fuente == "lotteryusa" and fecha != hoy_cuba:
+                    self.stdout.write(self.style.WARNING(f"⚠️ Saltando {nombre_db}: fecha {fecha} != hoy."))
+                    continue
+
+                # ═══ DEFINIR FORMAS E INICIALIZAR VARIABLES ═══
+>>>>>>> aa72afbd50503c647806e2625a06ca76ea98758a
                 formas = [str(f).lower().strip() for f in (sorteo.formas_juego or [])]
                 pick2_val = pick3_val = pick4_val = pick5_val = ''
                 fijo_val = corrido1_val = corrido2_val = ''
 
                 if fuente == "lotteryusa":
+<<<<<<< HEAD
                     # LOTTERYUSA: 3 bolas individuales → llenar todas las formas disponibles
+=======
+                    # LOTTERYUSA: 3 bolas individuales
+>>>>>>> aa72afbd50503c647806e2625a06ca76ea98758a
                     if len(numeros) >= 2:
                         if 'pick2' in formas:
                             pick2_val = "".join(numeros[:2])
@@ -135,6 +179,7 @@ class Command(BaseCommand):
                     elif 'pick4' in formas and len(numeros) >= 4:
                         pick4_val = "".join(numeros[:4])
                 else:
+<<<<<<< HEAD
                     # ENLOTERIA: SOLO fijo y corridos (3 números separados)
                     # NO se llena pick2/pick3 porque Enloteria no publica ese formato
                     # (King Lottery, Loteka, etc. solo usan Fijo/Corridos)
@@ -143,6 +188,16 @@ class Command(BaseCommand):
                     corrido2_val = numeros[2] if len(numeros) > 2 else ''
                     # ❌ REMOVIDO: concatenación de pick2/pick3 para Enloteria
                     # porque generaba valores erróneos como "431276"
+=======
+                    # ENLOTERIA: 3 sorteos separados (fijo, C1, C2)
+                    fijo_val = numeros[0] if len(numeros) > 0 else ''
+                    corrido1_val = numeros[1] if len(numeros) > 1 else ''
+                    corrido2_val = numeros[2] if len(numeros) > 2 else ''
+                    if 'pick2' in formas and len(numeros) >= 2:
+                        pick2_val = "".join(numeros[:2])
+                    if 'pick3' in formas and len(numeros) >= 3:
+                        pick3_val = "".join(numeros[:3])
+>>>>>>> aa72afbd50503c647806e2625a06ca76ea98758a
                 # ═══════════════════════════════════════════════
 
                 resultado_existente = Resultado.objects.filter(sorteo=sorteo, fecha=fecha).first()
@@ -165,9 +220,13 @@ class Command(BaseCommand):
                     actualizados += 1
                 else:
                     creados += 1
+<<<<<<< HEAD
                 self.stdout.write(self.style.SUCCESS(
                     f"✅ {nombre_db} -> P3={pick3_val or '-'} P2={pick2_val or '-'} F={fijo_val or '-'} C1={corrido1_val or '-'} C2={corrido2_val or '-'}"
                 ))
+=======
+                self.stdout.write(self.style.SUCCESS(f"✅ {nombre_db} -> P3={pick3_val} F={fijo_val} C1={corrido1_val} C2={corrido2_val} P2={pick2_val}"))
+>>>>>>> aa72afbd50503c647806e2625a06ca76ea98758a
                 premios_ok += 1
 
             except Exception as e:
