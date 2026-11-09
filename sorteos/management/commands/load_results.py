@@ -12,6 +12,7 @@ from resultados.views import procesar_resultado
 URL_JSON = "https://raw.githubusercontent.com/seiderrustangonzalez81-maker/LottoBooM/main/resultados.json"
 
 MAPEO_NOMBRES = {
+    # ─── ANGUILA Y HAITI ───
     "Anguilla 8AM": "Anguila 8 AM", "Anguilla 9AM": "Anguila 9 AM",
     "Anguilla 10AM": "Anguila 10 AM", "Anguilla 11AM": "Anguila 11 AM",
     "Anguilla 12PM": "Anguila 12 PM", "Anguilla 1PM": "Anguila 1 PM",
@@ -26,6 +27,8 @@ MAPEO_NOMBRES = {
     "Haiti Bolet 5:30 PM": "Haiti Bolet 5:30 PM",
     "Haiti Bolet 6:30 PM": "Haiti Bolet 6:30 PM",
     "Haiti Bolet 7:30 PM": "Haiti Bolet 7:30 PM",
+
+    # ─── DOMINICANAS ───
     "Nacional Gana Más": "Nacional Gana Más", "Nacional Noche": "Nacional Noche",
     "Leidsa": "Leidsa 8:55 PM",
     "Loteka Tarde": "Loteka 1:30 PM", "Loteka": "Loteka 7:55 PM",
@@ -33,9 +36,13 @@ MAPEO_NOMBRES = {
     "La Suerte": "La Suerte", "La Suerte 6PM": "La Suerte 6PM",
     "LoteDom": "Lotedom", "LoteDom Noche": "Lotedom Noche",
     "King Lottery Día": "King Lottery 12:30 PM", "King Lottery Noche": "King Lottery 7:30 PM",
+
+    # ─── VENEZOLANAS/OTRAS ───
     "El Quemaito Mayor": "El Quemaito Mayor", "El Quemaito Mayor Noche": "El Quemaito Mayor Noche",
     "El Quinielón Día": "El Quinielón Día", "El Quinielón Noche": "El Quinielón Noche",
     "Real": "Real", "Real Noche": "Real Noche",
+
+    # ─── USA (LotteryUSA - Nombres oficiales) ───
     "Texas 1:20 PM": "Texas 1:20 PM",
     "Florida 1:35 PM": "Florida 1:35 PM",
     "New York 2:30 PM": "New York 2:30 PM",
@@ -91,7 +98,6 @@ class Command(BaseCommand):
                 if not fecha: continue
 
                 # ═══ BLOQUEO ESTRICTO DE FECHAS FUTURAS ═══
-                # Evita que se carguen resultados falsos con fechas del futuro
                 if fecha > hoy_cuba:
                     self.stdout.write(self.style.WARNING(f"⚠️ Saltando {nombre_db}: Fecha futura ({fecha})."))
                     continue
@@ -102,7 +108,7 @@ class Command(BaseCommand):
 
                 fuente = item.get("fuente", "")
 
-                # Validación extra para LotteryUSA (evita cargar resultados de ayer si hoy aún no han salido)
+                # Validación extra para LotteryUSA
                 if fuente == "lotteryusa" and fecha != hoy_cuba:
                     self.stdout.write(self.style.WARNING(f"⚠️ Saltando {nombre_db} de LotteryUSA: la fecha {fecha} no es hoy."))
                     continue
@@ -112,6 +118,7 @@ class Command(BaseCommand):
                 fijo_val = corrido1_val = corrido2_val = ''
 
                 if fuente == "lotteryusa":
+                    # Lógica exclusiva para USA (Pick 3, 4, etc.)
                     if 'pick3' in formas and len(numeros) >= 3:
                         pick3_val = "".join(numeros[:3])
                     elif 'pick4' in formas and len(numeros) >= 4:
@@ -119,11 +126,11 @@ class Command(BaseCommand):
                     elif 'pick2' in formas and len(numeros) >= 2:
                         pick2_val = "".join(numeros[:2])
                 else:
+                    # Lógica para Enloteria (Fijo y Corridos SIEMPRE se llenan)
                     fijo_val = numeros[0] if len(numeros) > 0 else ''
                     corrido1_val = numeros[1] if len(numeros) > 1 else ''
                     corrido2_val = numeros[2] if len(numeros) > 2 else ''
-                    if 'pick3' in formas and len(numeros) >= 3:
-                        pick3_val = "".join(numeros[:3])
+                    # NOTA: NO concatenamos pick3 aquí porque Enloteria usa Fijo/Corridos
 
                 resultado_existente = Resultado.objects.filter(sorteo=sorteo, fecha=fecha).first()
 
