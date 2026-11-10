@@ -33,6 +33,7 @@ MAPEO_NOMBRES = {
     "El Quemaito Mayor": "El Quemaito Mayor", "El Quemaito Mayor Noche": "El Quemaito Mayor Noche",
     "El Quinielón Día": "El Quinielón Día", "El Quinielón Noche": "El Quinielón Noche",
     "Real": "Real", "Real Noche": "Real Noche",
+    "Florida Tarde": "Florida 9:50 PM",
 
     # USA - LotteryUSA (Fuente Oficial)
     "Texas 1:20 PM": "Texas 1:20 PM", "Texas 10:12 PM": "Texas 11 PM",
@@ -43,11 +44,6 @@ MAPEO_NOMBRES = {
     "Tennessee 1:20 PM": "Tennessee 1:20 PM", "Tennessee 6:30 PM": "Tennessee 7:20 PM",
 
     # USA - Enloteria (Fallback: Solo si lotteryusa falla o para sacar Fijo/Corridos)
-    "Georgia Día": "Georgia 12:30 PM", "Georgia Tarde": "Georgia 7 PM",
-    "Florida Tarde": "Florida 9:50 PM", "Florida Noche": "Florida 9:50 PM",
-    "New York Tarde": "New York 2:30 PM", "New York Noche": "New York 10:30 PM",
-    "New Jersey Tarde": "New Jersey 12:50 PM", "Texas Tarde": "Texas 7 PM",
-    "Tennessee Día": "Tennessee 1:20 PM",
 }
 
 TZ_CUBA = ZoneInfo('America/Havana')
