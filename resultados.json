@@ -503,13 +503,15 @@
   },
   {
     "sorteo_nombre": "Florida 9:45 PM",
-    "numeros": [
-      "4",
-      "0",
-      "4"
-    ],
     "fecha": "2026-11-09",
-    "fuente": "lotteryusa"
+    "fuente": "lotteryusa",
+    "pick2": "26",
+    "pick3": "404",
+    "pick4": "0889",
+    "pick5": "05031",
+    "fijo": "04",
+    "corrido_1": "00",
+    "corrido_2": "04"
   },
   {
     "sorteo_nombre": "New York 10:30 PM",
