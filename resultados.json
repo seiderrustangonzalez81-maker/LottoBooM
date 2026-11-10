@@ -62,9 +62,9 @@
   {
     "sorteo_nombre": "Anguilla 12PM",
     "numeros": [
-      "80",
-      "91",
-      "56"
+      "10",
+      "69",
+      "94"
     ],
     "fecha": "2026-11-09",
     "fuente": "enloteria"
@@ -102,9 +102,9 @@
   {
     "sorteo_nombre": "King Lottery Día",
     "numeros": [
-      "10",
-      "74",
-      "28"
+      "69",
+      "13",
+      "62"
     ],
     "fecha": "2026-11-09",
     "fuente": "enloteria"
@@ -162,9 +162,9 @@
   {
     "sorteo_nombre": "El Quinielon Dia",
     "numeros": [
+      "12",
       "71",
-      "09",
-      "97"
+      "09"
     ],
     "fecha": "2026-11-09",
     "fuente": "enloteria"
@@ -432,9 +432,9 @@
   {
     "sorteo_nombre": "El Quemaito Mayor",
     "numeros": [
+      "70",
       "66",
-      "86",
-      "95"
+      "86"
     ],
     "fecha": "2026-11-09",
     "fuente": "enloteria"
@@ -555,6 +555,86 @@
       "55",
       "36",
       "51"
+    ],
+    "fecha": "2026-11-10",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Anguilla 10AM",
+    "numeros": [
+      "01",
+      "84",
+      "33"
+    ],
+    "fecha": "2026-11-10",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Haiti Bolet 9:30 AM",
+    "numeros": [
+      "32",
+      "83",
+      "05"
+    ],
+    "fecha": "2026-11-10",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Anguilla 11AM",
+    "numeros": [
+      "38",
+      "65",
+      "71"
+    ],
+    "fecha": "2026-11-10",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Haiti Bolet 10:30 AM",
+    "numeros": [
+      "36",
+      "11",
+      "40"
+    ],
+    "fecha": "2026-11-10",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "La Primera",
+    "numeros": [
+      "27",
+      "66",
+      "18"
+    ],
+    "fecha": "2026-11-10",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "LoteDom",
+    "numeros": [
+      "16",
+      "95",
+      "95"
+    ],
+    "fecha": "2026-11-10",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Haiti Bolet 11:30 AM",
+    "numeros": [
+      "20",
+      "17",
+      "39"
+    ],
+    "fecha": "2026-11-10",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "La Suerte",
+    "numeros": [
+      "49",
+      "53",
+      "24"
     ],
     "fecha": "2026-11-10",
     "fuente": "enloteria"
