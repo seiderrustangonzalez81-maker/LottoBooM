@@ -22,9 +22,9 @@
   {
     "sorteo_nombre": "Anguilla 10AM",
     "numeros": [
-      "94",
-      "95",
-      "23"
+      "01",
+      "84",
+      "33"
     ],
     "fecha": "2026-11-09",
     "fuente": "enloteria"
@@ -538,5 +538,25 @@
     ],
     "fecha": "2026-11-09",
     "fuente": "lotteryusa"
+  },
+  {
+    "sorteo_nombre": "Anguilla 8AM",
+    "numeros": [
+      "28",
+      "64",
+      "38"
+    ],
+    "fecha": "2026-11-10",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Anguilla 9AM",
+    "numeros": [
+      "55",
+      "36",
+      "51"
+    ],
+    "fecha": "2026-11-10",
+    "fuente": "enloteria"
   }
 ]
