@@ -26,27 +26,53 @@ ARCHIVO_JSON = "resultados.json"
 # ═══════════════════════════════════════════════════════════════
 URLS_MULTI = {
     "Florida 1:35 PM": {
-        "pick2": ["https://www.lotteryusa.com/florida/midday-pick-2/", "https://www.lotteryusa.com/florida/pick-2-midday/"],
-        "pick3": ["https://www.lotteryusa.com/florida/midday-pick-3/", "https://www.lotteryusa.com/florida/pick-3-midday/"],
-        "pick4": ["https://www.lotteryusa.com/florida/midday-pick-4/", "https://www.lotteryusa.com/florida/pick-4-midday/"],
-        "pick5": ["https://www.lotteryusa.com/florida/midday-pick-5/", "https://www.lotteryusa.com/florida/pick-5-midday/"],
+        "pick2": ["https://www.lotteryusa.com/florida/pick-2-midday/"],
+        "pick3": ["https://www.lotteryusa.com/florida/midday-pick-3/"],
+        "pick4": ["https://www.lotteryusa.com/florida/midday-pick-4/"],
+        "pick5": ["https://www.lotteryusa.com/florida/pick-5-midday/"],
     },
     "Florida 9:45 PM": {
-        "pick2": ["https://www.lotteryusa.com/florida/evening-pick-2/", "https://www.lotteryusa.com/florida/pick-2-evening/"],
-        "pick3": ["https://www.lotteryusa.com/florida/evening-pick-3/", "https://www.lotteryusa.com/florida/pick-3-evening/"],
-        "pick4": ["https://www.lotteryusa.com/florida/evening-pick-4/", "https://www.lotteryusa.com/florida/pick-4-evening/"],
-        "pick5": ["https://www.lotteryusa.com/florida/evening-pick-5/", "https://www.lotteryusa.com/florida/pick-5-evening/"],
+        "pick2": ["https://www.lotteryusa.com/florida/pick-2/"],
+        "pick3": ["https://www.lotteryusa.com/florida/pick-3/"],
+        "pick4": ["https://www.lotteryusa.com/florida/pick-4/"],
+        "pick5": ["https://www.lotteryusa.com/florida/pick-5/"],
     },
-    "Texas 1:20 PM": {"pick3": ["https://www.lotteryusa.com/texas/midday-pick-3/", "https://www.lotteryusa.com/texas/pick-3-midday/"]},
-    "Texas 10:12 PM": {"pick3": ["https://www.lotteryusa.com/texas/pick-3/", "https://www.lotteryusa.com/texas/evening-pick-3/"]},
-    "New York 2:30 PM": {"pick3": ["https://www.lotteryusa.com/new-york/midday-numbers/", "https://www.lotteryusa.com/new-york/numbers-midday/"]},
-    "New York 10:30 PM": {"pick3": ["https://www.lotteryusa.com/new-york/numbers/", "https://www.lotteryusa.com/new-york/evening-numbers/"]},
-    "New Jersey 12:50 PM": {"pick3": ["https://www.lotteryusa.com/new-jersey/midday-pick-3/", "https://www.lotteryusa.com/new-jersey/pick-3-midday/"]},
-    "New Jersey 10:57 PM": {"pick3": ["https://www.lotteryusa.com/new-jersey/pick-3/", "https://www.lotteryusa.com/new-jersey/evening-pick-3/"]},
-    "Georgia 12:30 PM": {"pick3": ["https://www.lotteryusa.com/georgia/midday-3/", "https://www.lotteryusa.com/georgia/cash-3-midday/"]},
-    "Georgia 11:34 PM": {"pick3": ["https://www.lotteryusa.com/georgia/cash-3-evening/", "https://www.lotteryusa.com/georgia/evening-3/"]},
-    "Tennessee 1:20 PM": {"pick3": ["https://www.lotteryusa.com/tennessee/midday-cash-3/", "https://www.lotteryusa.com/tennessee/cash-3-midday/"]},
-    "Tennessee 6:30 PM": {"pick3": ["https://www.lotteryusa.com/tennessee/cash-3/", "https://www.lotteryusa.com/tennessee/cash-3-evening/"]},
+    "Texas 1:20 PM": {
+        "pick3": ["https://www.lotteryusa.com/texas/midday-pick-3/"]
+    },
+    "Texas 10:12 PM": {
+        "pick3": ["https://www.lotteryusa.com/texas/pick-3/"]
+    },
+    "New York 2:30 PM": {
+        "pick3": ["https://www.lotteryusa.com/new-york/midday-numbers/"]
+    },
+    "New York 10:30 PM": {
+        "pick3": ["https://www.lotteryusa.com/new-york/numbers/"]
+    },
+    "New Jersey 12:50 PM": {
+        "pick3": ["https://www.lotteryusa.com/new-jersey/midday-pick-3/"],
+        "pick4": ["https://www.lotteryusa.com/new-jersey/midday-pick-4/"]
+    },
+    "New Jersey 10:57 PM": {
+        "pick3": ["https://www.lotteryusa.com/new-jersey/pick-3/"],
+        "pick4": ["https://www.lotteryusa.com/new-jersey/pick-4/"]
+    },
+    "Georgia 12:30 PM": {
+        "pick3": ["https://www.lotteryusa.com/georgia/cash-3-midday/"],
+        "pick4": ["https://www.lotteryusa.com/georgia/cash-4-midday/"]
+    },
+    "Georgia 11:34 PM": {
+        "pick3": ["https://www.lotteryusa.com/georgia/cash-3-evening/"],
+        "pick4": ["https://www.lotteryusa.com/georgia/cash-4-evening/"]
+    },
+    "Tennessee 1:20 PM": {
+        "pick3": ["https://www.lotteryusa.com/tennessee/cash-3-midday/"],
+        "pick4": ["https://www.lotteryusa.com/tennessee/cash-4-midday/"]
+    },
+    "Tennessee 6:30 PM": {
+        "pick3": ["https://www.lotteryusa.com/tennessee/cash-3/"],
+        "pick4": ["https://www.lotteryusa.com/tennessee/cash-4/"]
+    },
 }
 
 # ═══════════════════════════════════════════════════════════════
@@ -318,15 +344,12 @@ def scrape_lotteryusa():
         
         for juego, urls in juegos.items():
             exito_juego = False
-            # Intentar con la URL principal y luego con la de respaldo
             for url in urls:
                 if exito_juego: break
-                # Reintentar hasta 3 veces por si hay timeout
                 for intento in range(3):
                     try:
                         resp = requests.get(f"{url}?nocache={int(time.time())}", headers=headers, timeout=25)
                         if resp.status_code == 404:
-                            print(f"  ⚠️ [{nombre_db} - {juego}] URL 404: {url}")
                             break # Pasar a la URL de respaldo
                             
                         resp.raise_for_status()
@@ -334,13 +357,11 @@ def scrape_lotteryusa():
                         tarjeta = _extraer_tarjeta_lotteryusa(soup)
                         
                         if not tarjeta:
-                            print(f"  ⚠️ [{nombre_db} - {juego}] Sin tarjeta en {url}")
                             continue
                             
                         fecha_tarjeta = _extraer_fecha_lotteryusa(tarjeta, nombre_db)
                         if fecha_tarjeta != fecha_esperada:
-                            print(f"  ⏭️ [{nombre_db} - {juego}] Fecha {fecha_tarjeta} != {fecha_esperada}")
-                            exito_juego = True # El juego existe pero no es de hoy, no reintentar
+                            exito_juego = True # El juego existe pero no es de hoy
                             break
                             
                         numeros = _extraer_numeros_lotteryusa(tarjeta)
@@ -363,13 +384,15 @@ def scrape_lotteryusa():
                         print(f"  ✅ OK {nombre_db} - {juego} -> {', '.join(numeros)}")
                         exito_juego = True
                         exito_total = True
-                        break # Salir del bucle de reintentos
+                        break 
                     except Exception as e:
                         print(f"  ❌ [{nombre_db} - {juego}] Error intento {intento+1} ({url}): {e}")
                         time.sleep(2)
         
         if exito_total:
             resultados.append(resultado_sorteo)
+        else:
+            print(f"  ⚠️ No se pudo extraer ningún dato nuevo para {nombre_db}. Se conservará el anterior.")
 
     return resultados
 
