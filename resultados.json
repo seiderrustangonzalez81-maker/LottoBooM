@@ -778,5 +778,55 @@
     ],
     "fecha": "2026-11-10",
     "fuente": "lotteryusa"
+  },
+  {
+    "sorteo_nombre": "Loteka Tarde",
+    "numeros": [
+      "90",
+      "40",
+      "85"
+    ],
+    "fecha": "2026-11-10",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "New Jersey Tarde",
+    "numeros": [
+      "33",
+      "42",
+      "96"
+    ],
+    "fecha": "2026-11-10",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Florida Tarde",
+    "numeros": [
+      "17",
+      "67",
+      "26"
+    ],
+    "fecha": "2026-11-10",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Anguilla 3PM",
+    "numeros": [
+      "58",
+      "42",
+      "36"
+    ],
+    "fecha": "2026-11-10",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "New York Tarde",
+    "numeros": [
+      "10",
+      "37",
+      "23"
+    ],
+    "fecha": "2026-11-10",
+    "fuente": "enloteria"
   }
 ]
