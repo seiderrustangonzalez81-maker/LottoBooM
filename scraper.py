@@ -94,12 +94,6 @@ def normalizar_nombre(nombre):
     return " ".join(nombre.split())
 
 def extraer_numeros_validos(tarjeta_o_soup):
-    """
-    Extrae números de una tarjeta de enloteria.
-    1. Prueba clases conocidas.
-    2. Si no, busca cualquier elemento con texto de 2 dígitos
-       dentro de contenedores que parezcan de resultados.
-    """
     bolas = []
     for clase in ("result-number", "result-number__ball", "draw-result-number",
                   "result__number", "numero-resultado", "result-card__number",
@@ -109,7 +103,6 @@ def extraer_numeros_validos(tarjeta_o_soup):
             break
 
     if not bolas:
-        # Fallback genérico: buscar en contenedores de resultados
         contenedores = tarjeta_o_soup.find_all(
             class_=lambda c: c and any(k in c.lower() for k in ("result", "ball", "number", "bola", "num"))
         )
