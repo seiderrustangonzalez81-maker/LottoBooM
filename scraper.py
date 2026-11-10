@@ -31,11 +31,6 @@ URLS_USA = {
     "Tennessee 6:30 PM": "https://www.lotteryusa.com/tennessee/cash-3/",
 }
 
-NOMBRES_IGNORADOS = {
-    "Georgia Día", "Georgia Tarde", "Florida Tarde", "Florida Noche",
-    "New York Tarde", "New Jersey Tarde", "Texas Tarde", "Tennessee Día",
-}
-
 def fecha_cuba():
     return datetime.now(TZ_CUBA).strftime("%Y-%m-%d")
 
@@ -155,7 +150,7 @@ def scrape_principal(page):
     for tarjeta in tarjetas:
         try:
             nombre = normalizar_nombre(tarjeta.get("data-lottery-name", "").strip())
-            if not nombre or nombre in NOMBRES_IGNORADOS:
+            if not nombre:
                 continue
             numeros = extraer_numeros_validos(tarjeta)
             if numeros and len(numeros) >= 2:
