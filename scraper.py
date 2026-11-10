@@ -26,27 +26,27 @@ ARCHIVO_JSON = "resultados.json"
 # ═══════════════════════════════════════════════════════════════
 URLS_MULTI = {
     "Florida 1:35 PM": {
-        "pick2": "https://www.lotteryusa.com/florida/midday-pick-2/",
-        "pick3": "https://www.lotteryusa.com/florida/midday-pick-3/",
-        "pick4": "https://www.lotteryusa.com/florida/midday-pick-4/",
-        "pick5": "https://www.lotteryusa.com/florida/midday-pick-5/",
+        "pick2": ["https://www.lotteryusa.com/florida/midday-pick-2/", "https://www.lotteryusa.com/florida/pick-2-midday/"],
+        "pick3": ["https://www.lotteryusa.com/florida/midday-pick-3/", "https://www.lotteryusa.com/florida/pick-3-midday/"],
+        "pick4": ["https://www.lotteryusa.com/florida/midday-pick-4/", "https://www.lotteryusa.com/florida/pick-4-midday/"],
+        "pick5": ["https://www.lotteryusa.com/florida/midday-pick-5/", "https://www.lotteryusa.com/florida/pick-5-midday/"],
     },
     "Florida 9:45 PM": {
-        "pick2": "https://www.lotteryusa.com/florida/evening-pick-2/",
-        "pick3": "https://www.lotteryusa.com/florida/evening-pick-3/",
-        "pick4": "https://www.lotteryusa.com/florida/evening-pick-4/",
-        "pick5": "https://www.lotteryusa.com/florida/evening-pick-5/",
+        "pick2": ["https://www.lotteryusa.com/florida/evening-pick-2/", "https://www.lotteryusa.com/florida/pick-2-evening/"],
+        "pick3": ["https://www.lotteryusa.com/florida/evening-pick-3/", "https://www.lotteryusa.com/florida/pick-3-evening/"],
+        "pick4": ["https://www.lotteryusa.com/florida/evening-pick-4/", "https://www.lotteryusa.com/florida/pick-4-evening/"],
+        "pick5": ["https://www.lotteryusa.com/florida/evening-pick-5/", "https://www.lotteryusa.com/florida/pick-5-evening/"],
     },
-    "Texas 1:20 PM": {"pick3": "https://www.lotteryusa.com/texas/midday-pick-3/"},
-    "Texas 10:12 PM": {"pick3": "https://www.lotteryusa.com/texas/pick-3/"},
-    "New York 2:30 PM": {"pick3": "https://www.lotteryusa.com/new-york/midday-numbers/"},
-    "New York 10:30 PM": {"pick3": "https://www.lotteryusa.com/new-york/numbers/"},
-    "New Jersey 12:50 PM": {"pick3": "https://www.lotteryusa.com/new-jersey/midday-pick-3/"},
-    "New Jersey 10:57 PM": {"pick3": "https://www.lotteryusa.com/new-jersey/pick-3/"},
-    "Georgia 12:30 PM": {"pick3": "https://www.lotteryusa.com/georgia/midday-3/"},
-    "Georgia 11:34 PM": {"pick3": "https://www.lotteryusa.com/georgia/cash-3-evening/"},
-    "Tennessee 1:20 PM": {"pick3": "https://www.lotteryusa.com/tennessee/midday-cash-3/"},
-    "Tennessee 6:30 PM": {"pick3": "https://www.lotteryusa.com/tennessee/cash-3/"},
+    "Texas 1:20 PM": {"pick3": ["https://www.lotteryusa.com/texas/midday-pick-3/", "https://www.lotteryusa.com/texas/pick-3-midday/"]},
+    "Texas 10:12 PM": {"pick3": ["https://www.lotteryusa.com/texas/pick-3/", "https://www.lotteryusa.com/texas/evening-pick-3/"]},
+    "New York 2:30 PM": {"pick3": ["https://www.lotteryusa.com/new-york/midday-numbers/", "https://www.lotteryusa.com/new-york/numbers-midday/"]},
+    "New York 10:30 PM": {"pick3": ["https://www.lotteryusa.com/new-york/numbers/", "https://www.lotteryusa.com/new-york/evening-numbers/"]},
+    "New Jersey 12:50 PM": {"pick3": ["https://www.lotteryusa.com/new-jersey/midday-pick-3/", "https://www.lotteryusa.com/new-jersey/pick-3-midday/"]},
+    "New Jersey 10:57 PM": {"pick3": ["https://www.lotteryusa.com/new-jersey/pick-3/", "https://www.lotteryusa.com/new-jersey/evening-pick-3/"]},
+    "Georgia 12:30 PM": {"pick3": ["https://www.lotteryusa.com/georgia/midday-3/", "https://www.lotteryusa.com/georgia/cash-3-midday/"]},
+    "Georgia 11:34 PM": {"pick3": ["https://www.lotteryusa.com/georgia/cash-3-evening/", "https://www.lotteryusa.com/georgia/evening-3/"]},
+    "Tennessee 1:20 PM": {"pick3": ["https://www.lotteryusa.com/tennessee/midday-cash-3/", "https://www.lotteryusa.com/tennessee/cash-3-midday/"]},
+    "Tennessee 6:30 PM": {"pick3": ["https://www.lotteryusa.com/tennessee/cash-3/", "https://www.lotteryusa.com/tennessee/cash-3-evening/"]},
 }
 
 # ═══════════════════════════════════════════════════════════════
@@ -299,9 +299,7 @@ def scrape_lotteryusa():
     print("Extrayendo USA (lotteryusa.com)...")
     resultados = []
     headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) '
-                      'AppleWebKit/537.36 (KHTML, like Gecko) '
-                      'Chrome/120.0.0.0 Safari/537.36'
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
     }
     print(f"  Fecha actual Este (EE.UU.): {fecha_este()}")
     print(f"  Fecha actual Cuba: {fecha_cuba()}")
@@ -316,46 +314,61 @@ def scrape_lotteryusa():
             "fijo": "", "corrido_1": "", "corrido_2": "",
         }
         
-        exito = False
-        for juego, url in juegos.items():
-            try:
-                resp = requests.get(f"{url}?nocache={int(time.time())}", headers=headers, timeout=20)
-                resp.raise_for_status()
-                soup = BeautifulSoup(resp.text, 'html.parser')
-                tarjeta = _extraer_tarjeta_lotteryusa(soup)
-                
-                if not tarjeta:
-                    print(f"  ⚠️ [{nombre_db} - {juego}] Sin tarjeta")
-                    continue
-                    
-                fecha_tarjeta = _extraer_fecha_lotteryusa(tarjeta, nombre_db)
-                if fecha_tarjeta != fecha_esperada:
-                    print(f"  ⏭️ [{nombre_db} - {juego}] Fecha {fecha_tarjeta} != esperado {fecha_esperada}")
-                    continue
-                    
-                numeros = _extraer_numeros_lotteryusa(tarjeta)
-                if not numeros:
-                    continue
-                    
-                if juego == "pick2":
-                    resultado_sorteo["pick2"] = "".join(numeros[:2])
-                elif juego == "pick3":
-                    resultado_sorteo["pick3"] = "".join(numeros[:3])
-                    if len(numeros) >= 3:
-                        resultado_sorteo["fijo"] = numeros[0].zfill(2)
-                        resultado_sorteo["corrido_1"] = numeros[1].zfill(2)
-                        resultado_sorteo["corrido_2"] = numeros[2].zfill(2)
-                elif juego == "pick4":
-                    resultado_sorteo["pick4"] = "".join(numeros[:4])
-                elif juego == "pick5":
-                    resultado_sorteo["pick5"] = "".join(numeros[:5])
-                    
-                print(f"  ✅ OK {nombre_db} - {juego} -> {', '.join(numeros)}")
-                exito = True
-            except Exception as e:
-                print(f"  ❌ [{nombre_db} - {juego}] Error: {e}")
+        exito_total = False
         
-        if exito:
+        for juego, urls in juegos.items():
+            exito_juego = False
+            # Intentar con la URL principal y luego con la de respaldo
+            for url in urls:
+                if exito_juego: break
+                # Reintentar hasta 3 veces por si hay timeout
+                for intento in range(3):
+                    try:
+                        resp = requests.get(f"{url}?nocache={int(time.time())}", headers=headers, timeout=25)
+                        if resp.status_code == 404:
+                            print(f"  ⚠️ [{nombre_db} - {juego}] URL 404: {url}")
+                            break # Pasar a la URL de respaldo
+                            
+                        resp.raise_for_status()
+                        soup = BeautifulSoup(resp.text, 'html.parser')
+                        tarjeta = _extraer_tarjeta_lotteryusa(soup)
+                        
+                        if not tarjeta:
+                            print(f"  ⚠️ [{nombre_db} - {juego}] Sin tarjeta en {url}")
+                            continue
+                            
+                        fecha_tarjeta = _extraer_fecha_lotteryusa(tarjeta, nombre_db)
+                        if fecha_tarjeta != fecha_esperada:
+                            print(f"  ⏭️ [{nombre_db} - {juego}] Fecha {fecha_tarjeta} != {fecha_esperada}")
+                            exito_juego = True # El juego existe pero no es de hoy, no reintentar
+                            break
+                            
+                        numeros = _extraer_numeros_lotteryusa(tarjeta)
+                        if not numeros:
+                            continue
+                            
+                        if juego == "pick2":
+                            resultado_sorteo["pick2"] = "".join(numeros[:2])
+                        elif juego == "pick3":
+                            resultado_sorteo["pick3"] = "".join(numeros[:3])
+                            if len(numeros) >= 3:
+                                resultado_sorteo["fijo"] = str(numeros[0]).zfill(2)
+                                resultado_sorteo["corrido_1"] = str(numeros[1]).zfill(2)
+                                resultado_sorteo["corrido_2"] = str(numeros[2]).zfill(2)
+                        elif juego == "pick4":
+                            resultado_sorteo["pick4"] = "".join(numeros[:4])
+                        elif juego == "pick5":
+                            resultado_sorteo["pick5"] = "".join(numeros[:5])
+                            
+                        print(f"  ✅ OK {nombre_db} - {juego} -> {', '.join(numeros)}")
+                        exito_juego = True
+                        exito_total = True
+                        break # Salir del bucle de reintentos
+                    except Exception as e:
+                        print(f"  ❌ [{nombre_db} - {juego}] Error intento {intento+1} ({url}): {e}")
+                        time.sleep(2)
+        
+        if exito_total:
             resultados.append(resultado_sorteo)
 
     return resultados
