@@ -55,7 +55,7 @@ MAPEO_NOMBRES = {
     # USA - fallback: Enloteria (solo si lotteryusa no trae el sorteo ese día)
     "Georgia Día": "Georgia 12:30 PM",
     "Georgia Tarde": "Georgia 7 PM",
-    "Florida Tarde": "Florida 1:35 PM",
+    "Florida Tarde": "Florida 9:50 PM",
     "Florida Noche": "Florida 9:50 PM",
     "New York Tarde": "New York 2:30 PM",
     "New York Noche": "New York 10:30 PM",
@@ -172,11 +172,6 @@ class Command(BaseCommand):
 
                 # PRIORIDAD LOTTERYUSA
                 resultado_existente = Resultado.objects.filter(sorteo=sorteo, fecha=fecha).first()
-                if resultado_existente:
-                    fuente_existente = (resultado_existente.metadata or {}).get('fuente', '')
-                    if fuente_existente == 'lotteryusa' and fuente != 'lotteryusa':
-                        saltados_por_prioridad.add(nombre_db)
-                        continue
 
                 formas = [str(f).lower().strip() for f in (sorteo.formas_juego or [])]
                 pick2_val = pick3_val = pick4_val = pick5_val = ''
@@ -187,10 +182,37 @@ class Command(BaseCommand):
                     pick3_val = item.get("pick3", "")
                     pick4_val = item.get("pick4", "")
                     pick5_val = item.get("pick5", "")
-                    fijo_val = item.get("fijo", "")
-                    corrido1_val = item.get("corrido_1", "")
-                    corrido2_val = item.get("corrido_2", "")
+                    
+                    # PRESERVAR FIJO Y CORRIDOS (que vienen de enloteria)
+                    if resultado_existente:
+                        fijo_val = resultado_existente.fijo or ''
+                        corrido1_val = resultado_existente.corrido_1 or ''
+                        corrido2_val = resultado_existente.corrido_2 or ''
+                    else:
+                        # Si lotteryusa llega primero, derivamos para no dejarlo vacío
+                        nums = [str(x).strip() for x in item.get("numeros", [])]
+                        if len(nums) >= 3:
+                            pick3_val = "".join(nums[:3])
+                            fijo_val = nums[0].zfill(2)
+                            corrido1_val = nums[1].zfill(2)
+                            corrido2_val = nums[2].zfill(2)
+                        if len(nums) >= 4:
+                            pick4_val = "".join(nums[:4])
+                            
                 else:
+                    # ENLOTERIA
+                    numeros_str = [str(n).strip() for n in item.get("numeros", [])]
+                    fijo_val = numeros_str[0].zfill(2) if len(numeros_str) > 0 else ''
+                    corrido1_val = numeros_str[1].zfill(2) if len(numeros_str) > 1 else ''
+                    corrido2_val = numeros_str[2].zfill(2) if len(numeros_str) > 2 else ''
+                
+                    # PRESERVAR PICKS (que vienen de lotteryusa)
+                    if resultado_existente:
+                        pick2_val = resultado_existente.pick2 or ''
+                        pick3_val = resultado_existente.pick3 or ''
+                        pick4_val = resultado_existente.pick4 or ''
+                        pick5_val = resultado_existente.pick5 or ''
+                
                     numeros_str = [str(n).strip() for n in item.get("numeros", [])]
                     fijo_val = numeros_str[0].zfill(2) if len(numeros_str) > 0 else ''
                     corrido1_val = numeros_str[1].zfill(2) if len(numeros_str) > 1 else ''
