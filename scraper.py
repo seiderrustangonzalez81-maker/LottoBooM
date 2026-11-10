@@ -61,7 +61,7 @@ URLS_MULTI = {
         "pick3": ["https://www.lotteryusa.com/georgia/cash-3-midday/"],
         "pick4": ["https://www.lotteryusa.com/georgia/cash-4-midday/"]
     },
-    "Georgia 11:34 PM": {
+    "Georgia 11:40 PM": {
         "pick3": ["https://www.lotteryusa.com/georgia/cash-3-evening/"],
         "pick4": ["https://www.lotteryusa.com/georgia/cash-4-evening/"]
     },
