@@ -978,5 +978,55 @@
     ],
     "fecha": "2026-11-09",
     "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Georgia Día",
+    "numeros": [
+      "64",
+      "66",
+      "83"
+    ],
+    "fecha": "2026-11-09",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "New Jersey Tarde",
+    "numeros": [
+      "71",
+      "86",
+      "44"
+    ],
+    "fecha": "2026-11-09",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Florida Tarde",
+    "numeros": [
+      "10",
+      "80",
+      "76"
+    ],
+    "fecha": "2026-11-09",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "New York Tarde",
+    "numeros": [
+      "05",
+      "95",
+      "93"
+    ],
+    "fecha": "2026-11-09",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Georgia Tarde",
+    "numeros": [
+      "06",
+      "56",
+      "18"
+    ],
+    "fecha": "2026-11-09",
+    "fuente": "enloteria"
   }
 ]
