@@ -24,30 +24,29 @@ ARCHIVO_JSON = "resultados.json"
 # ═══════════════════════════════════════════════════════════════
 # URLs LOTTERYUSA (12 rutas validadas)
 # ═══════════════════════════════════════════════════════════════
-URLS_USA = {
-    # ── TEXAS ──
-    "Texas 1:20 PM":  "https://www.lotteryusa.com/texas/midday-pick-3/",
-    "Texas 10:12 PM": "https://www.lotteryusa.com/texas/pick-3/",
-
-    # ── FLORIDA ──
-    "Florida 1:35 PM": "https://www.lotteryusa.com/florida/midday-pick-3/",
-    "Florida 9:45 PM": "https://www.lotteryusa.com/florida/pick-3/",
-
-    # ── NEW YORK ──
-    "New York 2:30 PM":  "https://www.lotteryusa.com/new-york/midday-numbers/",
-    "New York 10:30 PM": "https://www.lotteryusa.com/new-york/numbers/",
-
-    # ── NEW JERSEY ──
-    "New Jersey 12:50 PM": "https://www.lotteryusa.com/new-jersey/midday-pick-3/",
-    "New Jersey 10:57 PM": "https://www.lotteryusa.com/new-jersey/pick-3/",
-
-    # ── GEORGIA ──
-    "Georgia 12:30 PM": "https://www.lotteryusa.com/georgia/midday-3/",
-    "Georgia 11:34 PM": "https://www.lotteryusa.com/georgia/cash-3-evening/",
-
-    # ── TENNESSEE ──
-    "Tennessee 1:20 PM": "https://www.lotteryusa.com/tennessee/midday-cash-3/",
-    "Tennessee 6:30 PM": "https://www.lotteryusa.com/tennessee/cash-3/",
+URLS_MULTI = {
+    "Florida 1:35 PM": {
+        "pick2": "https://www.lotteryusa.com/florida/midday-pick-2/",
+        "pick3": "https://www.lotteryusa.com/florida/midday-pick-3/",
+        "pick4": "https://www.lotteryusa.com/florida/midday-pick-4/",
+        "pick5": "https://www.lotteryusa.com/florida/midday-pick-5/",
+    },
+    "Florida 9:45 PM": {
+        "pick2": "https://www.lotteryusa.com/florida/evening-pick-2/",
+        "pick3": "https://www.lotteryusa.com/florida/evening-pick-3/",
+        "pick4": "https://www.lotteryusa.com/florida/evening-pick-4/",
+        "pick5": "https://www.lotteryusa.com/florida/evening-pick-5/",
+    },
+    "Texas 1:20 PM": {"pick3": "https://www.lotteryusa.com/texas/midday-pick-3/"},
+    "Texas 10:12 PM": {"pick3": "https://www.lotteryusa.com/texas/pick-3/"},
+    "New York 2:30 PM": {"pick3": "https://www.lotteryusa.com/new-york/midday-numbers/"},
+    "New York 10:30 PM": {"pick3": "https://www.lotteryusa.com/new-york/numbers/"},
+    "New Jersey 12:50 PM": {"pick3": "https://www.lotteryusa.com/new-jersey/midday-pick-3/"},
+    "New Jersey 10:57 PM": {"pick3": "https://www.lotteryusa.com/new-jersey/pick-3/"},
+    "Georgia 12:30 PM": {"pick3": "https://www.lotteryusa.com/georgia/midday-3/"},
+    "Georgia 11:34 PM": {"pick3": "https://www.lotteryusa.com/georgia/cash-3-evening/"},
+    "Tennessee 1:20 PM": {"pick3": "https://www.lotteryusa.com/tennessee/midday-cash-3/"},
+    "Tennessee 6:30 PM": {"pick3": "https://www.lotteryusa.com/tennessee/cash-3/"},
 }
 
 # ═══════════════════════════════════════════════════════════════
@@ -307,62 +306,60 @@ def scrape_lotteryusa():
     print(f"  Fecha actual Este (EE.UU.): {fecha_este()}")
     print(f"  Fecha actual Cuba: {fecha_cuba()}")
 
-    for nombre_db, url in URLS_USA.items():
-        exito = False
+    for nombre_db, juegos in URLS_MULTI.items():
         fecha_esperada = calcular_fecha_esperada_usa(nombre_db)
-        for intento in range(1, 4):
+        resultado_sorteo = {
+            "sorteo_nombre": nombre_db,
+            "fecha": fecha_esperada,
+            "fuente": "lotteryusa",
+            "pick2": "", "pick3": "", "pick4": "", "pick5": "",
+            "fijo": "", "corrido_1": "", "corrido_2": "",
+        }
+        
+        exito = False
+        for juego, url in juegos.items():
             try:
-                resp = requests.get(f"{url}?nocache={int(time.time())}",
-                                    headers=headers, timeout=20)
+                resp = requests.get(f"{url}?nocache={int(time.time())}", headers=headers, timeout=20)
                 resp.raise_for_status()
                 soup = BeautifulSoup(resp.text, 'html.parser')
-
                 tarjeta = _extraer_tarjeta_lotteryusa(soup)
+                
                 if not tarjeta:
-                    print(f"  ⚠️ [{nombre_db}] Sin tarjeta (intento {intento})")
-                    time.sleep(2)
+                    print(f"  ⚠️ [{nombre_db} - {juego}] Sin tarjeta")
                     continue
-
+                    
                 fecha_tarjeta = _extraer_fecha_lotteryusa(tarjeta, nombre_db)
-                if not fecha_tarjeta:
-                    print(f"  ⚠️ [{nombre_db}] Sin fecha parseable en tarjeta")
-                    exito = True
-                    break
-
-                # Solo aceptar si la tarjeta muestra la fecha esperada.
-                # Esto evita guardar resultados viejos bajo fecha nueva
-                # cuando lotteryusa aún no se ha actualizado tras el sorteo.
                 if fecha_tarjeta != fecha_esperada:
-                    print(f"  ⏭️ [{nombre_db}] Tarjeta={fecha_tarjeta} "
-                          f"esperado={fecha_esperada} (aún no actualizado)")
-                    exito = True
-                    break
-
+                    print(f"  ⏭️ [{nombre_db} - {juego}] Fecha {fecha_tarjeta} != esperado {fecha_esperada}")
+                    continue
+                    
                 numeros = _extraer_numeros_lotteryusa(tarjeta)
                 if not numeros:
-                    print(f"  ⚠️ [{nombre_db}] Sin números en la tarjeta")
-                    exito = True
-                    break
-
-                resultados.append({
-                    "sorteo_nombre": nombre_db,
-                    "numeros": numeros,
-                    "fecha": fecha_esperada,
-                    "fuente": "lotteryusa",
-                })
-                print(f"  ✅ OK {nombre_db} [{fecha_esperada}] -> {', '.join(numeros)}")
+                    continue
+                    
+                if juego == "pick2":
+                    resultado_sorteo["pick2"] = "".join(numeros[:2])
+                elif juego == "pick3":
+                    resultado_sorteo["pick3"] = "".join(numeros[:3])
+                    if len(numeros) >= 3:
+                        resultado_sorteo["fijo"] = numeros[0].zfill(2)
+                        resultado_sorteo["corrido_1"] = numeros[1].zfill(2)
+                        resultado_sorteo["corrido_2"] = numeros[2].zfill(2)
+                elif juego == "pick4":
+                    resultado_sorteo["pick4"] = "".join(numeros[:4])
+                elif juego == "pick5":
+                    resultado_sorteo["pick5"] = "".join(numeros[:5])
+                    
+                print(f"  ✅ OK {nombre_db} - {juego} -> {', '.join(numeros)}")
                 exito = True
-                break
             except Exception as e:
-                print(f"  ❌ [{nombre_db}] Error intento {intento}: {e}")
-                time.sleep(2)
-        if not exito:
-            print(f"  ❌ [{nombre_db}] Falló tras 3 intentos")
+                print(f"  ❌ [{nombre_db} - {juego}] Error: {e}")
+        
+        if exito:
+            resultados.append(resultado_sorteo)
+
     return resultados
 
-# ═══════════════════════════════════════════════════════════════
-# 3. MAIN (unificación y guardado)
-# ═══════════════════════════════════════════════════════════════
 def main():
     todos_nuevos = []
     hoy_cuba = fecha_cuba()

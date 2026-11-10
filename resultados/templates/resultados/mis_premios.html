@@ -463,7 +463,8 @@ function compartirTodosPremios(){
 
   var win = window.open('', '_blank');
 
-  fetch('/resultados/api/premios-todos/?' + params.toString())
+  const win = window.open('', '_blank');
+      fetch('/resultados/api/premios-todos/?' + params.toString())
     .then(function(r){ return r.json(); })
     .then(function(d){
       if (btn){ btn.disabled = false; btn.innerHTML = originalHtml; }
@@ -523,7 +524,7 @@ function compartirPremios(sorteoId, fecha){
   const url = '/resultados/api/premios-sorteo/?sorteo_id=' + sorteoId + '&fecha=' + fecha;
   fetch(url).then(function(r){ return r.json(); }).then(function(d){
     if (d.success){
-      window.open('https://wa.me/?text=' + encodeURIComponent(d.resumen), '_blank');
+      if (win) { win.location.href = 'https://wa.me/?text=' + encodeURIComponent(d.resumen); } else { window.location.href = 'https://wa.me/?text=' + encodeURIComponent(d.resumen); }
     } else {
       alert(d.error || 'Error');
     }

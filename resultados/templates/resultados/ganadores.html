@@ -1557,16 +1557,18 @@
     const params = new URLSearchParams(window.location.search);
     const url = `/resultados/api/resumen-filtrado/?${params.toString()}`;
 
-    fetch(url)
+    const win = window.open('', '_blank');
+      fetch(url)
       .then((r) => r.json())
       .then((data) => {
         if (data.success) {
-          window.open('https://wa.me/?text=' + encodeURIComponent(data.resumen), '_blank');
+          if (win) { win.location.href = 'https://wa.me/?text=' + encodeURIComponent(data.resumen); } else { window.location.href = 'https://wa.me/?text=' + encodeURIComponent(data.resumen); }
         } else {
           alert('❌ No se pudo obtener el resumen.');
         }
       })
       .catch((e) => {
+        if (win) win.close();
         console.error(e);
         alert('❌ Error de conexión.');
       })

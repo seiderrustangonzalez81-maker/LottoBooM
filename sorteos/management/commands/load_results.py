@@ -12,7 +12,7 @@ from resultados.views import procesar_resultado
 URL_JSON = "https://raw.githubusercontent.com/seiderrustangonzalez81-maker/LottoBooM/main/resultados.json"
 
 MAPEO_NOMBRES = {
-    # ─── ANGUILA Y HAITI ───
+    # ANGUILA Y HAITI
     "Anguilla 8AM": "Anguila 8 AM", "Anguilla 9AM": "Anguila 9 AM",
     "Anguilla 10AM": "Anguila 10 AM", "Anguilla 11AM": "Anguila 11 AM",
     "Anguilla 12PM": "Anguila 12 PM", "Anguilla 1PM": "Anguila 1 PM",
@@ -28,7 +28,7 @@ MAPEO_NOMBRES = {
     "Haiti Bolet 6:30 PM": "Haiti Bolet 6:30 PM",
     "Haiti Bolet 7:30 PM": "Haiti Bolet 7:30 PM",
 
-    # ─── DOMINICANAS ───
+    # DOMINICANAS
     "Nacional Gana Más": "Nacional Gana Más", "Nacional Noche": "Nacional Noche",
     "Leidsa": "Leidsa 8:55 PM",
     "Loteka Tarde": "Loteka 1:30 PM", "Loteka": "Loteka 7:55 PM",
@@ -37,38 +37,65 @@ MAPEO_NOMBRES = {
     "LoteDom": "Lotedom", "LoteDom Noche": "Lotedom Noche",
     "King Lottery Día": "King Lottery 12:30 PM", "King Lottery Noche": "King Lottery 7:30 PM",
 
-    # ─── VENEZOLANAS/OTRAS ───
-    "El Quemaito Mayor": "El Quemaito Mayor", "El Quemaito Mayor Noche": "El Quemaito Mayor Noche",
-    "El Quinielón Día": "El Quinielón Día", "El Quinielón Noche": "El Quinielón Noche",
+    # VENEZOLANAS/OTRAS
+    "El Quemaito Mayor": "El Quemaito Mayor",
+    "El Quemaito Mayor Noche": "El Quemaito Mayor Noche",
+    "El Quinielón Día": "El Quinielón Día",
+    "El Quinielón Noche": "El Quinielón Noche",
     "Real": "Real", "Real Noche": "Real Noche",
 
-    # ─── USA (SOLO desde LotteryUSA - fuente oficial) ───
-    "Texas 1:20 PM": "Texas 1:20 PM",
-    "Texas 10:12 PM": "Texas 11 PM",
-    "Florida 9:45 PM": "Florida 9:50 PM",
-    "New Jersey 10:57 PM": "New Jersey 10:50 PM",
-    "Tennessee 6:30 PM": "Tennessee 7:20 PM",
-    "Florida 1:35 PM": "Florida 1:35 PM",
-    "New York 2:30 PM": "New York 2:30 PM",
-    "New York 10:30 PM": "New York 10:30 PM",
-    "New Jersey 12:50 PM": "New Jersey 12:50 PM",
-    "Georgia 12:30 PM": "Georgia 12:30 PM",
-    "Georgia 11:34 PM": "Georgia 11:34 PM",
-    "Tennessee 1:20 PM": "Tennessee 1:20 PM",
-    # NOTA: los nombres de enloteria para USA (Georgia Día, New York Tarde, etc.)
-    # se dejan FUERA a propósito, para no contaminar con datos no oficiales.
+    # USA - fuente oficial: LotteryUSA
+    "Texas 1:20 PM": "Texas 1:20 PM", "Texas 10:12 PM": "Texas 11 PM",
+    "Florida 1:35 PM": "Florida 1:35 PM", "Florida 9:45 PM": "Florida 9:50 PM",
+    "New York 2:30 PM": "New York 2:30 PM", "New York 10:30 PM": "New York 10:30 PM",
+    "New Jersey 12:50 PM": "New Jersey 12:50 PM", "New Jersey 10:57 PM": "New Jersey 10:50 PM",
+    "Georgia 12:30 PM": "Georgia 12:30 PM", "Georgia 11:34 PM": "Georgia 11:34 PM",
+    "Tennessee 1:20 PM": "Tennessee 1:20 PM", "Tennessee 6:30 PM": "Tennessee 7:20 PM",
+
+    # USA - fallback: Enloteria (solo si lotteryusa no trae el sorteo ese día)
+    "Georgia Día": "Georgia 12:30 PM",
+    "Georgia Tarde": "Georgia 7 PM",
+    "Florida Tarde": "Florida 1:35 PM",
+    "Florida Noche": "Florida 9:50 PM",
+    "New York Tarde": "New York 2:30 PM",
+    "New York Noche": "New York 10:30 PM",
+    "New Jersey Tarde": "New Jersey 12:50 PM",
+    "Texas Tarde": "Texas 7 PM",
+    "Tennessee Día": "Tennessee 1:20 PM",
 }
 
 TZ_CUBA = ZoneInfo('America/Havana')
+TZ_ESTE = ZoneInfo('America/New_York')
+
+DIAS_ES = {
+    0: 'lunes', 1: 'martes', 2: 'miercoles', 3: 'jueves',
+    4: 'viernes', 5: 'sabado', 6: 'domingo',
+}
 
 def normalizar_texto(texto):
-    if not texto: return ""
+    if not texto:
+        return ""
     texto = unicodedata.normalize('NFD', str(texto))
     texto = ''.join(c for c in texto if unicodedata.category(c) != 'Mn')
     return texto.lower().strip()
 
+def temporada_actual():
+    offset = datetime.now(TZ_ESTE).utcoffset()
+    return 'invierno' if offset == timedelta(hours=-5) else 'verano'
+
+def sorteo_corre_hoy(sorteo, dia_actual, temporada):
+    horarios = sorteo.horarios
+    if not horarios or not isinstance(horarios, dict):
+        return True
+    bloque = horarios.get(temporada) or horarios.get('invierno') or {}
+    if not bloque:
+        return True
+    valor = bloque.get(dia_actual)
+    return bool(valor and str(valor).strip())
+
 class FakeRequest:
-    def __init__(self, user): self.user = user
+    def __init__(self, user):
+        self.user = user
 
 class Command(BaseCommand):
     help = "Carga resultados desde EnLoteria y LotteryUSA, calculando premios automáticamente."
@@ -93,10 +120,16 @@ class Command(BaseCommand):
         ahora_cuba = datetime.now(TZ_CUBA)
         hoy_cuba = ahora_cuba.date()
         ayer_cuba = hoy_cuba - timedelta(days=1)
+        dia_actual = DIAS_ES[ahora_cuba.weekday()]
+        temporada = temporada_actual()
+
+        self.stdout.write(f"Día actual: {dia_actual} | Temporada: {temporada}")
 
         creados = actualizados = errores = premios_ok = 0
         sin_mapeo = set()
         sin_sorteo_db = set()
+        no_corren_hoy = set()
+        saltados_por_prioridad = set()
 
         for item in data:
             nombre_web = ""
@@ -116,61 +149,52 @@ class Command(BaseCommand):
                     sin_sorteo_db.add(nombre_db)
                     continue
 
+                if not sorteo_corre_hoy(sorteo, dia_actual, temporada):
+                    no_corren_hoy.add(nombre_db)
+                    continue
+
                 fecha = parse_date(item.get("fecha", ""))
                 if not fecha:
                     self.stdout.write(self.style.WARNING(
                         f"⚠️ Fecha inválida en '{nombre_web}': {item.get('fecha')!r}"))
                     continue
 
-                # ─── BLOQUEO ESTRICTO DE FECHAS FUTURAS ───
                 if fecha > hoy_cuba:
                     self.stdout.write(self.style.WARNING(
                         f"⚠️ Saltando {nombre_db}: fecha futura ({fecha})."))
                     continue
 
-                numeros = item.get("numeros", [])
-                if not numeros or len(numeros) < 2:
-                    continue
-
                 fuente = item.get("fuente", "")
 
-                # ─── VALIDACIÓN DE FECHA PARA LOTTERYUSA ───
-                # Cuba (UTC-4) va 1 hora por delante del Este EE.UU. (UTC-5).
-                # Los sorteos de noche (10:00 PM - 11:34 PM EST) se publican
-                # cuando en Cuba ya es el día siguiente. Por eso se acepta
-                # tanto hoy_cuba como ayer_cuba.
                 if fuente == "lotteryusa" and fecha not in (hoy_cuba, ayer_cuba):
-                    self.stdout.write(self.style.WARNING(
-                        f"⚠️ Saltando {nombre_db}: fecha {fecha} fuera de ventana "
-                        f"({ayer_cuba}..{hoy_cuba})."))
+                    self.stdout.write(self.style.WARNING(f"⚠️ Saltando {nombre_db}: fecha {fecha} fuera de ventana."))
                     continue
 
-                # ─── INICIALIZAR VARIABLES ───
+                # PRIORIDAD LOTTERYUSA
+                resultado_existente = Resultado.objects.filter(sorteo=sorteo, fecha=fecha).first()
+                if resultado_existente:
+                    fuente_existente = (resultado_existente.metadata or {}).get('fuente', '')
+                    if fuente_existente == 'lotteryusa' and fuente != 'lotteryusa':
+                        saltados_por_prioridad.add(nombre_db)
+                        continue
+
                 formas = [str(f).lower().strip() for f in (sorteo.formas_juego or [])]
                 pick2_val = pick3_val = pick4_val = pick5_val = ''
                 fijo_val = corrido1_val = corrido2_val = ''
 
                 if fuente == "lotteryusa":
-                    # LotteryUSA: 3 bolas individuales → llenar todas las formas disponibles
-                    if len(numeros) >= 2:
-                        if 'pick2' in formas:
-                            pick2_val = "".join(numeros[:2])
-                        if 'fijo' in formas:
-                            fijo_val = numeros[0]
-                        if 'corridos' in formas and len(numeros) >= 3:
-                            corrido1_val = numeros[1]
-                            corrido2_val = numeros[2]
-                    if 'pick3' in formas and len(numeros) >= 3:
-                        pick3_val = "".join(numeros[:3])
-                    elif 'pick4' in formas and len(numeros) >= 4:
-                        pick4_val = "".join(numeros[:4])
+                    pick2_val = item.get("pick2", "")
+                    pick3_val = item.get("pick3", "")
+                    pick4_val = item.get("pick4", "")
+                    pick5_val = item.get("pick5", "")
+                    fijo_val = item.get("fijo", "")
+                    corrido1_val = item.get("corrido_1", "")
+                    corrido2_val = item.get("corrido_2", "")
                 else:
-                    # Enloteria: solo fijo y corridos (3 números separados)
-                    fijo_val = numeros[0] if len(numeros) > 0 else ''
-                    corrido1_val = numeros[1] if len(numeros) > 1 else ''
-                    corrido2_val = numeros[2] if len(numeros) > 2 else ''
-
-                resultado_existente = Resultado.objects.filter(sorteo=sorteo, fecha=fecha).first()
+                    numeros_str = [str(n).strip() for n in item.get("numeros", [])]
+                    fijo_val = numeros_str[0].zfill(2) if len(numeros_str) > 0 else ''
+                    corrido1_val = numeros_str[1].zfill(2) if len(numeros_str) > 1 else ''
+                    corrido2_val = numeros_str[2].zfill(2) if len(numeros_str) > 2 else ''
 
                 datos = {
                     'sorteo': sorteo, 'fecha': fecha, 'hora': sorteo.hora_salida,
@@ -195,7 +219,8 @@ class Command(BaseCommand):
                     creados += 1
                 premios_ok += 1
                 self.stdout.write(self.style.SUCCESS(
-                    f"✅ {nombre_db} [{fecha}] -> P3={pick3_val or '-'} P2={pick2_val or '-'} "
+                    f"✅ {nombre_db} [{fecha}] ({fuente}) -> "
+                    f"P3={pick3_val or '-'} P2={pick2_val or '-'} "
                     f"F={fijo_val or '-'} C1={corrido1_val or '-'} C2={corrido2_val or '-'} "
                     f"(premios: {premios_count})"
                 ))
@@ -205,18 +230,27 @@ class Command(BaseCommand):
                 self.stdout.write(self.style.ERROR(
                     f"❌ Error procesando '{nombre_web}': {str(e)}"))
 
-        # ─── RESUMEN FINAL ───
         self.stdout.write(self.style.SUCCESS(
             f"\nResumen Final -> Creados={creados}, Actualizados={actualizados}, "
             f"Premios OK={premios_ok}, Errores={errores}"
         ))
         if sin_mapeo:
             self.stdout.write(self.style.WARNING(
-                f"\n⚠️ Nombres del JSON SIN MAPEO (revisa MAPEO_NOMBRES):"))
+                "\n⚠️ Nombres del JSON SIN MAPEO:"))
             for n in sorted(sin_mapeo):
                 self.stdout.write(self.style.WARNING(f"   - {n}"))
         if sin_sorteo_db:
             self.stdout.write(self.style.WARNING(
-                f"\n⚠️ Sorteos mapeados pero NO EXISTEN en BD (créalos):"))
+                "\n⚠️ Sorteos mapeados pero NO EXISTEN en BD:"))
             for n in sorted(sin_sorteo_db):
+                self.stdout.write(self.style.WARNING(f"   - {n}"))
+        if no_corren_hoy:
+            self.stdout.write(self.style.WARNING(
+                f"\nℹ️ Sorteos que NO corren hoy ({dia_actual}/{temporada}):"))
+            for n in sorted(no_corren_hoy):
+                self.stdout.write(self.style.WARNING(f"   - {n}"))
+        if saltados_por_prioridad:
+            self.stdout.write(self.style.WARNING(
+                "\n⏭️ Sorteos saltados por prioridad (lotteryusa ya los tenía):"))
+            for n in sorted(saltados_por_prioridad):
                 self.stdout.write(self.style.WARNING(f"   - {n}"))
