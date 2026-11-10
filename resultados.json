@@ -491,13 +491,15 @@
   },
   {
     "sorteo_nombre": "Texas 10:12 PM",
-    "numeros": [
-      "2",
-      "3",
-      "9"
-    ],
     "fecha": "2026-11-09",
-    "fuente": "lotteryusa"
+    "fuente": "lotteryusa",
+    "pick2": "",
+    "pick3": "239",
+    "pick4": "",
+    "pick5": "",
+    "fijo": "02",
+    "corrido_1": "03",
+    "corrido_2": "09"
   },
   {
     "sorteo_nombre": "Florida 9:45 PM",
@@ -511,13 +513,15 @@
   },
   {
     "sorteo_nombre": "New York 10:30 PM",
-    "numeros": [
-      "7",
-      "3",
-      "9"
-    ],
     "fecha": "2026-11-09",
-    "fuente": "lotteryusa"
+    "fuente": "lotteryusa",
+    "pick2": "",
+    "pick3": "739",
+    "pick4": "",
+    "pick5": "",
+    "fijo": "07",
+    "corrido_1": "03",
+    "corrido_2": "09"
   },
   {
     "sorteo_nombre": "New Jersey 10:57 PM",
@@ -721,23 +725,27 @@
   },
   {
     "sorteo_nombre": "Texas 1:20 PM",
-    "numeros": [
-      "4",
-      "2",
-      "3"
-    ],
     "fecha": "2026-11-10",
-    "fuente": "lotteryusa"
+    "fuente": "lotteryusa",
+    "pick2": "",
+    "pick3": "423",
+    "pick4": "",
+    "pick5": "",
+    "fijo": "04",
+    "corrido_1": "02",
+    "corrido_2": "03"
   },
   {
     "sorteo_nombre": "Florida 1:35 PM",
-    "numeros": [
-      "2",
-      "1",
-      "7"
-    ],
     "fecha": "2026-11-10",
-    "fuente": "lotteryusa"
+    "fuente": "lotteryusa",
+    "pick2": "",
+    "pick3": "217",
+    "pick4": "6726",
+    "pick5": "",
+    "fijo": "02",
+    "corrido_1": "01",
+    "corrido_2": "07"
   },
   {
     "sorteo_nombre": "New Jersey 12:50 PM",
@@ -771,13 +779,15 @@
   },
   {
     "sorteo_nombre": "New York 2:30 PM",
-    "numeros": [
-      "2",
-      "1",
-      "0"
-    ],
     "fecha": "2026-11-10",
-    "fuente": "lotteryusa"
+    "fuente": "lotteryusa",
+    "pick2": "",
+    "pick3": "210",
+    "pick4": "",
+    "pick5": "",
+    "fijo": "02",
+    "corrido_1": "01",
+    "corrido_2": "00"
   },
   {
     "sorteo_nombre": "Loteka Tarde",
