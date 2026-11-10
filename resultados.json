@@ -848,5 +848,15 @@
     ],
     "fecha": "2026-11-10",
     "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Anguilla 5PM",
+    "numeros": [
+      "75",
+      "62",
+      "26"
+    ],
+    "fecha": "2026-11-10",
+    "fuente": "enloteria"
   }
 ]
