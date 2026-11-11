@@ -1,5 +1,7 @@
-import os
-import sys
+import os, sys, time
+
+os.environ['TZ'] = 'America/Havana'
+time.tzset()
 
 path = '/home/LottoBooM'
 if path not in sys.path:

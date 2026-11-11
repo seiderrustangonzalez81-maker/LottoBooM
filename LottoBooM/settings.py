@@ -17,16 +17,16 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # ============================================================
 # SEGURIDAD
 # ============================================================
+DEBUG = os.environ.get("DEBUG", "False").lower() == "true"
+
 SECRET_KEY = os.environ.get("SECRET_KEY")
 if not SECRET_KEY:
-    if os.environ.get("DEBUG", "True") == "True":
+    if DEBUG:
         SECRET_KEY = "django-insecure-2yuy%z1761p37=66_i8yqqr4-&!9(8#7=$n^r6p*n9r4eltu5h"
     else:
         raise ImproperlyConfigured(
             "La variable de entorno SECRET_KEY es obligatoria en producción."
         )
-
-DEBUG = True   # ⚠️ Cambia a False SOLO cuando el sitio funcione estable
 
 ALLOWED_HOSTS = os.environ.get(
     "ALLOWED_HOSTS",
@@ -85,8 +85,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',   # 12) Clickjacking
     'publico.middleware.RegistrarVisitaMiddleware',             # 13) Visitas,
     "publico.middleware.NoCacheHTMLMiddleware",
-    'resultados.middleware.ActualizadorResultadosMiddleware',
-]
+    ]
 
 # ============================================================
 # URLS Y APLICACIÓN
