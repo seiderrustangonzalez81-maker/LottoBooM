@@ -462,9 +462,15 @@ def main():
     for n in todos_nuevos:
         dic[f"{n['sorteo_nombre']}|{n['fecha']}"] = n
 
-    finales = list(dic.values())
+    # === FILTRO FINAL: Solo mantener resultados de HOY en ET ===
+    hoy_et = datetime.now(ZoneInfo('America/New_York')).strftime('%Y-%m-%d')
+    finales_filtrados = [r for r in dic.values() if r.get('fecha') == hoy_et]
+
+    # Si no hay resultados de hoy, el JSON queda vacio (mejor que mostrar datos viejos)
     with open(ARCHIVO_JSON, "w", encoding="utf-8") as f:
-        json.dump(finales, f, ensure_ascii=False, indent=2)
+        json.dump(finales_filtrados, f, ensure_ascii=False, indent=2)
+
+    print(f"Filtro aplicado: {len(finales_filtrados)} resultados de hoy ({hoy_et}) guardados.")
 
     print("\n=== RESUMEN ===")
     print(f"Total sorteos en JSON: {len(finales)}")
