@@ -1,4 +1,5 @@
 name: Scrape Loterias
+
 on:
   schedule:
     - cron: '*/15 * * * *'
@@ -11,10 +12,10 @@ on:
 jobs:
   scrape:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
     permissions:
       contents: write
-      actions: write        # ← NUEVO: necesario para poder reactivar el workflow
+      actions: write
 
     steps:
       - name: Checkout
@@ -40,11 +41,16 @@ jobs:
           git config user.name "GitHub Action"
           git add resultados.json
           git diff --staged --quiet || git commit -m "Update resultados [skip ci]"
-          git pull --rebase origin main
+          
+          # Forzar la autenticación usando el token de GitHub
+          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
+          
+          # Traer cambios remotos de forma segura y empujar
+          git pull --rebase origin main || true
           git push origin main
 
       - name: Re-enable workflow if disabled
-        if: always()          # Se ejecuta incluso si el scraper falla
+        if: always()
         run: |
           gh api -X PUT \
             "repos/${{ github.repository }}/actions/workflows/scrape.yml/enable" \
