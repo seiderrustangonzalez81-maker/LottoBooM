@@ -44,9 +44,9 @@ MAPEO_NOMBRES = {
 
     # USA - Enloteria (Fallback para Fijo y Corridos)
     "Florida Tarde": "Florida 9:50 PM",
-    "New York Tarde": "New York 2:30 PM",
-    "New Jersey Tarde": "New Jersey 12:50 PM",
-    "Georgia Tarde": "Georgia 12:30 PM",
+    "New York Tarde": "New York 10:30 PM",
+    "New Jersey Tarde": "New Jersey 10:50 PM",
+    "Georgia Tarde": "Georgia 7 PM",
     "Texas Tarde": "Texas 7 PM",
     "Tennessee Día": "Tennessee 1:20 PM",
 }
