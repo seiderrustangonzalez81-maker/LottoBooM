@@ -723,7 +723,7 @@ def procesar_resultado(request, datos, resultado_existente=None, solo_crear_resu
 
         premios_anteriores = Premio.objects.filter(
             jugada__sorteo=resultado.sorteo,
-            metadata__resultado_id=resultado.id,
+            jugada__fecha_sorteo=resultado.fecha,
         )
         for p_ant in premios_anteriores:
             try:
@@ -790,7 +790,6 @@ def procesar_resultado(request, datos, resultado_existente=None, solo_crear_resu
                 jugada.save(update_fields=['estado', 'monto_premio', 'actualizado_en'])
                 premio, created = Premio.objects.get_or_create(
                     jugada=jugada,
-                    metadata__resultado_id=resultado.id,
                     defaults={
                         'monto_premio': monto_premio,
                         'multiplicador_aplicado': multiplicador,
