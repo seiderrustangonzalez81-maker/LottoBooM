@@ -360,7 +360,8 @@ def scrape_lotteryusa():
                             continue
                             
                         fecha_tarjeta = _extraer_fecha_lotteryusa(tarjeta, nombre_db)
-                        if fecha_tarjeta != fecha_esperada:
+                        fecha_hoy_et = datetime.now(ZoneInfo('America/New_York')).strftime('%Y-%m-%d')
+                if fecha_tarjeta != fecha_hoy_et:
                             exito_juego = True # El juego existe pero no es de hoy
                             break
                             
