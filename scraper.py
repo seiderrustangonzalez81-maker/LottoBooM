@@ -214,7 +214,7 @@ def scrape_principal(page):
     resultados = []
     try:
         page.goto(URL_MAIN, wait_until="domcontentloaded", timeout=60000)
-        page.wait_for_timeout(10000)
+        page.wait_for_timeout(5000)
         scroll_hasta_estabilizar(page)
         page.evaluate("window.scrollTo(0, 0)")
         page.wait_for_timeout(1000)
@@ -348,7 +348,7 @@ def scrape_lotteryusa():
                 if exito_juego: break
                 for intento in range(3):
                     try:
-                        resp = requests.get(f"{url}?nocache={int(time.time())}", headers=headers, timeout=25)
+                        resp = requests.get(f"{url}?nocache={int(time.time(, timeout=20))}", headers=headers, timeout=25)
                         if resp.status_code == 404:
                             break # Pasar a la URL de respaldo
                             
