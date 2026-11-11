@@ -1430,6 +1430,9 @@ def _guardar_apuesta_impl(request):
 
         # Si la fecha enviada por el navegador es el día de hoy o mañana (por el desfase),
         # la forzamos a la fecha real de Cuba.
+        # Definir si el usuario es admin (banco o superadmin)
+        _es_admin_f = request.user.is_superuser or request.user.roles.filter(tipo__in=['banco', 'superadmin'], activo=True).exists()
+
         if not _es_admin_f and abs((fecha_apuesta - hoy).days) <= 1:
             fecha_apuesta = hoy
         # ══════════════════════════════════════════════════════════════════════════════════════
