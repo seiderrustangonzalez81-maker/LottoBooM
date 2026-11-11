@@ -910,5 +910,15 @@
     ],
     "fecha": "2026-11-10",
     "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Loteka",
+    "numeros": [
+      "64",
+      "72",
+      "35"
+    ],
+    "fecha": "2026-11-10",
+    "fuente": "enloteria"
   }
 ]
