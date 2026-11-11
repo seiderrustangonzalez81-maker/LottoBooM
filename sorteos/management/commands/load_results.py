@@ -33,7 +33,6 @@ MAPEO_NOMBRES = {
     "El Quemaito Mayor": "El Quemaito Mayor", "El Quemaito Mayor Noche": "El Quemaito Mayor Noche",
     "El Quinielón Día": "El Quinielón Día", "El Quinielón Noche": "El Quinielón Noche",
     "Real": "Real", "Real Noche": "Real Noche",
-    "Florida Tarde": "Florida 9:50 PM",
 
     # USA - LotteryUSA (Fuente Oficial)
     "Texas 1:20 PM": "Texas 1:20 PM", "Texas 10:12 PM": "Texas 11 PM",
@@ -43,7 +42,13 @@ MAPEO_NOMBRES = {
     "Georgia 12:30 PM": "Georgia 12:30 PM", "Georgia 11:34 PM": "Georgia 11:40 PM",
     "Tennessee 1:20 PM": "Tennessee 1:20 PM", "Tennessee 6:30 PM": "Tennessee 7:20 PM",
 
-    # USA - Enloteria (Fallback: Solo si lotteryusa falla o para sacar Fijo/Corridos)
+    # USA - Enloteria (Fallback para Fijo y Corridos)
+    "Florida Tarde": "Florida 9:50 PM",
+    "New York Tarde": "New York 2:30 PM",
+    "New Jersey Tarde": "New Jersey 12:50 PM",
+    "Georgia Tarde": "Georgia 12:30 PM",
+    "Texas Tarde": "Texas 7 PM",
+    "Tennessee Día": "Tennessee 1:20 PM",
 }
 
 TZ_CUBA = ZoneInfo('America/Havana')
@@ -67,6 +72,69 @@ def sorteo_corre_hoy(sorteo, dia_actual, temporada):
     if not bloque: return True
     valor = bloque.get(dia_actual)
     return bool(valor and str(valor).strip())
+
+def calcular_derivados(pick2, pick3, pick4, fijo, c1, c2):
+    """Replica la lógica del frontend crear_resultado.html"""
+    pf = ""
+    if pick3 and len(pick3) >= 2:
+        pf = pick3[:2].zfill(2)
+    elif pick2 and len(pick2) >= 2:
+        pf = pick2.zfill(2)
+
+    centena1 = ""
+    centena2 = ""
+    if pick3 and len(pick3) == 3 and c1 and len(c1) == 2:
+        centena1 = pick3[2] + c1
+    if pick3 and len(pick3) == 3 and c2 and len(c2) == 2:
+        d1 = int(pick3[0])
+        d3 = int(pick3[2])
+        centena2 = str((d1 + d3) % 10) + c2
+
+    fijos_list = [f for f in [fijo, c1, c2] if f and len(f) == 2]
+
+    parlets = set()
+    for i in range(len(fijos_list)):
+        for j in range(i+1, len(fijos_list)):
+            if fijos_list[i] != fijos_list[j]:
+                parlets.add(fijos_list[i] + 'x' + fijos_list[j])
+                parlets.add(fijos_list[j] + 'x' + fijos_list[i])
+    parlet_str = "  ".join(sorted(parlets))
+
+    posicion = ""
+    tripleta = ""
+    if fijo and c1 and c2:
+        posicion = f"{fijo} {c1} {c2}"
+        tripleta = posicion
+
+    vspf_arr = []
+    if pf:
+        for n in fijos_list:
+            if n != pf:
+                vspf_arr.append(pf + 'x' + n)
+    vspf_str = "  ".join(sorted(vspf_arr))
+
+    vspick2_arr = []
+    if pick2 and len(pick2) == 2:
+        for n in fijos_list:
+            if n != pick2:
+                vspick2_arr.append(pick2 + 'x' + n)
+    vspick2_str = "  ".join(sorted(vspick2_arr))
+
+    pick2vspf_str = ""
+    if pick2 and len(pick2) == 2 and pf and pick2 != pf:
+        pick2vspf_str = pf + 'x' + pick2
+
+    return {
+        'pf': pf,
+        'centena_corrida_1': centena1,
+        'centena_corrida_2': centena2,
+        'parlet': parlet_str,
+        'posicion': posicion,
+        'tripleta': tripleta,
+        'vspf': vspf_str,
+        'vspick2': vspick2_str,
+        'pick2vspf': pick2vspf_str
+    }
 
 class FakeRequest:
     def __init__(self, user): self.user = user
@@ -98,6 +166,17 @@ class Command(BaseCommand):
 
         creados = actualizados = errores = premios_ok = 0
 
+        # PRIMERA PASADA: identificar qué sorteos tienen datos de enloteria en este JSON
+        # Esto permite que lotteryusa no sobreescriba Fijo/Corridos cuando enloteria los provee
+        sorteos_con_enloteria = set()
+        for item in data:
+            if item.get("fuente") == "enloteria":
+                nombre_web = item.get("sorteo_nombre", "").strip()
+                nombre_db = (MAPEO_NOMBRES.get(nombre_web) or mapeo_normalizado.get(normalizar_texto(nombre_web)))
+                if nombre_db:
+                    sorteos_con_enloteria.add(nombre_db)
+
+        # SEGUNDA PASADA: procesar
         for item in data:
             nombre_web = item.get("sorteo_nombre", "").strip()
             if not nombre_web: continue
@@ -133,15 +212,21 @@ class Command(BaseCommand):
                     if len(raw_nums) >= 4: pick4_val = "".join(raw_nums[:4])
                     if len(raw_nums) >= 5: pick5_val = "".join(raw_nums[:5])
 
-                # PRESERVAR Fijo y Corridos si ya existen
-                if resultado_existente and resultado_existente.fijo:
-                    fijo_val = resultado_existente.fijo
-                    corrido1_val = resultado_existente.corrido_1
-                    corrido2_val = resultado_existente.corrido_2
-                elif pick3_val and len(pick3_val) == 3:
-                    fijo_val = pick3_val[0].zfill(2)
-                    corrido1_val = pick3_val[1].zfill(2)
-                    corrido2_val = pick3_val[2].zfill(2)
+                # SIEMPRE derivar de los datos actuales (Fijo = últimos 2 de P3, Corridos = P4)
+                if pick3_val and len(pick3_val) >= 3:
+                    fijo_val = pick3_val[-2:].zfill(2)
+                if pick4_val and len(pick4_val) == 4:
+                    corrido1_val = pick4_val[:2]
+                    corrido2_val = pick4_val[2:4]
+
+                # Si enloteria va a correr en este mismo batch para este sorteo,
+                # NO sobrescribimos Fijo/Corridos (dejamos que enloteria los ponga)
+                if nombre_db in sorteos_con_enloteria:
+                    # Usar los valores existentes si enloteria ya los puso antes
+                    if resultado_existente and resultado_existente.fijo:
+                        fijo_val = resultado_existente.fijo
+                        corrido1_val = resultado_existente.corrido_1
+                        corrido2_val = resultado_existente.corrido_2
 
             else:
                 raw_nums = [str(x).strip() for x in item.get("numeros", [])]
@@ -149,18 +234,27 @@ class Command(BaseCommand):
                 corrido1_val = raw_nums[1].zfill(2) if len(raw_nums) > 1 else ''
                 corrido2_val = raw_nums[2].zfill(2) if len(raw_nums) > 2 else ''
 
-                # PRESERVAR Picks si ya existen
                 if resultado_existente:
                     pick2_val = resultado_existente.pick2 or ''
                     pick3_val = resultado_existente.pick3 or ''
                     pick4_val = resultado_existente.pick4 or ''
                     pick5_val = resultado_existente.pick5 or ''
 
+            derivados = calcular_derivados(pick2_val, pick3_val, pick4_val, fijo_val, corrido1_val, corrido2_val)
+
             datos = {
                 'sorteo': sorteo, 'fecha': fecha, 'hora': sorteo.hora_salida,
                 'pick2': pick2_val, 'pick3': pick3_val, 'pick4': pick4_val, 'pick5': pick5_val,
                 'fijo': fijo_val, 'corrido_1': corrido1_val, 'corrido_2': corrido2_val,
-                'pf': '', 'centena_corrida_1': '', 'centena_corrida_2': '',
+                'pf': derivados['pf'],
+                'centena_corrida_1': derivados['centena_corrida_1'],
+                'centena_corrida_2': derivados['centena_corrida_2'],
+                'parlet': derivados['parlet'],
+                'posicion': derivados['posicion'],
+                'tripleta': derivados['tripleta'],
+                'vspf': derivados['vspf'],
+                'vspick2': derivados['vspick2'],
+                'pick2vspf': derivados['pick2vspf'],
             }
 
             try:
