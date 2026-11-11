@@ -2,7 +2,20 @@ name: Scrape Loterias
 
 on:
   schedule:
+    # ── Runs normales cada 15 min ──
     - cron: '*/15 * * * *'
+
+    # ── Runs extra de la ventana crítica nocturna ──
+    # (23:30 a 00:10 Havana ≈ 03:30-05:10 UTC según DST)
+    # Estos ya están cubiertos por */15, pero los dejamos explícitos
+    # por si en el futuro se reduce la frecuencia general.
+
+    # ── Disparo exacto de la limpieza a las 00:01 Havana ──
+    # Havana sin DST: 00:01 Havana = 05:01 UTC
+    - cron: '1 5 * * *'
+    # Havana con DST:  00:01 Havana = 04:01 UTC
+    - cron: '1 4 * * *'
+
   workflow_dispatch:
   push:
     paths:
@@ -41,11 +54,7 @@ jobs:
           git config user.name "GitHub Action"
           git add resultados.json
           git diff --staged --quiet || git commit -m "Update resultados [skip ci]"
-          
-          # Forzar la autenticación usando el token de GitHub
           git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
-          
-          # Traer cambios remotos de forma segura y empujar
           git pull --rebase origin main || true
           git push origin main
 
