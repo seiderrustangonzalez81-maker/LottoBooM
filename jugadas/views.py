@@ -1430,7 +1430,7 @@ def _guardar_apuesta_impl(request):
 
         # Si la fecha enviada por el navegador es el día de hoy o mañana (por el desfase),
         # la forzamos a la fecha real de Cuba.
-        if abs((fecha_apuesta - hoy).days) <= 1:
+        if not _es_admin_f and abs((fecha_apuesta - hoy).days) <= 1:
             fecha_apuesta = hoy
         # ══════════════════════════════════════════════════════════════════════════════════════
 
