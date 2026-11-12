@@ -41,17 +41,18 @@ URLS_MULTI = {
         "pick3": ["https://www.lotteryusa.com/new-jersey/pick-3/"],
         "pick4": ["https://www.lotteryusa.com/new-jersey/pick-4/"]
     },
-    "Georgia 12:30 PM": {
-        "pick3": ["https://www.lotteryusa.com/georgia/cash-3-midday/"],
-        "pick4": ["https://www.lotteryusa.com/georgia/cash-4-midday/"]
+
+    "Georgia 12:30 PM": {   # Midday (12:29 PM ET)
+        "pick3": ["https://www.lotteryusa.com/georgia/midday-3/"],
+        "pick4": ["https://www.lotteryusa.com/georgia/midday-4/"],
     },
-    "Georgia 12:30 PM": {
-        "pick3": ["https://www.lotteryusa.com/georgia/midday-3/"],        # ✅ URL corregida
-        "pick4": ["https://www.lotteryusa.com/georgia/midday-4/"]         # ✅ ver nota abajo
+    "Georgia 6:59 PM": {    # Evening (6:59 PM ET) — FALTABA
+        "pick3": ["https://www.lotteryusa.com/georgia/cash-3-evening/"],
+        "pick4": ["https://www.lotteryusa.com/georgia/cash-4-evening/"],
     },
-    "Georgia 11:40 PM": {
-        "pick3": ["https://www.lotteryusa.com/georgia/evening-3/"],       # ✅ URL corregida
-        "pick4": ["https://www.lotteryusa.com/georgia/evening-4/"]        # ✅ ver nota abajo
+    "Georgia 11:34 PM": {   # Night (11:34 PM ET)
+        "pick3": ["https://www.lotteryusa.com/georgia/cash-3/"],
+        "pick4": ["https://www.lotteryusa.com/georgia/cash-4/"],
     },
 
     "New Jersey 12:50 PM": {
