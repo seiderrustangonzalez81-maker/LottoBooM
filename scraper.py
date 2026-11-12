@@ -245,12 +245,10 @@ def _extraer_numeros_lotteryusa(tarjeta):
             return [n.get_text(strip=True) for n in nodos]
     return []
 
-def scrape_lotteryusa():
-    print("Extrayendo USA (lotteryusa.com)...")
+# ⬅️ CORREGIDO: ahora recibe `page` de Playwright y navega con él (evita los 403)
+def scrape_lotteryusa(page):
+    print("Extrayendo USA (lotteryusa.com) con Playwright...")
     resultados = []
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-    }
     print(f"  Fecha actual Este (EE.UU.): {fecha_este()}")
     print(f"  Fecha actual Cuba: {fecha_cuba()}")
 
@@ -261,32 +259,37 @@ def scrape_lotteryusa():
             "pick2": "", "pick3": "", "pick4": "", "pick5": "",
             "fijo": "", "corrido_1": "", "corrido_2": "",
         }
-        
+
         exito_total = False
         for juego, urls in juegos.items():
             exito_juego = False
             for url in urls:
-                if exito_juego: break
+                if exito_juego:
+                    break
                 for intento in range(3):
                     try:
-                        resp = requests.get(f"{url}?nocache={int(time.time())}", headers=headers, timeout=25)
-                        if resp.status_code == 404:
-                            break
-                        resp.raise_for_status()
-                        soup = BeautifulSoup(resp.text, 'html.parser')
+                        # ⬅️ CORREGIDO: Playwright en vez de requests
+                        page.goto(url, wait_until="domcontentloaded", timeout=30000)
+                        page.wait_for_timeout(3000)  # pausa para JS
+                        soup = BeautifulSoup(page.content(), 'html.parser')
                         tarjeta = _extraer_tarjeta_lotteryusa(soup)
-                        if not tarjeta: continue
-                            
+                        if not tarjeta:
+                            continue
+
                         fecha_tarjeta = _extraer_fecha_lotteryusa(tarjeta, nombre_db)
-                        fecha_hoy_et = datetime.now(ZoneInfo('America/New_York')).strftime('%Y-%m-%d')
-                        if fecha_tarjeta != fecha_hoy_et:
-                            print(f"  ⏭️ [{nombre_db} - {juego}] Omitido: La tarjeta muestra {fecha_tarjeta}, pero hoy en ET es {fecha_hoy_et}.")
+
+                        # ⬅️ CORREGIDO: comparar contra `fecha_esperada` (hora del sorteo),
+                        # NO contra "hoy en ET". Permite capturar el sorteo nocturno
+                        # de Georgia (11:34 PM) aunque el run caiga después de medianoche.
+                        if fecha_tarjeta != fecha_esperada:
+                            print(f"  ⏭️ [{nombre_db} - {juego}] Omitido: tarjeta muestra {fecha_tarjeta}, se esperaba {fecha_esperada}.")
                             exito_juego = True
                             break
-                            
+
                         numeros = _extraer_numeros_lotteryusa(tarjeta)
-                        if not numeros: continue
-                            
+                        if not numeros:
+                            continue
+
                         if juego == "pick2":
                             resultado_sorteo["pick2"] = "".join(numeros[:2])
                         elif juego == "pick3":
@@ -299,15 +302,15 @@ def scrape_lotteryusa():
                             resultado_sorteo["pick4"] = "".join(numeros[:4])
                         elif juego == "pick5":
                             resultado_sorteo["pick5"] = "".join(numeros[:5])
-                            
+
                         print(f"  ✅ OK {nombre_db} - {juego} -> {', '.join(numeros)}")
                         exito_juego = True
                         exito_total = True
-                        break 
+                        break
                     except Exception as e:
                         print(f"  ❌ [{nombre_db} - {juego}] Error intento {intento+1} ({url}): {e}")
                         time.sleep(2)
-        
+
         if exito_total:
             resultados.append(resultado_sorteo)
         else:
@@ -317,45 +320,63 @@ def scrape_lotteryusa():
 
 def main():
     todos_nuevos = []
-    hoy_cuba = fecha_cuba()
-    ayer_cuba = (datetime.now(TZ_CUBA) - timedelta(days=1)).strftime("%Y-%m-%d")
+
+    # ⬅️ CORREGIDO: fechas base calculadas UNA sola vez
+    now_cuba = datetime.now(TZ_CUBA)
+    hoy_cuba = now_cuba.strftime("%Y-%m-%d")
+    ayer_cuba = (now_cuba - timedelta(days=1)).strftime("%Y-%m-%d")
+    now_et = datetime.now(TZ_ESTE)
+    hoy_et = now_et.strftime("%Y-%m-%d")
+    ayer_et = (now_et - timedelta(days=1)).strftime("%Y-%m-%d")
 
     print("=== INICIO SCRAPER ===")
     print(f"Fecha Cuba: {hoy_cuba}")
-    print(f"Fecha Este: {fecha_este()}")
+    print(f"Fecha Este: {hoy_et}")
 
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
-        context = browser.new_context(user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
+        context = browser.new_context(
+            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                       "AppleWebKit/537.36 (KHTML, like Gecko) "
+                       "Chrome/120.0.0.0 Safari/537.36"
+        )
         page = context.new_page()
         page.set_default_timeout(60000)
+
         try:
             res = scrape_principal(page)
             print(f"  → {len(res)} sorteos de principal")
             todos_nuevos.extend(res)
         except Exception as e:
             print(f"Error principal: {e}")
+
         try:
             res = scrape_especifica(page, URL_QUEMAITO, "El Quemaito Mayor")
-            if res: print("  → El Quemaito Mayor OK")
+            if res:
+                print("  → El Quemaito Mayor OK")
             todos_nuevos.extend(res)
         except Exception as e:
             print(f"Error Quemaito: {e}")
+
         try:
             res = scrape_especifica(page, URL_QUINIELON, "El Quinielon Dia")
-            if res: print("  → El Quinielon Dia OK")
+            if res:
+                print("  → El Quinielon Dia OK")
             todos_nuevos.extend(res)
         except Exception as e:
             print(f"Error Quinielon: {e}")
+
+        # ⬅️ CORREGIDO: lotteryusa DENTRO del with para reutilizar el page
+        try:
+            res = scrape_lotteryusa(page)
+            print(f"  → {len(res)} sorteos de lotteryusa")
+            todos_nuevos.extend(res)
+        except Exception as e:
+            print(f"Error en lotteryusa: {e}")
+
         browser.close()
 
-    try:
-        res = scrape_lotteryusa()
-        print(f"  → {len(res)} sorteos de lotteryusa")
-        todos_nuevos.extend(res)
-    except Exception as e:
-        print(f"Error en lotteryusa: {e}")
-
+    # ── Cargar resultados previos válidos (hoy y ayer) ──
     guardados = []
     if os.path.exists(ARCHIVO_JSON):
         try:
@@ -366,21 +387,67 @@ def main():
 
     dic = {}
     for r in guardados:
-        if r.get("fecha") in (hoy_cuba, ayer_cuba):
+        if r.get("fecha") in (hoy_cuba, ayer_cuba, hoy_et, ayer_et):
             dic[f"{r['sorteo_nombre']}|{r['fecha']}"] = r
     for n in todos_nuevos:
         dic[f"{n['sorteo_nombre']}|{n['fecha']}"] = n
 
-    hoy_et = datetime.now(ZoneInfo('America/New_York')).strftime('%Y-%m-%d')
-    finales_filtrados = [r for r in dic.values() if r.get('fecha') == hoy_et]
+    # ── Ventana de gracia ──
+    # Durante la hora 0 de La Habana:
+    #   • Minuto 00 → se mantiene ayer para no perder el último sorteo
+    #     nocturno de Georgia (11:34 PM ET ≈ 11:34 PM Havana).
+    #   • Minuto 01 en adelante → si Georgia 11:34 PM de ayer YA está
+    #     cargado, se limpia ayer. Si no, se mantiene hasta que aparezca.
+    georgia_ayer_presente = any(
+        r.get("sorteo_nombre", "").startswith("Georgia 11:34 PM")
+        and r.get("fecha") == ayer_et
+        for r in dic.values()
+    )
+    if now_cuba.hour == 0:
+        if now_cuba.minute < 1:
+            en_ventana_gracia = True
+        else:
+            en_ventana_gracia = not georgia_ayer_presente
+    else:
+        en_ventana_gracia = False
+
+    print(f"Ventana de gracia: {'SÍ' if en_ventana_gracia else 'NO'} "
+          f"(Georgia ayer presente: {'SÍ' if georgia_ayer_presente else 'NO'})")
+
+    # ── Filtro de fecha POR FUENTE ──
+    finales_filtrados = []
+    descartados = []
+
+    for r in dic.values():
+        fecha = r.get("fecha")
+        fuente = r.get("fuente", "")
+
+        if fuente == "enloteria":
+            fecha_hoy, fecha_ayer = hoy_cuba, ayer_cuba
+        else:  # lotteryusa
+            fecha_hoy, fecha_ayer = hoy_et, ayer_et
+
+        if fecha == fecha_hoy:
+            finales_filtrados.append(r)
+        elif en_ventana_gracia and fecha == fecha_ayer:
+            finales_filtrados.append(r)
+        else:
+            descartados.append(r)
 
     with open(ARCHIVO_JSON, "w", encoding="utf-8") as f:
         json.dump(finales_filtrados, f, ensure_ascii=False, indent=2)
 
-    print(f"Filtro aplicado: {len(finales_filtrados)} resultados de hoy ({hoy_et}) guardados.")
+    print(f"✅ Guardados {len(finales_filtrados)} resultados vigentes "
+          f"(Cuba={hoy_cuba} / ET={hoy_et}).")
+    if descartados:
+        print(f"⏭️  Descartados {len(descartados)} resultados de fechas no vigentes:")
+        for d in descartados:
+            print(f"     - {d['sorteo_nombre']} | {d['fecha']} | {d.get('fuente')}")
+
     print("\n=== RESUMEN ===")
     print(f"Total sorteos en JSON: {len(finales_filtrados)}")
     print(f"Fecha Cuba: {hoy_cuba}")
+    print(f"Fecha ET:   {hoy_et}")
 
 if __name__ == "__main__":
     main()
