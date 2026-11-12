@@ -352,5 +352,15 @@
     "fijo": "09",
     "corrido_1": "02",
     "corrido_2": "02"
+  },
+  {
+    "sorteo_nombre": "Nacional Gana Más",
+    "numeros": [
+      "29",
+      "73",
+      "84"
+    ],
+    "fecha": "2026-11-12",
+    "fuente": "enloteria"
   }
 ]
