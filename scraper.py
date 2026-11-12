@@ -45,16 +45,30 @@ URLS_MULTI = {
         "pick3": ["https://www.lotteryusa.com/georgia/cash-3-midday/"],
         "pick4": ["https://www.lotteryusa.com/georgia/cash-4-midday/"]
     },
-    "Georgia 11:40 PM": {
-        "pick3": ["https://www.lotteryusa.com/georgia/cash-3-evening/"],
-        "pick4": ["https://www.lotteryusa.com/georgia/cash-4-evening/"]
+    "Georgia 12:30 PM": {
+        "pick3": ["https://www.lotteryusa.com/georgia/midday-3/"],        # ✅ URL corregida
+        "pick4": ["https://www.lotteryusa.com/georgia/midday-4/"]         # ✅ ver nota abajo
     },
+    "Georgia 11:40 PM": {
+        "pick3": ["https://www.lotteryusa.com/georgia/evening-3/"],       # ✅ URL corregida
+        "pick4": ["https://www.lotteryusa.com/georgia/evening-4/"]        # ✅ ver nota abajo
+    },
+
+    "New Jersey 12:50 PM": {
+        "pick3": ["https://www.lotteryusa.com/new-jersey/midday-pick-3/"], # ✅ ya era correcta
+        "pick4": ["https://www.lotteryusa.com/new-jersey/midday-pick-4/"]
+    },
+    "New Jersey 10:57 PM": {
+        "pick3": ["https://www.lotteryusa.com/new-jersey/pick-3/"],
+        "pick4": ["https://www.lotteryusa.com/new-jersey/pick-4/"]
+    },
+
     "Tennessee 1:20 PM": {
-        "pick3": ["https://www.lotteryusa.com/tennessee/cash-3-midday/"],
-        "pick4": ["https://www.lotteryusa.com/tennessee/cash-4-midday/"]
+        "pick3": ["https://www.lotteryusa.com/tennessee/midday-cash-3/"],  # ✅ URL corregida
+        "pick4": ["https://www.lotteryusa.com/tennessee/midday-cash-4/"]   # ✅ ver nota abajo
     },
     "Tennessee 6:30 PM": {
-        "pick3": ["https://www.lotteryusa.com/tennessee/cash-3/"],
+        "pick3": ["https://www.lotteryusa.com/tennessee/cash-3/"],         # (esta sí parece correcta)
         "pick4": ["https://www.lotteryusa.com/tennessee/cash-4/"]
     },
 }
