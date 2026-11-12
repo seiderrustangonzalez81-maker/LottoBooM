@@ -15,6 +15,25 @@ from django.core.exceptions import ImproperlyConfigured
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # ============================================================
+# CARGAR .env (para consola, Scheduled Tasks y cron)
+# ============================================================
+def _load_env_file(path):
+    if not path.exists():
+        return
+    for line in path.read_text().splitlines():
+        line = line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        key = key.strip()
+        value = value.strip().strip('"').strip("'")
+        if key and key not in os.environ:
+            os.environ[key] = value
+
+_load_env_file(BASE_DIR / ".env")
+
+
+# ============================================================
 # SEGURIDAD
 # ============================================================
 DEBUG = os.environ.get("DEBUG", "False").lower() == "true"

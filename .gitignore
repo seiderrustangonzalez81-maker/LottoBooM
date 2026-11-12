@@ -100,3 +100,4 @@ backup_db_*.sqlite3
 *.swp
 backups_favicon/
 .git-credentials
+diag_*.sh

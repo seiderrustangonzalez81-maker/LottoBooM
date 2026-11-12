@@ -39,7 +39,9 @@ MAPEO_NOMBRES = {
     "Florida 1:35 PM": "Florida 1:35 PM", "Florida 9:45 PM": "Florida 9:50 PM",
     "New York 2:30 PM": "New York 2:30 PM", "New York 10:30 PM": "New York 10:30 PM",
     "New Jersey 12:50 PM": "New Jersey 12:50 PM", "New Jersey 10:57 PM": "New Jersey 10:50 PM",
-    "Georgia 12:30 PM": "Georgia 12:30 PM", "Georgia 11:34 PM": "Georgia 11:40 PM",
+    "Georgia 12:30 PM": "Georgia 12:30 PM",
+    "Georgia 6:59 PM": "Georgia 7 PM",                    # ⬅️ BUG B CORREGIDO (Evening)
+    "Georgia 11:34 PM": "Georgia 11:34 PM",               # ⬅️ BUG A CORREGIDO (Night)
     "Tennessee 1:20 PM": "Tennessee 1:20 PM", "Tennessee 6:30 PM": "Tennessee 7:20 PM",
 
     # USA - Enloteria (Fallback para Fijo y Corridos)
@@ -152,7 +154,9 @@ class Command(BaseCommand):
             return
 
         admin = User.objects.filter(is_superuser=True).first()
-        if not admin: return
+        if not admin:
+            self.stdout.write(self.style.ERROR("No hay superusuario. Abortando."))
+            return
         req = FakeRequest(admin)
 
         mapeo_normalizado = {normalizar_texto(k): v for k, v in MAPEO_NOMBRES.items()}
@@ -163,11 +167,11 @@ class Command(BaseCommand):
         temporada = temporada_actual()
 
         self.stdout.write(f"Día actual: {dia_actual} | Temporada: {temporada}")
+        self.stdout.write(f"Fecha Cuba: {hoy_cuba} | Ayer: {ayer_cuba}")
 
         creados = actualizados = errores = premios_ok = 0
 
         # PRIMERA PASADA: identificar qué sorteos tienen datos de enloteria en este JSON
-        # Esto permite que lotteryusa no sobreescriba Fijo/Corridos cuando enloteria los provee
         sorteos_con_enloteria = set()
         for item in data:
             if item.get("fuente") == "enloteria":
@@ -179,20 +183,38 @@ class Command(BaseCommand):
         # SEGUNDA PASADA: procesar
         for item in data:
             nombre_web = item.get("sorteo_nombre", "").strip()
-            if not nombre_web: continue
+            if not nombre_web:
+                continue
 
             nombre_db = (MAPEO_NOMBRES.get(nombre_web) or mapeo_normalizado.get(normalizar_texto(nombre_web)))
-            if not nombre_db: continue
+            if not nombre_db:
+                continue
 
             sorteo = Sorteo.objects.filter(nombre__iexact=nombre_db).first()
-            if not sorteo: continue
-            if not sorteo_corre_hoy(sorteo, dia_actual, temporada): continue
+            if not sorteo:
+                continue
+            if not sorteo_corre_hoy(sorteo, dia_actual, temporada):
+                continue
 
             fecha = parse_date(item.get("fecha", ""))
-            if not fecha or fecha > hoy_cuba: continue
+            if not fecha or fecha > hoy_cuba:
+                continue
 
             fuente = item.get("fuente", "")
-            if fuente == "lotteryusa" and fecha not in (hoy_cuba, ayer_cuba): continue
+
+            # ── Filtro estricto por fuente ──
+            if fuente == "enloteria":
+                if fecha != hoy_cuba:
+                    self.stdout.write(self.style.WARNING(
+                        f"⏭️ Descartado {nombre_web} [{fecha}] (enloteria, no es hoy {hoy_cuba})"
+                    ))
+                    continue
+            else:  # lotteryusa y otras
+                if fecha not in (hoy_cuba, ayer_cuba):
+                    self.stdout.write(self.style.WARNING(
+                        f"⏭️ Descartado {nombre_web} [{fecha}] (usa, no es hoy ni ayer)"
+                    ))
+                    continue
 
             resultado_existente = Resultado.objects.filter(sorteo=sorteo, fecha=fecha).first()
 
@@ -212,23 +234,19 @@ class Command(BaseCommand):
                     if len(raw_nums) >= 4: pick4_val = "".join(raw_nums[:4])
                     if len(raw_nums) >= 5: pick5_val = "".join(raw_nums[:5])
 
-                # SIEMPRE derivar de los datos actuales (Fijo = últimos 2 de P3, Corridos = P4)
                 if pick3_val and len(pick3_val) >= 3:
                     fijo_val = pick3_val[-2:].zfill(2)
                 if pick4_val and len(pick4_val) == 4:
                     corrido1_val = pick4_val[:2]
                     corrido2_val = pick4_val[2:4]
 
-                # Si enloteria va a correr en este mismo batch para este sorteo,
-                # NO sobrescribimos Fijo/Corridos (dejamos que enloteria los ponga)
                 if nombre_db in sorteos_con_enloteria:
-                    # Usar los valores existentes si enloteria ya los puso antes
                     if resultado_existente and resultado_existente.fijo:
                         fijo_val = resultado_existente.fijo
                         corrido1_val = resultado_existente.corrido_1
                         corrido2_val = resultado_existente.corrido_2
 
-            else:
+            else:  # enloteria
                 raw_nums = [str(x).strip() for x in item.get("numeros", [])]
                 fijo_val = raw_nums[0].zfill(2) if len(raw_nums) > 0 else ''
                 corrido1_val = raw_nums[1].zfill(2) if len(raw_nums) > 1 else ''
@@ -264,8 +282,10 @@ class Command(BaseCommand):
                 resultado_obj.procesamiento_estado = 'completado'
                 resultado_obj.save(update_fields=['metadata', 'procesamiento_estado'])
 
-                if resultado_existente: actualizados += 1
-                else: creados += 1
+                if resultado_existente:
+                    actualizados += 1
+                else:
+                    creados += 1
                 premios_ok += 1
 
                 if fuente == "lotteryusa":
@@ -281,7 +301,9 @@ class Command(BaseCommand):
                 errores += 1
                 self.stdout.write(self.style.ERROR(f"❌ Error procesando '{nombre_web}': {str(e)}"))
 
-        self.stdout.write(self.style.SUCCESS(f"\nResumen Final -> Creados={creados}, Actualizados={actualizados}, Premios OK={premios_ok}, Errores={errores}"))
+        self.stdout.write(self.style.SUCCESS(
+            f"\nResumen Final -> Creados={creados}, Actualizados={actualizados}, Premios OK={premios_ok}, Errores={errores}"
+        ))
 
 if __name__ == "__main__":
     pass
