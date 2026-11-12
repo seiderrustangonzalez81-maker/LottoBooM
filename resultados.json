@@ -284,5 +284,15 @@
     ],
     "fecha": "2026-11-12",
     "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Real",
+    "numeros": [
+      "46",
+      "49",
+      "85"
+    ],
+    "fecha": "2026-11-12",
+    "fuente": "enloteria"
   }
 ]
