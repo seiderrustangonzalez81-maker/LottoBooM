@@ -105,6 +105,8 @@ def calcular_estado_sorteo(sorteo, ahora=None, fecha_consulta=None):
     ahora_local = ahora.astimezone(_tz_cuba(fecha_consulta if fecha_consulta else ahora.date()))
     if fecha_consulta is None:
         fecha_consulta = ahora_local.date()
+        if (sorteo.nombre == 'Georgia 11:34 PM' and ahora_local.hour == 0 and ahora_local.minute < 25):
+            fecha_consulta = fecha_consulta - timedelta(days=1)
 
     # Determinar hora de salida para HOY (Cuba)
     if sorteo.horarios:
