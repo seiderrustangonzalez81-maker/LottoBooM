@@ -392,44 +392,15 @@ def main():
     for n in todos_nuevos:
         dic[f"{n['sorteo_nombre']}|{n['fecha']}"] = n
 
-    # ── Ventana de gracia ──
-    # Durante la hora 0 de La Habana:
-    #   • Minuto 00 → se mantiene ayer para no perder el último sorteo
-    #     nocturno de Georgia (11:34 PM ET ≈ 11:34 PM Havana).
-    #   • Minuto 01 en adelante → si Georgia 11:34 PM de ayer YA está
-    #     cargado, se limpia ayer. Si no, se mantiene hasta que aparezca.
-    georgia_ayer_presente = any(
-        r.get("sorteo_nombre", "").startswith("Georgia 11:34 PM")
-        and r.get("fecha") == ayer_et
-        for r in dic.values()
-    )
-    if now_cuba.hour == 0:
-        if now_cuba.minute < 1:
-            en_ventana_gracia = True
-        else:
-            en_ventana_gracia = not georgia_ayer_presente
-    else:
-        en_ventana_gracia = False
-
-    print(f"Ventana de gracia: {'SÍ' if en_ventana_gracia else 'NO'} "
-          f"(Georgia ayer presente: {'SÍ' if georgia_ayer_presente else 'NO'})")
-
-    # ── Filtro de fecha POR FUENTE ──
+    # Filtro 2 dias (sin ventana de gracia)
     finales_filtrados = []
     descartados = []
 
     for r in dic.values():
-        fecha = r.get("fecha")
-        fuente = r.get("fuente", "")
-
-        if fuente == "enloteria":
-            fecha_hoy, fecha_ayer = hoy_cuba, ayer_cuba
-        else:  # lotteryusa
-            fecha_hoy, fecha_ayer = hoy_et, ayer_et
-
-        if fecha == fecha_hoy:
-            finales_filtrados.append(r)
-        elif en_ventana_gracia and fecha == fecha_ayer:
+        fecha = r.get('fecha')
+        fuente = r.get('fuente', '')
+        fechas_validas = (hoy_cuba,) if fuente == 'enloteria' else (hoy_et, ayer_et)
+        if fecha in fechas_validas:
             finales_filtrados.append(r)
         else:
             descartados.append(r)
