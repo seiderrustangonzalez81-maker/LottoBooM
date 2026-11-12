@@ -1032,6 +1032,13 @@ def superparlet(request):
 
     formas_pago = FormaPago.objects.filter(activo=True)
     sorteos_disponibles = _obtener_sorteos_cuba_estricto()
+    if not (es_superadmin or es_banco):
+        _aux = []
+        for _s in sorteos_disponibles:
+            _s2 = calcular_estado_sorteo(_s, timezone.now())
+            if getattr(_s2, "segundos_para_salida", 0) > 600:
+                _aux.append(_s)
+        sorteos_disponibles = _aux
 
     if es_autorizador:
         total_fondos = 0
@@ -1198,6 +1205,13 @@ def apostar(request):
 
     fecha_actual = timezone.localdate()
     sorteos_disponibles = _obtener_sorteos_cuba_estricto()
+    if not (es_superadmin or es_banco):
+        _aux = []
+        for _s in sorteos_disponibles:
+            _s2 = calcular_estado_sorteo(_s, timezone.now())
+            if getattr(_s2, "segundos_para_salida", 0) > 600:
+                _aux.append(_s)
+        sorteos_disponibles = _aux
 
     formas_juego = FormaJuego.objects.filter(activo=True)
     formas_pago = FormaPago.objects.filter(activo=True)
@@ -1975,7 +1989,7 @@ def _guardar_apuesta_impl(request):
                             if es_superadmin_:
                                 _permitido = True
                             elif es_banco_:
-                                _permitido = _dentro_ventana_banco(_estado_chk, timezone.now(), horas=24)
+                                _permitido = True
                             if not _permitido:
                                 advertencias.append(
                                     f'SuperParlet cancelado: el sorteo "{_sorteo_chk.nombre}" no está abierto. Ambos sorteos deben estar abiertos para apostar.'
