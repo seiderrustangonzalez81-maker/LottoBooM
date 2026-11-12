@@ -384,5 +384,55 @@
     "fijo": "02",
     "corrido_1": "09",
     "corrido_2": "01"
+  },
+  {
+    "sorteo_nombre": "La Primera Noche",
+    "numeros": [
+      "53",
+      "81",
+      "13"
+    ],
+    "fecha": "2026-11-11",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Real Noche",
+    "numeros": [
+      "99",
+      "68",
+      "66"
+    ],
+    "fecha": "2026-11-11",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Anguilla 9PM",
+    "numeros": [
+      "85",
+      "80",
+      "51"
+    ],
+    "fecha": "2026-11-11",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Nacional Noche",
+    "numeros": [
+      "67",
+      "64",
+      "23"
+    ],
+    "fecha": "2026-11-11",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "El Quemaito Mayor",
+    "numeros": [
+      "11",
+      "70",
+      "66"
+    ],
+    "fecha": "2026-11-11",
+    "fuente": "enloteria"
   }
 ]
