@@ -1036,7 +1036,7 @@ def superparlet(request):
         _aux = []
         for _s in sorteos_disponibles:
             _s2 = calcular_estado_sorteo(_s, timezone.now())
-            if getattr(_s2, "segundos_para_salida", 0) > 600:
+            if True:  # Filtro de 10 min desactivado
                 _aux.append(_s)
         sorteos_disponibles = _aux
 
@@ -1209,7 +1209,7 @@ def apostar(request):
         _aux = []
         for _s in sorteos_disponibles:
             _s2 = calcular_estado_sorteo(_s, timezone.now())
-            if getattr(_s2, "segundos_para_salida", 0) > 600:
+            if True:  # Filtro de 10 min desactivado
                 _aux.append(_s)
         sorteos_disponibles = _aux
 
@@ -1456,7 +1456,22 @@ def _guardar_apuesta_impl(request):
         # FIX_FUTURO_1ANO_V1 + FIX_USUARIO_URGENTE_V1
         _u = request.user
         _es_admin_f = _u.is_superuser or _u.roles.filter(tipo__in=['superadmin','banco'], activo=True).exists()
-        if fecha_apuesta < hoy and not _es_admin_f:
+        _sids_early = []
+        try:
+            _sstr = request.POST.get('sorteos', '[]')
+            _sids_early = json.loads(_sstr) if _sstr else []
+        except Exception:
+            pass
+        _georgia_late = False
+        _now_cuba = timezone.now().astimezone(ZoneInfo('America/Havana'))
+        if _now_cuba.hour == 0 and _now_cuba.minute < 25 and _sids_early:
+            for _sid in _sids_early:
+                if Sorteo.objects.filter(id=int(_sid), nombre='Georgia 11:34 PM').exists():
+                    _georgia_late = True
+                    if fecha_apuesta == hoy:
+                        fecha_apuesta = hoy - timedelta(days=1)
+                    break
+        if fecha_apuesta < hoy and not _es_admin_f and not _georgia_late:
             return JsonResponse({'success': False, 'message': 'Los clientes y comerciales solo pueden apostar desde hoy en adelante.'}, status=400)
         if fecha_apuesta > limite_futuro:
             return JsonResponse({'success': False, 'message': 'La fecha de la apuesta no puede ser superior a 6 meses en el futuro.'}, status=400)
