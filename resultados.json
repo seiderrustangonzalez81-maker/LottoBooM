@@ -328,5 +328,29 @@
     "fijo": "09",
     "corrido_1": "08",
     "corrido_2": "08"
+  },
+  {
+    "sorteo_nombre": "Texas 1:20 PM",
+    "fecha": "2026-11-12",
+    "fuente": "lotteryusa",
+    "pick2": "",
+    "pick3": "436",
+    "pick4": "",
+    "pick5": "",
+    "fijo": "04",
+    "corrido_1": "03",
+    "corrido_2": "06"
+  },
+  {
+    "sorteo_nombre": "Tennessee 1:20 PM",
+    "fecha": "2026-11-12",
+    "fuente": "lotteryusa",
+    "pick2": "",
+    "pick3": "922",
+    "pick4": "6156",
+    "pick5": "",
+    "fijo": "09",
+    "corrido_1": "02",
+    "corrido_2": "02"
   }
 ]
