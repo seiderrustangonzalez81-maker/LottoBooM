@@ -317,6 +317,9 @@ def jugada_es_ganadora(jugada, resultado):
             # REGLA SEIDER: Si el número sale Fijo, también se paga en Corridos
             if fijo_val and numero == fijo_val:
                 count += 1
+            # REGLA SEIDER: Si el número sale Fijo, también se paga en Corridos
+            if fijo_val and numero == fijo_val:
+                count += 1
             total_coincidencias = count
             if total_coincidencias > 0:
                 return True, multiplicador * total_coincidencias
