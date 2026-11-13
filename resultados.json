@@ -446,5 +446,25 @@
     ],
     "fecha": "2026-11-13",
     "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Anguilla 6PM",
+    "numeros": [
+      "09",
+      "34",
+      "73"
+    ],
+    "fecha": "2026-11-13",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "La Suerte 6PM",
+    "numeros": [
+      "01",
+      "12",
+      "26"
+    ],
+    "fecha": "2026-11-13",
+    "fuente": "enloteria"
   }
 ]
