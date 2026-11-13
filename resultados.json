@@ -416,5 +416,15 @@
     ],
     "fecha": "2026-11-13",
     "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Anguilla 4PM",
+    "numeros": [
+      "19",
+      "39",
+      "82"
+    ],
+    "fecha": "2026-11-13",
+    "fuente": "enloteria"
   }
 ]
