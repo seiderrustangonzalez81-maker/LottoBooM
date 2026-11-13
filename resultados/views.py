@@ -1125,7 +1125,7 @@ def resultados_view(request):
         threading.Thread(target=actualizar_en_segundo_plano).start()
     # --- FIN ACTUALIZACIÓN DINÁMICA ---
 
-    resultados = Resultado.objects.all().select_related('sorteo').order_by('fecha', 'sorteo__hora_salida', 'hora')
+    resultados = Resultado.objects.all().select_related('sorteo').order_by('-fecha', '-sorteo__hora_salida', '-hora')
 
     sorteo_id = request.GET.get('sorteo')
     if sorteo_id:
@@ -1142,10 +1142,10 @@ def resultados_view(request):
     tiene_filtro_fecha = bool(fecha_desde_str or fecha_hasta_str)
 
     if not tiene_filtro_fecha:
-        resultados = resultados.filter(fecha=fecha_actual)
-        fecha_desde_obj = fecha_actual
-        fecha_hasta_obj = fecha_actual
-        mostrando_hoy = True
+        # Ya no forzamos a mostrar solo el día de hoy
+        fecha_desde_obj = None
+        fecha_hasta_obj = None
+        mostrando_hoy = False
     else:
         fecha_desde_obj = None
         if fecha_desde_str:
@@ -1164,7 +1164,7 @@ def resultados_view(request):
         mostrando_hoy = False
 
     # ═══ FIX: SIN PAGINACIÓN (tabla tipo Excel) ═══
-    resultados_lista = list(resultados)
+    resultados_lista = list(resultados[:500])
     # ═══════════════════════════════════════════════
 
     # ═══ Pre-calcular todos los campos para cada resultado ═══
