@@ -196,7 +196,7 @@
                     {% for resultado in resultados %}
                     <tr>
                         <td data-label="#">{{ resultado.id }}</td>
-                        <td data-label="Sorteo"><strong>{{ resultado.sorteo.nombre }}</strong></td>
+                        <td data-label="Sorteo"><strong>{{ resultado.sorteo.nombre }}</strong>{% if resultado.aposto_cliente %}<span class="badge bg-danger ms-1" style="font-size:0.75em;" title="Tienes una jugada en este sorteo">🔔 Nuevo</span>{% endif %}</td>
                         <td data-label="Fecha">{{ resultado.fecha|date:"d/m/Y" }}</td>
                         <td data-label="Hora">{{ resultado.hora|time:"H:i" }}</td>
                         <td data-label="Campos">
