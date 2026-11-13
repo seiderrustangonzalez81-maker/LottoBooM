@@ -668,7 +668,7 @@ def agrupar_jugadas(qs):
                 'monto': j.monto, 'numeros': [],
                 'premios': Decimal('0.00'), 'estados': set(),
             })
-            m_entry['numeros'].append(j.numero)
+            m_entry['numeros'].append({'numero': j.numero, 'estado': j.estado})
             if j.monto_premio:
                 m_entry['premios'] += j.monto_premio
             m_entry['estados'].add(j.estado)
@@ -686,23 +686,22 @@ def agrupar_jugadas(qs):
         for s in por_sorteo.values():
             formas_list = []
             for f in s['por_forma'].values():
-                grupos = []
+                numeros_con_monto = []
                 for m in f['por_monto'].values():
-                    est = next((e for e in ('ganadora', 'pendiente', 'perdedora')
-                                if e in m['estados']), 'finalizada')
-                    grupos.append({
-                        'monto': m['monto'],
-                        'numeros': m['numeros'],
-                        'premios': m['premios'],
-                        'estado': est,
-                    })
-                grupos.sort(key=lambda g: -float(g['monto']))
+                    for num_dict in m['numeros']:
+                        numeros_con_monto.append({
+                            'monto': m['monto'],
+                            'numero': num_dict['numero'],
+                            'estado': num_dict['estado'],
+                            'premios': m['premios'],
+                        })
+                numeros_con_monto.sort(key=lambda g: -float(g['monto']))
                 est_f = next((e for e in ('ganadora', 'pendiente', 'perdedora')
                               if e in f['estados']), 'finalizada')
                 formas_list.append({
                     'forma_nombre': f['forma_nombre'],
-                    'grupos_monto': grupos,
-                    'total': f['total'],
+                    'numeros_con_monto': numeros_con_monto,
+                    'monto_total': f['total'],
                     'estado': est_f,
                 })
             formas_list.sort(key=lambda x: x['forma_nombre'])
