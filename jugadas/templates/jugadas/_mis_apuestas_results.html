@@ -596,9 +596,12 @@
                         {% for item in fj_data.numeros_con_monto %}
                           <span class="{% if item.estado == 'ganadora' %}num-ganador{% endif %}"
                                 data-bs-toggle="tooltip"
-                                title="Monto individual: ${{ item.monto|floatformat:2 }} (Total grupo: ${{ fj_data.monto_total|floatformat:2 }})">
+                                title="Monto jugado: ${{ item.monto|floatformat:2 }} {% if item.estado == 'ganadora' and item.premios > 0 %}| 🏆 Premio: ${{ item.premios|floatformat:2 }}{% endif %}">
                             {{ item.numero }}
                             <span class="monto">${{ item.monto|floatformat:2 }}</span>
+                            {% if item.estado == 'ganadora' and item.premios > 0 %}
+                                <span class="badge bg-success ms-1" style="font-size:0.75em;">🏆 ${{ item.premios|floatformat:2 }}</span>
+                            {% endif %}
                           </span>
                         {% endfor %}
                       </div>

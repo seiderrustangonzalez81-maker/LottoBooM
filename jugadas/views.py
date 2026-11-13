@@ -668,7 +668,7 @@ def agrupar_jugadas(qs):
                 'monto': j.monto, 'numeros': [],
                 'premios': Decimal('0.00'), 'estados': set(),
             })
-            m_entry['numeros'].append({'numero': j.numero, 'estado': j.estado})
+            m_entry['numeros'].append({'numero': j.numero, 'estado': j.estado, 'premio': j.monto_premio or 0})
             if j.monto_premio:
                 m_entry['premios'] += j.monto_premio
             m_entry['estados'].add(j.estado)
@@ -705,7 +705,7 @@ def agrupar_jugadas(qs):
                             'monto': m['monto'],
                             'numero': num_dict['numero'],
                             'estado': num_dict['estado'],
-                            'premios': m['premios'],
+                            'premios': num_dict.get('premio', 0),
                         })
                 numeros_con_monto.sort(key=lambda g: -float(g['monto']))
                 
