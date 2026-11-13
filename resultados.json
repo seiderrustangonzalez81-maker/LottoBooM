@@ -352,5 +352,27 @@
     "fijo": "05",
     "corrido_1": "05",
     "corrido_2": "08"
+  },
+  {
+    "sorteo_nombre": "Nacional Gana Más",
+    "numeros": [
+      "33",
+      "97",
+      "20"
+    ],
+    "fecha": "2026-11-13",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Florida 1:35 PM",
+    "fecha": "2026-11-13",
+    "fuente": "lotteryusa",
+    "pick2": "83",
+    "pick3": "290",
+    "pick4": "4257",
+    "pick5": "91983",
+    "fijo": "02",
+    "corrido_1": "09",
+    "corrido_2": "00"
   }
 ]
