@@ -519,15 +519,22 @@ document.addEventListener('DOMContentLoaded', function(){
 });
 
 function compartirPremios(sorteoId, fecha){
+  // 1. Abrimos la ventana INMEDIATAMENTE para que el navegador móvil no la bloquee
+  var win = window.open('about:blank', '_blank');
+  
   const url = '/resultados/api/premios-sorteo/?sorteo_id=' + sorteoId + '&fecha=' + fecha;
-  var win = window.open('', '_blank');
   fetch(url).then(function(r){ return r.json(); }).then(function(d){
     if (d.success){
-      if (win) { win.location.href = 'https://wa.me/?text=' + encodeURIComponent(d.resumen); } else { window.location.href = 'https://wa.me/?text=' + encodeURIComponent(d.resumen); }
+      var texto = d.resumen || d.texto || d.mensaje;
+      if (win) { win.location.href = 'https://wa.me/?text=' + encodeURIComponent(texto); } 
+      else { window.location.href = 'https://wa.me/?text=' + encodeURIComponent(texto); }
     } else {
       if (win) win.close();
-      alert(d.error || 'Error');
+      alert(d.error || 'Error al obtener los premios');
     }
+  }).catch(function(e){
+    if (win) win.close();
+    alert('Error de conexión');
   });
 }
 </script>
