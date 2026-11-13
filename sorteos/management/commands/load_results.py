@@ -236,9 +236,8 @@ class Command(BaseCommand):
 
                 if pick3_val and len(pick3_val) >= 3:
                     fijo_val = pick3_val[-2:].zfill(2)
-                if pick4_val and len(pick4_val) == 4:
-                    corrido1_val = pick4_val[:2]
-                    corrido2_val = pick4_val[2:4]
+                    corrido1_val = pick3_val[:2].zfill(2)
+                    corrido2_val = (pick3_val[0] + pick3_val[2]).zfill(2)
 
                 if nombre_db in sorteos_con_enloteria:
                     if resultado_existente and resultado_existente.fijo:
