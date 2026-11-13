@@ -572,6 +572,16 @@ def procesar_resultado(request, datos, resultado_existente=None, solo_crear_resu
         if Resultado.objects.filter(sorteo=sorteo, fecha=fecha).exists():
             raise ValueError(f"Ya existe un resultado para {sorteo.nombre} en {fecha.strftime('%d/%m/%Y')}.")
     else:
+        # BLINDAJE ANTI-BUCLE: Si los números no han cambiado, no hacemos nada.
+        if (resultado_existente.pick2 == pick2 and
+            resultado_existente.pick3 == pick3 and
+            resultado_existente.pick4 == pick4 and
+            resultado_existente.pick5 == pick5 and
+            resultado_existente.fijo == fijo and
+            resultado_existente.corrido_1 == corrido_1 and
+            resultado_existente.corrido_2 == corrido_2):
+            return resultado_existente, 0
+
         duplicado = Resultado.objects.filter(sorteo=sorteo, fecha=fecha).exclude(id=resultado_existente.id).exists()
         if duplicado:
             raise ValueError(f"Ya existe otro resultado para {sorteo.nombre} en {fecha.strftime('%d/%m/%Y')}.")
