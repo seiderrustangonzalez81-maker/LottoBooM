@@ -789,7 +789,7 @@ def procesar_resultado(request, datos, resultado_existente=None, solo_crear_resu
                         'metadata': {'resultado_id': resultado.id},
                     },
                 )
-                if created:
+                if created or not premio.cobrado:
                     premios_generados += 1
 
                     cliente = jugada.usuario
