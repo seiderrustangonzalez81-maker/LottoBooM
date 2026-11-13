@@ -384,5 +384,17 @@
     ],
     "fecha": "2026-11-13",
     "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "New York 2:30 PM",
+    "fecha": "2026-11-13",
+    "fuente": "lotteryusa",
+    "pick2": "",
+    "pick3": "297",
+    "pick4": "",
+    "pick5": "",
+    "fijo": "02",
+    "corrido_1": "09",
+    "corrido_2": "07"
   }
 ]
