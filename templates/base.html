@@ -1508,6 +1508,13 @@
       <a href="{% url 'usuarios:perfil_cliente' %}" class="menu-item"><span class="emoji">👤</span><span class="text">Mi Perfil</span></a>
       <a href="{% url 'publico:faq' %}" class="menu-item"><span class="emoji">❓</span><span class="text">Preguntas Frecuentes</span></a>
       <a href="{% url 'publico:charada' %}" class="menu-item"><span class="emoji">🎴</span><span class="text">La Charada</span></a>
+                </div>
+                <div class="menu-group">
+                    <div class="menu-group-toggle"><span class="group-emoji">🎯</span><span>Sorteos y Resultados</span><span class="caret">▶</span></div>
+                    <div class="menu-group-items">
+                        <a href="{% url 'sorteos:lista_sorteos' %}" class="menu-item"><span class="emoji">🎯</span><span class="text">Sorteos</span></a>
+                        <a href="{% url 'resultados:resultados' %}" class="menu-item"><span class="emoji">📊</span><span class="text">Resultados</span></a>
+                    </div>
     </div>
   </div>
   <div class="menu-group">
@@ -1624,6 +1631,7 @@
       <a href="{% url 'resultados:todos_los_ganadores' %}" class="menu-item"><span class="emoji">🏅</span><span class="text">Todos Ganadores</span></a>
       {% if user|has_role:'superadmin' %}
       <a href="{% url 'sorteos:sorteo_crear' %}" class="menu-item"><span class="emoji">➕</span><span class="text">Crear Sorteo</span></a>
+                    <a href="/admin/" class="menu-item" style="color: #ffd700; font-weight: bold;"><span class="emoji">🛡️</span><span class="text">Admin Django</span></a>
       {% endif %}
     </div>
   </div>
