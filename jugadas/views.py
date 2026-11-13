@@ -746,7 +746,7 @@ def agrupar_jugadas(qs):
             'destinatario': entry['destinatario'],
             'forma_pago': entry['forma_pago'],
             'fecha_sorteo': entry['fecha_sorteo'],
-            'creado_en': entry['lineas'][0].fecha if entry['lineas'] else None,
+            'creado_en': timezone.localtime(entry['lineas'][0].fecha).strftime('%I:%M %p') if entry['lineas'] and entry['lineas'][0].fecha else '',
             'total_apostado': entry['total_apostado'],
             'total_premios': entry['total_premios'],
             'ganancia_neta': entry['total_premios'] - entry['total_apostado'],
