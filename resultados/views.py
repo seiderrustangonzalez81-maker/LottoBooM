@@ -302,24 +302,9 @@ def jugada_es_ganadora(jugada, resultado):
     centena_2_val = n(derivados.get('centena_corrida_2'))
 
     if forma in ('fijo', 'fijos'):
+        # LOGICA ESTRICTA: Solo gana si el número es exactamente el Fijo
         if numero == fijo_val:
             return True, multiplicador
-        if numero and (numero == corrido_1_val or numero == corrido_2_val):
-            try:
-                from roles.utils import gestor_paga_fijo_como_corrido, get_dosis_gestor as _gd
-                from jugadas.models import FormaJuego as _FJ
-                if gestor_paga_fijo_como_corrido(jugada.destinatario):
-                    _fc = _FJ.objects.filter(nombre__iexact='corridos').first()
-                    if _fc:
-                        try:
-                            _mc = int(_gd(jugada.destinatario, jugada.sorteo, _fc, jugada.forma_pago))
-                            if _mc > 0:
-                                return True, _mc
-                        except Exception:
-                            pass
-                    return True, multiplicador
-            except Exception:
-                logger.exception('FIX_FIJO_PAGA_COMO_CORRIDO_V1 err jugada #%s', jugada.id)
         return False, 0
 
     if forma in ('corridos', 'corrido1', 'corrido2', 'corrido'):
