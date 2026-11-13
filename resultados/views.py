@@ -1182,6 +1182,17 @@ def resultados_view(request):
         puede_editar = False
         puede_eliminar = False
 
+    # ═══ BUSCAR SORTEOS APOSTADOS POR EL CLIENTE ═══
+    mis_apuestas = set()
+    if request.user.is_authenticated:
+        # Buscamos las fechas y sorteos donde el cliente tiene jugadas
+        mis_apuestas = set(Jugada.objects.filter(usuario=request.user).values_list('sorteo_id', 'fecha_sorteo'))
+    
+    # Marcamos cada resultado para saber si el cliente apostó en él
+    for r in resultados_lista:
+        r.aposto_cliente = (r.sorteo_id, r.fecha) in mis_apuestas
+    # ══════════════════════════════════════════════════════
+
     context = {
         'resultados': resultados_lista,
         'sorteos': sorteos,
