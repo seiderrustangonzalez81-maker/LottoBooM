@@ -302,7 +302,7 @@ def jugada_es_ganadora(jugada, resultado):
     centena_2_val = n(derivados.get('centena_corrida_2'))
 
     if forma in ('fijo', 'fijos'):
-        if numero == fijo_val or numero in fijos_list:
+        if numero == fijo_val:
             return True, multiplicador
         if numero and (numero == corrido_1_val or numero == corrido_2_val):
             try:
@@ -329,8 +329,7 @@ def jugada_es_ganadora(jugada, resultado):
                 count += 1
             if corrido_2_val and numero == corrido_2_val:
                 count += 1
-            count_lista = corridos_list.count(numero) if numero in corridos_list else 0
-            total_coincidencias = max(count, count_lista)
+            total_coincidencias = count
             if total_coincidencias > 0:
                 return True, multiplicador * total_coincidencias
 
