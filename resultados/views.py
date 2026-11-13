@@ -334,7 +334,8 @@ def jugada_es_ganadora(jugada, resultado):
             if total_coincidencias > 0:
                 return True, multiplicador * total_coincidencias
 
-        if numero == fijo_val and numero not in corridos_list:
+        # (DESACTIVADO: Pagaba corridos como fijos)
+        if False and numero == fijo_val and numero not in corridos_list:
             try:
                 from roles.utils import gestor_paga_fijo_como_corrido
                 if gestor_paga_fijo_como_corrido(jugada.destinatario):
