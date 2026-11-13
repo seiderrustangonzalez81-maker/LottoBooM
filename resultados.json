@@ -214,5 +214,25 @@
     ],
     "fecha": "2026-11-13",
     "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "La Primera",
+    "numeros": [
+      "61",
+      "86",
+      "82"
+    ],
+    "fecha": "2026-11-13",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "LoteDom",
+    "numeros": [
+      "98",
+      "34",
+      "70"
+    ],
+    "fecha": "2026-11-13",
+    "fuente": "enloteria"
   }
 ]
