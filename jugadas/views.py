@@ -686,6 +686,18 @@ def agrupar_jugadas(qs):
         for s in por_sorteo.values():
             formas_list = []
             for f in s['por_forma'].values():
+                grupos = []
+                for m in f['por_monto'].values():
+                    est = next((e for e in ('ganadora', 'pendiente', 'perdedora')
+                                if e in m['estados']), 'finalizada')
+                    grupos.append({
+                        'monto': m['monto'],
+                        'numeros': [num['numero'] for num in m['numeros']],
+                        'premios': m['premios'],
+                        'estado': est,
+                    })
+                grupos.sort(key=lambda g: -float(g['monto']))
+
                 numeros_con_monto = []
                 for m in f['por_monto'].values():
                     for num_dict in m['numeros']:
@@ -696,12 +708,15 @@ def agrupar_jugadas(qs):
                             'premios': m['premios'],
                         })
                 numeros_con_monto.sort(key=lambda g: -float(g['monto']))
+                
                 est_f = next((e for e in ('ganadora', 'pendiente', 'perdedora')
                               if e in f['estados']), 'finalizada')
                 formas_list.append({
                     'forma_nombre': f['forma_nombre'],
+                    'grupos_monto': grupos,
                     'numeros_con_monto': numeros_con_monto,
                     'monto_total': f['total'],
+                    'total': f['total'],
                     'estado': est_f,
                 })
             formas_list.sort(key=lambda x: x['forma_nombre'])
