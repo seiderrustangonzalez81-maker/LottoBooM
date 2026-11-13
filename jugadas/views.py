@@ -611,8 +611,8 @@ def agrupar_jugadas(qs):
     ):
         es_super = (j.forma_juego and j.forma_juego.nombre.lower() == 'superparlet')
 
-        # FIX_AGRUPAR_CLIENTE_SORTEO_V1: agrupar por (cliente, sorteo, fecha)
-        key = (j.usuario_id, j.sorteo_id, j.fecha_sorteo, es_super)
+        # FIX_NO_AGRUPAR_BOLETAS_V1: Agrupar por ID de boleta, no por cliente/sorteo
+        key = (j.boleta_id, es_super) if j.boleta_id else (f"huerfana_{j.id}", es_super)
         if j.boleta_id:
             bucket = buckets_super if es_super else buckets_normal
             entry = bucket.setdefault(key, _nueva_entry(j, es_super))
