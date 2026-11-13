@@ -462,8 +462,6 @@ function compartirTodosPremios(){
   if (btn){ btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Preparando...'; }
 
   var win = window.open('', '_blank');
-
-  const win = window.open('', '_blank');
       fetch('/resultados/api/premios-todos/?' + params.toString())
     .then(function(r){ return r.json(); })
     .then(function(d){
@@ -522,10 +520,12 @@ document.addEventListener('DOMContentLoaded', function(){
 
 function compartirPremios(sorteoId, fecha){
   const url = '/resultados/api/premios-sorteo/?sorteo_id=' + sorteoId + '&fecha=' + fecha;
+  var win = window.open('', '_blank');
   fetch(url).then(function(r){ return r.json(); }).then(function(d){
     if (d.success){
       if (win) { win.location.href = 'https://wa.me/?text=' + encodeURIComponent(d.resumen); } else { window.location.href = 'https://wa.me/?text=' + encodeURIComponent(d.resumen); }
     } else {
+      if (win) win.close();
       alert(d.error || 'Error');
     }
   });
