@@ -853,7 +853,7 @@ body.ma-dark .ma-grupo .premio{color:#a3e635;}
                             <span class="premio">🏆 ${{ g.premios|stringformat:"0.2f" }}</span>
                           {% endif %}
                           <span class="ma-grupo-nums-inline">
-                            {% for n in g.numeros %}<code{% if g.premios > 0 %} class="num-ganador"{% endif %}>{{ n }}</code>{% endfor %}
+                            {% for item in f.numeros_con_monto %}{% if item.monto == g.monto %}<code{% if item.estado == "ganadora" %} class="num-ganador"{% endif %}>{{ item.numero }}</code>{% endif %}{% endfor %}
                           </span>
                         </div>
                       {% endfor %}
@@ -953,7 +953,7 @@ body.ma-dark .ma-grupo .premio{color:#a3e635;}
                           <span class="ma-grupo-monto">${{ g.monto|stringformat:"0.2f" }}</span>
                           {% if g.premios > 0 %}<span class="premio">🏆 ${{ g.premios|stringformat:"0.2f" }}</span>{% endif %}
                           <span class="ma-grupo-nums-inline">
-                            {% for n in g.numeros %}<code{% if g.premios > 0 %} class="num-ganador"{% endif %}>{{ n }}</code>{% endfor %}
+                            {% for item in f.numeros_con_monto %}{% if item.monto == g.monto %}<code{% if item.estado == "ganadora" %} class="num-ganador"{% endif %}>{{ item.numero }}</code>{% endif %}{% endfor %}
                           </span>
                         </div>
                       {% endfor %}
