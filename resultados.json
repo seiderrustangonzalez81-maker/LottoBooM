@@ -664,5 +664,17 @@
     "fijo": "08",
     "corrido_1": "05",
     "corrido_2": "01"
+  },
+  {
+    "sorteo_nombre": "New Jersey 10:57 PM",
+    "fecha": "2026-11-13",
+    "fuente": "lotteryusa",
+    "pick2": "",
+    "pick3": "024",
+    "pick4": "2979",
+    "pick5": "",
+    "fijo": "00",
+    "corrido_1": "02",
+    "corrido_2": "04"
   }
 ]
