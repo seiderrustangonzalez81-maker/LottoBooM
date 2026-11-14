@@ -101,3 +101,10 @@ backup_db_*.sqlite3
 backups_favicon/
 .git-credentials
 diag_*.sh
+
+# Scripts temporales
+*.bak
+*.bak_parser
+arreglar_*.py
+fix_*.py
+renombrar_*.py
