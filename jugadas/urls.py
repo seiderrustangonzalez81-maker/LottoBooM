@@ -39,4 +39,5 @@ urlpatterns = [
     path('api/otorgar-postpago/', views.otorgar_postpago_view, name='otorgar_postpago'),
     path('api/liquidar-postpago/', views.liquidar_postpago_view, name='liquidar_postpago'),
     path('api/postpago-cliente/', views.api_postpago_cliente, name='api_postpago_cliente'),
+    path('api/ultimo-cambio-resultados/', views.api_ultimo_cambio_resultados, name='api_ultimo_cambio_resultados'),
 ]

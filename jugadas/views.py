@@ -4342,3 +4342,20 @@ def api_check_duplicados(request):
         'count': len(duplicados),
     })
 
+
+# ═══════════════════════════════════════════════════════════════
+# API: último cambio en resultados (para auto-reload)
+# ═══════════════════════════════════════════════════════════════
+@login_required
+def api_ultimo_cambio_resultados(request):
+    from resultados.models import Resultado
+    from django.db.models import Max
+    from django.http import JsonResponse
+    ultimo = Resultado.objects.aggregate(
+        ultimo_id=Max('id'),
+        ultima_fecha=Max('actualizado_en')
+    )
+    return JsonResponse({
+        'ultimo_id': ultimo['ultimo_id'] or 0,
+        'ultima_fecha': ultimo['ultima_fecha'].isoformat() if ultimo['ultima_fecha'] else None,
+    })
