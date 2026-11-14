@@ -325,6 +325,13 @@ def historial_cuadres(request):
     es_auditor_user = user.roles.filter(tipo='auditor', activo=True).exists()
     fecha_inicio = request.GET.get('fecha_inicio')
     fecha_fin = request.GET.get('fecha_fin')
+    # FIX_FECHA_HOY_V1: default de hoy si no vienen fechas
+    if not fecha_inicio and not fecha_fin:
+        from django.utils import timezone as _tz_fix
+        _hoy_fix = _tz_fix.localdate()
+        fecha_inicio = _hoy_fix.strftime('%Y-%m-%d')
+        fecha_fin = _hoy_fix.strftime('%Y-%m-%d')
+
     tipo = request.GET.get('tipo', 'comercial')
 
     if es_superadmin:
@@ -400,6 +407,13 @@ def historial_ventas(request):
     es_banco = user.roles.filter(tipo='banco', activo=True).exists()
     fecha_inicio = request.GET.get('fecha_inicio')
     fecha_fin = request.GET.get('fecha_fin')
+    # FIX_FECHA_HOY_V1: default de hoy si no vienen fechas
+    if not fecha_inicio and not fecha_fin:
+        from django.utils import timezone as _tz_fix
+        _hoy_fix = _tz_fix.localdate()
+        fecha_inicio = _hoy_fix.strftime('%Y-%m-%d')
+        fecha_fin = _hoy_fix.strftime('%Y-%m-%d')
+
     sorteo_id = request.GET.get('sorteo')
     forma_juego_id = request.GET.get('forma_juego')
     jugadas = Jugada.objects.filter(estado__in=['confirmada', 'ganadora', 'perdedora'])
@@ -440,6 +454,13 @@ def analisis_rendimiento(request):
     es_banco = user.roles.filter(tipo='banco', activo=True).exists()
     fecha_inicio = request.GET.get('fecha_inicio')
     fecha_fin = request.GET.get('fecha_fin')
+    # FIX_FECHA_HOY_V1: default de hoy si no vienen fechas
+    if not fecha_inicio and not fecha_fin:
+        from django.utils import timezone as _tz_fix
+        _hoy_fix = _tz_fix.localdate()
+        fecha_inicio = _hoy_fix.strftime('%Y-%m-%d')
+        fecha_fin = _hoy_fix.strftime('%Y-%m-%d')
+
     sorteo_id = request.GET.get('sorteo')
     jugadas = Jugada.objects.filter(estado__in=['confirmada', 'ganadora', 'perdedora'])
     if fecha_inicio:
@@ -4830,6 +4851,13 @@ def historial_movimientos(request):
         qs = qs.filter(forma_pago_id=fp_id)
     fd = (request.GET.get('fecha_desde') or '').strip()
     fh = (request.GET.get('fecha_hasta') or '').strip()
+    # FIX_FECHA_HOY_V1: default de hoy si no vienen fechas
+    if not fd and not fh:
+        from django.utils import timezone as _tz_fix
+        _hoy_fix = _tz_fix.localdate()
+        fd = _hoy_fix.strftime('%Y-%m-%d')
+        fh = _hoy_fix.strftime('%Y-%m-%d')
+
     # FIX_DEFAULT_HOY_OK_V1: default hoy si no hay filtros de fecha
     if not fd and not fh:
         from django.utils import timezone as _tz_hoy

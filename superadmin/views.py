@@ -361,6 +361,13 @@ def jugadas_list(request):
 
     fecha_desde = request.GET.get('fecha_desde')
     fecha_hasta = request.GET.get('fecha_hasta')
+    # FIX_FECHA_HOY_V1: default de hoy si no vienen fechas
+    if not fecha_desde and not fecha_hasta:
+        from django.utils import timezone as _tz_fix
+        _hoy_fix = _tz_fix.localdate()
+        fecha_desde = _hoy_fix.strftime('%Y-%m-%d')
+        fecha_hasta = _hoy_fix.strftime('%Y-%m-%d')
+
     if fecha_desde:
         jugadas = jugadas.filter(fecha__date__gte=fecha_desde)
     if fecha_hasta:
@@ -392,6 +399,13 @@ def jugadas_list(request):
 def reporte_ventas(request):
     fecha_inicio = request.GET.get('fecha_inicio')
     fecha_fin = request.GET.get('fecha_fin')
+    # FIX_FECHA_HOY_V1: default de hoy si no vienen fechas
+    if not fecha_inicio and not fecha_fin:
+        from django.utils import timezone as _tz_fix
+        _hoy_fix = _tz_fix.localdate()
+        fecha_inicio = _hoy_fix.strftime('%Y-%m-%d')
+        fecha_fin = _hoy_fix.strftime('%Y-%m-%d')
+
     sorteo_id = request.GET.get('sorteo')
     forma_juego_id = request.GET.get('forma_juego')
 

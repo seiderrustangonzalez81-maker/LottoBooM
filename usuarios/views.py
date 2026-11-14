@@ -1449,6 +1449,13 @@ def mis_movimientos(request):
     if fp_id.isdigit(): qs = qs.filter(forma_pago_id=fp_id)
     fd = (request.GET.get('fecha_desde') or '').strip()
     fh = (request.GET.get('fecha_hasta') or '').strip()
+    # FIX_FECHA_HOY_V1: default de hoy si no vienen fechas
+    if not fd and not fh:
+        from django.utils import timezone as _tz_fix
+        _hoy_fix = _tz_fix.localdate()
+        fd = _hoy_fix.strftime('%Y-%m-%d')
+        fh = _hoy_fix.strftime('%Y-%m-%d')
+
     # FIX_DEFAULT_HOY_OK_V1: default hoy si no hay filtros de fecha
     if not fd and not fh:
         from django.utils import timezone as _tz_hoy

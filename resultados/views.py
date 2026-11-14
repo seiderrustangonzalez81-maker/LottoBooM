@@ -998,6 +998,13 @@ def resultados_view(request):
 
     fecha_desde_str = request.GET.get('fecha_desde')
     fecha_hasta_str = request.GET.get('fecha_hasta')
+    # FIX_FECHA_HOY_V1: default de hoy si no vienen fechas
+    if not fecha_desde_str and not fecha_hasta_str:
+        from django.utils import timezone as _tz_fix
+        _hoy_fix = _tz_fix.localdate()
+        fecha_desde_str = _hoy_fix.strftime('%Y-%m-%d')
+        fecha_hasta_str = _hoy_fix.strftime('%Y-%m-%d')
+
 
     tiene_filtro_fecha = bool(fecha_desde_str or fecha_hasta_str)
 
@@ -2107,6 +2114,13 @@ def api_resumen_filtrado(request):
     sorteo_id = request.GET.get('sorteo')
     fecha_desde_str = request.GET.get('fecha_desde')
     fecha_hasta_str = request.GET.get('fecha_hasta')
+    # FIX_FECHA_HOY_V1: default de hoy si no vienen fechas
+    if not fecha_desde_str and not fecha_hasta_str:
+        from django.utils import timezone as _tz_fix
+        _hoy_fix = _tz_fix.localdate()
+        fecha_desde_str = _hoy_fix.strftime('%Y-%m-%d')
+        fecha_hasta_str = _hoy_fix.strftime('%Y-%m-%d')
+
 
     resultados = Resultado.objects.select_related('sorteo').order_by(
         'fecha', 'sorteo__hora_salida', 'hora'
