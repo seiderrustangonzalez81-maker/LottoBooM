@@ -35,14 +35,14 @@ MAPEO_NOMBRES = {
     "Real": "Real", "Real Noche": "Real Noche",
 
     # USA - LotteryUSA (Fuente Oficial)
-    "Texas 1:20 PM": "Texas 1:20 PM", "Texas 10:12 PM": "Texas 11 PM",
+    "Texas 1:20 PM": "Texas 1:20 PM", "Texas 10:12 PM": "Texas 11 AM",
     "Florida 1:35 PM": "Florida 1:35 PM", "Florida 9:45 PM": "Florida 9:50 PM",
     "New York 2:30 PM": "New York 2:30 PM", "New York 10:30 PM": "New York 10:30 PM",
     "New Jersey 12:50 PM": "New Jersey 12:50 PM", "New Jersey 10:57 PM": "New Jersey 10:50 PM",
     "Georgia 12:30 PM": "Georgia 12:30 PM",
     "Georgia 6:59 PM": "Georgia 7 PM",                    # ⬅️ BUG B CORREGIDO (Evening)
-    "Georgia 11:34 PM": "Georgia 11:34 PM",               # ⬅️ BUG A CORREGIDO (Night)
-    "Tennessee 1:20 PM": "Tennessee 1:20 PM", "Tennessee 6:30 PM": "Tennessee 7:20 PM",
+    "Georgia 11:34 PM": "Georgia 12:34 AM",               # ⬅️ BUG A CORREGIDO (Night)
+    "Tennessee 10:20 AM": "Tennessee 10:20 AM", "Tennessee 1:20 PM": "Tennessee 1:20 PM", "Tennessee 6:30 PM": "Tennessee 7:20 PM",
 
     # USA - Enloteria (Fallback para Fijo y Corridos)
     "Florida Tarde": "Florida 9:50 PM",
