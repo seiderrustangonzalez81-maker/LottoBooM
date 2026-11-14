@@ -240,5 +240,25 @@
     "fijo": "00",
     "corrido_1": "04",
     "corrido_2": "00"
+  },
+  {
+    "sorteo_nombre": "Loteka Tarde",
+    "numeros": [
+      "24",
+      "44",
+      "54"
+    ],
+    "fecha": "2026-11-14",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Anguilla 3PM",
+    "numeros": [
+      "45",
+      "24",
+      "74"
+    ],
+    "fecha": "2026-11-14",
+    "fuente": "enloteria"
   }
 ]
