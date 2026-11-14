@@ -34,12 +34,34 @@ body.ma-dark{
   --ma-rose-soft:#38101a; --ma-emerald-soft:#0a2a1f;
 }
 html,body{background:var(--ma-bg);color:var(--ma-ink);font-family:var(--f-sans);}
+
+/* ============================================================
+   FIX_ICONOS_MA_V1: Control de tipografía sin romper FontAwesome
+   ============================================================ */
 .ma-wrap{max-width:1500px;margin:0 auto;padding:18px 18px 60px;}
-.ma-wrap, .ma-wrap *:not(code):not(.val):not(.ref-text):not(.ma-grupo-monto):not(.ma-fj-total):not(.sorteo-total):not(.tot strong):not(.money){font-family:var(--f-sans);}
-.ma-wrap code, .ma-wrap .val, .ma-wrap .ref-text,
-.ma-wrap .ma-grupo-monto, .ma-wrap .ma-fj-total,
-.ma-wrap .sorteo-total, .ma-wrap .tot strong,
-.ma-wrap .money {font-family:var(--f-mono);}
+
+/* Aplicamos la fuente sans-serif a todo, EXCEPTO a los iconos y elementos mono */
+.ma-wrap,
+.ma-wrap *:not(code):not(.val):not(.ref-text):not(.ma-grupo-monto):not(.ma-fj-total):not(.sorteo-total):not(.tot strong):not(.money):not(i):not(.fas):not(.far):not(.fab):not(.fa) {
+    font-family: var(--f-sans);
+}
+
+/* Elementos que usan monoespaciada */
+.ma-wrap code,
+.ma-wrap .val,
+.ma-wrap .ref-text,
+.ma-wrap .ma-grupo-monto,
+.ma-wrap .ma-fj-total,
+.ma-wrap .sorteo-total,
+.ma-wrap .tot strong,
+.ma-wrap .money {
+    font-family: var(--f-mono);
+}
+
+/* Blindaje absoluto: FontAwesome siempre gana */
+.ma-wrap i.fas, .ma-wrap i.fa-solid   { font-family: "Font Awesome 6 Free"   !important; font-weight: 900; }
+.ma-wrap i.far, .ma-wrap i.fa-regular { font-family: "Font Awesome 6 Free"   !important; font-weight: 400; }
+.ma-wrap i.fab, .ma-wrap i.fa-brands  { font-family: "Font Awesome 6 Brands" !important; font-weight: 400; }
 
 .ma-header{position:relative;background:var(--ma-surface);border:1px solid var(--ma-line);
   border-radius:var(--ma-r-xl);padding:18px 24px;margin-bottom:16px;
@@ -156,16 +178,10 @@ body.ma-dark .ma-tab .badge-cnt{background:#1e1e2a;}
   font-size:.72rem;font-weight:700;cursor:pointer;transition:.18s;
   font-family:inherit;letter-spacing:.1px;white-space:nowrap;}
 .ma-act-btn i{font-size:.72rem;}
-.ma-act-btn:hover{transform:translateY(-1px);color:#fff;border-color:transparent;}
 .ma-act-btn:disabled{opacity:.45;cursor:not-allowed;transform:none!important;}
-.ma-act-btn.duplicate:hover{background:var(--ma-cyan);box-shadow:0 4px 12px -5px var(--ma-cyan);}
-.ma-act-btn.edit:hover{background:var(--ma-amber);box-shadow:0 4px 12px -5px var(--ma-amber);}
-.ma-act-btn.cancel:hover{background:var(--ma-rose);box-shadow:0 4px 12px -5px var(--ma-rose);}
-.ma-act-btn.share-wa:hover{background:#25d366;box-shadow:0 4px 12px -5px #25d366;}
 .ma-boleta-row-2{display:flex;flex-wrap:wrap;gap:14px;font-size:.76rem;color:var(--ma-ink-2);
   font-weight:600;margin-bottom:10px;}
 .ma-boleta-row-2 .meta{display:inline-flex;align-items:center;gap:5px;}
-.ma-boleta-row-2 .meta i{color:var(--ma-ink-3);font-size:.72rem;}
 .ma-boleta-row-3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;
   padding:10px 12px;background:var(--ma-surface-2);
   border-radius:var(--ma-r-sm);border:1px solid var(--ma-line);}
@@ -196,7 +212,7 @@ body.ma-dark .ma-estado.finalizada{background:#1e1e2a;}
   gap:10px;flex-wrap:wrap;padding-bottom:8px;margin-bottom:8px;
   border-bottom:1px dashed var(--ma-line);font-weight:800;font-size:.82rem;color:var(--ma-ink);}
 .ma-sorteo-block-head .sorteo-name{display:inline-flex;align-items:center;gap:7px;}
-.ma-sorteo-block-head .sorteo-name i{color:var(--ma-violet);font-size:.75rem;}
+.ma-sorteo-block-head .sorteo-name i{font-size:.75rem;}
 .ma-sorteo-block-head .sorteo-total{font-weight:700;font-size:.82rem;
   padding:3px 11px;border-radius:999px;background:var(--ma-primary-soft);color:var(--ma-primary);}
 .ma-fj{display:grid;grid-template-columns:130px 1fr auto;gap:12px;align-items:center;
@@ -204,7 +220,7 @@ body.ma-dark .ma-estado.finalizada{background:#1e1e2a;}
 .ma-fj:last-child{border-bottom:none;padding-bottom:0;}
 .ma-fj-nombre{display:flex;align-items:center;gap:7px;flex-wrap:wrap;
   font-weight:700;font-size:.78rem;color:var(--ma-ink);}
-.ma-fj-nombre i{color:var(--ma-violet);font-size:.7rem;}
+.ma-fj-nombre i{font-size:.7rem;}
 .ma-fj-nums{display:flex;flex-wrap:wrap;gap:6px;min-width:0;}
 .ma-fj-total{font-weight:800;font-size:.9rem;color:var(--ma-ink);
   text-align:right;min-width:80px;letter-spacing:-.4px;}
@@ -242,7 +258,6 @@ body.ma-dark .ma-grupo .premio{color:#a3e635;}
 .ma-toast.info{border-color:rgba(79,70,229,.4);background:var(--ma-primary-soft);}
 
 @media (max-width:900px){
-  
   .ma-fj{grid-template-columns:1fr;gap:8px;}
   .ma-fj-total{text-align:left;}
 }
@@ -252,7 +267,6 @@ body.ma-dark .ma-grupo .premio{color:#a3e635;}
   .ma-header-text h2{font-size:1.08rem;}
   .ma-stat{padding:12px 14px;}
   .ma-stat .val{font-size:1.05rem;}
-  
   .ma-tabs{width:100%;justify-content:center;}
   .ma-boleta-actions{width:100%;justify-content:flex-start;}
   .ma-boleta-row-3{grid-template-columns:1fr;}
@@ -260,7 +274,6 @@ body.ma-dark .ma-grupo .premio{color:#a3e635;}
   .ma-toast.visible{transform:translateY(0);}
 }
 @media (max-width:420px){
-  
 }
 
 /* Botón compartir todas */
@@ -280,30 +293,21 @@ body.ma-dark .ma-grupo .premio{color:#a3e635;}
 .ma-compartir-todas:hover { transform: translate(-1px,-1px); box-shadow: 4px 4px 0 #064e3b; }
 .ma-compartir-todas:active { transform: translate(1px,1px); box-shadow: 1px 1px 0 #064e3b; }
 .ma-compartir-todas i { color: #fff !important; }
-/* ═══════════════════════════════════════════════════════════
-   MEJORAS MÓVILES — apostar.html
-   Solo aplican en pantallas ≤ 900px. No tocan el desktop.
-   ═══════════════════════════════════════════════════════════ */
 
-/* ---------- Tablet / móvil grande (≤ 900px) ---------- */
+/* ═══════════════════════════════════════════════════════════
+   MEJORAS MÓVILES — mis_apuestas.html
+   ═══════════════════════════════════════════════════════════ */
 @media (max-width: 900px){
   .ma-wrap{padding:14px 14px 50px;}
-
   .ma-header{padding:14px 16px;}
   .ma-header-icon{width:38px;height:38px;font-size:1.15rem;border-radius:10px;}
   .ma-header-text h2{font-size:1.15rem;}
   .ma-header-text p{font-size:.74rem;}
-
-  
   .ma-stat{padding:12px;gap:10px;}
   .ma-stat .ic{width:34px;height:34px;font-size:.92rem;border-radius:9px;}
   .ma-stat .val{font-size:1.15rem;}
   .ma-stat .lbl{font-size:.58rem;letter-spacing:.8px;}
-
   .ma-filters{padding:14px;}
-  
-
-  /* Acciones de boleta: scroll horizontal si no caben */
   .ma-boleta-actions{
     display:flex;flex-wrap:nowrap;overflow-x:auto;
     -webkit-overflow-scrolling:touch;
@@ -311,8 +315,6 @@ body.ma-dark .ma-grupo .premio{color:#a3e635;}
   }
   .ma-boleta-actions::-webkit-scrollbar{display:none;}
   .ma-act-btn{flex:0 0 auto;}
-
-  /* Totales: 3 columnas con separadores verticales */
   .ma-boleta-row-3{
     grid-template-columns:repeat(3,1fr);
     gap:0;padding:8px 4px;
@@ -327,8 +329,6 @@ body.ma-dark .ma-grupo .premio{color:#a3e635;}
   .ma-boleta-row-3 .tot:last-child{border-right:none;}
   .ma-boleta-row-3 .tot span{font-size:.55rem;letter-spacing:.6px;}
   .ma-boleta-row-3 .tot strong{font-size:.92rem;}
-
-  /* Forma de juego: nombre+total arriba, números abajo (full width) */
   .ma-fj{
     grid-template-columns:1fr auto;
     gap:6px 10px;
@@ -344,18 +344,14 @@ body.ma-dark .ma-grupo .premio{color:#a3e635;}
   .ma-fj-nums{grid-column:1 / -1;grid-row:2;}
 }
 
-/* ---------- Móvil (≤ 640px) ---------- */
 @media (max-width: 640px){
   .ma-wrap{padding:10px 10px 40px;}
-
-  /* HEADER apilado: info arriba, botones abajo en grid */
   .ma-header{padding:12px 14px;border-radius:16px;}
   .ma-header-inner{flex-direction:column;align-items:stretch;gap:10px;}
   .ma-header-left{gap:10px;}
   .ma-header-icon{width:36px;height:36px;font-size:1.05rem;}
   .ma-header-text h2{font-size:1.05rem;letter-spacing:-.3px;}
   .ma-header-text p{font-size:.7rem;}
-
   .ma-header-right{
     display:grid;
     grid-template-columns:1fr 42px 42px;
@@ -372,25 +368,17 @@ body.ma-dark .ma-grupo .premio{color:#a3e635;}
     box-shadow:2px 2px 0 #064e3b;
   }
   .ma-icon-btn{width:42px;height:42px;font-size:.95rem;}
-
-  /* STATS 2x2 más compactas */
-  
   .ma-stat{padding:10px 12px;gap:9px;border-radius:12px;}
   .ma-stat::before{width:3px;}
   .ma-stat .ic{width:32px;height:32px;font-size:.85rem;border-radius:8px;}
   .ma-stat .val{font-size:1rem;letter-spacing:-.3px;}
   .ma-stat .lbl{font-size:.54rem;letter-spacing:.7px;}
-
-  /* FILTROS */
   .ma-filters{padding:12px;border-radius:14px;}
   .ma-filters::before{height:2px;}
-  
   .ma-fgrp label{font-size:.55rem;letter-spacing:.7px;}
   .ma-fgrp select,.ma-fgrp input{padding:8px 10px;font-size:.78rem;border-radius:8px;}
   .ma-filters-actions{margin-top:12px;}
   .btn-clear{padding:9px 14px;font-size:.78rem;}
-
-  /* TABS: scroll horizontal elegante */
   .ma-tabs{
     width:100%;border-radius:12px;padding:4px;
     overflow-x:auto;flex-wrap:nowrap;
@@ -400,66 +388,45 @@ body.ma-dark .ma-grupo .premio{color:#a3e635;}
   .ma-tabs::-webkit-scrollbar{display:none;}
   .ma-tab{padding:8px 14px;font-size:.78rem;flex:0 0 auto;}
   .ma-tab .badge-cnt{font-size:.6rem;padding:1px 7px;}
-
-  /* BOLETA */
   .ma-boleta{border-radius:14px;margin-bottom:12px;}
   .ma-boleta-head{padding:12px 14px 10px;}
   .ma-boleta-body{padding:10px 14px 12px;}
-
   .ma-boleta-row-1{margin-bottom:8px;gap:8px;}
   .ma-boleta-ref{font-size:.88rem;gap:8px;}
   .ma-boleta-ref .ref-icon{width:28px;height:28px;font-size:.75rem;border-radius:8px;}
   .ma-estado{font-size:.55rem;padding:3px 9px;}
-
   .ma-boleta-row-2{gap:8px 12px;font-size:.72rem;}
   .ma-boleta-row-2 .meta i{font-size:.68rem;}
-
-  /* Sorteo block */
   .ma-sorteo-block{padding:9px 10px;border-radius:10px;margin-bottom:8px;}
   .ma-sorteo-block-head{padding-bottom:7px;margin-bottom:7px;font-size:.76rem;}
   .ma-sorteo-block-head .sorteo-total{font-size:.72rem;padding:2px 9px;}
-
-  /* Forma de juego más compacta */
   .ma-fj{padding:9px 2px;gap:6px 8px;}
   .ma-fj-nombre{font-size:.74rem;}
   .ma-fj-total{font-size:.9rem;}
-
-  /* Chips de números */
   .ma-grupo{padding:3px 8px;gap:6px;}
   .ma-grupo-monto{font-size:.66rem;padding:1px 7px;}
   .ma-grupo .premio{font-size:.6rem;padding:1px 6px;}
   .ma-grupo-nums-inline{gap:3px;}
   .ma-grupo-nums-inline code{font-size:.68rem;padding:2px 6px;border-radius:4px;}
-
-  /* Toast */
   .ma-toast{left:10px;right:10px;top:70px;padding:12px 14px;font-size:.82rem;}
-
-  /* Vacío */
   .ma-empty{padding:40px 16px;}
   .ma-empty .ico{font-size:2.4rem;margin-bottom:10px;}
   .ma-empty h4{font-size:.96rem;}
   .ma-empty p{font-size:.82rem;}
 }
 
-/* ---------- Móvil pequeño (≤ 420px) ---------- */
 @media (max-width: 420px){
   .ma-stat{padding:9px 10px;gap:7px;}
   .ma-stat .ic{width:28px;height:28px;font-size:.78rem;}
   .ma-stat .val{font-size:.92rem;}
-
-  
-
   .ma-header-right{grid-template-columns:1fr 40px 40px;}
   .ma-icon-btn{width:40px;height:40px;}
-
   .ma-act-btn{padding:6px 10px;font-size:.68rem;}
   .ma-act-btn i{font-size:.68rem;}
-
   .ma-boleta-ref{font-size:.82rem;}
   .ma-boleta-ref .ref-text{font-size:.82rem;}
 }
 
-/* ---------- Pantallas muy estrechas (≤ 360px) ---------- */
 @media (max-width: 360px){
   .ma-wrap{padding:8px 8px 30px;}
   .ma-header{padding:10px 12px;}
@@ -477,25 +444,7 @@ body.ma-dark .ma-grupo .premio{color:#a3e635;}
   -webkit-tap-highlight-color:transparent;
 }
 
-/* Ajuste móvil para el buscador */
-@media (max-width: 768px) {
-    
-}
-
-
-
-/* Ajuste móvil definitivo */
-@media (max-width: 768px) {
-    
-    
-}
-@media (max-width: 480px) {
-    
-    
-}
-
-
-/* FIX_GRID_MAESTRO_V7: Grid a prueba de balas */
+/* FIX_GRID_MAESTRO_V7 */
 .ma-stats {
     display: grid !important;
     grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)) !important;
@@ -507,32 +456,24 @@ body.ma-dark .ma-grupo .premio{color:#a3e635;}
     grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)) !important;
     gap: 10px !important;
 }
-/* El buscador siempre ocupa toda la fila */
 .ma-filters-grid > div:last-child {
     grid-column: 1 / -1 !important;
 }
-
-/* En pantallas muy pequeñas, forzar 1 columna si es necesario, pero de forma limpia */
 @media (max-width: 400px) {
     .ma-stats { grid-template-columns: 1fr 1fr !important; }
     .ma-filters-grid { grid-template-columns: 1fr !important; }
 }
 
-
-/* FIX_MIS_APUESTAS_2COLS_V3 (2026-10-20): Forzar 2 columnas en móviles */
+/* FIX_MIS_APUESTAS_2COLS_V3 */
 @media (max-width: 768px) {
-    /* Forzar 2 columnas exactas para los filtros */
-    .ma-filters-grid { 
-        display: grid !important; 
-        grid-template-columns: 1fr 1fr !important; 
-        gap: 10px !important; 
+    .ma-filters-grid {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
+        gap: 10px !important;
     }
-    /* El último elemento (el buscador) ocupa toda la fila */
-    .ma-filters-grid > div:last-child { 
-        grid-column: 1 / -1 !important; 
+    .ma-filters-grid > div:last-child {
+        grid-column: 1 / -1 !important;
     }
-    
-    /* Forzar 2 columnas exactas para las estadísticas de arriba */
     .ma-stats {
         display: grid !important;
         grid-template-columns: 1fr 1fr !important;
@@ -540,30 +481,130 @@ body.ma-dark .ma-grupo .premio{color:#a3e635;}
     }
 }
 
+/* FIX_NUMEROS_GANADOR_V3 */
+.ma-grupo-nums-inline code{
+  background:transparent !important;
+  color:var(--ma-ink) !important;
+  padding:0 4px !important;
+  border:none !important;
+  font-weight:700;
+}
+.ma-grupo-nums-inline code.num-ganador{
+  background:transparent !important;
+  border:2px solid #16a34a !important;
+  color:#15803d !important;
+  padding:1px 6px !important;
+  border-radius:4px !important;
+  font-weight:900 !important;
+}
+body.ma-dark .ma-grupo-nums-inline code{
+  color:#e5e7eb !important;
+}
+body.ma-dark .ma-grupo-nums-inline code.num-ganador{
+  border-color:#22c55e !important;
+  color:#4ade80 !important;
+}
 
-  /* FIX_NUMEROS_GANADOR_V3: sin fondo cyan en números, solo ganadores con borde verde */
-  .ma-grupo-nums-inline code{
-    background:transparent !important;
-    color:var(--ma-ink) !important;
-    padding:0 4px !important;
-    border:none !important;
-    font-weight:700;
+/* ═══════════════════════════════════════════════════════════
+   ICONOGRAFÍA UNIFICADA Y A TODO COLOR
+   ═══════════════════════════════════════════════════════════ */
+.ma-wrap i[class*="fa-"]{
+  line-height: 1;
+  vertical-align: middle;
+  display: inline-block;
+  transition: color 0.2s ease, transform 0.2s ease;
+}
+
+.ma-header-icon i{ font-size: 1.35rem; color: #fff; }
+.ma-stat .ic i{ font-size: 1.15rem; }
+
+.ma-fgrp label{ display: inline-flex; align-items: center; gap: 5px; }
+.ma-fgrp label i { font-size: .75rem; }
+.ma-fgrp label i.fa-university { color: #3b82f6; }
+.ma-fgrp label i.fa-briefcase { color: #f59e0b; }
+.ma-fgrp label i.fa-user { color: #10b981; }
+.ma-fgrp label i.fa-user-cog { color: #8b5cf6; }
+.ma-fgrp label i.fa-ticket-alt { color: #ec4899; }
+.ma-fgrp label i.fa-dice { color: #6366f1; }
+.ma-fgrp label i.fa-calendar-alt { color: #14b8a6; }
+.ma-fgrp label i.fa-calendar-check { color: #22c55e; }
+.ma-fgrp label i.fa-traffic-light { color: #f97316; }
+.ma-fgrp label i.fa-search { color: #64748b; }
+
+.ma-tab i { font-size: .85rem; margin-right: 2px; }
+.ma-tab i.fa-bullseye { color: #4f46e5; }
+.ma-tab i.fa-star { color: #f59e0b; }
+.ma-tab.active i { color: #fff !important; }
+
+/* Metadatos base */
+.ma-boleta-row-2 .meta i { font-size: .75rem; width: 14px; text-align: center; }
+.ma-boleta-row-2 .meta i.fa-calendar,
+.ma-boleta-row-2 .meta i.fa-clock { color: #10b981; }
+.ma-boleta-row-2 .meta i.fa-credit-card { color: #f59e0b; }
+.ma-boleta-row-2 .meta i.fa-hashtag { color: #ec4899; }
+
+/* JERARQUÍA VISUAL: CLIENTE vs GESTOR vs COMERCIAL */
+.ma-boleta-row-2 .meta-cliente i { color: #10b981; /* Verde esmeralda */ }
+
+.ma-boleta-row-2 .meta-gestor {
+  background: var(--ma-violet-soft);
+  padding: 3px 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(124, 58, 237, 0.2);
+  color: var(--ma-violet) !important;
+  font-weight: 700;
+  box-shadow: 0 2px 6px -2px rgba(124, 58, 237, 0.15);
+}
+.ma-boleta-row-2 .meta-gestor i {
+  color: #7c3aed;
+  font-size: 0.8rem;
+}
+body.ma-dark .ma-boleta-row-2 .meta-gestor {
+  background: rgba(124, 58, 237, 0.15);
+  border-color: rgba(124, 58, 237, 0.4);
+  color: #a78bfa !important;
+}
+body.ma-dark .ma-boleta-row-2 .meta-gestor i { color: #a78bfa; }
+
+.ma-boleta-agente i.fa-briefcase { color: #f59e0b; /* Ámbar */ }
+
+.ma-boleta-ref .ref-icon i { font-size: 1rem; color: #fff; }
+
+.ma-sorteo-block-head .sorteo-name i.fa-ticket { color: #8b5cf6; }
+.ma-sorteo-block-head .sorteo-name i.fa-star { color: #f59e0b; }
+.ma-fj-nombre i.fa-dice { color: #f97316; font-size: .8rem; }
+
+.ma-act-btn i { font-size: .8rem; width: 14px; text-align: center; }
+.ma-act-btn.edit i { color: #f59e0b; }
+.ma-act-btn.reenviar i { color: #3b82f6; }
+.ma-act-btn.share-wa i { color: #25d366; }
+.ma-act-btn.cancel i { color: #ef4444; }
+
+.ma-empty .ico i.fa-inbox { color: #94a3b8; font-size: 3.5rem; }
+.ma-empty .ico i.fa-star { color: #f59e0b; font-size: 3.5rem; }
+
+body.ma-dark .ma-fgrp label i,
+body.ma-dark .ma-boleta-row-2 .meta i,
+body.ma-dark .ma-act-btn i {
+  filter: brightness(1.3);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   FIX BOTONES HOVER EN MÓVILES (Evita que el botón desaparezca)
+   ═══════════════════════════════════════════════════════════ */
+@media (hover: hover) {
+  .ma-act-btn:hover {
+    transform: translateY(-1px);
+    color: #fff !important;
+    border-color: transparent;
   }
-  .ma-grupo-nums-inline code.num-ganador{
-    background:transparent !important;
-    border:2px solid #16a34a !important;
-    color:#15803d !important;
-    padding:1px 6px !important;
-    border-radius:4px !important;
-    font-weight:900 !important;
-  }
-  body.ma-dark .ma-grupo-nums-inline code{
-    color:#e5e7eb !important;
-  }
-  body.ma-dark .ma-grupo-nums-inline code.num-ganador{
-    border-color:#22c55e !important;
-    color:#4ade80 !important;
-  }
+  .ma-act-btn:hover i { color: #fff !important; transform: scale(1.1); }
+
+  .ma-act-btn.edit:hover { background: var(--ma-amber); box-shadow: 0 4px 12px -5px var(--ma-amber); }
+  .ma-act-btn.reenviar:hover { background: #3b82f6; box-shadow: 0 4px 12px -5px #3b82f6; }
+  .ma-act-btn.cancel:hover { background: var(--ma-rose); box-shadow: 0 4px 12px -5px var(--ma-rose); }
+  .ma-act-btn.share-wa:hover { background: #25d366; box-shadow: 0 4px 12px -5px #25d366; }
+}
 </style>
 {% endblock %}
 
@@ -578,7 +619,7 @@ body.ma-dark .ma-grupo .premio{color:#a3e635;}
   <div class="ma-header">
     <div class="ma-header-inner">
       <div class="ma-header-left">
-        <div class="ma-header-icon">📊</div>
+        <div class="ma-header-icon"><i class="fas fa-chart-line"></i></div>
         <div class="ma-header-text">
           <h2>Mis Apuestas</h2>
           <p id="maGreeting">Cargando...</p>
@@ -610,7 +651,7 @@ body.ma-dark .ma-grupo .premio{color:#a3e635;}
   <div class="ma-stats">
 
     <div class="ma-stat">
-      <span class="ic">🎲</span>
+      <span class="ic"><i class="fas fa-ticket-alt"></i></span>
       <div class="text">
         <div class="lbl">Total boletas</div>
         <div class="val" data-count="{{ estadisticas.total_boletas|default:estadisticas.total_jugadas|default:0|stringformat:'d' }}">
@@ -620,7 +661,7 @@ body.ma-dark .ma-grupo .premio{color:#a3e635;}
     </div>
 
     <div class="ma-stat">
-      <span class="ic">💵</span>
+      <span class="ic"><i class="fas fa-dollar-sign"></i></span>
       <div class="text">
         <div class="lbl">Total apostado</div>
         <div class="val" data-count="{{ estadisticas.total_apostado|default:0|stringformat:'0.2f' }}" data-money="1">
@@ -630,7 +671,7 @@ body.ma-dark .ma-grupo .premio{color:#a3e635;}
     </div>
 
     <div class="ma-stat">
-      <span class="ic">🏆</span>
+      <span class="ic"><i class="fas fa-trophy"></i></span>
       <div class="text">
         <div class="lbl">Premios ganados</div>
         <div class="val" data-count="{{ estadisticas.total_premios|default:0|stringformat:'0.2f' }}" data-money="1">
@@ -640,7 +681,7 @@ body.ma-dark .ma-grupo .premio{color:#a3e635;}
     </div>
 
     <div class="ma-stat">
-      <span class="ic">🎯</span>
+      <span class="ic"><i class="fas fa-bullseye"></i></span>
       <div class="text">
         <div class="lbl">Tasa de acierto</div>
         <div class="val" data-count="{{ estadisticas.tasa_acierto|default:0|stringformat:'0.0f' }}" data-suffix="%">
@@ -655,7 +696,7 @@ body.ma-dark .ma-grupo .premio{color:#a3e635;}
   <form method="get" class="ma-filters" id="filtroForm">
     <div class="ma-filters-grid">
       {% if es_superadmin %}
-        <div class="ma-fgrp"><label>🏦 Banco</label>
+        <div class="ma-fgrp"><label><i class="fas fa-university"></i> Banco</label>
           <select name="banco" onchange="this.form.submit()">
             <option value="">Seleccionar banco</option>
             {% for b in bancos_opciones %}
@@ -665,7 +706,7 @@ body.ma-dark .ma-grupo .premio{color:#a3e635;}
         </div>
       {% endif %}
       {% if es_superadmin or es_banco %}
-        <div class="ma-fgrp"><label>💼 Comercial</label>
+        <div class="ma-fgrp"><label><i class="fas fa-briefcase"></i> Comercial</label>
           <select name="comercial" onchange="this.form.submit()">
             <option value="">Seleccionar comercial</option>
             {% for c in comerciales_opciones %}
@@ -675,7 +716,7 @@ body.ma-dark .ma-grupo .premio{color:#a3e635;}
         </div>
       {% endif %}
       {% if es_autorizador %}
-        <div class="ma-fgrp"><label>👤 Cliente</label>
+        <div class="ma-fgrp"><label><i class="fas fa-user"></i> Cliente</label>
           <select name="cliente" onchange="this.form.submit()">
             <option value="">Seleccionar cliente</option>
             {% for c in clientes_opciones %}
@@ -685,7 +726,7 @@ body.ma-dark .ma-grupo .premio{color:#a3e635;}
         </div>
       {% endif %}
       {% if es_cliente %}
-        <div class="ma-fgrp"><label>🏢 Gestor</label>
+        <div class="ma-fgrp"><label><i class="fas fa-user-cog"></i> Gestor</label>
           <select name="gestor" onchange="this.form.submit()">
             <option value="">Seleccionar gestor</option>
             {% for g in gestores_opciones %}
@@ -694,7 +735,7 @@ body.ma-dark .ma-grupo .premio{color:#a3e635;}
           </select>
         </div>
       {% endif %}
-      <div class="ma-fgrp"><label>🎰 Sorteo</label>
+      <div class="ma-fgrp"><label><i class="fas fa-ticket-alt"></i> Sorteo</label>
         <select name="sorteo" onchange="this.form.submit()">
           <option value="">Seleccionar sorteo</option>
           {% for s in sorteos_filtro %}
@@ -702,7 +743,7 @@ body.ma-dark .ma-grupo .premio{color:#a3e635;}
           {% endfor %}
         </select>
       </div>
-      <div class="ma-fgrp"><label>🎲 Forma de juego</label>
+      <div class="ma-fgrp"><label><i class="fas fa-dice"></i> Forma de juego</label>
         <select name="forma_juego" onchange="this.form.submit()">
           <option value="">Seleccionar forma</option>
           {% for fj in formas_juego_filtro %}
@@ -710,13 +751,13 @@ body.ma-dark .ma-grupo .premio{color:#a3e635;}
           {% endfor %}
         </select>
       </div>
-      <div class="ma-fgrp"><label>📅 Desde</label>
+      <div class="ma-fgrp"><label><i class="fas fa-calendar-alt"></i> Desde</label>
         <input type="date" name="fecha_desde" value="{{ filtro_fecha_desde|default:'' }}" onchange="this.form.submit()">
       </div>
-      <div class="ma-fgrp"><label>📅 Hasta</label>
+      <div class="ma-fgrp"><label><i class="fas fa-calendar-check"></i> Hasta</label>
         <input type="date" name="fecha_hasta" value="{{ filtro_fecha_hasta|default:'' }}" onchange="this.form.submit()">
       </div>
-      <div class="ma-fgrp"><label>🚦 Estado</label>
+      <div class="ma-fgrp"><label><i class="fas fa-traffic-light"></i> Estado</label>
         <select name="estado" onchange="this.form.submit()">
           <option value="">Seleccionar estado</option>
           <option value="pendiente" {% if filtro_estado == 'pendiente' %}selected{% endif %}>Pendiente</option>
@@ -725,7 +766,7 @@ body.ma-dark .ma-grupo .premio{color:#a3e635;}
           <option value="cancelada" {% if filtro_estado == 'cancelada' %}selected{% endif %}>Cancelada</option>
         </select>
       </div>
-      <div class="ma-fgrp"><label>🔎 Buscar número</label>
+      <div class="ma-fgrp"><label><i class="fas fa-search"></i> Buscar número</label>
         <input type="text" name="buscar" id="maSearchInput"
                value="{{ filtro_buscar|default:'' }}" placeholder="Ej: 1234 o PA">
       </div>
@@ -740,11 +781,11 @@ body.ma-dark .ma-grupo .premio{color:#a3e635;}
   {# TABS #}
   <div class="ma-tabs" role="tablist">
     <button class="ma-tab active" data-tab="normales" type="button">
-      🎯 Apuestas normales
+      <i class="fas fa-bullseye"></i> Apuestas normales
       <span class="badge-cnt">{{ estadisticas_normales.total_boletas|default:estadisticas_normales.total_jugadas|default:0 }}</span>
     </button>
     <button class="ma-tab" data-tab="superparlet" type="button">
-      ⭐ Superparlet
+      <i class="fas fa-star"></i> Superparlet
       <span class="badge-cnt">{{ estadisticas_super.total_boletas|default:estadisticas_super.total_jugadas|default:0 }}</span>
     </button>
   </div>
@@ -767,7 +808,7 @@ body.ma-dark .ma-grupo .premio{color:#a3e635;}
           <div class="ma-boleta-head">
             <div class="ma-boleta-row-1">
               <div class="ma-boleta-ref">
-                <span class="ref-icon">📋</span>
+                <span class="ref-icon"><i class="fas fa-receipt"></i></span>
                 <span class="ref-text">{{ b.referencia }}</span>
                 <span class="ma-estado {{ b.estado_general }}">{{ b.estado_general|capfirst }}</span>
               </div>
@@ -796,17 +837,23 @@ body.ma-dark .ma-grupo .premio{color:#a3e635;}
             </div>
 
             <div class="ma-boleta-row-2">
-              <span class="meta"><i class="fas fa-user"></i> {{ b.cliente.username }}</span>
+              <!-- CLIENTE (Jugador) -->
+              <span class="meta meta-cliente"><i class="fas fa-user"></i> {{ b.cliente.username }}</span>
+
+              <!-- GESTOR (Admin) -->
               {% if b.destinatario and b.destinatario != b.cliente %}
-                <span class="meta"><i class="fas fa-user-tie"></i> {{ b.destinatario.username }}</span>
+                <span class="meta meta-gestor"><i class="fas fa-user-tie"></i> {{ b.destinatario.username }}</span>
               {% endif %}
+
               <span class="meta"><i class="fas fa-calendar"></i> {{ b.fecha_sorteo|date:"d/m/Y" }} | <i class="fas fa-clock"></i> {{ b.creado_en }}</span>
               {% if b.forma_pago %}
                 <span class="meta"><i class="fas fa-credit-card"></i> {{ b.forma_pago.nombre }}</span>
               {% endif %}
               <span class="meta"><i class="fas fa-hashtag"></i> {{ b.cantidad_numeros }} númer{{ b.cantidad_numeros|pluralize:"o,os" }}</span>
+
+              <!-- COMERCIAL -->
               {% if b.agentes and b.agentes != 'Autoapuesta' %}
-                <span class="ma-boleta-agente"><i class="fas fa-user-tie"></i> {{ b.agentes }}</span>
+                <span class="ma-boleta-agente"><i class="fas fa-briefcase"></i> {{ b.agentes }}</span>
               {% endif %}
             </div>
 
@@ -868,7 +915,7 @@ body.ma-dark .ma-grupo .premio{color:#a3e635;}
       {% endfor %}
     {% else %}
       <div class="ma-empty">
-        <span class="ico">📭</span>
+        <span class="ico"><i class="fas fa-inbox"></i></span>
         <h4>No hay apuestas normales</h4>
         <p>No se encontraron boletas con los filtros seleccionados.</p>
       </div>
@@ -909,15 +956,24 @@ body.ma-dark .ma-grupo .premio{color:#a3e635;}
               {% endif %}
             </div>
             <div class="ma-boleta-row-2">
-              <span class="meta"><i class="fas fa-user"></i> {{ b.cliente.username }}</span>
+              <!-- CLIENTE (Jugador) -->
+              <span class="meta meta-cliente"><i class="fas fa-user"></i> {{ b.cliente.username }}</span>
+
+              <!-- GESTOR (Admin) -->
               {% if b.destinatario and b.destinatario != b.cliente %}
-                <span class="meta"><i class="fas fa-user-tie"></i> {{ b.destinatario.username }}</span>
+                <span class="meta meta-gestor"><i class="fas fa-user-tie"></i> {{ b.destinatario.username }}</span>
               {% endif %}
+
               <span class="meta"><i class="fas fa-calendar"></i> {{ b.fecha_sorteo|date:"d/m/Y" }} | <i class="fas fa-clock"></i> {{ b.creado_en }}</span>
               {% if b.forma_pago %}
                 <span class="meta"><i class="fas fa-credit-card"></i> {{ b.forma_pago.nombre }}</span>
               {% endif %}
               <span class="meta"><i class="fas fa-hashtag"></i> {{ b.cantidad_numeros }} númer{{ b.cantidad_numeros|pluralize:"o,os" }}</span>
+
+              <!-- COMERCIAL -->
+              {% if b.agentes and b.agentes != 'Autoapuesta' %}
+                <span class="ma-boleta-agente"><i class="fas fa-briefcase"></i> {{ b.agentes }}</span>
+              {% endif %}
             </div>
             <div class="ma-boleta-row-3">
               <div class="tot"><span>Apostado</span><strong>${{ b.total_apostado|stringformat:"0.2f" }}</strong></div>
@@ -968,7 +1024,7 @@ body.ma-dark .ma-grupo .premio{color:#a3e635;}
       {% endfor %}
     {% else %}
       <div class="ma-empty">
-        <span class="ico">⭐</span>
+        <span class="ico"><i class="fas fa-star"></i></span>
         <h4>No hay apuestas Superparlet</h4>
         <p>No se encontraron boletas Superparlet con los filtros seleccionados.</p>
       </div>
@@ -1118,10 +1174,13 @@ body.ma-dark .ma-grupo .premio{color:#a3e635;}
     const btn = this;
     btn.disabled = true;
     btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
-    const csrf = document.querySelector('[name="csrfmiddlewaretoken"]');
+
+    // FIX_CSRF_CANCELAR: Leer el token del meta tag, no de un input que no existe.
+    const csrfToken = (document.querySelector('meta[name="csrf-token"]') || {}).content || '';
+
     fetch(`/jugadas/api/cancelar-boleta/${boletaToCancel.id}/`, {
       method:'POST',
-      headers:{'X-CSRFToken': csrf ? csrf.value : ''},
+      headers:{'X-CSRFToken': csrfToken},
       credentials:'same-origin',
     })
     .then(r => r.json())
@@ -1152,17 +1211,15 @@ document.addEventListener('DOMContentLoaded', function(){
     e.preventDefault();
     e.stopPropagation();
 
-    // Recolectar todas las tarjetas de boleta visibles
     var tarjetas = document.querySelectorAll('.ma-boleta[data-boleta-id]');
     if (!tarjetas.length){
       showToast('No hay boletas para compartir', 'warn');
       return;
     }
 
-    // Filtrar las que NO estén ocultas (display: none)
     var visibles = [];
     tarjetas.forEach(function(t){
-      var oculta = t.offsetParent === null;  // true si display:none o padre oculto
+      var oculta = t.offsetParent === null;
       if (!oculta){
         visibles.push(t);
       }
@@ -1173,7 +1230,6 @@ document.addEventListener('DOMContentLoaded', function(){
       return;
     }
 
-    // Filtrar las canceladas si aplica
     visibles = visibles.filter(function(t){
       var estadoEl = t.querySelector('.ma-estado');
       var estado = estadoEl ? estadoEl.textContent.trim().toLowerCase() : '';
@@ -1194,9 +1250,6 @@ document.addEventListener('DOMContentLoaded', function(){
 
   // WHATSAPP
 
-/* ═══════════════════════════════════════════════════════════════
-   Compartir múltiples boletas por WhatsApp con división inteligente
-   ═══════════════════════════════════════════════════════════════ */
 function _waCompartirMultiple(boletas, opts){
   opts = opts || {};
   var maxChars = opts.maxChars || 3000;
@@ -1207,12 +1260,10 @@ function _waCompartirMultiple(boletas, opts){
     return;
   }
 
-  // Construir bloque de cada boleta
   var bloques = boletas.map(function(b){
     return buildBoletaWhatsappText(b);
   });
 
-  // Calcular tamaño del mensaje con encabezado
   var totalFiltro = boletas.reduce(function(s, b){
     var t = (b.dataset && b.dataset.boletaTotal) ? parseFloat(b.dataset.boletaTotal) : 0;
     return s + (t || 0);
@@ -1238,7 +1289,6 @@ function _waCompartirMultiple(boletas, opts){
   }
   if (actual) bloquesTotales.push(actual);
 
-  // Si es 1 solo bloque → abrir directo
   if (bloquesTotales.length === 1){
     var url = 'https://wa.me/?text=' + encodeURIComponent(bloquesTotales[0]);
     window.open(url, '_blank', 'noopener,noreferrer');
@@ -1246,7 +1296,6 @@ function _waCompartirMultiple(boletas, opts){
     return;
   }
 
-  // Múltiples bloques → abrir 1ro + copiar 2do al portapapeles
   var url1 = 'https://wa.me/?text=' + encodeURIComponent(bloquesTotales[0]);
   window.open(url1, '_blank', 'noopener,noreferrer');
 
@@ -1289,7 +1338,6 @@ function buildBoletaWhatsappText(boletaEl){
     if (fp)    lineas.push(`💳 Forma de pago: ${fp}`);
     if (numCount) lineas.push(`🔢 Números: ${numCount}`);
 
-    // Recorrer sorteos
     boletaEl.querySelectorAll('.ma-sorteo-block').forEach(sb => {
       const sorteoNombre = sb.dataset.sorteoNombre || '';
       const sorteoTotal = sb.querySelector('.sorteo-total')?.textContent?.trim() || '';
@@ -1299,7 +1347,6 @@ function buildBoletaWhatsappText(boletaEl){
       lineas.push(`   💰 Subtotal: ${sorteoTotal}`);
 
       sb.querySelectorAll('.ma-fj').forEach(fj => {
-        // Nombre de forma: limpiar el badge de estado
         const nombreEl = fj.querySelector('.ma-fj-nombre');
         let forma = '';
         if (nombreEl){
@@ -1309,7 +1356,6 @@ function buildBoletaWhatsappText(boletaEl){
           forma = clone.textContent.trim();
         }
 
-        // Agrupar por monto
         fj.querySelectorAll('.ma-grupo').forEach(g => {
           const monto = g.querySelector('.ma-grupo-monto')?.textContent?.trim() || '';
           const nums = Array.from(g.querySelectorAll('code')).map(c => c.textContent).join(', ');
@@ -1362,6 +1408,3 @@ function buildBoletaWhatsappText(boletaEl){
 })();
 </script>
 {% endblock extra_js %}
-
-
-

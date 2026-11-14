@@ -1092,6 +1092,13 @@ def apostar(request):
         from django.contrib import messages
         from django.shortcuts import redirect
         messages.warning(request, "Los auditores no pueden realizar apuestas. Solo tienen permisos de supervisión.")
+        # FIX_REDIRECT_GEORGIA: Redirigir a la fecha de la última jugada
+        from jugadas.models import Jugada as _Jugada
+        _ult_jug = _Jugada.objects.filter(usuario=request.user).order_by('-id').first()
+        if _ult_jug:
+            _f_str = _ult_jug.fecha_sorteo.strftime('%Y-%m-%d')
+            from django.urls import reverse
+            return redirect(f"{reverse('jugadas:mis_apuestas')}?fecha_desde={_f_str}&fecha_hasta={_f_str}")
         return redirect('jugadas:mis_apuestas')
 
     if request.method != 'GET':

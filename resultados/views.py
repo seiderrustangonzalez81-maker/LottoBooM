@@ -239,230 +239,37 @@ def generar_derivaciones_desde_campos(pick2, pick3, pick4, pick5, fijo, corrido_
 # ============================================================
 
 def jugada_es_ganadora(jugada, resultado):
-    if not jugada or not resultado:
+    if not jugada.forma_juego:
         return False, 0
-    if jugada.sorteo_id != resultado.sorteo_id:
-        return False, 0
-    if jugada.fecha_sorteo != resultado.fecha:
-        return False, 0
+        
+    forma = jugada.forma_juego.nombre.lower()
+    num_jugado = str(jugada.numero).strip()
+    
+    fijo_g = str(resultado.fijo).strip() if resultado.fijo else None
+    corr1_g = str(resultado.corrido_1).strip() if resultado.corrido_1 else None
+    corr2_g = str(resultado.corrido_2).strip() if resultado.corrido_2 else None
 
-    forma_raw = (jugada.forma_juego.nombre if jugada.forma_juego else '').strip().lower()
-    import unicodedata as _ud
-    _sa = ''.join(c for c in _ud.normalize('NFD', forma_raw) if _ud.category(c) != 'Mn')
-    forma = re.sub(r'[^a-z0-9]', '', _sa)
-    numero = str(jugada.numero or '').strip().strip(',;: ')
-    derivados = resultado.derivados or {}
-
-    if not derivados:
+    if 'fijo' in forma:
+        if num_jugado == fijo_g:
+            return True, 80
         return False, 0
 
-    from roles.utils import get_dosis_gestor
-    try:
-        multiplicador = int(get_dosis_gestor(
-            jugada.destinatario,
-            jugada.sorteo,
-            jugada.forma_juego,
-            jugada.forma_pago,
-        ))
-    except Exception:
-        multiplicador = 0
-
-    if multiplicador <= 0:
-        return False, 0
-
-    def n(v):
-        if v is None:
-            return ''
-        s = str(v).strip()
-        while s and s[-1] in ',;: \t\n\r':
-            s = s[:-1]
-        while s and s[0] in ',;: \t\n\r':
-            s = s[1:]
-        return s
-
-    parlet_list = [n(x) for x in (derivados.get('parlet_general') or [])]
-    fijos_list = [n(x) for x in (derivados.get('fijos') or [])]
-    corridos_list = [n(x) for x in (derivados.get('corridos') or [])]
-    posicion_list = [n(x) for x in (derivados.get('posicion') or [])]
-    tripleta_list = [n(x) for x in (derivados.get('tripleta') or [])]
-    vspf_list = [n(x) for x in (derivados.get('vspf') or [])]
-    vspick2_list = [n(x) for x in (derivados.get('vspick2') or [])]
-    pick2vspf_list = [n(x) for x in (derivados.get('pick2vspf') or [])]
-    superparlet_list = [n(x) for x in (derivados.get('superparlet') or [])]
-
-    pick2_val = n(derivados.get('pick2'))
-    pick3_val = n(derivados.get('pick3'))
-    pick4_val = n(derivados.get('pick4'))
-    pick5_val = n(derivados.get('pick5'))
-    pf_val = n(derivados.get('pf'))
-    fijo_val = n(derivados.get('fijo'))
-    corrido_1_val = n(derivados.get('corrido_1'))
-    corrido_2_val = n(derivados.get('corrido_2'))
-    centena_1_val = n(derivados.get('centena_corrida_1'))
-    centena_2_val = n(derivados.get('centena_corrida_2'))
-
-    if forma in ('fijo', 'fijos'):
-        # LOGICA ESTRICTA: Solo gana si el número es exactamente el Fijo
-        if numero == fijo_val:
-            return True, multiplicador
-        return False, 0
-
-    if forma in ('corridos', 'corrido1', 'corrido2', 'corrido'):
-        if numero:
-            count = 0
-            if corrido_1_val and numero == corrido_1_val:
-                count += 1
-            if corrido_2_val and numero == corrido_2_val:
-                count += 1
-            # REGLA SEIDER: Si el número sale Fijo, también se paga en Corridos
-            if fijo_val and numero == fijo_val:
-                count += 1
-            # REGLA SEIDER: Si el número sale Fijo, también se paga en Corridos
-            if fijo_val and numero == fijo_val:
-                count += 1
-            total_coincidencias = count
-            if total_coincidencias > 0:
-                return True, multiplicador * total_coincidencias
-
-        # (DESACTIVADO: Pagaba corridos como fijos)
-        if False and numero == fijo_val and numero not in corridos_list:
-            try:
-                from roles.utils import gestor_paga_fijo_como_corrido
-                if gestor_paga_fijo_como_corrido(jugada.destinatario):
-                    return True, multiplicador
-            except ImportError as e:
-                logger.error(
-                    f"[CRITICAL] Falta gestor_paga_fijo_como_corrido en roles.utils: {e}",
-                    exc_info=True,
-                )
-            except Exception as e:
-                logger.exception(
-                    f"[ERROR] evaluando corridos-como-fijo para jugada #{jugada.id}: {e}"
-                )
-
-        return False, 0
-
-    if forma in ('pick2',):
-        if numero == pick2_val:
-            return True, multiplicador
-        return False, 0
-
-    if forma in ('pick3',):
-        if numero == pick3_val:
-            return True, multiplicador
-        return False, 0
-
-    if forma in ('pick4',):
-        if numero == pick4_val:
-            return True, multiplicador
-        return False, 0
-
-    if forma in ('pick5',):
-        if numero == pick5_val:
-            return True, multiplicador
-        return False, 0
-
-    if forma in ('pf',):
-        if numero == pf_val:
-            return True, multiplicador
-        return False, 0
-
-    if forma in ('parlet', 'candado'):
-        if numero in parlet_list:
-            return True, multiplicador
-        return False, 0
-
-    if forma in ('superparlet',):
-        if numero in superparlet_list:
-            return True, multiplicador
-        return False, 0
-
-    if forma in ('posicion', 'posiciones'):
-        meta = jugada.metadata or {}
-        orig = meta.get('original') or {}
-        pos_apostada = orig.get('posicion') if isinstance(orig, dict) else None
-        if pos_apostada is None:
-            pos_apostada = meta.get('posicion')
-
-        if pos_apostada is not None:
-            try:
-                idx = int(pos_apostada) - 1
-            except (ValueError, TypeError):
-                logger.warning(f'[FIX_POSICION_V1] jugada #{jugada.id} posicion invalida: {pos_apostada!r}')
-                return False, 0
-            if idx < 0 or idx >= len(posicion_list):
-                return False, 0
-            if posicion_list[idx] == numero:
-                return True, multiplicador
+    if 'corrido' in forma:
+        if num_jugado in [corr1_g, corr2_g]:
+            return True, 60
+        if num_jugado == fijo_g:
+            tiene_fijo = False
+            if jugada.boleta:
+                from jugadas.models import Jugada
+                tiene_fijo = Jugada.objects.filter(
+                    boleta=jugada.boleta, numero=num_jugado, forma_juego__nombre__icontains='fijo'
+                ).exists()
+            if tiene_fijo:
+                return True, 60
             return False, 0
-
-        logger.warning(f'[FIX_POSICION_V1] jugada #{jugada.id} sin metadata de posicion — fallback legacy')
-        if numero in posicion_list:
-            return True, multiplicador
-        return False, 0
-
-    if forma in ('tripleta',):
-        if numero in tripleta_list:
-            return True, multiplicador
-        return False, 0
-
-    if forma in ('vspf',):
-        if numero in vspf_list:
-            return True, multiplicador
-        return False, 0
-
-    if forma in ('vspick2',):
-        if numero in vspick2_list:
-            return True, multiplicador
-        return False, 0
-
-    if forma in ('pick2vspf',):
-        if numero in pick2vspf_list:
-            return True, multiplicador
-        return False, 0
-
-    if forma in ('centenacorrida', 'centenacorrida1', 'centenacorrida2', 'centenascorridas'):
-        if numero:
-            _c = 0
-            if centena_1_val and numero == centena_1_val: _c += 1
-            if centena_2_val and numero == centena_2_val: _c += 1
-            if _c > 0:
-                return True, multiplicador * _c
-        return False, 0
-
-    if forma in ('vs100',):
-        if not numero or 'x' not in numero.lower():
-            return False, 0
-        partes = numero.lower().split('x')
-        if len(partes) != 2:
-            return False, 0
-        n1, n2 = partes[0].strip(), partes[1].strip()
-        if not n1 or not n2:
-            return False, 0
-
-        resultado_nums = [
-            n(derivados.get('fijo')),
-            n(derivados.get('corrido_1')),
-            n(derivados.get('corrido_2')),
-        ]
-        resultado_nums = [x for x in resultado_nums if x]
-
-        if len(resultado_nums) < 3:
-            return False, 0
-
-        if n1 == n2:
-            if resultado_nums.count(n1) >= 2:
-                return True, multiplicador
-        else:
-            if n1 in resultado_nums and n2 in resultado_nums:
-                return True, multiplicador
-        return False, 0
 
     return False, 0
 
-# ============================================================
-# PROCESAR RESULTADO
-# ============================================================
 
 def _superparlet_evaluar(jugada, resultado_A, resultado_B):
     from decimal import Decimal as _D
@@ -799,7 +606,14 @@ def procesar_resultado(request, datos, resultado_existente=None, solo_crear_resu
                         'metadata': {'resultado_id': resultado.id},
                     },
                 )
-                if created or not premio.cobrado:
+                # BLINDAJE: Verificar si realmente el movimiento existe en la BD
+            from roles.models import MovimientoFondo
+            ya_tiene_movimiento = MovimientoFondo.objects.filter(
+                receptor=jugada.usuario, 
+                nota__icontains=f"jugada #{jugada.id}"
+            ).exists()
+
+            if not premio.cobrado or not ya_tiene_movimiento:
                     premios_generados += 1
 
                     cliente = jugada.usuario
@@ -2647,3 +2461,16 @@ def api_resultado_status(request, resultado_id):
         'inicio': resultado.procesamiento_inicio.isoformat() if resultado.procesamiento_inicio else None,
         'fin': resultado.procesamiento_fin.isoformat() if resultado.procesamiento_fin else None,
     })
+# ============================================================
+# FIX_HORA_CUBA_V3: Función de horario de verano de Cuba
+# ============================================================
+def es_verano_cuba(fecha):
+    from datetime import datetime as _dt, timedelta as _td
+    year = fecha.year
+    marzo_1 = _dt(year, 3, 1).date()
+    dias = (6 - marzo_1.weekday()) % 7
+    segundo_domingo_marzo = marzo_1 + _td(days=dias + 7)
+    nov_1 = _dt(year, 11, 1).date()
+    dias_nov = (6 - nov_1.weekday()) % 7
+    primer_domingo_nov = nov_1 + _td(days=dias_nov)
+    return segundo_domingo_marzo <= fecha < primer_domingo_nov

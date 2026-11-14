@@ -1,7 +1,30 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block page_title %}🎲 Apostar{% endblock %}
+{% block page_title %}🎲 Apostar
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // FIX_GEORGIA_JS: Forzar fecha futura al seleccionar Georgia 12:34 AM
+    const sorteoSelect = document.querySelector('select[name="sorteo"]') || document.getElementById('id_sorteo');
+    const fechaInput = document.querySelector('input[name="fecha_sorteo"]') || document.querySelector('input[name="fecha"]') || document.getElementById('id_fecha_sorteo');
+    
+    if (sorteoSelect && fechaInput) {
+        sorteoSelect.addEventListener('change', function() {
+            if (this.value === '54') {
+                let manana = new Date();
+                manana.setDate(manana.getDate() + 1);
+                let fechaFmt = manana.toISOString().split('T')[0];
+                fechaInput.value = fechaFmt;
+                if (fechaInput._flatpickr) {
+                    fechaInput._flatpickr.setDate(fechaFmt);
+                }
+            }
+        });
+    }
+});
+</script>
+
+{% endblock %}
 {% block page_subtitle %}Registra jugadas para tus clientes{% endblock %}
 
 {% block extra_css %}

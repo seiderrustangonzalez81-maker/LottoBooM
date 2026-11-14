@@ -93,27 +93,27 @@
 
 
 /* FIX_MIS_PREMIOS_MOBILE_V1 (2026-10-20): Regla maestra para móviles */
-.px-kpis { 
-    display: grid !important; 
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)) !important; 
-    gap: 10px !important; 
+.px-kpis {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)) !important;
+    gap: 10px !important;
 }
-.px-filters .grid { 
-    display: grid !important; 
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)) !important; 
-    gap: 10px !important; 
+.px-filters .grid {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)) !important;
+    gap: 10px !important;
 }
 /* El botón de buscar/filtrar ocupa toda la fila al final */
-.px-filters .grid > div:last-child { 
-    grid-column: 1 / -1 !important; 
+.px-filters .grid > div:last-child {
+    grid-column: 1 / -1 !important;
 }
 
 /* Hacer que la tabla se pueda deslizar de lado a lado en móviles */
-.table-responsive, .px-tabla-wrapper, .px-tabla { 
-    display: block !important; 
-    width: 100% !important; 
-    overflow-x: auto !important; 
-    -webkit-overflow-scrolling: touch !important; 
+.table-responsive, .px-tabla-wrapper, .px-tabla {
+    display: block !important;
+    width: 100% !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
 }
 .px-tabla th, .px-tabla td {
     white-space: nowrap !important; /* Evita que el texto se rompa en dos líneas */
@@ -128,14 +128,14 @@
 
 /* FIX_MIS_PREMIOS_2COLS_V2 (2026-10-20): Forzar 2 columnas en móviles */
 @media (max-width: 768px) {
-    .px-filters .grid { 
-        display: grid !important; 
+    .px-filters .grid {
+        display: grid !important;
         grid-template-columns: 1fr 1fr !important; /* Fuerza 2 columnas exactas */
-        gap: 10px !important; 
+        gap: 10px !important;
     }
     /* El último elemento (el botón) ocupa toda la fila */
-    .px-filters .grid > div:last-child { 
-        grid-column: 1 / -1 !important; 
+    .px-filters .grid > div:last-child {
+        grid-column: 1 / -1 !important;
     }
     .px-kpis {
         display: grid !important;
@@ -453,46 +453,72 @@ div:has(> .px-tabla)::-webkit-scrollbar-thumb:hover {
 </div>
 
 <script>
-
+// FIX_COMPARTIR_PREMIOS_V3: Manejo robusto de errores de API (HTML vs JSON)
 
 function compartirTodosPremios(){
   var params = new URLSearchParams(window.location.search);
   var btn = document.getElementById('btnCompartirTodosPremios');
   var originalHtml = btn ? btn.innerHTML : '';
-  if (btn){ btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Preparando...'; }
+
+  if (btn){
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Preparando...';
+  }
 
   var win = window.open('', '_blank');
-      fetch('/resultados/api/premios-todos/?' + params.toString())
-    .then(function(r){ return r.json(); })
+  if (!win) {
+      alert('Por favor, permite las ventanas emergentes (pop-ups) para poder compartir.');
+      if (btn){ btn.disabled = false; btn.innerHTML = originalHtml; }
+      return;
+  }
+
+  fetch('/resultados/api/premios-todos/?' + params.toString())
+    .then(function(r){
+        // Si la respuesta NO es 200 OK (ej. 500, 404, 403)
+        if (!r.ok) {
+            return r.text().then(function(text) {
+                console.error("Error del servidor:", text);
+                throw new Error("Error " + r.status + ". La sesión pudo haber expirado o hay un error en el servidor.");
+            });
+        }
+        // Si la respuesta no es JSON (ej. HTML de login)
+        var contentType = r.headers.get("content-type");
+        if (!contentType || contentType.indexOf("application/json") === -1) {
+            return r.text().then(function(text) {
+                console.error("Respuesta no JSON:", text);
+                throw new Error("El servidor devolvió HTML en lugar de datos. Verifica que tu sesión esté activa.");
+            });
+        }
+        return r.json();
+    })
     .then(function(d){
       if (btn){ btn.disabled = false; btn.innerHTML = originalHtml; }
       if (!d.success){
         if (win) win.close();
-        alert(d.error || 'No hay premios.');
+        alert(d.error || 'No hay premios para compartir.');
         return;
       }
+
       var msgs = d.mensajes || [];
       if (msgs.length === 0){
         if (win) win.close();
-        alert('No hay premios.');
+        alert('No hay premios para compartir.');
         return;
       }
+
       if (win) {
         win.location = 'https://wa.me/?text=' + encodeURIComponent(msgs[0]);
       } else {
         window.location.href = 'https://wa.me/?text=' + encodeURIComponent(msgs[0]);
       }
+
       if (msgs.length > 1){
-        var resto = msgs.slice(1).join('
-
-─────────────
-
-');
+        var resto = msgs.slice(1).join('\n\n─────────────\n\n');
         if (navigator.clipboard && navigator.clipboard.writeText){
           navigator.clipboard.writeText(resto).then(function(){
-            alert('OK Mensaje 1/' + msgs.length + ' abierto. Los bloques 2 al ' + msgs.length + ' fueron copiados.');
+            alert('✅ Mensaje 1/' + msgs.length + ' abierto en WhatsApp.\nLos bloques 2 al ' + msgs.length + ' han sido copiados. Solo pégalos en el chat.');
           }).catch(function(){
-            alert('Abierto bloque 1.');
+            alert('Abierto bloque 1 de ' + msgs.length + '.');
           });
         } else {
           alert('Abierto bloque 1 de ' + msgs.length + '.');
@@ -502,10 +528,53 @@ function compartirTodosPremios(){
     .catch(function(e){
       if (win) win.close();
       if (btn){ btn.disabled = false; btn.innerHTML = originalHtml; }
-      alert('Error: ' + e.message);
+      alert('Error de conexión: ' + e.message);
     });
 }
 
+function compartirPremios(sorteoId, fecha){
+  var win = window.open('about:blank', '_blank');
+  if (!win) {
+      alert('Por favor, permite las ventanas emergentes (pop-ups) para poder compartir.');
+      return;
+  }
+
+  const url = '/resultados/api/premios-sorteo/?sorteo_id=' + sorteoId + '&fecha=' + fecha;
+
+  fetch(url)
+    .then(function(r){
+        if (!r.ok) {
+            return r.text().then(function(text) {
+                console.error("Error del servidor:", text);
+                throw new Error("Error " + r.status + ". La sesión pudo haber expirado o hay un error en el servidor.");
+            });
+        }
+        var contentType = r.headers.get("content-type");
+        if (!contentType || contentType.indexOf("application/json") === -1) {
+            return r.text().then(function(text) {
+                console.error("Respuesta no JSON:", text);
+                throw new Error("El servidor devolvió HTML en lugar de datos. Verifica que tu sesión esté activa.");
+            });
+        }
+        return r.json();
+    })
+    .then(function(d){
+      if (d.success){
+        var texto = d.resumen || d.texto || d.mensaje || 'Premios LottoBooM';
+        if (win) {
+            win.location.href = 'https://wa.me/?text=' + encodeURIComponent(texto);
+        } else {
+            window.location.href = 'https://wa.me/?text=' + encodeURIComponent(texto);
+        }
+      } else {
+        if (win) win.close();
+        alert(d.error || 'Error al obtener los premios de este sorteo');
+      }
+    }).catch(function(e){
+      if (win) win.close();
+      alert('Error de conexión: ' + e.message);
+    });
+}
 
 document.addEventListener('DOMContentLoaded', function(){
   var btn = document.getElementById('btnCompartirTodosPremios');
@@ -517,26 +586,6 @@ document.addEventListener('DOMContentLoaded', function(){
     });
   }
 });
-
-function compartirPremios(sorteoId, fecha){
-  // 1. Abrimos la ventana INMEDIATAMENTE para que el navegador móvil no la bloquee
-  var win = window.open('about:blank', '_blank');
-  
-  const url = '/resultados/api/premios-sorteo/?sorteo_id=' + sorteoId + '&fecha=' + fecha;
-  fetch(url).then(function(r){ return r.json(); }).then(function(d){
-    if (d.success){
-      var texto = d.resumen || d.texto || d.mensaje;
-      if (win) { win.location.href = 'https://wa.me/?text=' + encodeURIComponent(texto); } 
-      else { window.location.href = 'https://wa.me/?text=' + encodeURIComponent(texto); }
-    } else {
-      if (win) win.close();
-      alert(d.error || 'Error al obtener los premios');
-    }
-  }).catch(function(e){
-    if (win) win.close();
-    alert('Error de conexión');
-  });
-}
 </script>
 
 {% endblock %}
