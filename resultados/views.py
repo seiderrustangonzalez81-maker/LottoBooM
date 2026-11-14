@@ -241,34 +241,68 @@ def generar_derivaciones_desde_campos(pick2, pick3, pick4, pick5, fijo, corrido_
 def jugada_es_ganadora(jugada, resultado):
     if not jugada.forma_juego:
         return False, 0
-        
-    forma = jugada.forma_juego.nombre.lower()
-    num_jugado = str(jugada.numero).strip()
-    
-    fijo_g = str(resultado.fijo).strip() if resultado.fijo else None
-    corr1_g = str(resultado.corrido_1).strip() if resultado.corrido_1 else None
-    corr2_g = str(resultado.corrido_2).strip() if resultado.corrido_2 else None
 
-    if 'fijo' in forma:
+    forma = (jugada.forma_juego.nombre or '').lower().strip()
+    num_jugado = str(jugada.numero or '').strip().upper()
+
+    def _n(v):
+        return str(v).strip().upper() if v else None
+
+    fijo_g   = _n(resultado.fijo)
+    corr1_g  = _n(resultado.corrido_1)
+    corr2_g  = _n(resultado.corrido_2)
+    pick4_g  = _n(resultado.pick4)
+
+    # Corridos base: los del JSON (57, 56)
+    corridos_ganadores = [c for c in [corr1_g, corr2_g] if c]
+
+    # Añadir corridos derivados del Pick4 (06, 65, 50)
+    if pick4_g and len(pick4_g) == 4:
+        p4_corridos = [pick4_g[0:2], pick4_g[1:3], pick4_g[2:4]]
+        for c in p4_corridos:
+            if c and c not in corridos_ganadores:
+                corridos_ganadores.append(c)
+
+    def _mult(default):
+        try:
+            from roles.utils import get_dosis_gestor
+            m = get_dosis_gestor(
+                jugada.destinatario, jugada.sorteo,
+                jugada.forma_juego, jugada.forma_pago,
+            )
+            if m and float(m) > 0:
+                return int(float(m))
+        except Exception:
+            pass
+        return default
+
+    # 1. FIJO
+    if forma == 'fijo':
         if num_jugado == fijo_g:
-            return True, 80
+            return True, _mult(80)
         return False, 0
 
-    if 'corrido' in forma:
-        if num_jugado in [corr1_g, corr2_g]:
-            return True, 60
+    # 2. CORRIDOS
+    if forma in ('corridos', 'corrido'):
+        # Gana si está en los corridos (del JSON o del Pick4)
+        if num_jugado in corridos_ganadores:
+            return True, _mult(60)
+        # Si salió 1ro (fijo), solo gana si hay un Fijo en la misma boleta
         if num_jugado == fijo_g:
             tiene_fijo = False
-            if jugada.boleta:
-                from jugadas.models import Jugada
-                tiene_fijo = Jugada.objects.filter(
-                    boleta=jugada.boleta, numero=num_jugado, forma_juego__nombre__icontains='fijo'
-                ).exists()
+            if jugada.boleta_id:
+                from jugadas.models import Jugada as _J
+                tiene_fijo = _J.objects.filter(
+                    boleta_id=jugada.boleta_id,
+                    numero=num_jugado,
+                    forma_juego__nombre__icontains='fijo',
+                ).exclude(id=jugada.id).exists()
             if tiene_fijo:
-                return True, 60
-            return False, 0
+                return True, _mult(60)
+        return False, 0
 
     return False, 0
+
 
 
 def _superparlet_evaluar(jugada, resultado_A, resultado_B):
