@@ -1132,7 +1132,7 @@ def resultados_view(request):
     if necesita_actualizar:
         with open(archivo_lock, 'w') as f:
             f.write(str(timezone.now()))
-        threading.Thread(target=actualizar_en_segundo_plano).start()
+        # threading.Thread(target=actualizar_en_segundo_plano).start()
     # --- FIN ACTUALIZACIÓN DINÁMICA ---
 
     resultados = Resultado.objects.all().select_related('sorteo').order_by('-fecha', '-sorteo__hora_salida', '-hora')
