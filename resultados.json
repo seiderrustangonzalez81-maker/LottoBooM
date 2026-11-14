@@ -493,10 +493,20 @@
     "fuente": "lotteryusa",
     "pick2": "",
     "pick3": "689",
-    "pick4": "",
+    "pick4": "3597",
     "pick5": "",
     "fijo": "06",
     "corrido_1": "08",
     "corrido_2": "09"
+  },
+  {
+    "sorteo_nombre": "Loteka",
+    "numeros": [
+      "72",
+      "71",
+      "75"
+    ],
+    "fecha": "2026-11-13",
+    "fuente": "enloteria"
   }
 ]
