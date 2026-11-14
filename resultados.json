@@ -224,5 +224,15 @@
     ],
     "fecha": "2026-11-14",
     "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "La Primera",
+    "numeros": [
+      "22",
+      "12",
+      "67"
+    ],
+    "fecha": "2026-11-14",
+    "fuente": "enloteria"
   }
 ]
