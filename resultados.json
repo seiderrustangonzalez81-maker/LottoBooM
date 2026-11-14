@@ -164,5 +164,15 @@
     ],
     "fecha": "2026-11-14",
     "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Anguilla 9AM",
+    "numeros": [
+      "45",
+      "81",
+      "73"
+    ],
+    "fecha": "2026-11-14",
+    "fuente": "enloteria"
   }
 ]
