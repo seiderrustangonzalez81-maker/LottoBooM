@@ -67,7 +67,6 @@ urlpatterns = [
     # ============================================================
     # EVENTOS Y NOTIFICACIONES EN TIEMPO REAL
     # ============================================================
-    path("events/", include("django_eventstream.urls")),
 ]
 
 

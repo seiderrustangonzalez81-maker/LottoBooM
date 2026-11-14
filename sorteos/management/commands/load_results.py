@@ -210,7 +210,7 @@ class Command(BaseCommand):
                     ))
                     continue
             else:  # lotteryusa y otras
-                if fecha not in (hoy_cuba, ayer_cuba):
+                if fecha != hoy_cuba:
                     self.stdout.write(self.style.WARNING(
                         f"⏭️ Descartado {nombre_web} [{fecha}] (usa, no es hoy ni ayer)"
                     ))
