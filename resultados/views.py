@@ -607,13 +607,13 @@ def procesar_resultado(request, datos, resultado_existente=None, solo_crear_resu
                     },
                 )
                 # BLINDAJE: Verificar si realmente el movimiento existe en la BD
-            from roles.models import MovimientoFondo
-            ya_tiene_movimiento = MovimientoFondo.objects.filter(
-                receptor=jugada.usuario, 
-                nota__icontains=f"jugada #{jugada.id}"
-            ).exists()
+                from roles.models import MovimientoFondo
+                ya_tiene_movimiento = MovimientoFondo.objects.filter(
+                    receptor=jugada.usuario, 
+                    nota__icontains=f"jugada #{jugada.id}"
+                ).exists()
 
-            if not premio.cobrado or not ya_tiene_movimiento:
+                if not premio.cobrado or not ya_tiene_movimiento:
                     premios_generados += 1
 
                     cliente = jugada.usuario
