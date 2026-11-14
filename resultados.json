@@ -214,5 +214,15 @@
     ],
     "fecha": "2026-11-14",
     "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "LoteDom",
+    "numeros": [
+      "72",
+      "00",
+      "71"
+    ],
+    "fecha": "2026-11-14",
+    "fuente": "enloteria"
   }
 ]
