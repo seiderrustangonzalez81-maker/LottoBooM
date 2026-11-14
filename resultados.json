@@ -694,11 +694,11 @@
     "fecha": "2026-11-13",
     "fuente": "lotteryusa",
     "pick2": "",
-    "pick3": "",
+    "pick3": "234",
     "pick4": "4605",
     "pick5": "",
-    "fijo": "",
-    "corrido_1": "",
-    "corrido_2": ""
+    "fijo": "02",
+    "corrido_1": "03",
+    "corrido_2": "04"
   }
 ]
