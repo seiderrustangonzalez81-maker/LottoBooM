@@ -387,7 +387,8 @@ def main():
 
     dic = {}
     for r in guardados:
-        if r.get("fecha") in (hoy_cuba, ayer_cuba, hoy_et, ayer_et):
+        # Solo cargar los de hoy (no ayer)
+        if r.get("fecha") == hoy_cuba or r.get("fecha") == hoy_et:
             dic[f"{r['sorteo_nombre']}|{r['fecha']}"] = r
     for n in todos_nuevos:
         dic[f"{n['sorteo_nombre']}|{n['fecha']}"] = n
@@ -399,7 +400,7 @@ def main():
     for r in dic.values():
         fecha = r.get('fecha')
         fuente = r.get('fuente', '')
-        fechas_validas = (hoy_cuba,) if fuente == 'enloteria' else (hoy_et, ayer_et)
+        fechas_validas = (hoy_cuba,) if fuente == 'enloteria' else (hoy_et,)
         if fecha in fechas_validas:
             finales_filtrados.append(r)
         else:
