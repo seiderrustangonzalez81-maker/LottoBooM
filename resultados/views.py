@@ -928,6 +928,8 @@ def crear_resultado(request):
             })
 
 def resultados_view(request):
+    from jugadas.views import _intentar_actualizar_loteria
+    _intentar_actualizar_loteria()
     # --- INICIO ACTUALIZACIÓN DINÁMICA ---
     def actualizar_en_segundo_plano():
         try:

@@ -1015,7 +1015,7 @@ def _intentar_actualizar_loteria():
     # Candado de 5 minutos
     if os.path.exists(archivo_lock):
         ultima_mod = os.path.getmtime(archivo_lock)
-        if timezone.now().timestamp() - ultima_mod < 300:
+        if timezone.now().timestamp() - ultima_mod < 60:
             necesita_actualizar = False
 
     if necesita_actualizar:
@@ -1036,6 +1036,7 @@ def _intentar_actualizar_loteria():
 # ============================================================
 @login_required
 def superparlet(request):
+    _intentar_actualizar_loteria()
     user = request.user
     es_superadmin = user.is_superuser or user.roles.filter(tipo='superadmin', activo=True).exists()
     es_banco = user.roles.filter(tipo='banco', activo=True).exists()
