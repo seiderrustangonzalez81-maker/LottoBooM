@@ -859,6 +859,7 @@ def _do_cancelar_boleta(boleta, user, motivo=''):
 
     es_superadmin = user.is_superuser or user.roles.filter(tipo='superadmin', activo=True).exists()
     es_banco = user.roles.filter(tipo='banco', activo=True).exists()
+    # FIX_ELIMINAR_V1: banco y superadmin pueden eliminar aunque el sorteo haya cerrado
     if not (es_superadmin or es_banco):
         for j in jugadas:
             if not j.puede_modificar():
@@ -2426,8 +2427,32 @@ def _sorteo_esta_abierto(sorteo, fecha):
 def _calcular_permisos_boleta(user, boleta, es_banco=False, es_superadmin=False):
     es_dueno = (boleta.usuario_id == user.id)
     es_gestor = (boleta.destinatario_id == user.id)
-    es_autorizador = es_banco or es_superadmin
-    # FIX_N_PLUS_1_PERMS_V1: una sola query + cache de sorteos por sorteo_id
+
+    # FIX_ELIMINAR_V1: verificar si el banco es gestor de la red del cliente
+    es_banco_gestor_red = False
+    if es_banco and not es_superadmin:
+        try:
+            from roles.models import Subordinacion as _Sub
+            # Comerciales subordinados del banco
+            comerciales_ids = list(_Sub.objects.filter(
+                jefe=user, activo=True
+            ).values_list('subordinado_id', flat=True))
+            # El cliente de la boleta tiene como destinatario al banco o a uno de sus comerciales
+            if boleta.destinatario_id == user.id or boleta.destinatario_id in comerciales_ids:
+                es_banco_gestor_red = True
+            # O el cliente tiene un Fondo asignado por el banco o sus comerciales
+            if not es_banco_gestor_red:
+                from roles.models import Fondo as _Fondo
+                if _Fondo.objects.filter(
+                    usuario_id=boleta.usuario_id,
+                    asignado_por_id__in=[user.id] + comerciales_ids,
+                    activo=True,
+                ).exists():
+                    es_banco_gestor_red = True
+        except Exception:
+            pass
+
+    # Verificar si los sorteos están abiertos (para cliente/comercial)
     sorteo_abierto = True
     jugadas_qs = boleta.jugadas.exclude(estado="cancelada").values_list("sorteo_id", "fecha_sorteo").distinct()[:50]
     _sorteos_cache = {}
@@ -2439,18 +2464,39 @@ def _calcular_permisos_boleta(user, boleta, es_banco=False, es_superadmin=False)
         if not sorteo or not _sorteo_esta_abierto(sorteo, fecha):
             sorteo_abierto = False
             break
-    base = {"es_dueno": es_dueno, "es_gestor": es_gestor, "sorteo_abierto": sorteo_abierto}
+
+    base = {
+        "es_dueno": es_dueno,
+        "es_gestor": es_gestor,
+        "sorteo_abierto": sorteo_abierto,
+        "es_banco_gestor_red": es_banco_gestor_red,
+    }
+
+    # ─── REGLA 1: superadmin → puede todo ───
+    if es_superadmin:
+        base.update({"puede_editar": True, "puede_reenviar": True, "puede_eliminar": True})
+        return base
+
+    # ─── REGLA 2: banco gestor de la red → puede todo ───
+    if es_banco and es_banco_gestor_red:
+        base.update({"puede_editar": True, "puede_reenviar": True, "puede_eliminar": True})
+        return base
+
+    # ─── REGLA 3: no es dueño ni gestor → nada ───
     if not (es_dueno or es_gestor):
         base.update({"puede_editar": False, "puede_reenviar": False, "puede_eliminar": False})
-    elif sorteo_abierto:
+        return base
+
+    # ─── REGLA 4: dueño/gestor con sorteo abierto → puede todo ───
+    if sorteo_abierto:
         base.update({"puede_editar": True, "puede_reenviar": True, "puede_eliminar": True})
-    elif es_gestor and es_autorizador:
-        base.update({"puede_editar": True, "puede_reenviar": True, "puede_eliminar": True})
-    elif es_gestor:
-        base.update({"puede_editar": False, "puede_reenviar": True, "puede_eliminar": False})
-    else:
-        base.update({"puede_editar": False, "puede_reenviar": False, "puede_eliminar": False})
+        return base
+
+    # ─── REGLA 5: gestor con sorteo cerrado → solo reenviar ───
+    base.update({"puede_editar": False, "puede_reenviar": True, "puede_eliminar": False})
     return base
+
+
 
 @login_required
 def mis_apuestas(request):
