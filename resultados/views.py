@@ -1320,6 +1320,12 @@ def mis_premios(request):
         periodo = 'hoy'
     fecha_desde_str = request.GET.get('fecha_desde')
     fecha_hasta_str = request.GET.get('fecha_hasta')
+    # FIX_FECHA_HOY_V1: default de hoy si no vienen fechas
+    if not fecha_desde_str and not fecha_hasta_str:
+        from django.utils import timezone as _tz_fix2
+        _hoy_fix2 = _tz_fix2.localdate()
+        fecha_desde_str = _hoy_fix2.strftime('%Y-%m-%d')
+        fecha_hasta_str = _hoy_fix2.strftime('%Y-%m-%d')
 
     if sorteo_id:
         premios = premios.filter(jugada__sorteo_id=sorteo_id)
@@ -2384,6 +2390,12 @@ def api_premios_todos(request):
     periodo = request.GET.get('periodo', '')
     fdesde = request.GET.get('fecha_desde')
     fhasta = request.GET.get('fecha_hasta')
+    # FIX_FECHA_HOY_V1: default de hoy si no vienen fechas
+    if not fdesde and not fhasta:
+        from django.utils import timezone as _tz_fix3
+        _hoy_fix3 = _tz_fix3.localdate()
+        fdesde = _hoy_fix3.strftime('%Y-%m-%d')
+        fhasta = _hoy_fix3.strftime('%Y-%m-%d')
 
     if sorteo_id: premios = premios.filter(jugada__sorteo_id=sorteo_id)
     if fj_id: premios = premios.filter(jugada__forma_juego_id=fj_id)
