@@ -31,8 +31,10 @@ URLS_MULTI = {
     },
     "Texas 1:20 PM": {"pick3": ["https://www.lotteryusa.com/texas/midday-pick-3/"]},
     "Texas 10:12 PM": {"pick3": ["https://www.lotteryusa.com/texas/pick-3/"]},
-    "New York 2:30 PM": {"pick3": ["https://www.lotteryusa.com/new-york/midday-numbers/"]},
-    "New York 10:30 PM": {"pick3": ["https://www.lotteryusa.com/new-york/numbers/"]},
+    "New York 2:30 PM": {"pick3": ["https://www.lotteryusa.com/new-york/midday-numbers/"],
+        "pick4": ["https://www.lotteryusa.com/new-york/midday-win-4/"]},
+    "New York 10:30 PM": {"pick3": ["https://www.lotteryusa.com/new-york/numbers/"],
+        "pick4": ["https://www.lotteryusa.com/new-york/win-4/"]},
     "New Jersey 12:50 PM": {
         "pick3": ["https://www.lotteryusa.com/new-jersey/midday-pick-3/"],
         "pick4": ["https://www.lotteryusa.com/new-jersey/midday-pick-4/"],
