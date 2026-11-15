@@ -78,5 +78,25 @@
     ],
     "fecha": "2026-11-15",
     "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Haiti Bolet 11:30 AM",
+    "numeros": [
+      "24",
+      "44",
+      "23"
+    ],
+    "fecha": "2026-11-15",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "La Suerte",
+    "numeros": [
+      "93",
+      "92",
+      "10"
+    ],
+    "fecha": "2026-11-15",
+    "fuente": "enloteria"
   }
 ]
