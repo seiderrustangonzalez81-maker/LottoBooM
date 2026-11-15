@@ -211,11 +211,11 @@
     "fuente": "lotteryusa",
     "pick2": "",
     "pick3": "005",
-    "pick4": "",
+    "pick4": "7074",
     "pick5": "",
     "fijo": "05",
-    "corrido_1": "",
-    "corrido_2": ""
+    "corrido_1": "70",
+    "corrido_2": "74"
   },
   {
     "sorteo_nombre": "Loteka Tarde",
@@ -263,6 +263,16 @@
       "78",
       "61",
       "16"
+    ],
+    "fecha": "2026-11-15",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Haiti Bolet 5:30 PM",
+    "numeros": [
+      "17",
+      "90",
+      "55"
     ],
     "fecha": "2026-11-15",
     "fuente": "enloteria"
