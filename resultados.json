@@ -330,5 +330,27 @@
     ],
     "fecha": "2026-11-14",
     "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Loteka",
+    "numeros": [
+      "86",
+      "48",
+      "44"
+    ],
+    "fecha": "2026-11-14",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Georgia 6:59 PM",
+    "fecha": "2026-11-14",
+    "fuente": "lotteryusa",
+    "pick2": "",
+    "pick3": "007",
+    "pick4": "2412",
+    "pick5": "",
+    "fijo": "00",
+    "corrido_1": "00",
+    "corrido_2": "07"
   }
 ]
