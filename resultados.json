@@ -147,9 +147,9 @@
     "pick3": "536",
     "pick4": "1589",
     "pick5": "",
-    "fijo": "05",
-    "corrido_1": "03",
-    "corrido_2": "06"
+    "fijo": "36",
+    "corrido_1": "15",
+    "corrido_2": "89"
   },
   {
     "sorteo_nombre": "Anguilla 1PM",
@@ -169,9 +169,9 @@
     "pick3": "561",
     "pick4": "2463",
     "pick5": "",
-    "fijo": "05",
-    "corrido_1": "06",
-    "corrido_2": "01"
+    "fijo": "61",
+    "corrido_1": "24",
+    "corrido_2": "63"
   },
   {
     "sorteo_nombre": "Nacional Gana Más",
@@ -191,8 +191,8 @@
     "pick3": "797",
     "pick4": "7853",
     "pick5": "37076",
-    "fijo": "07",
-    "corrido_1": "09",
-    "corrido_2": "07"
+    "fijo": "97",
+    "corrido_1": "78",
+    "corrido_2": "53"
   }
 ]
