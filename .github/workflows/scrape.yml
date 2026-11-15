@@ -3,13 +3,7 @@ name: Scrape Loterias
 on:
   schedule:
     - cron: '*/15 * * * *'
-    - cron: '1 5 * * *'
-    - cron: '1 4 * * *'
   workflow_dispatch:
-  push:
-    paths:
-      - 'scraper.py'
-      - '.github/workflows/scrape.yml'
 
 jobs:
   scrape:
@@ -40,18 +34,10 @@ jobs:
         run: |
           git config user.email "action@github.com"
           git config user.name "GitHub Action"
-          
-          # Guardar el archivo generado en un lugar seguro
           cp resultados.json /tmp/resultados_nuevos.json
-          
-          # Traer el último estado de GitHub de forma forzada
           git fetch origin main
           git reset --hard origin/main
-          
-          # Sobrescribir con el archivo del scraper
           cp /tmp/resultados_nuevos.json resultados.json
-          
-          # Subir sin conflictos
           git add resultados.json
           git diff --staged --quiet || git commit -m "Update resultados [skip ci]"
           git push origin main
