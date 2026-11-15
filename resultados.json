@@ -486,5 +486,15 @@
     "fijo": "02",
     "corrido_1": "02",
     "corrido_2": "07"
+  },
+  {
+    "sorteo_nombre": "New York Noche",
+    "numeros": [
+      "48",
+      "39",
+      "06"
+    ],
+    "fecha": "2026-11-14",
+    "fuente": "enloteria"
   }
 ]
