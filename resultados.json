@@ -352,5 +352,15 @@
     "fijo": "00",
     "corrido_1": "00",
     "corrido_2": "07"
+  },
+  {
+    "sorteo_nombre": "Haiti Bolet 7:30 PM",
+    "numeros": [
+      "90",
+      "38",
+      "95"
+    ],
+    "fecha": "2026-11-14",
+    "fuente": "enloteria"
   }
 ]
