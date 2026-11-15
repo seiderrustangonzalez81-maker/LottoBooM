@@ -295,11 +295,14 @@ def scrape_lotteryusa(page):
                         elif juego == "pick3":
                             resultado_sorteo["pick3"] = "".join(numeros[:3])
                             if len(numeros) >= 3:
-                                resultado_sorteo["fijo"] = str(numeros[0]).zfill(2)
-                                resultado_sorteo["corrido_1"] = str(numeros[1]).zfill(2)
-                                resultado_sorteo["corrido_2"] = str(numeros[2]).zfill(2)
+                                # FIX: Fijo = últimos 2 dígitos del pick3
+                                resultado_sorteo["fijo"] = str(numeros[1]) + str(numeros[2])
                         elif juego == "pick4":
                             resultado_sorteo["pick4"] = "".join(numeros[:4])
+                            if len(numeros) >= 4:
+                                # FIX: Corridos = primeros 2 y últimos 2 del pick4
+                                resultado_sorteo["corrido_1"] = str(numeros[0]) + str(numeros[1])
+                                resultado_sorteo["corrido_2"] = str(numeros[2]) + str(numeros[3])
                         elif juego == "pick5":
                             resultado_sorteo["pick5"] = "".join(numeros[:5])
 
