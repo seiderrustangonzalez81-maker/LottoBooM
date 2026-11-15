@@ -41,26 +41,17 @@ jobs:
           git config user.email "action@github.com"
           git config user.name "GitHub Action"
           
-          # 1. Guardar el archivo generado por el scraper en un lugar seguro
+          # Guardar el archivo generado en un lugar seguro
           cp resultados.json /tmp/resultados_nuevos.json
           
-          # 2. Traer el último estado de GitHub de forma forzada
+          # Traer el último estado de GitHub de forma forzada
           git fetch origin main
           git reset --hard origin/main
           
-          # 3. Sobrescribir el archivo con la versión que generó el scraper
+          # Sobrescribir con el archivo del scraper
           cp /tmp/resultados_nuevos.json resultados.json
           
-          # 4. Subir sin conflictos
+          # Subir sin conflictos
           git add resultados.json
           git diff --staged --quiet || git commit -m "Update resultados [skip ci]"
           git push origin main
-
-      - name: Re-enable workflow if disabled
-        if: always()
-        run: |
-          gh api -X PUT \
-            "repos/${{ github.repository }}/actions/workflows/scrape.yml/enable" \
-            || true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
