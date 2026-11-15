@@ -98,5 +98,35 @@
     ],
     "fecha": "2026-11-15",
     "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Anguilla 12PM",
+    "numeros": [
+      "85",
+      "79",
+      "94"
+    ],
+    "fecha": "2026-11-15",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "King Lottery Día",
+    "numeros": [
+      "01",
+      "55",
+      "02"
+    ],
+    "fecha": "2026-11-15",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "El Quinielon Dia",
+    "numeros": [
+      "87",
+      "42",
+      "87"
+    ],
+    "fecha": "2026-11-15",
+    "fuente": "enloteria"
   }
 ]
