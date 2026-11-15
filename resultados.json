@@ -454,5 +454,15 @@
     ],
     "fecha": "2026-11-14",
     "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "LoteDom Noche",
+    "numeros": [
+      "28",
+      "44",
+      "67"
+    ],
+    "fecha": "2026-11-14",
+    "fuente": "enloteria"
   }
 ]
