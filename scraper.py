@@ -113,13 +113,17 @@ def calcular_fecha_esperada_usa(nombre_db):
     hora_sorteo = parsear_hora_sorteo(nombre_db)
     if not hora_sorteo:
         return fecha_este()
-    ahora_este = datetime.now(TZ_ESTE)
     hora, minuto = hora_sorteo
+    ahora_este = datetime.now(TZ_ESTE)
     hoy_sorteo = ahora_este.replace(hour=hora, minute=minuto, second=0, microsecond=0)
     if ahora_este >= hoy_sorteo:
-        return ahora_este.strftime("%Y-%m-%d")
+        dt_sorteo = hoy_sorteo
     else:
-        return (ahora_este - timedelta(days=1)).strftime("%Y-%m-%d")
+        dt_sorteo = hoy_sorteo - timedelta(days=1)
+    
+    # FIX_FECHA_CUBA_V1: Convertir la fecha de ET a Cuba
+    dt_cuba = dt_sorteo.astimezone(TZ_CUBA)
+    return dt_cuba.strftime("%Y-%m-%d")
 
 def normalizar_nombre(nombre):
     return " ".join(nombre.split())
