@@ -464,5 +464,27 @@
     ],
     "fecha": "2026-11-14",
     "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Anguilla 10PM",
+    "numeros": [
+      "21",
+      "56",
+      "43"
+    ],
+    "fecha": "2026-11-14",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Florida 9:45 PM",
+    "fecha": "2026-11-14",
+    "fuente": "lotteryusa",
+    "pick2": "95",
+    "pick3": "227",
+    "pick4": "7652",
+    "pick5": "02259",
+    "fijo": "02",
+    "corrido_1": "02",
+    "corrido_2": "07"
   }
 ]
