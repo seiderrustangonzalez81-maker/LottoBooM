@@ -58,5 +58,25 @@
     ],
     "fecha": "2026-11-15",
     "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "La Primera",
+    "numeros": [
+      "45",
+      "18",
+      "97"
+    ],
+    "fecha": "2026-11-15",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "LoteDom",
+    "numeros": [
+      "65",
+      "99",
+      "94"
+    ],
+    "fecha": "2026-11-15",
+    "fuente": "enloteria"
   }
 ]
