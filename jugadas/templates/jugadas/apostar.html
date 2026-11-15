@@ -7,7 +7,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // FIX_GEORGIA_JS: Forzar fecha futura al seleccionar Georgia 12:34 AM
     const sorteoSelect = document.querySelector('select[name="sorteo"]') || document.getElementById('id_sorteo');
     const fechaInput = document.querySelector('input[name="fecha_sorteo"]') || document.querySelector('input[name="fecha"]') || document.getElementById('id_fecha_sorteo');
-    
+
     if (sorteoSelect && fechaInput) {
         sorteoSelect.addEventListener('change', function() {
             if (this.value === '54') {
@@ -23,6 +23,20 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 </script>
+
+
+/* FIX_RESALTADO_LINEAS_V1 */
+.proc-mirror-wrap{ position:relative; width:100%; }
+.proc-mirror{
+  position:absolute; inset:0; pointer-events:none;
+  padding:10px; border:1.5px solid transparent; border-radius:8px;
+  font-family:'Courier New',monospace; font-size:.82rem; line-height:1.35;
+  white-space:pre-wrap; word-wrap:break-word; overflow:hidden;
+  color:#1e293b;
+}
+.proc-mirror .ln{ display:block; }
+.proc-mirror .ln-ok{ color:#15803d; background:rgba(22,163,74,.10); border-radius:4px; }
+.proc-mirror .ln-err{ color:#b91c1c; background:rgba(220,38,38,.10); border-radius:4px; }
 
 {% endblock %}
 {% block page_subtitle %}Registra jugadas para tus clientes{% endblock %}
@@ -2264,9 +2278,12 @@ document.addEventListener('DOMContentLoaded', function() {
             <label style="display:block;font-weight:800;color:#7c2d12;font-size:.78rem;margin-bottom:6px;">
               <i class="fas fa-paste"></i> Pega aquí el texto del cliente
             </label>
-            <textarea id="procesarText" rows="6" placeholder="Ejemplo:
+            <div class="proc-mirror-wrap">
+  <div id="procesarHighlight" class="proc-mirror" aria-hidden="true"></div>
+  <textarea id="procesarText" rows="6" placeholder="Ejemplo:
 T7 con 25
-D 8 1 5 con 50f y 20c" style="width:100%;padding:10px;border:1.5px solid #fdba74;border-radius:8px;font-family:'Courier New',monospace;font-size:.82rem;background:#ffffff;color:#1e293b;resize:vertical;"></textarea>
+D 8 1 5 con 50f y 20c" style="width:100%;padding:10px;border:1.5px solid #fdba74;border-radius:8px;font-family:'Courier New',monospace;font-size:.82rem;background:transparent;color:transparent;caret-color:#1e293b;resize:vertical;position:relative;z-index:2;"></textarea>
+</div>
             <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:8px;flex-wrap:wrap;">
               <small id="procEstado" style="font-size:.7rem;font-weight:700;color:#78350f;">Edita el texto y se procesará solo</small>
               <button type="button" id="btnProcAhora" style="padding:6px 14px;background:linear-gradient(135deg,#ea580c,#c2410c);color:#fff;border:2px solid #7c2d12;border-radius:10px;font-weight:800;font-size:.78rem;cursor:pointer;font-family:inherit;box-shadow:2px 2px 0 #7c2d12;">
@@ -2977,7 +2994,7 @@ const TABLE_DEFS = {
     aliases:{'corrido1':'corridos','corrido2':'corridos'}
   },
   'tabla-pick3':    { label:'Pick 3',   icon:'3️⃣', kind:'single', numDigits:3, forms:['pick3'] },
-  'tabla-centenas': { label:'Centenas', icon:'💯', kind:'multi', numDigits:3,
+  'tabla-centenas': { label:'Centenas Corridas', icon:'💯', kind:'multi', numDigits:3,
                       forms:['centenas corridas'],
                       labels:{'centenas corridas':'Centenas Corridas'},
                       aliases:{'centena corrida1':'centenas corridas','centena corrida2':'centenas corridas'} },
@@ -3134,8 +3151,8 @@ function cargarFormasPago(){
     let alertaDeuda = '';
     if (postpagoPendiente > 0) {
       alertaDeuda = `<div class="alert alert-danger" style="font-size:0.8rem; padding:10px; margin-bottom:10px; border-radius:8px; border: 1px solid #f5c2c7; background:#f8d7da; color:#842029;">
-        <i class="fas fa-exclamation-triangle"></i> 
-        <strong>Atención:</strong> Tienes una deuda pendiente de <strong>${fmtMoney(postpagoPendiente)}</strong>. 
+        <i class="fas fa-exclamation-triangle"></i>
+        <strong>Atención:</strong> Tienes una deuda pendiente de <strong>${fmtMoney(postpagoPendiente)}</strong>.
         Los premios de tus apuestas se usarán primero para cubrir esta deuda.
       </div>`;
     }
@@ -7685,17 +7702,51 @@ function _procEsMovil(){
 
 function _procNormalizarTexto(texto){
   var t = String(texto || '');
+  
+  // 1. Reemplazos básicos
   t = t.replace(/\bTe(\d)/g, 'T$1');
   t = t.replace(/\bDe(\d)/g, 'D$1');
   t = t.replace(/\bPA\./g, 'PA');
-  t = t.replace(/\.(?=\s|$)/g, '');
-  t = t.replace(/[\u2013\u2014]/g, '-');
-  t = t.replace(/[_;]/g, ' ');  // FIX_FIX_UNDERSCORE: _ y ; → espacio
-  // FIX_PRESERVA_NEWLINES_V1: colapsar espacios/tabs pero NO newlines
+  t = t.replace(/[_;]/g, ' ');
+  
+  // 2. Emoji candado → palabra
+  t = t.replace(/🔒/g, ' candado ');
+  
+  // 3. Formas compuestas (orden: más específicas primero)
+  t = t.replace(/\bpick[ \t]*2[ \t]*vs[ \t]*pf\b/gi, ' pick2vspf ');
+  t = t.replace(/\bpf[ \t]*vs[ \t]*pick[ \t]*2\b/gi, ' pick2vspf ');
+  t = t.replace(/\bpick2[ \t]*vspf\b/gi, ' pick2vspf ');
+  t = t.replace(/\bvs[ \t]*pick[ \t]*2\b/gi, ' vspick2 ');
+  t = t.replace(/\bvs[ \t]*pf\b/gi, ' vspf ');
+  t = t.replace(/\bvs[ \t]*100\b/gi, ' vs100 ');
+  
+  // 4. Corregir typos (parlet, candado, pick, fijo, corrido, tripleta, posicion)
+  t = t.replace(/\b(parle|parlet|parl|pale|palet|pared|parler|parley|parles|parlets|palets|palé|parlé|pares|parless|parlett)\b/gi, ' parlet ');
+  t = t.replace(/\b(candado|candad|canado|kandado|kandad|caandado|candaod|candados|kandados|canados|candadó|canadó|candao|candaos|candaddo)\b/gi, ' candado ');
+  t = t.replace(/\b(pick[ \t]*2|pik[ \t]*2|pic[ \t]*2|pick2s|pik2s|pic2s|pickk2)\b/gi, ' pick2 ');
+  t = t.replace(/\b(pick[ \t]*3|pik[ \t]*3|pic[ \t]*3|pick3s|pik3s|pic3s|pickk3)\b/gi, ' pick3 ');
+  t = t.replace(/\b(pick[ \t]*4|pik[ \t]*4|pic[ \t]*4|pick4s|pik4s|pic4s|pickk4)\b/gi, ' pick4 ');
+  t = t.replace(/\b(pick[ \t]*5|pik[ \t]*5|pic[ \t]*5|pick5s|pik5s|pic5s|pickk5)\b/gi, ' pick5 ');
+  t = t.replace(/\b(fijos|fixo|fixos|fijto)\b/gi, ' fijo ');
+  t = t.replace(/\b(coridos|corridos|corriodo|corido)\b/gi, ' corrido ');
+  t = t.replace(/\b(triplita|triplete|tripletas|triplet|tripletá)\b/gi, ' tripleta ');
+  t = t.replace(/\b(posición|posision|posisión|posiciones|posisions|posiciom)\b/gi, ' posicion ');
+  
+  // 5. Espacios alrededor de palabras clave canónicas
+  t = t.replace(/\b(pick2vspf|vspick2|vs100|vspf|parlet|candado|corrido|tripleta|posicion|pick2|pick3|pick4|pick5|fijo|con|vs|pf|y)\b/gi, ' $1 ');
+  
+  // 6. fijo → con (SIEMPRE)
+  t = t.replace(/\bfijo\b/gi, ' con ');
+  
+  // 7. Separar palabras pegadas a números
+  t = t.replace(/(\d+)([a-zA-Z]+)(\d+)/g, '$1 $2 $3');
+  t = t.replace(/(\d+)([a-zA-Z]+)/g, '$1 $2');
+  
+  // 8. Limpieza final de espacios (SIEMPRE AL FINAL)
   t = t.replace(/[ \t]+/g, ' ');
   t = t.replace(/[ \t]+\n/g, '\n');
   t = t.replace(/\n+/g, '\n');
-  return t;
+  return t.trim();
 }
 
 function _procActualizarEstado(msg, tipo){
@@ -7718,7 +7769,7 @@ function _procActualizarEstado(msg, tipo){
     }
     return r;
   }
-  
+
   function _procSimilitud(a, b){
     a = String(a||'').toLowerCase(); b = String(b||'').toLowerCase();
     if (a === b) return 0;
@@ -7807,31 +7858,45 @@ function _procActualizarEstado(msg, tipo){
     }
     return out;
   }
-  
+
   function _procParsearMontos(str){
     str = String(str || '').toLowerCase().replace(/\s+/g, ' ').trim();
     var res = { fijo: null, corridos: null, parlet: null, candado: null };
     if (!str) return res;
 
-    var mCand = str.match(/(?:candado|candad|candao|kandado|canado|caandado)[\s:]*([0-9]+(?:\.[0-9]+)?)/i);
+    // Candado
+    var mCand = str.match(/(?:candado|candad|candao|kandado|canado|caandado|🔒)[\s:]*([0-9]+(?:\.[0-9]+)?)/i);
     if (mCand) res.candado = mCand[1];
 
+    // Parlet
     var mParle = str.match(/(?:parle|parlet|parl|palet|parler|parley)[\s:]*([0-9]+(?:\.[0-9]+)?)/i);
     if (mParle) res.parlet = mParle[1];
 
-    var mF = str.match(/([0-9]+(?:\.[0-9]+)?)\s*f\b/);
-    var mC = str.match(/([0-9]+(?:\.[0-9]+)?)\s*c\b/);
-    if (mF) res.fijo = mF[1];
-    if (mC) res.corridos = mC[1];
+    // Fijo: "25 f" o "fijo 25"
+    var mF1 = str.match(/([0-9]+(?:\.[0-9]+)?)\s*f\b/);
+    var mF2 = str.match(/fijo[\s:]+([0-9]+(?:\.[0-9]+)?)/i);
+    if (mF1) res.fijo = mF1[1];
+    if (mF2) res.fijo = mF2[1];
 
+    // Corrido: "10 c" o "corrido 10"
+    var mC1 = str.match(/([0-9]+(?:\.[0-9]+)?)\s*c\b/);
+    var mC2 = str.match(/corrido[\s:]+([0-9]+(?:\.[0-9]+)?)/i);
+    if (mC1) res.corridos = mC1[1];
+    if (mC2) res.corridos = mC2[1];
+
+    // "con X y Y" o "con X"
     if (!res.fijo && !res.corridos){
-      var mY = str.match(/([0-9]+(?:\.[0-9]+)?)\s+y\s+([0-9]+(?:\.[0-9]+)?)/);
+      var mY = str.match(/con[\s:]+([0-9]+(?:\.[0-9]+)?)\s+y\s+([0-9]+(?:\.[0-9]+)?)/i);
       if (mY){ res.fijo = mY[1]; res.corridos = mY[2]; }
-      else if (!res.candado && !res.parlet){
-        var mS = str.match(/([0-9]+(?:\.[0-9]+)?)/);
-        if (mS) res.fijo = mS[1];
+      else {
+        var mUno = str.match(/con[\s:]+([0-9]+(?:\.[0-9]+)?)/i);
+        if (mUno) {
+          if (res.parlet || str.match(/parlet|parle|pale|palet|pared/i)) res.parlet = mUno[1];
+          else res.fijo = mUno[1];
+        }
       }
     }
+
     return res;
   }
 
@@ -7942,7 +8007,6 @@ function _procActualizarEstado(msg, tipo){
       var nums = grupoPendiente.nums;
       var numStr = nums.join(' ');
 
-      // FIX_PICK3_ROUTE_V2: si TODOS los numeros tienen 3 digitos → pick3
       var _todos3 = nums.length > 0 && nums.every(function(n){ return /^\d{3}$/.test(n); });
       if (_todos3 && (m.fijo || m.corridos || m.parlet)){
         filas.push({
@@ -7954,34 +8018,22 @@ function _procActualizarEstado(msg, tipo){
         return;
       }
 
-      // Emitir grupo normal SIN candado
-      if (nums.length > 0 && (m.fijo || m.corridos || m.parlet)){
+      if (nums.length > 0 && (m.fijo || m.corridos || m.parlet || m.candado)){
+        var parletFinal = m.parlet;
+        if (m.candado && !m.parlet) {
+          var pp = _candadoAPorParlet(m.candado, nums.length);
+          if (pp) parletFinal = pp;
+        }
         filas.push({
           num: numStr,
           montos: {
             fijo: m.fijo || '',
             corridos: m.corridos || '',
-            parlet: m.parlet || ''
+            parlet: parletFinal || '',
+            candado: m.candado || ''
           },
           tabla: 'tabla-tradicional'
         });
-      }
-
-      // FIX_CANDADO_SEPARADO_V1: el candado va en su propia fila
-      if (m.candado){
-        var pp = _candadoAPorParlet(m.candado, nums.length);
-        if (pp){
-          filas.push({
-            num: numStr,
-            montos: {
-              fijo: '',
-              corridos: '',
-              parlet: pp,
-              candado: m.candado
-            },
-            tabla: 'tabla-tradicional'
-          });
-        }
       }
 
       grupoPendiente = null;
@@ -8010,10 +8062,10 @@ function _procActualizarEstado(msg, tipo){
     }
 
     function _detectarInstruccionPos(linea){
-      // Busca el indice donde comienza la instruccion (con/candado/parle/emoji)
-      var m = linea.match(/\s+(con|candado|kandado|canado|candad|parle|parlet|parl|palet|parler|parley)\s/i);
+      // Busca el indice donde comienza la instruccion (con/candado/parle/emoji/fijo/corrido)
+      var m = linea.match(/\s+(con|candado|kandado|canado|candad|parle|parlet|parl|palet|parler|parley|fijo|corrido)\s/i);
       if (m) return m.index + 1;
-      var m2 = linea.match(/\s+(candado|kandado|canado|candad|parle|parlet|parl|palet|parler|parley)(?=\s|$)/i);
+      var m2 = linea.match(/\s+(candado|kandado|canado|candad|parle|parlet|parl|palet|parler|parley|fijo|corrido)(?=\s|$)/i);
       if (m2) return m2.index + 1;
       var mEmoji = linea.match(/\s+([\uD83D\uDD10\uD83D\uDD12\uD83D\uDD13])/);
       if (mEmoji) return mEmoji.index + 1;
@@ -8211,7 +8263,7 @@ function _procActualizarEstado(msg, tipo){
       if (typeof toast === 'function') toast('OK: ' + filas.length + ' fila(s) aplicadas a ' + aplicados + ' sorteo(s)', 'success');
     }
   }
-  
+
   (function _bindProcesarText(){
     function _procFeedback(estado){
       var ta = document.getElementById('procesarText');
@@ -8893,13 +8945,13 @@ document.addEventListener('submit', function(ev){
             toast('💰 Recarga: $' + (d.monto||monto).toFixed(2) + ' en ' + (d.forma_pago_nombre||'') + '. Saldo: $' + (d.saldo_actual||0).toFixed(2), 'success');
           } else { alert('Recarga exitosa: $' + (d.monto||monto).toFixed(2)); }
           if (typeof cargarFormasPago === 'function') cargarFormasPago();
-          
+
           /* FIX_RECARGA_SALDO_AUTO_V1: actualizar saldo sin recargar página */
           (function(){
             var _num = (typeof d.saldo_actual === 'number') ? d.saldo_actual : parseFloat(d.saldo_actual || 0);
             var _fmt = function(n){ return '$' + parseFloat(n||0).toFixed(2); };
             console.log('[RECARGA_SALDO_V1] Update saldo:', _num);
-            
+
             if (!isNaN(_num)) {
               var _chipA = document.querySelector('.fp-chip.active');
               if (_chipA) {
@@ -8911,7 +8963,7 @@ document.addEventListener('submit', function(ev){
                 if (el) el.textContent = _fmt(_num);
               });
             }
-            
+
             var _sel2 = document.getElementById('selCliente');
             if (_sel2 && _sel2.value) {
               fetch('/jugadas/api/forma-pago-cliente/?cliente_id=' + encodeURIComponent(_sel2.value), {headers:{'X-Requested-With':'XMLHttpRequest'}})
@@ -8931,7 +8983,7 @@ document.addEventListener('submit', function(ev){
               })
               .catch(function(e){ console.warn('[RECARGA_SALDO_V1] fetch err:', e); });
             }
-            
+
             if (typeof actualizarVisibilidad === 'function') {
               setTimeout(function(){ try { actualizarVisibilidad(); } catch(_){} }, 200);
             }
@@ -8966,5 +9018,63 @@ window._BORRADOR_CTX = {
 };
 </script>
 <script src="{% static 'js/borrador_apostar.js' %}?v=20261022b"></script>
+
+
+<script>
+/* FIX_RESALTADO_LINEAS_V1: espejo que colorea cada línea según el Parser */
+(function(){
+  function init(){
+    var ta = document.getElementById('procesarText');
+    var mirror = document.getElementById('procesarHighlight');
+    if (!ta || !mirror || ta.dataset.mirrorBound) return;
+    ta.dataset.mirrorBound = '1';
+
+    function escapeHtml(s){
+      return String(s).replace(/[&<>"']/g, function(ch){
+        return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch];
+      });
+    }
+
+    function lineaEsValida(linea){
+      var txt = String(linea || '').trim();
+      if (!txt) return true; // línea vacía no se pinta
+      try {
+        var filas = (typeof _procParsearTexto === 'function')
+          ? _procParsearTexto(txt)
+          : [];
+        if (!filas || !filas.length) return false;
+        return filas.some(function(f){
+          var n = String(f.num || '').trim();
+          var m = f.montos || {};
+          var tieneMonto = !!(m.fijo || m.corridos || m.parlet || m.candado || m.pick3 || m.pick4 || m.pick5);
+          return n.length > 0 && (tieneMonto || n.indexOf('x') !== -1);
+        });
+      } catch(e){ return false; }
+    }
+
+    function render(){
+      var lines = ta.value.split('\n');
+      var html = lines.map(function(l){
+        var ok = lineaEsValida(l);
+        var cls = (String(l).trim() === '') ? 'ln' : (ok ? 'ln ln-ok' : 'ln ln-err');
+        return '<span class="'+cls+'">'+escapeHtml(l || ' ')+'</span>';
+      }).join('\n');
+      mirror.innerHTML = html;
+      mirror.scrollTop = ta.scrollTop;
+    }
+
+    ta.addEventListener('input', render);
+    ta.addEventListener('scroll', function(){ mirror.scrollTop = ta.scrollTop; });
+    ta.addEventListener('paste', function(){ setTimeout(render, 0); });
+    render();
+  }
+
+  if (document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    setTimeout(init, 300);
+  }
+})();
+</script>
 
 {% endblock extra_js %}

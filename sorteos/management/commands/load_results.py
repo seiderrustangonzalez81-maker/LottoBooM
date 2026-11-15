@@ -64,8 +64,9 @@ def normalizar_texto(texto):
     return texto.lower().strip()
 
 def temporada_actual():
-    offset = datetime.now(TZ_ESTE).utcoffset()
-    return 'invierno' if offset == timedelta(hours=-5) else 'verano'
+    # FIX_CARIBE_UTC4_2027: Cuba y Rep. Dominicana mantienen UTC-4 hasta nov 2027.
+    # No aplicar cambio de horario para sorteos del Caribe.
+    return 'verano'
 
 def sorteo_corre_hoy(sorteo, dia_actual, temporada):
     horarios = sorteo.horarios

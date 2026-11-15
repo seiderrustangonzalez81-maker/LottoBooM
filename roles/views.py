@@ -3409,6 +3409,17 @@ def cuadre_diario_view(request):
             context["comercial_seleccionado"] = comercial
             context["vista"] = "banco_comercial"
         else:
+            # FIX_FECHA_CUADRE_URGENTE_V1: Forzar fecha a hoy si viene vacía
+            from datetime import datetime
+            from zoneinfo import ZoneInfo
+            _hoy_cuba = datetime.now(ZoneInfo('America/Havana')).strftime('%Y-%m-%d')
+            if not fecha: fecha = _hoy_cuba
+            if not fecha_hasta: fecha_hasta = _hoy_cuba
+            if not request.GET.get('fecha'):
+                request.GET = request.GET.copy()
+                request.GET['fecha'] = _hoy_cuba
+                request.GET['fecha_desde'] = _hoy_cuba
+                request.GET['fecha_hasta'] = _hoy_cuba
             context["resumen_general"] = CuadreService.calcular_resumen_banco(usuario_actual, fecha, fecha_hasta)
             context.update(CuadreService.generar_cuadre_completo(usuario_actual, fecha))
             context["vista"] = "banco_resumen"

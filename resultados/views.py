@@ -2527,12 +2527,5 @@ def api_resultado_status(request, resultado_id):
 # FIX_HORA_CUBA_V3: Función de horario de verano de Cuba
 # ============================================================
 def es_verano_cuba(fecha):
-    from datetime import datetime as _dt, timedelta as _td
-    year = fecha.year
-    marzo_1 = _dt(year, 3, 1).date()
-    dias = (6 - marzo_1.weekday()) % 7
-    segundo_domingo_marzo = marzo_1 + _td(days=dias + 7)
-    nov_1 = _dt(year, 11, 1).date()
-    dias_nov = (6 - nov_1.weekday()) % 7
-    primer_domingo_nov = nov_1 + _td(days=dias_nov)
-    return segundo_domingo_marzo <= fecha < primer_domingo_nov
+    # FIX_VERANO_CUBA_2027: Cuba mantiene UTC-4 hasta el 7/11/2027
+    return True
