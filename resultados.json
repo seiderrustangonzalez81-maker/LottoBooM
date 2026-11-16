@@ -196,5 +196,15 @@
     "fijo": "11",
     "corrido_1": "",
     "corrido_2": ""
+  },
+  {
+    "sorteo_nombre": "Nacional Gana Más",
+    "numeros": [
+      "52",
+      "45",
+      "80"
+    ],
+    "fecha": "2026-11-16",
+    "fuente": "enloteria"
   }
 ]
