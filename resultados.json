@@ -140,6 +140,18 @@
     "fuente": "enloteria"
   },
   {
+    "sorteo_nombre": "Georgia 12:30 PM",
+    "fecha": "2026-11-16",
+    "fuente": "lotteryusa",
+    "pick2": "",
+    "pick3": "526",
+    "pick4": "8357",
+    "pick5": "",
+    "fijo": "26",
+    "corrido_1": "83",
+    "corrido_2": "57"
+  },
+  {
     "sorteo_nombre": "Anguilla 1PM",
     "numeros": [
       "24",
@@ -148,18 +160,6 @@
     ],
     "fecha": "2026-11-16",
     "fuente": "enloteria"
-  },
-  {
-    "sorteo_nombre": "Texas 1:20 PM",
-    "fecha": "2026-11-16",
-    "fuente": "lotteryusa",
-    "pick2": "",
-    "pick3": "911",
-    "pick4": "",
-    "pick5": "",
-    "fijo": "11",
-    "corrido_1": "",
-    "corrido_2": ""
   },
   {
     "sorteo_nombre": "New Jersey 12:50 PM",
@@ -174,18 +174,6 @@
     "corrido_2": "26"
   },
   {
-    "sorteo_nombre": "Georgia 12:30 PM",
-    "fecha": "2026-11-16",
-    "fuente": "lotteryusa",
-    "pick2": "",
-    "pick3": "526",
-    "pick4": "8357",
-    "pick5": "",
-    "fijo": "26",
-    "corrido_1": "83",
-    "corrido_2": "57"
-  },
-  {
     "sorteo_nombre": "Tennessee 1:20 PM",
     "fecha": "2026-11-16",
     "fuente": "lotteryusa",
@@ -196,5 +184,17 @@
     "fijo": "36",
     "corrido_1": "03",
     "corrido_2": "39"
+  },
+  {
+    "sorteo_nombre": "Texas 1:20 PM",
+    "fecha": "2026-11-16",
+    "fuente": "lotteryusa",
+    "pick2": "",
+    "pick3": "911",
+    "pick4": "",
+    "pick5": "",
+    "fijo": "11",
+    "corrido_1": "",
+    "corrido_2": ""
   }
 ]
