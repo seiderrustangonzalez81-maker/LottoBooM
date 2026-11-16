@@ -218,5 +218,15 @@
     "fijo": "36",
     "corrido_1": "03",
     "corrido_2": "39"
+  },
+  {
+    "sorteo_nombre": "Anguilla 2PM",
+    "numeros": [
+      "06",
+      "26",
+      "57"
+    ],
+    "fecha": "2026-11-16",
+    "fuente": "enloteria"
   }
 ]
