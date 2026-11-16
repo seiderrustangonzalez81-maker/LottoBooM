@@ -179,9 +179,21 @@
     "fuente": "lotteryusa",
     "pick2": "",
     "pick3": "336",
-    "pick4": "",
+    "pick4": "0339",
     "pick5": "",
     "fijo": "36",
+    "corrido_1": "03",
+    "corrido_2": "39"
+  },
+  {
+    "sorteo_nombre": "Texas 1:20 PM",
+    "fecha": "2026-11-16",
+    "fuente": "lotteryusa",
+    "pick2": "",
+    "pick3": "911",
+    "pick4": "",
+    "pick5": "",
+    "fijo": "11",
     "corrido_1": "",
     "corrido_2": ""
   }
