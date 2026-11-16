@@ -140,18 +140,6 @@
     "fuente": "enloteria"
   },
   {
-    "sorteo_nombre": "Georgia 12:30 PM",
-    "fecha": "2026-11-16",
-    "fuente": "lotteryusa",
-    "pick2": "",
-    "pick3": "526",
-    "pick4": "8357",
-    "pick5": "",
-    "fijo": "26",
-    "corrido_1": "83",
-    "corrido_2": "57"
-  },
-  {
     "sorteo_nombre": "Anguilla 1PM",
     "numeros": [
       "24",
@@ -162,28 +150,26 @@
     "fuente": "enloteria"
   },
   {
-    "sorteo_nombre": "New Jersey 12:50 PM",
+    "sorteo_nombre": "Nacional Gana Más",
+    "numeros": [
+      "52",
+      "45",
+      "80"
+    ],
     "fecha": "2026-11-16",
-    "fuente": "lotteryusa",
-    "pick2": "",
-    "pick3": "867",
-    "pick4": "7826",
-    "pick5": "",
-    "fijo": "67",
-    "corrido_1": "78",
-    "corrido_2": "26"
+    "fuente": "enloteria"
   },
   {
-    "sorteo_nombre": "Tennessee 1:20 PM",
+    "sorteo_nombre": "Florida 1:35 PM",
     "fecha": "2026-11-16",
     "fuente": "lotteryusa",
-    "pick2": "",
-    "pick3": "336",
-    "pick4": "0339",
+    "pick2": "20",
+    "pick3": "690",
+    "pick4": "",
     "pick5": "",
-    "fijo": "36",
-    "corrido_1": "03",
-    "corrido_2": "39"
+    "fijo": "90",
+    "corrido_1": "",
+    "corrido_2": ""
   },
   {
     "sorteo_nombre": "Texas 1:20 PM",
@@ -198,13 +184,39 @@
     "corrido_2": ""
   },
   {
-    "sorteo_nombre": "Nacional Gana Más",
-    "numeros": [
-      "52",
-      "45",
-      "80"
-    ],
+    "sorteo_nombre": "New Jersey 12:50 PM",
     "fecha": "2026-11-16",
-    "fuente": "enloteria"
+    "fuente": "lotteryusa",
+    "pick2": "",
+    "pick3": "867",
+    "pick4": "7826",
+    "pick5": "",
+    "fijo": "67",
+    "corrido_1": "78",
+    "corrido_2": "26"
+  },
+  {
+    "sorteo_nombre": "Georgia 12:30 PM",
+    "fecha": "2026-11-16",
+    "fuente": "lotteryusa",
+    "pick2": "",
+    "pick3": "526",
+    "pick4": "8357",
+    "pick5": "",
+    "fijo": "26",
+    "corrido_1": "83",
+    "corrido_2": "57"
+  },
+  {
+    "sorteo_nombre": "Tennessee 1:20 PM",
+    "fecha": "2026-11-16",
+    "fuente": "lotteryusa",
+    "pick2": "",
+    "pick3": "336",
+    "pick4": "0339",
+    "pick5": "",
+    "fijo": "36",
+    "corrido_1": "03",
+    "corrido_2": "39"
   }
 ]
