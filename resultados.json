@@ -150,5 +150,15 @@
     "fijo": "18",
     "corrido_1": "10",
     "corrido_2": "93"
+  },
+  {
+    "sorteo_nombre": "Anguilla 1PM",
+    "numeros": [
+      "28",
+      "81",
+      "61"
+    ],
+    "fecha": "2026-11-17",
+    "fuente": "enloteria"
   }
 ]
