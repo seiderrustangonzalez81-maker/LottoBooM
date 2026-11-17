@@ -508,5 +508,17 @@
     "fijo": "27",
     "corrido_1": "21",
     "corrido_2": "21"
+  },
+  {
+    "sorteo_nombre": "Texas 10:12 PM",
+    "fecha": "2026-11-16",
+    "fuente": "lotteryusa",
+    "pick2": "",
+    "pick3": "062",
+    "pick4": "",
+    "pick5": "",
+    "fijo": "62",
+    "corrido_1": "",
+    "corrido_2": ""
   }
 ]
