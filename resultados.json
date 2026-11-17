@@ -218,5 +218,15 @@
     ],
     "fecha": "2026-11-17",
     "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Anguilla 2PM",
+    "numeros": [
+      "70",
+      "63",
+      "74"
+    ],
+    "fecha": "2026-11-17",
+    "fuente": "enloteria"
   }
 ]
