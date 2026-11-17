@@ -352,5 +352,27 @@
     ],
     "fecha": "2026-11-16",
     "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Haiti Bolet 7:30 PM",
+    "numeros": [
+      "42",
+      "26",
+      "92"
+    ],
+    "fecha": "2026-11-16",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Tennessee 6:30 PM",
+    "fecha": "2026-11-16",
+    "fuente": "lotteryusa",
+    "pick2": "",
+    "pick3": "259",
+    "pick4": "4001",
+    "pick5": "",
+    "fijo": "59",
+    "corrido_1": "40",
+    "corrido_2": "01"
   }
 ]
