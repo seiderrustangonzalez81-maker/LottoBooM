@@ -310,5 +310,15 @@
     ],
     "fecha": "2026-11-17",
     "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Haiti Bolet 6:30 PM",
+    "numeros": [
+      "75",
+      "42",
+      "03"
+    ],
+    "fecha": "2026-11-17",
+    "fuente": "enloteria"
   }
 ]
