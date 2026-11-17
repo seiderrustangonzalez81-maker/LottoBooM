@@ -374,5 +374,25 @@
     "fijo": "59",
     "corrido_1": "40",
     "corrido_2": "01"
+  },
+  {
+    "sorteo_nombre": "Anguilla 8PM",
+    "numeros": [
+      "58",
+      "86",
+      "08"
+    ],
+    "fecha": "2026-11-16",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Leidsa",
+    "numeros": [
+      "01",
+      "47",
+      "51"
+    ],
+    "fecha": "2026-11-16",
+    "fuente": "enloteria"
   }
 ]
