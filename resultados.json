@@ -160,5 +160,17 @@
     ],
     "fecha": "2026-11-17",
     "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "New Jersey 12:50 PM",
+    "fecha": "2026-11-17",
+    "fuente": "lotteryusa",
+    "pick2": "",
+    "pick3": "985",
+    "pick4": "3220",
+    "pick5": "",
+    "fijo": "85",
+    "corrido_1": "32",
+    "corrido_2": "20"
   }
 ]
