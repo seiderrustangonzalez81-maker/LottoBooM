@@ -464,5 +464,15 @@
     ],
     "fecha": "2026-11-17",
     "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Anguilla 10PM",
+    "numeros": [
+      "63",
+      "10",
+      "27"
+    ],
+    "fecha": "2026-11-17",
+    "fuente": "enloteria"
   }
 ]
