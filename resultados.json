@@ -179,11 +179,11 @@
     "fuente": "lotteryusa",
     "pick2": "",
     "pick3": "593",
-    "pick4": "3673",
+    "pick4": "",
     "pick5": "",
     "fijo": "93",
-    "corrido_1": "36",
-    "corrido_2": "73"
+    "corrido_1": "",
+    "corrido_2": ""
   },
   {
     "sorteo_nombre": "Texas 1:20 PM",
@@ -194,6 +194,18 @@
     "pick4": "",
     "pick5": "",
     "fijo": "75",
+    "corrido_1": "",
+    "corrido_2": ""
+  },
+  {
+    "sorteo_nombre": "Florida 1:35 PM",
+    "fecha": "2026-11-18",
+    "fuente": "lotteryusa",
+    "pick2": "15",
+    "pick3": "",
+    "pick4": "",
+    "pick5": "",
+    "fijo": "",
     "corrido_1": "",
     "corrido_2": ""
   }
