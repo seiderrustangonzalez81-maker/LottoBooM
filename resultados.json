@@ -48,5 +48,25 @@
     ],
     "fecha": "2026-11-18",
     "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Anguilla 11AM",
+    "numeros": [
+      "47",
+      "38",
+      "65"
+    ],
+    "fecha": "2026-11-18",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "LoteDom",
+    "numeros": [
+      "81",
+      "00",
+      "89"
+    ],
+    "fecha": "2026-11-18",
+    "fuente": "enloteria"
   }
 ]
