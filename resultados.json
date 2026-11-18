@@ -138,5 +138,17 @@
     ],
     "fecha": "2026-11-18",
     "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Georgia 12:30 PM",
+    "fecha": "2026-11-18",
+    "fuente": "lotteryusa",
+    "pick2": "",
+    "pick3": "461",
+    "pick4": "1232",
+    "pick5": "",
+    "fijo": "61",
+    "corrido_1": "12",
+    "corrido_2": "32"
   }
 ]
