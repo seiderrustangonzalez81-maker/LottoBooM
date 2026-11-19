@@ -142,39 +142,58 @@ def scrape_lotteryusa():
     resultados = []
     for nombre_db, juegos in URLS_MULTI.items():
         fecha_esperada = calcular_fecha_esperada_usa(nombre_db)
-        resultado_sorteo = {"sorteo_nombre": nombre_db, "fecha": fecha_esperada, "fuente": "lotteryusa", "pick2": "", "pick3": "", "pick4": "", "pick5": "", "fijo": "", "corrido_1": "", "corrido_2": ""}
-        exito_total = False
+        resultado_sorteo = {
+            "sorteo_nombre": nombre_db, 
+            "fecha": fecha_esperada, 
+            "fuente": "lotteryusa", 
+            "pick2": "", "pick3": "", "pick4": "", "pick5": "", 
+            "fijo": "", "corrido_1": "", "corrido_2": ""
+        }
+        
+        exito_alguna = False # Variable para saber si al menos sacamos un juego
+        
+        # Recorremos TODOS los juegos (pick2, pick3, pick4, etc.)
         for juego, urls in juegos.items():
-            if exito_total: break
+            # Recorremos las URLs (por si una falla)
             for url in urls:
                 html = fetch_url(url)
                 if not html: continue
                 soup = BeautifulSoup(html, 'html.parser')
                 tarjeta = _extraer_tarjeta_lotteryusa(soup)
                 if not tarjeta: continue
+                
                 fecha_tarjeta = _extraer_fecha_lotteryusa(tarjeta)
                 if fecha_tarjeta and fecha_tarjeta != fecha_esperada:
-                    break
+                    break # Si la fecha no coincide, probamos la siguiente URL
+                    
                 nodos = tarjeta.select('li.c-ball, li.c-result__ball, .c-ball, .ball')
                 numeros = [n.get_text(strip=True) for n in nodos]
                 if not numeros: continue
-                if juego == "pick2": resultado_sorteo["pick2"] = "".join(numeros[:2])
+                
+                # Asignamos los datos según el juego
+                if juego == "pick2": 
+                    resultado_sorteo["pick2"] = "".join(numeros[:2])
                 elif juego == "pick3":
                     resultado_sorteo["pick3"] = "".join(numeros[:3])
-                    if len(numeros) >= 3: resultado_sorteo["fijo"] = str(numeros[1]) + str(numeros[2])
+                    if len(numeros) >= 3: 
+                        resultado_sorteo["fijo"] = str(numeros[1]) + str(numeros[2])
                 elif juego == "pick4":
                     resultado_sorteo["pick4"] = "".join(numeros[:4])
                     if len(numeros) >= 4:
                         resultado_sorteo["corrido_1"] = str(numeros[0]) + str(numeros[1])
                         resultado_sorteo["corrido_2"] = str(numeros[2]) + str(numeros[3])
-                elif juego == "pick5": resultado_sorteo["pick5"] = "".join(numeros[:5])
-                exito_total = True
-                break
-        if exito_total:
+                elif juego == "pick5": 
+                    resultado_sorteo["pick5"] = "".join(numeros[:5])
+                    
+                exito_alguna = True
+                break # Rompe el bucle de URLs de ESTE juego, y pasa al SIGUIENTE juego (ej. del pick3 al pick4)
+                
+        if exito_alguna:
             resultados.append(resultado_sorteo)
             print(f"  ✅ {nombre_db}")
         else:
             print(f"  ⚠️ {nombre_db} (sin datos)")
+            
     return resultados
 
 def main():
