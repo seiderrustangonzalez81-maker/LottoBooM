@@ -256,5 +256,245 @@
     "fijo": "86",
     "corrido_1": "66",
     "corrido_2": "69"
+  },
+  {
+    "sorteo_nombre": "Loteka Tarde",
+    "numeros": [
+      "17",
+      "45",
+      "43"
+    ],
+    "fecha": "2026-11-18",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Anguilla 2PM",
+    "numeros": [
+      "66",
+      "40",
+      "80"
+    ],
+    "fecha": "2026-11-18",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Nacional Gana Más",
+    "numeros": [
+      "95",
+      "28",
+      "12"
+    ],
+    "fecha": "2026-11-18",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Anguilla 3PM",
+    "numeros": [
+      "01",
+      "08",
+      "38"
+    ],
+    "fecha": "2026-11-18",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Anguilla 4PM",
+    "numeros": [
+      "91",
+      "17",
+      "57"
+    ],
+    "fecha": "2026-11-18",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Anguilla 5PM",
+    "numeros": [
+      "64",
+      "48",
+      "59"
+    ],
+    "fecha": "2026-11-18",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Anguilla 6PM",
+    "numeros": [
+      "75",
+      "13",
+      "93"
+    ],
+    "fecha": "2026-11-18",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "La Suerte 6PM",
+    "numeros": [
+      "63",
+      "53",
+      "89"
+    ],
+    "fecha": "2026-11-18",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Haiti Bolet 5:30 PM",
+    "numeros": [
+      "23",
+      "75",
+      "80"
+    ],
+    "fecha": "2026-11-18",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Anguilla 7PM",
+    "numeros": [
+      "40",
+      "37",
+      "51"
+    ],
+    "fecha": "2026-11-18",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "La Primera Noche",
+    "numeros": [
+      "50",
+      "52",
+      "78"
+    ],
+    "fecha": "2026-11-18",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Haiti Bolet 6:30 PM",
+    "numeros": [
+      "14",
+      "39",
+      "38"
+    ],
+    "fecha": "2026-11-18",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "King Lottery Noche",
+    "numeros": [
+      "63",
+      "71",
+      "41"
+    ],
+    "fecha": "2026-11-18",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Loteka",
+    "numeros": [
+      "84",
+      "64",
+      "09"
+    ],
+    "fecha": "2026-11-18",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Anguilla 8PM",
+    "numeros": [
+      "15",
+      "81",
+      "70"
+    ],
+    "fecha": "2026-11-18",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Real Noche",
+    "numeros": [
+      "21",
+      "31",
+      "80"
+    ],
+    "fecha": "2026-11-18",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Haiti Bolet 7:30 PM",
+    "numeros": [
+      "09",
+      "15",
+      "92"
+    ],
+    "fecha": "2026-11-18",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Leidsa",
+    "numeros": [
+      "76",
+      "29",
+      "90"
+    ],
+    "fecha": "2026-11-18",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Anguilla 9PM",
+    "numeros": [
+      "09",
+      "99",
+      "67"
+    ],
+    "fecha": "2026-11-18",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Nacional Noche",
+    "numeros": [
+      "75",
+      "35",
+      "76"
+    ],
+    "fecha": "2026-11-18",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Anguilla 10PM",
+    "numeros": [
+      "57",
+      "02",
+      "46"
+    ],
+    "fecha": "2026-11-18",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "LoteDom Noche",
+    "numeros": [
+      "17",
+      "09",
+      "97"
+    ],
+    "fecha": "2026-11-18",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "New York Noche",
+    "numeros": [
+      "04",
+      "30",
+      "64"
+    ],
+    "fecha": "2026-11-18",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "El Quemaito Mayor",
+    "numeros": [
+      "58",
+      "46",
+      "43"
+    ],
+    "fecha": "2026-11-18",
+    "fuente": "enloteria"
   }
 ]
