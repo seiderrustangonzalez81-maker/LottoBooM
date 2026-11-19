@@ -1,1 +1,12 @@
-[]
+[
+  {
+    "sorteo_nombre": "Anguilla 8AM",
+    "numeros": [
+      "13",
+      "89",
+      "13"
+    ],
+    "fecha": "2026-11-19",
+    "fuente": "enloteria"
+  }
+]
