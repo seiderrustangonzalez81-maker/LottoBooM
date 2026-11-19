@@ -167,11 +167,11 @@
     "fuente": "lotteryusa",
     "pick2": "",
     "pick3": "912",
-    "pick4": "",
+    "pick4": "3674",
     "pick5": "",
     "fijo": "12",
-    "corrido_1": "",
-    "corrido_2": ""
+    "corrido_1": "36",
+    "corrido_2": "74"
   },
   {
     "sorteo_nombre": "Tennessee 1:20 PM",
@@ -226,24 +226,24 @@
     "fecha": "2026-11-18",
     "fuente": "lotteryusa",
     "pick2": "",
-    "pick3": "",
-    "pick4": "5782",
+    "pick3": "427",
+    "pick4": "",
     "pick5": "",
-    "fijo": "",
-    "corrido_1": "57",
-    "corrido_2": "82"
+    "fijo": "27",
+    "corrido_1": "",
+    "corrido_2": ""
   },
   {
     "sorteo_nombre": "Tennessee 6:30 PM",
     "fecha": "2026-11-18",
     "fuente": "lotteryusa",
     "pick2": "",
-    "pick3": "868",
-    "pick4": "",
+    "pick3": "",
+    "pick4": "0552",
     "pick5": "",
-    "fijo": "68",
-    "corrido_1": "",
-    "corrido_2": ""
+    "fijo": "",
+    "corrido_1": "05",
+    "corrido_2": "52"
   },
   {
     "sorteo_nombre": "Florida 9:45 PM",
@@ -515,10 +515,10 @@
     "fuente": "lotteryusa",
     "pick2": "",
     "pick3": "468",
-    "pick4": "",
+    "pick4": "2681",
     "pick5": "",
     "fijo": "68",
-    "corrido_1": "",
-    "corrido_2": ""
+    "corrido_1": "26",
+    "corrido_2": "81"
   }
 ]
