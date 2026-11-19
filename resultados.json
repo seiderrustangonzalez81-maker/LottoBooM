@@ -202,12 +202,12 @@
     "fecha": "2026-11-18",
     "fuente": "lotteryusa",
     "pick2": "15",
-    "pick3": "",
-    "pick4": "",
-    "pick5": "",
-    "fijo": "",
-    "corrido_1": "",
-    "corrido_2": ""
+    "pick3": "428",
+    "pick4": "7998",
+    "pick5": "63587",
+    "fijo": "28",
+    "corrido_1": "79",
+    "corrido_2": "98"
   },
   {
     "sorteo_nombre": "New York 2:30 PM",
@@ -215,11 +215,11 @@
     "fuente": "lotteryusa",
     "pick2": "",
     "pick3": "132",
-    "pick4": "",
+    "pick4": "8181",
     "pick5": "",
     "fijo": "32",
-    "corrido_1": "",
-    "corrido_2": ""
+    "corrido_1": "81",
+    "corrido_2": "81"
   },
   {
     "sorteo_nombre": "Georgia 6:59 PM",
@@ -250,11 +250,11 @@
     "fecha": "2026-11-18",
     "fuente": "lotteryusa",
     "pick2": "52",
-    "pick3": "",
-    "pick4": "",
+    "pick3": "086",
+    "pick4": "6669",
     "pick5": "",
-    "fijo": "",
-    "corrido_1": "",
-    "corrido_2": ""
+    "fijo": "86",
+    "corrido_1": "66",
+    "corrido_2": "69"
   }
 ]
