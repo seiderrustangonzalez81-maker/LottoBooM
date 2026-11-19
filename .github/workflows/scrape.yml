@@ -24,8 +24,7 @@ jobs:
       - name: Install deps
         run: |
           pip install --upgrade pip
-          pip install beautifulsoup4 playwright requests tzdata
-          playwright install --with-deps chromium
+          pip install beautifulsoup4 requests tzdata
 
       - name: Run scraper
         run: python scraper.py
