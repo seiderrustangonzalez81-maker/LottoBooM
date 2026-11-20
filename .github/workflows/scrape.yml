@@ -24,7 +24,7 @@ jobs:
       - name: Install deps
         run: |
           pip install --upgrade pip
-          pip install beautifulsoup4 curl_cffi tzdata
+          pip install beautifulsoup4 curl_cffi tzdata requests
 
       - name: Run scraper
         run: python scraper.py
