@@ -53,7 +53,7 @@ SORTEOS_ESPERADOS = [
     "Georgia 7 PM", "Texas 7 PM", "Tennessee 7:20 PM",
     "King Lottery 7:30 PM", "Haití 6", "Loteka 7:50 PM", "Tok 3",
     "Anguila 8 PM", "Nacional", "Leidsa 8:55 PM", "Pega 3+",
-    "Anguila 9 PM", "Florida 9:50 PM", "New York 10:30 PM",
+    "Anguila 9 PM", "Anguila 10 PM", "Florida 9:50 PM", "New York 10:30 PM",
     "New Jersey 10:50 PM", "Texas 11 PM", "Georgia 11:40 PM",
 ]
 URL_CONECTATE = "https://www.conectate.com.do/loterias/"
