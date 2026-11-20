@@ -8,9 +8,10 @@ class NormalizeTests(unittest.TestCase):
         self.assertEqual(audit.norm("  QUINIELÓN  "), "quinielon")
     def test_alias_results(self):
         self.assertEqual(audit.canon("El Quinielon Dia"), audit.canon("Quinielón"))
-        self.assertEqual(audit.canon("Anguilla 8AM"), audit.canon("Anguila 8 AM"))\n        self.assertEqual(audit.canon("Loteka 1:30 PM"), audit.canon("Loteka 7:50 PM"))
+        self.assertEqual(audit.canon("Anguilla 8AM"), audit.canon("Anguila 8 AM"))
+        self.assertEqual(audit.canon("Loteka 1:30 PM"), audit.canon("Loteka 7:50 PM"))
     def test_known_schedule_alias(self):
-        self.assertNotEqual(audit.canon("Florida 9:45 PM"), audit.canon("Florida 9:50 PM"))
+        self.assertEqual(audit.canon("Florida 9:45 PM"), audit.canon("Florida 9:50 PM"))
     def test_different_draws_not_collapsed(self):
         self.assertNotEqual(audit.canon("Suerte 12:30 PM"), audit.canon("Suerte 6 PM"))
 class CanonicalNamesTests(unittest.TestCase):
