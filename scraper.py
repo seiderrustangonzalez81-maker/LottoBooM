@@ -97,6 +97,12 @@ URLS_MULTI = {
         "pick3": ["https://www.lotteryusa.com/georgia/cash-3/"],
         "pick4": ["https://www.lotteryusa.com/georgia/cash-4/"],
     },
+    # Tennessee Morning (la matriz de la app lo etiqueta 10:20 AM).
+    # LotteryUSA publica Cash 3 Morning y Cash 4 Morning.
+    "Tennessee 10:20 AM": {
+        "pick3": ["https://www.lotteryusa.com/tennessee/morning-cash-3/"],
+        "pick4": ["https://www.lotteryusa.com/tennessee/morning-cash-4/"],
+    },
     "Tennessee 1:20 PM": {
         "pick3": ["https://www.lotteryusa.com/tennessee/midday-cash-3/"],
         "pick4": ["https://www.lotteryusa.com/tennessee/midday-cash-4/"],
@@ -425,11 +431,23 @@ def informar_cobertura(resultados):
     print(f"\n=== AUDITORÍA MATRIZ ({len(SORTEOS_ESPERADOS)} sorteos configurados) ===")
     print(f"Nombres distintos obtenidos: {len(obtenidos & esperados)}/{len(SORTEOS_ESPERADOS)}")
     if faltan:
-        print("Pendientes/no detectados:")
+        print("Pendientes/no detectados (no significa que no haya resultado; puede faltar fuente/configuración):")
         for nombre in faltan:
             print(f"  - {nombre}")
     else:
         print("✅ Se detectaron todos los nombres de la matriz.")
+
+    # Auditoría separada: identifica los sorteos estadounidenses que sí están
+    # configurados explícitamente en LotteryUSA. La lista de matriz no sustituye
+    # esta configuración y así se evita asumir que un nombre ya se está scrapeando.
+    configurados = {normalizar_nombre(n).casefold() for n in URLS_MULTI}
+    usa_esperados = [n for n in SORTEOS_ESPERADOS if any(n.startswith(e) for e in ZONAS_ESTADOS)]
+    sin_config = [n for n in usa_esperados if normalizar_nombre(n).casefold() not in configurados]
+    print(f"Sorteos USA esperados con configuración directa: {len(usa_esperados)-len(sin_config)}/{len(usa_esperados)}")
+    if sin_config:
+        print("USA sin configuración directa:")
+        for nombre in sin_config:
+            print(f"  - {nombre}")
 
 
 def main():
