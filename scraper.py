@@ -341,7 +341,7 @@ def scrape_lotteryusa(page):
     for nombre_db, juegos in URLS_MULTI.items():
         fecha_esperada_local, fecha_esperada_cuba = calcular_fechas_esperadas_usa(nombre_db)
         resultado_sorteo = {
-            "sorteo_nombre": nombre_db, "fecha": fecha_esperada_cuba, "fuente": "lotteryusa",
+            "sorteo_nombre": canonizar_nombre_sorteo(nombre_db), "nombre_fuente": nombre_db, "fecha": fecha_esperada_cuba, "fuente": "lotteryusa",
             "pick2": "", "pick3": "", "pick4": "", "pick5": "",
             "fijo": "", "corrido_1": "", "corrido_2": "",
         }
