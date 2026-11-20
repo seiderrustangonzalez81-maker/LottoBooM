@@ -1,0 +1,29 @@
+name: Auditoría del repositorio
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+  schedule:
+    - cron: "23 8 * * 1"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Ejecutar auditoría estática de alineación
+        run: python scripts/auditar_sorteos.py --json audit-report.json
+      - name: Publicar reporte como artefacto
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: audit-report
+          path: audit-report.json
+          if-no-files-found: warn
+          retention-days: 14
