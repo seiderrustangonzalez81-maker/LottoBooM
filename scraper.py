@@ -10,6 +10,26 @@ from playwright.sync_api import sync_playwright
 
 TZ_CUBA = ZoneInfo("America/Havana")
 TZ_ESTE = ZoneInfo("America/New_York")
+TZ_RD = ZoneInfo("America/Santo_Domingo")
+
+# Cuba decidió mantener UTC-4 durante el período indicado.
+# El override evita depender de que la imagen de Ubuntu/GitHub tenga
+# actualizada la base IANA para esta decisión temporal.
+CUBA_UTC4_DESDE_UTC = datetime(2026, 11, 1, 5, 0, tzinfo=timezone.utc)
+CUBA_UTC4_HASTA_UTC = datetime(2027, 11, 7, 5, 0, tzinfo=timezone.utc)  # límite exclusivo
+CUBA_UTC4 = timezone(timedelta(hours=-4), name="Cuba-UTC-4")
+
+# Hora local oficial usada para calcular la fecha de cada sorteo estadounidense.
+# Tennessee se usa Central (zona de Nashville); Florida se usa Eastern,
+# que es la zona con la que se publican los horarios de los sorteos.
+ZONAS_ESTADOS = {
+    "Florida": ZoneInfo("America/New_York"),
+    "Texas": ZoneInfo("America/Chicago"),
+    "New York": ZoneInfo("America/New_York"),
+    "New Jersey": ZoneInfo("America/New_York"),
+    "Georgia": ZoneInfo("America/New_York"),
+    "Tennessee": ZoneInfo("America/Chicago"),
+}
 
 URL_MAIN = "https://enloteria.com/resultados-loterias-hoy"
 URL_QUEMAITO = "https://enloteria.com/resultados-el-quemaito-mayor-hoy"
@@ -69,8 +89,22 @@ NOMBRES_IGNORADOS = {
     "New York Tarde", "New Jersey Tarde", "Texas Tarde", "Tennessee Día",
 }
 
+def obtener_hora_cuba(ahora_utc=None):
+    """Hora cubana correcta, usando UTC-4 durante la decisión temporal vigente."""
+    ahora_utc = ahora_utc or datetime.now(timezone.utc)
+    if ahora_utc.tzinfo is None:
+        ahora_utc = ahora_utc.replace(tzinfo=timezone.utc)
+    instante_utc = ahora_utc.astimezone(timezone.utc)
+    if CUBA_UTC4_DESDE_UTC <= instante_utc < CUBA_UTC4_HASTA_UTC:
+        return ahora_utc.astimezone(CUBA_UTC4)
+    return ahora_utc.astimezone(TZ_CUBA)
+
+def convertir_a_cuba(fecha_hora_aware):
+    """Convierte un instante con zona horaria a la hora vigente de Cuba."""
+    return obtener_hora_cuba(fecha_hora_aware.astimezone(timezone.utc))
+
 def fecha_cuba():
-    return datetime.now(TZ_CUBA).strftime("%Y-%m-%d")
+    return obtener_hora_cuba().strftime("%Y-%m-%d")
 
 def fecha_este():
     return datetime.now(TZ_ESTE).strftime("%Y-%m-%d")
@@ -98,34 +132,46 @@ def parsear_hora_sorteo(nombre):
     return None
 
 def calcular_fecha_sorteo_enloteria(nombre):
-    ahora_cuba = datetime.now(TZ_CUBA)
+    ahora_cuba = obtener_hora_cuba()
     hora_sorteo = parsear_hora_sorteo(nombre)
     if hora_sorteo:
         hora, minuto = hora_sorteo
         hoy_sorteo = ahora_cuba.replace(hour=hora, minute=minuto, second=0, microsecond=0)
         if ahora_cuba >= hoy_sorteo:
             return ahora_cuba.strftime("%Y-%m-%d")
-        else:
-            return (ahora_cuba - timedelta(days=1)).strftime("%Y-%m-%d")
+        return (ahora_cuba - timedelta(days=1)).strftime("%Y-%m-%d")
     if ahora_cuba.hour < 6:
         return (ahora_cuba - timedelta(days=1)).strftime("%Y-%m-%d")
     return ahora_cuba.strftime("%Y-%m-%d")
 
-def calcular_fecha_esperada_usa(nombre_db):
+
+def zona_horaria_sorteo_usa(nombre_db):
+    for estado, zona in ZONAS_ESTADOS.items():
+        if nombre_db.startswith(estado):
+            return zona
+    return TZ_ESTE
+
+
+def calcular_fechas_esperadas_usa(nombre_db):
+    """Retorna (fecha local oficial del sorteo, fecha correspondiente en Cuba)."""
     hora_sorteo = parsear_hora_sorteo(nombre_db)
+    zona = zona_horaria_sorteo_usa(nombre_db)
+    ahora_local = datetime.now(zona)
     if not hora_sorteo:
-        return fecha_este()
-    hora, minuto = hora_sorteo
-    ahora_este = datetime.now(TZ_ESTE)
-    hoy_sorteo = ahora_este.replace(hour=hora, minute=minuto, second=0, microsecond=0)
-    if ahora_este >= hoy_sorteo:
-        dt_sorteo = hoy_sorteo
+        fecha_local = ahora_local.date()
+        instante_sorteo = datetime.combine(fecha_local, datetime.min.time(), tzinfo=zona)
     else:
-        dt_sorteo = hoy_sorteo - timedelta(days=1)
-    
-    # FIX_FECHA_CUBA_V1: Convertir la fecha de ET a Cuba
-    dt_cuba = dt_sorteo.astimezone(TZ_CUBA)
-    return dt_cuba.strftime("%Y-%m-%d")
+        hora, minuto = hora_sorteo
+        hoy_sorteo = ahora_local.replace(hour=hora, minute=minuto, second=0, microsecond=0)
+        instante_sorteo = hoy_sorteo if ahora_local >= hoy_sorteo else hoy_sorteo - timedelta(days=1)
+        fecha_local = instante_sorteo.date()
+    fecha_cuba_sorteo = convertir_a_cuba(instante_sorteo).strftime("%Y-%m-%d")
+    return fecha_local.strftime("%Y-%m-%d"), fecha_cuba_sorteo
+
+
+def calcular_fecha_esperada_usa(nombre_db):
+    # Mantiene la fecha almacenada alineada con la fecha cubana del instante del sorteo.
+    return calcular_fechas_esperadas_usa(nombre_db)[1]
 
 def normalizar_nombre(nombre):
     return " ".join(nombre.split())
@@ -145,16 +191,22 @@ def extraer_numeros_validos(tarjeta_o_soup):
     return numeros[:4]
 
 def scroll_hasta_estabilizar(page, max_intentos=20, pausa_ms=3000):
-    previas = 0
+    previas = -1
+    comprobaciones_estables = 0
+    actuales = 0
     for _ in range(max_intentos):
         actuales = page.locator('div[data-lottery-name]').count()
         if actuales == previas:
+            comprobaciones_estables += 1
+        else:
+            comprobaciones_estables = 0
+        if comprobaciones_estables >= 3:
             print(f"  ✅ Scroll completado. Tarjetas: {actuales}")
             return
         previas = actuales
         page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
         page.wait_for_timeout(pausa_ms)
-    print(f"  ⚠️ Máximo de scrolls alcanzado. Tarjetas: {previas}")
+    print(f"  ⚠️ Máximo de scrolls alcanzado. Tarjetas: {actuales}")
 
 def scrape_principal(page):
     print("Extrayendo enloteria (principal)...")
@@ -259,9 +311,9 @@ def scrape_lotteryusa(page):
     print(f"  Fecha actual Cuba: {fecha_cuba()}")
 
     for nombre_db, juegos in URLS_MULTI.items():
-        fecha_esperada = calcular_fecha_esperada_usa(nombre_db)
+        fecha_esperada_local, fecha_esperada_cuba = calcular_fechas_esperadas_usa(nombre_db)
         resultado_sorteo = {
-            "sorteo_nombre": nombre_db, "fecha": fecha_esperada, "fuente": "lotteryusa",
+            "sorteo_nombre": nombre_db, "fecha": fecha_esperada_cuba, "fuente": "lotteryusa",
             "pick2": "", "pick3": "", "pick4": "", "pick5": "",
             "fijo": "", "corrido_1": "", "corrido_2": "",
         }
@@ -287,13 +339,15 @@ def scrape_lotteryusa(page):
                         # ⬅️ CORREGIDO: comparar contra `fecha_esperada` (hora del sorteo),
                         # NO contra "hoy en ET". Permite capturar el sorteo nocturno
                         # de Georgia (11:34 PM) aunque el run caiga después de medianoche.
-                        if fecha_tarjeta != fecha_esperada:
-                            print(f"  ⏭️ [{nombre_db} - {juego}] Omitido: tarjeta muestra {fecha_tarjeta}, se esperaba {fecha_esperada}.")
-                            exito_juego = True
-                            break
+                        if fecha_tarjeta != fecha_esperada_local:
+                            print(f"  ⏳ [{nombre_db} - {juego}] Tarjeta muestra {fecha_tarjeta}; se esperaba {fecha_esperada_local}. Reintento {intento + 1}/3.")
+                            time.sleep(2)
+                            continue
 
                         numeros = _extraer_numeros_lotteryusa(tarjeta)
-                        if not numeros:
+                        cantidad_requerida = {"pick2": 2, "pick3": 3, "pick4": 4, "pick5": 5}[juego]
+                        if len(numeros) < cantidad_requerida:
+                            print(f"  ⚠️ [{nombre_db} - {juego}] Resultado incompleto ({len(numeros)}/{cantidad_requerida}); no se guarda este campo.")
                             continue
 
                         if juego == "pick2":
@@ -321,26 +375,44 @@ def scrape_lotteryusa(page):
                         time.sleep(2)
 
         if exito_total:
+            juegos_faltantes = [j for j in juegos if not resultado_sorteo.get(j)]
+            if juegos_faltantes:
+                print(f"  ⚠️ {nombre_db}: resultados parciales; faltan {', '.join(juegos_faltantes)}. Se preservarán los valores anteriores si existen.")
+            else:
+                print(f"  ✅ {nombre_db}: todos los juegos extraídos.")
             resultados.append(resultado_sorteo)
         else:
             print(f"  ⚠️ No se pudo extraer ningún dato nuevo para {nombre_db}.")
 
     return resultados
 
+def combinar_resultados(anterior, nuevo):
+    """Combina resultados parciales sin borrar campos que ya estaban válidos."""
+    combinado = dict(anterior)
+    for clave, valor in nuevo.items():
+        if valor not in (None, "", [], {}):
+            combinado[clave] = valor
+    return combinado
+
+
 def main():
     todos_nuevos = []
 
-    # ⬅️ CORREGIDO: fechas base calculadas UNA sola vez
-    now_cuba = datetime.now(TZ_CUBA)
+    now_cuba = obtener_hora_cuba()
     hoy_cuba = now_cuba.strftime("%Y-%m-%d")
-    ayer_cuba = (now_cuba - timedelta(days=1)).strftime("%Y-%m-%d")
-    now_et = datetime.now(TZ_ESTE)
+    ahora_utc = datetime.now(timezone.utc)
+    now_et = ahora_utc.astimezone(TZ_ESTE)
     hoy_et = now_et.strftime("%Y-%m-%d")
-    ayer_et = (now_et - timedelta(days=1)).strftime("%Y-%m-%d")
 
     print("=== INICIO SCRAPER ===")
+    print("===== DIAGNÓSTICO HORARIO =====")
+    print(f"UTC: {ahora_utc.isoformat()}")
+    print(f"Cuba: {now_cuba.isoformat()}")
+    print(f"Nueva York: {now_et.isoformat()}")
+    print(f"República Dominicana: {ahora_utc.astimezone(TZ_RD).isoformat()}")
     print(f"Fecha Cuba: {hoy_cuba}")
     print(f"Fecha Este: {hoy_et}")
+    print("===============================")
 
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
@@ -375,7 +447,6 @@ def main():
         except Exception as e:
             print(f"Error Quinielon: {e}")
 
-        # ⬅️ CORREGIDO: lotteryusa DENTRO del with para reutilizar el page
         try:
             res = scrape_lotteryusa(page)
             print(f"  → {len(res)} sorteos de lotteryusa")
@@ -385,50 +456,57 @@ def main():
 
         browser.close()
 
-    # ── Cargar resultados previos válidos (hoy y ayer) ──
+    # Si el scraper no obtuvo absolutamente nada, no reemplazar el JSON por vacío.
+    if not todos_nuevos:
+        print("⚠️ No se obtuvo ningún resultado nuevo. Se conserva resultados.json sin cambios.")
+        raise SystemExit(1)
+
     guardados = []
     if os.path.exists(ARCHIVO_JSON):
         try:
             with open(ARCHIVO_JSON, "r", encoding="utf-8") as f:
                 guardados = json.load(f)
-        except Exception:
+            if not isinstance(guardados, list):
+                guardados = []
+        except Exception as e:
+            print(f"⚠️ No se pudo leer JSON previo: {e}")
             guardados = []
 
+    # Se conservan solamente los registros de la fecha cubana vigente,
+    # y los registros parciales se completan con los campos nuevos no vacíos.
     dic = {}
     for r in guardados:
-        # Solo cargar los de hoy (no ayer)
-        if r.get("fecha") == hoy_cuba or r.get("fecha") == hoy_et:
-            dic[f"{r['sorteo_nombre']}|{r['fecha']}"] = r
-    for n in todos_nuevos:
-        dic[f"{n['sorteo_nombre']}|{n['fecha']}"] = n
+        if r.get("fecha") == hoy_cuba and r.get("sorteo_nombre"):
+            clave = f"{r['sorteo_nombre']}|{r['fecha']}"
+            dic[clave] = r
 
-    # Filtro 2 dias (sin ventana de gracia)
-    finales_filtrados = []
-    descartados = []
-
-    for r in dic.values():
-        fecha = r.get('fecha')
-        fuente = r.get('fuente', '')
-        fechas_validas = (hoy_cuba,) if fuente == 'enloteria' else (hoy_et,)
-        if fecha in fechas_validas:
-            finales_filtrados.append(r)
+    for nuevo in todos_nuevos:
+        fecha = nuevo.get("fecha")
+        if fecha != hoy_cuba:
+            print(f"⏭️ Fuera de fecha Cuba: {nuevo.get('sorteo_nombre')} | {fecha}")
+            continue
+        clave = f"{nuevo['sorteo_nombre']}|{fecha}"
+        if clave in dic:
+            dic[clave] = combinar_resultados(dic[clave], nuevo)
         else:
-            descartados.append(r)
+            dic[clave] = nuevo
 
-    with open(ARCHIVO_JSON, "w", encoding="utf-8") as f:
+    finales_filtrados = list(dic.values())
+    if not finales_filtrados:
+        print("⚠️ No hay resultados de la fecha actual para guardar. Se conserva JSON previo.")
+        raise SystemExit(1)
+
+    # Escritura atómica: evita dejar un JSON truncado si la ejecución falla.
+    archivo_temporal = ARCHIVO_JSON + ".tmp"
+    with open(archivo_temporal, "w", encoding="utf-8") as f:
         json.dump(finales_filtrados, f, ensure_ascii=False, indent=2)
+    os.replace(archivo_temporal, ARCHIVO_JSON)
 
-    print(f"✅ Guardados {len(finales_filtrados)} resultados vigentes "
-          f"(Cuba={hoy_cuba} / ET={hoy_et}).")
-    if descartados:
-        print(f"⏭️  Descartados {len(descartados)} resultados de fechas no vigentes:")
-        for d in descartados:
-            print(f"     - {d['sorteo_nombre']} | {d['fecha']} | {d.get('fuente')}")
-
+    print(f"✅ Guardados {len(finales_filtrados)} resultados vigentes (fecha Cuba={hoy_cuba}).")
     print("\n=== RESUMEN ===")
     print(f"Total sorteos en JSON: {len(finales_filtrados)}")
     print(f"Fecha Cuba: {hoy_cuba}")
-    print(f"Fecha ET:   {hoy_et}")
+    print(f"Fecha ET: {hoy_et}")
 
 if __name__ == "__main__":
     main()
