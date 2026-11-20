@@ -19,7 +19,9 @@ jobs:
           python-version: "3.11"
       - name: Ejecutar auditoría estática de alineación
         run: python scripts/auditar_sorteos.py --json audit-report.json
-      - name: Pruebas unitarias del auditor\n        run: python -m unittest discover -s scripts/tests -v\n      - name: Publicar reporte como artefacto
+      - name: Pruebas unitarias del auditor
+        run: python -m unittest discover -s scripts/tests -v
+      - name: Publicar reporte como artefacto
         if: always()
         uses: actions/upload-artifact@v4
         with:
