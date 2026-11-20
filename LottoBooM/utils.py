@@ -8,7 +8,8 @@ CUB = ZoneInfo("America/Havana")
 # OVERRIDE_CUBA_2027: Cuba decidió mantener el horario de verano (UTC-4) de forma indefinida 
 # hasta el 7 de noviembre de 2027 por la crisis energética. 
 # La base de datos IANA (tzdata 2026f) confirma este cambio.
-_OVERRIDE_UTC4_DESDE = date(2026, 11, 1)\n_OVERRIDE_UTC4_HASTA = date(2027, 11, 7)
+_OVERRIDE_UTC4_DESDE = date(2026, 11, 1)
+_OVERRIDE_UTC4_HASTA = date(2027, 11, 7)
 
 
 def es_verano_cuba(fecha=None):
@@ -24,8 +25,8 @@ def es_verano_cuba(fecha=None):
     else:
         fecha_d = fecha
 
-    # Override explícito para el tramo 1→7 nov 2026
-    if fecha_d <= _OVERRIDE_UTC4_HASTA:
+    # Override explícito con límites; no afecta fechas históricas.
+    if _OVERRIDE_UTC4_DESDE <= fecha_d <= _OVERRIDE_UTC4_HASTA:
         return True
 
     dt = datetime.combine(fecha_d, datetime.min.time()).replace(tzinfo=CUB)
