@@ -24,7 +24,13 @@ ALIASES = {
     "haiti bolet 1:30 pm": "haiti 3", "haiti bolet 4:30 pm": "haiti 4",
     "haiti bolet 5:30 pm": "haiti 5", "haiti bolet 6:30 pm": "haiti 6",
     "el quemaito mayor": "quemaito", "el quinielon dia": "quinielon",
-    "la primera": "primera", "lotedom": "lotedom",\n    "loteka 1 30 pm": "loteka 7 50 pm",\n    "florida 9 45 pm": "florida 9 50 pm",\n    "new jersey 10 57 pm": "new jersey 10 50 pm",\n    "georgia 6 59 pm": "georgia 7 pm",\n    "georgia 11 34 pm": "georgia 11 40 pm",\n    "texas 10 12 pm": "texas 11 pm",
+    "la primera": "primera", "lotedom": "lotedom",
+    "loteka 1 30 pm": "loteka 7 50 pm",
+    "florida 9 45 pm": "florida 9 50 pm",
+    "new jersey 10 57 pm": "new jersey 10 50 pm",
+    "georgia 6 59 pm": "georgia 7 pm",
+    "georgia 11 34 pm": "georgia 11 40 pm",
+    "texas 10 12 pm": "texas 11 pm",
 }
 def norm(s):
     s = unicodedata.normalize("NFKD", str(s or "")).encode("ascii","ignore").decode().lower()
