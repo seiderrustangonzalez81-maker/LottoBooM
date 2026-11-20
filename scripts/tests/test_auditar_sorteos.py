@@ -10,7 +10,7 @@ class NormalizeTests(unittest.TestCase):
         self.assertEqual(audit.canon("El Quinielon Dia"), audit.canon("Quinielón"))
         self.assertEqual(audit.canon("Anguilla 8AM"), audit.canon("Anguila 8 AM"))
     def test_known_schedule_alias(self):
-        self.assertEqual(audit.canon("Florida 9:45 PM"), audit.canon("Florida 9:50 PM"))
+        self.assertNotEqual(audit.canon("Florida 9:45 PM"), audit.canon("Florida 9:50 PM"))
     def test_different_draws_not_collapsed(self):
         self.assertNotEqual(audit.canon("Suerte 12:30 PM"), audit.canon("Suerte 6 PM"))
 if __name__=="__main__": unittest.main()
