@@ -126,7 +126,10 @@ def main():
         if config: compare("JSON_vs_CSV",config.keys(),csv_names,matrix_json.name)
         if fixture_names: compare("Fixture_vs_CSV",fixture_names,csv_names,str(fixture.relative_to(ROOT)))
         if expected: compare("Scraper_expected_vs_CSV",expected,csv_names,"scraper.py")
-        if scraper_keys:\n            unknown_url_keys=sorted(x for x in scraper_keys if canon(x) not in {canon(y) for y in csv_names})\n            report["sources"]["scraper_url_keys"]={"count":len(scraper_keys),"unknown_vs_catalog":unknown_url_keys}\n            if unknown_url_keys: add(findings,"warning","SCRAPER_URL_UNKNOWN",f"URLS_MULTI con nombre no reconocido: {unknown_url_keys}","scraper.py")
+        if scraper_keys:
+            unknown_url_keys=sorted(x for x in scraper_keys if canon(x) not in {canon(y) for y in csv_names})
+            report["sources"]["scraper_url_keys"]={"count":len(scraper_keys),"unknown_vs_catalog":unknown_url_keys}
+            if unknown_url_keys: add(findings,"warning","SCRAPER_URL_UNKNOWN",f"URLS_MULTI con nombre no reconocido: {unknown_url_keys}","scraper.py")
     # Forms consistency across JSON, CSV, fixture and Django choices.
     csv_forms=set()
     if csv_rows:
