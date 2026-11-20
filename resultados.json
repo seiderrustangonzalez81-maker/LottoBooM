@@ -144,12 +144,12 @@
     "fecha": "2026-11-19",
     "fuente": "lotteryusa",
     "pick2": "",
-    "pick3": "",
-    "pick4": "4749",
+    "pick3": "815",
+    "pick4": "",
     "pick5": "",
-    "fijo": "",
-    "corrido_1": "47",
-    "corrido_2": "49"
+    "fijo": "15",
+    "corrido_1": "",
+    "corrido_2": ""
   },
   {
     "sorteo_nombre": "Anguilla 1PM",
@@ -359,6 +359,16 @@
       "11",
       "07",
       "19"
+    ],
+    "fecha": "2026-11-19",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Anguilla 8PM",
+    "numeros": [
+      "97",
+      "94",
+      "68"
     ],
     "fecha": "2026-11-19",
     "fuente": "enloteria"
