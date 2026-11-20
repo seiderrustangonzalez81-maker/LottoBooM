@@ -2,8 +2,12 @@ name: Scrape Loterias
 
 on:
   schedule:
-    - cron: '*/15 * * * *'
+    - cron: "*/15 * * * *"
   workflow_dispatch:
+
+concurrency:
+  group: scrape-loterias
+  cancel-in-progress: false
 
 jobs:
   scrape:
@@ -13,30 +17,35 @@ jobs:
       contents: write
 
     steps:
-      - name: Checkout
+      - name: Checkout main
         uses: actions/checkout@v4
+        with:
+          ref: main
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
-          
-      - name: Install deps
+          python-version: "3.11"
+
+      - name: Install scraper dependencies
         run: |
-          pip install --upgrade pip
-          pip install beautifulsoup4 curl_cffi tzdata requests
+          python -m pip install --upgrade pip
+          python -m pip install beautifulsoup4 playwright tzdata
+          python -m playwright install --with-deps chromium
 
       - name: Run scraper
         run: python scraper.py
 
-      - name: Commit and push
+      - name: Commit and push resultados.json
         run: |
           git config user.email "action@github.com"
           git config user.name "GitHub Action"
-          cp resultados.json /tmp/resultados_nuevos.json
-          git fetch origin main
-          git reset --hard origin/main
-          cp /tmp/resultados_nuevos.json resultados.json
           git add resultados.json
-          git diff --staged --quiet || git commit -m "Update resultados [skip ci]"
-          git push origin main
+
+          if git diff --cached --quiet; then
+            echo "No hay cambios en resultados.json."
+            exit 0
+          fi
+
+          git commit -m "Update resultados [skip ci]"
+          git push origin HEAD:main
