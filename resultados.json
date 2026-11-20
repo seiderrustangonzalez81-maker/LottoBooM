@@ -518,5 +518,15 @@
     ],
     "fecha": "2026-11-19",
     "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "King Lottery Noche",
+    "numeros": [
+      "79",
+      "75",
+      "50"
+    ],
+    "fecha": "2026-11-19",
+    "fuente": "enloteria"
   }
 ]
