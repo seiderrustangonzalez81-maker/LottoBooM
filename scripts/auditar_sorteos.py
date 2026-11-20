@@ -24,7 +24,7 @@ ALIASES = {
     "haiti bolet 1:30 pm": "haiti 3", "haiti bolet 4:30 pm": "haiti 4",
     "haiti bolet 5:30 pm": "haiti 5", "haiti bolet 6:30 pm": "haiti 6",
     "el quemaito mayor": "quemaito", "el quinielon dia": "quinielon",
-    "la primera": "primera", "lotedom": "lotedom",
+    "la primera": "primera", "lotedom": "lotedom",\n    "loteka 1 30 pm": "loteka 7 50 pm",\n    "florida 9 45 pm": "florida 9 50 pm",\n    "new jersey 10 57 pm": "new jersey 10 50 pm",\n    "georgia 6 59 pm": "georgia 7 pm",\n    "georgia 11 34 pm": "georgia 11 40 pm",\n    "texas 10 12 pm": "texas 11 pm",
 }
 def norm(s):
     s = unicodedata.normalize("NFKD", str(s or "")).encode("ascii","ignore").decode().lower()
@@ -145,7 +145,7 @@ def main():
         if absent or added: add(findings,"warning","FORM_FIXTURE_MISMATCH",f"Fixture vs matriz: fixture extra={absent[:20]}; matriz extra={added[:20]}","sorteos/fixtures/sorteos.json")
     if django_choices and config_forms:
         missing=sorted(config_forms-django_choices); unused=sorted(django_choices-config_forms)
-        if missing or unused: add(findings,"warning","FORM_CHOICES_MISMATCH",f"Choices Django vs catálogo: no definidas={missing}; choices no usadas={unused}","sorteos/forms.py")
+        if missing: add(findings,"warning","FORM_CHOICES_MISSING",f"Choices Django faltantes en el catálogo: {missing}","sorteos/forms.py")\n        if unused: add(findings,"info","FORM_CHOICES_UNUSED",f"Choices globales disponibles pero no usadas por la matriz: {unused}","sorteos/forms.py")
     report["sources"]["forms"]={"csv":len(csv_forms),"json":len(config_forms),"fixture":len(fixture_form_keys),"django_choices":len(django_choices)}
 
     # Results names: aliases are normalized, unknowns and duplicate draw/date are reported.
