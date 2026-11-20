@@ -372,5 +372,27 @@
     ],
     "fecha": "2026-11-19",
     "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Leidsa",
+    "numeros": [
+      "27",
+      "62",
+      "94"
+    ],
+    "fecha": "2026-11-19",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Tennessee 6:30 PM",
+    "fecha": "2026-11-19",
+    "fuente": "lotteryusa",
+    "pick2": "",
+    "pick3": "505",
+    "pick4": "",
+    "pick5": "",
+    "fijo": "05",
+    "corrido_1": "",
+    "corrido_2": ""
   }
 ]
