@@ -1,6 +1,6 @@
 import importlib.util, unittest
 from pathlib import Path
-SCRIPT=Path(__file__).resolve().parents[1]/"scripts"/"auditar_sorteos.py"
+SCRIPT=Path(__file__).resolve().parents[2]/"scripts"/"auditar_sorteos.py"
 spec=importlib.util.spec_from_file_location("audit_draws",SCRIPT)
 audit=importlib.util.module_from_spec(spec); spec.loader.exec_module(audit)
 class NormalizeTests(unittest.TestCase):
