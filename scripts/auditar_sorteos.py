@@ -25,11 +25,6 @@ ALIASES = {
     "haiti bolet 5:30 pm": "haiti 5", "haiti bolet 6:30 pm": "haiti 6",
     "el quemaito mayor": "quemaito", "el quinielon dia": "quinielon",
     "la primera": "primera", "lotedom": "lotedom",
-    "florida 9:45 pm": "florida 9:50 pm",
-    "new jersey 10:57 pm": "new jersey 10:50 pm",
-    "tennessee 6:30 pm": "tennessee 7:20 pm",
-    "georgia 6:59 pm": "georgia 7 pm", "georgia 11:34 pm": "georgia 11:40 pm",
-    "texas 10:12 pm": "texas 11 pm",
 }
 def norm(s):
     s = unicodedata.normalize("NFKD", str(s or "")).encode("ascii","ignore").decode().lower()
@@ -38,7 +33,7 @@ def norm(s):
     return re.sub(r"\s+", " ", s)
 def canon(s):
     n = norm(s)
-    return ALIASES.get(n, n)
+    return next((norm(target) for alias, target in ALIASES.items() if norm(alias) == n), n)
 def load_json(path):
     try: return json.loads(path.read_text(encoding="utf-8"))
     except Exception as e: raise ValueError(f"{path.relative_to(ROOT)}: {e}")
