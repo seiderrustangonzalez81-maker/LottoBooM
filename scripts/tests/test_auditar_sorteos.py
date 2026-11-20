@@ -26,7 +26,7 @@ class CanonicalNamesTests(unittest.TestCase):
         exec(compile(ast.Module(body=nodes,type_ignores=[]),str(path),"exec"),ns)
         canon=ns["canonizar_nombre_sorteo"]
         self.assertEqual(canon("Anguilla 8AM"), "Anguila 8 AM")
-        self.assertEqual(canon("El Quinielon Dia"), "Quinielón")
+        self.assertEqual(canon("El Quinielon Dia"), "Quinielón")\n        self.assertEqual(canon("King Lottery Día"), "King Lottery 12:30 PM")
         self.assertEqual(canon("Florida 9:45 PM"), "Florida 9:50 PM")
         self.assertEqual(canon("Tennessee 6:30 PM"), "Tennessee 6:30 PM")
 
