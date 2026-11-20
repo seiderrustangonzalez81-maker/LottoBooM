@@ -274,5 +274,35 @@
     ],
     "fecha": "2026-11-20",
     "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Haiti Bolet 11:30 AM",
+    "numeros": [
+      "65",
+      "55",
+      "23"
+    ],
+    "fecha": "2026-11-20",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "King Lottery Día",
+    "numeros": [
+      "90",
+      "96",
+      "19"
+    ],
+    "fecha": "2026-11-20",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "La Suerte",
+    "numeros": [
+      "97",
+      "41",
+      "68"
+    ],
+    "fecha": "2026-11-20",
+    "fuente": "enloteria"
   }
 ]
