@@ -346,5 +346,17 @@
     "fijo": "33",
     "corrido_1": "13",
     "corrido_2": "56"
+  },
+  {
+    "sorteo_nombre": "Tennessee 10:20 AM",
+    "fecha": "2026-11-20",
+    "fuente": "lotteryusa",
+    "pick2": "",
+    "pick3": "291",
+    "pick4": "9320",
+    "pick5": "",
+    "fijo": "91",
+    "corrido_1": "93",
+    "corrido_2": "20"
   }
 ]
