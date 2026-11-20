@@ -30,6 +30,14 @@ class CanonicalNamesTests(unittest.TestCase):
         self.assertEqual(canon("Florida 9:45 PM"), "Florida 9:50 PM")
         self.assertEqual(canon("Tennessee 6:30 PM"), "Tennessee 6:30 PM")
 
+class TemplateIdTests(unittest.TestCase):
+    def test_mutually_exclusive_template_branches_are_not_duplicates(self):
+        self.assertEqual(audit.template_duplicate_ids('{% if a %}<input id="x">{% else %}<input id="x">{% endif %}'), [])
+    def test_simultaneous_static_ids_are_reported(self):
+        self.assertEqual(audit.template_duplicate_ids('<div id="x"></div><div id="x"></div>'), ["x"])
+    def test_ids_inside_scripts_are_ignored(self):
+        self.assertEqual(audit.template_duplicate_ids('<div id="x"></div><script>const str = "id=x";</script>'), [])
+
 class CubaOverrideTests(unittest.TestCase):
     def test_override_has_explicit_start_and_end(self):
         import importlib.util
