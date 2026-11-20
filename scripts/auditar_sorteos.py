@@ -43,7 +43,7 @@ def load_json(path):
     try: return json.loads(path.read_text(encoding="utf-8"))
     except Exception as e: raise ValueError(f"{path.relative_to(ROOT)}: {e}")
 def add(items, sev, code, message, path=None):
-    items.append({"severity":sev,"code":code,"message":message, **({"path":path} if path else {})}
+    items.append({"severity":sev,"code":code,"message":message, **({"path":path} if path else {})})
 def read_csv_matrix(path):
     with path.open(encoding="utf-8-sig", newline="") as f:
         return list(csv.DictReader(f))
