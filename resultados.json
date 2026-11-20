@@ -397,10 +397,10 @@
     "fuente": "lotteryusa",
     "pick2": "43",
     "pick3": "279",
-    "pick4": "",
+    "pick4": "0146",
     "pick5": "28010",
     "fijo": "79",
-    "corrido_1": "",
-    "corrido_2": ""
+    "corrido_1": "01",
+    "corrido_2": "46"
   }
 ]
