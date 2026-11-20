@@ -40,6 +40,36 @@ def norm(s):
 def canon(s):
     n = norm(s)
     return next((norm(target) for alias, target in ALIASES.items() if norm(alias) == n), n)
+def template_duplicate_ids(content):
+    """Find duplicate static IDs, ignoring JS/CSS and mutually exclusive Django branches."""
+    content=re.sub(r"<script[^>]*>.*?</script>", "", content, flags=re.I|re.S)
+    content=re.sub(r"<style[^>]*>.*?</style>", "", content, flags=re.I|re.S)
+    content=re.sub(r"<!--.*?-->", "", content, flags=re.S)
+    token=re.compile(r"{%\\s*(if|elif|else|endif)\\b[^%]*%}|\\bid\\s*=\\s*([^\\s>]+)",re.I)
+    stack=[]; next_group=0; found={}
+    for m in token.finditer(content):
+        directive=m.group(1)
+        if directive:
+            directive=directive.lower()
+            if directive=="if":
+                next_group+=1; stack.append([next_group,0])
+            elif directive in {"elif","else"} and stack:
+                stack[-1][1]+=1
+            elif directive=="endif" and stack:
+                stack.pop()
+            continue
+        value=m.group(2).strip(chr(34)+chr(39))
+        if any(mark in value for mark in ("{{","}}","|","%")): continue
+        found.setdefault(value,[]).append(tuple(tuple(x) for x in stack))
+    duplicates=[]
+    for value,paths in found.items():
+        for i,left in enumerate(paths):
+            for right in paths[i+1:]:
+                if all(lb==rb for lg,lb in left for rg,rb in right if lg==rg):
+                    duplicates.append(value); break
+            if value in duplicates: break
+    return sorted(set(duplicates))
+
 def load_json(path):
     try: return json.loads(path.read_text(encoding="utf-8"))
     except Exception as e: raise ValueError(f"{path.relative_to(ROOT)}: {e}")
@@ -188,9 +218,7 @@ def main():
     for p in templates:
         try: content=p.read_text(encoding="utf-8")
         except Exception: continue
-        ids=re.findall(r'\bid\s*=\s*["\']([^"\']+)["\']',content)
-        ids=[x for x in ids if "{{" not in x and "|" not in x and "${" not in x]
-        dups=[x for x,c in Counter(ids).items() if c>1]
+        dups=template_duplicate_ids(content)
         if dups: duplicate_ids.append(f"{p.relative_to(ROOT)}: {dups[:8]}")
         # Only recognize explicit literal draw labels inside template text/attributes.
         for name in catalog_names:
