@@ -324,5 +324,15 @@
     ],
     "fecha": "2026-11-20",
     "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Loteka Tarde",
+    "numeros": [
+      "47",
+      "07",
+      "84"
+    ],
+    "fecha": "2026-11-19",
+    "fuente": "enloteria"
   }
 ]
