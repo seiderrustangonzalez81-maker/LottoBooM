@@ -151,7 +151,10 @@ def main():
         if absent or added: add(findings,"warning","FORM_FIXTURE_MISMATCH",f"Fixture vs matriz: fixture extra={absent[:20]}; matriz extra={added[:20]}","sorteos/fixtures/sorteos.json")
     if django_choices and config_forms:
         missing=sorted(config_forms-django_choices); unused=sorted(django_choices-config_forms)
-        if missing: add(findings,"warning","FORM_CHOICES_MISSING",f"Choices Django faltantes en el catálogo: {missing}","sorteos/forms.py")\n        if unused: add(findings,"info","FORM_CHOICES_UNUSED",f"Choices globales disponibles pero no usadas por la matriz: {unused}","sorteos/forms.py")
+        if missing:
+            add(findings,"warning","FORM_CHOICES_MISSING",f"Choices Django faltantes en el catálogo: {missing}","sorteos/forms.py")
+        if unused:
+            add(findings,"info","FORM_CHOICES_UNUSED",f"Choices globales disponibles pero no usadas por la matriz: {unused}","sorteos/forms.py")
     report["sources"]["forms"]={"csv":len(csv_forms),"json":len(config_forms),"fixture":len(fixture_form_keys),"django_choices":len(django_choices)}
 
     # Results names: aliases are normalized, unknowns and duplicate draw/date are reported.
