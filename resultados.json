@@ -28,5 +28,39 @@
     ],
     "fecha": "2026-11-20",
     "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Anguilla 10AM",
+    "numeros": [
+      "98",
+      "18",
+      "96"
+    ],
+    "fecha": "2026-11-20",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Texas 10:12 PM",
+    "fecha": "2026-11-20",
+    "fuente": "lotteryusa",
+    "pick2": "",
+    "pick3": "972",
+    "pick4": "",
+    "pick5": "",
+    "fijo": "72",
+    "corrido_1": "",
+    "corrido_2": ""
+  },
+  {
+    "sorteo_nombre": "Georgia 11:34 PM",
+    "fecha": "2026-11-20",
+    "fuente": "lotteryusa",
+    "pick2": "",
+    "pick3": "560",
+    "pick4": "3009",
+    "pick5": "",
+    "fijo": "60",
+    "corrido_1": "30",
+    "corrido_2": "09"
   }
 ]
