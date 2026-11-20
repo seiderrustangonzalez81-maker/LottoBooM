@@ -36,6 +36,28 @@ URL_QUEMAITO = "https://enloteria.com/resultados-el-quemaito-mayor-hoy"
 URL_QUINIELON = "https://enloteria.com/resultados-el-quinielon-dia-hoy"
 ARCHIVO_JSON = "resultados.json"
 
+
+# Matriz maestra de los sorteos que la aplicación espera (51 nombres).
+# Se usa para auditar cobertura: no bloquea la publicación de resultados parciales.
+SORTEOS_ESPERADOS = [
+    "Anguila 8 AM", "Anguila 9 AM", "Haití 1", "Anguila 10 AM",
+    "Tennessee 10:20 AM", "Haití 2", "Anguila 11 AM", "Texas 11 AM",
+    "Haití 3", "Lotedom", "Quemaito", "Anguila 12 PM", "Primera",
+    "Quinielón", "Suerte 12:30 PM", "King Lottery 12:30 PM",
+    "Georgia 12:30 PM", "Real 12:50 PM", "New Yol Real 12:50 PM",
+    "New Jersey 12:50 PM", "Anguila 1 PM", "Tennessee 1:20 PM",
+    "Texas 1:20 PM", "Florida 1:35 PM", "Anguila 2 PM",
+    "Gana Más 2:30 PM", "New York 2:30 PM", "Anguila 3 PM",
+    "Anguila 4 PM", "Anguila 5 PM", "Haití 4", "Suerte 6 PM",
+    "Anguila 6 PM", "Haití 5", "Anguila 7 PM", "Primera 7 PM",
+    "Georgia 7 PM", "Texas 7 PM", "Tennessee 7:20 PM",
+    "King Lottery 7:30 PM", "Haití 6", "Loteka 7:50 PM", "Tok 3",
+    "Anguila 8 PM", "Nacional", "Leidsa 8:55 PM", "Pega 3+",
+    "Anguila 9 PM", "Florida 9:50 PM", "New York 10:30 PM",
+    "New Jersey 10:50 PM", "Texas 11 PM", "Georgia 11:40 PM",
+]
+URL_CONECTATE = "https://www.conectate.com.do/loterias/"
+
 URLS_MULTI = {
     "Florida 1:35 PM": {
         "pick2": ["https://www.lotteryusa.com/florida/pick-2-midday/"],
@@ -395,6 +417,21 @@ def combinar_resultados(anterior, nuevo):
     return combinado
 
 
+def informar_cobertura(resultados):
+    """Resumen de cobertura contra la matriz de sorteos, normalizando nombres."""
+    obtenidos = {normalizar_nombre(r.get("sorteo_nombre", "")).casefold() for r in resultados}
+    esperados = {normalizar_nombre(n).casefold() for n in SORTEOS_ESPERADOS}
+    faltan = [n for n in SORTEOS_ESPERADOS if normalizar_nombre(n).casefold() not in obtenidos]
+    print(f"\n=== AUDITORÍA MATRIZ ({len(SORTEOS_ESPERADOS)} sorteos configurados) ===")
+    print(f"Nombres distintos obtenidos: {len(obtenidos & esperados)}/{len(SORTEOS_ESPERADOS)}")
+    if faltan:
+        print("Pendientes/no detectados:")
+        for nombre in faltan:
+            print(f"  - {nombre}")
+    else:
+        print("✅ Se detectaron todos los nombres de la matriz.")
+
+
 def main():
     todos_nuevos = []
 
@@ -456,6 +493,8 @@ def main():
 
         browser.close()
 
+    informar_cobertura(todos_nuevos)
+
     # Si el scraper no obtuvo absolutamente nada, no reemplazar el JSON por vacío.
     if not todos_nuevos:
         print("⚠️ No se obtuvo ningún resultado nuevo. Se conserva resultados.json sin cambios.")
@@ -472,19 +511,24 @@ def main():
             print(f"⚠️ No se pudo leer JSON previo: {e}")
             guardados = []
 
-    # Se conservan solamente los registros de la fecha cubana vigente,
-    # y los registros parciales se completan con los campos nuevos no vacíos.
+    # Se conservan hoy y ayer (Cuba) para no descartar sorteos nocturnos
+    # válidos por diferencias entre la fecha del país del sorteo y Cuba.
+    # El consumidor del JSON debe usar el campo fecha para elegir el día.
+    fecha_ayer = (now_cuba.date() - timedelta(days=1)).strftime("%Y-%m-%d")
+    fechas_validas = {hoy_cuba, fecha_ayer}
     dic = {}
     for r in guardados:
-        if r.get("fecha") == hoy_cuba and r.get("sorteo_nombre"):
+        if r.get("fecha") in fechas_validas and r.get("sorteo_nombre"):
             clave = f"{r['sorteo_nombre']}|{r['fecha']}"
             dic[clave] = r
 
     for nuevo in todos_nuevos:
         fecha = nuevo.get("fecha")
-        if fecha != hoy_cuba:
-            print(f"⏭️ Fuera de fecha Cuba: {nuevo.get('sorteo_nombre')} | {fecha}")
+        if fecha not in fechas_validas:
+            print(f"⏭️ Fecha demasiado antigua/futura: {nuevo.get('sorteo_nombre')} | {fecha}")
             continue
+        if fecha == fecha_ayer:
+            print(f"ℹ️ Se conserva resultado de ayer: {nuevo.get('sorteo_nombre')} | {fecha}")
         clave = f"{nuevo['sorteo_nombre']}|{fecha}"
         if clave in dic:
             dic[clave] = combinar_resultados(dic[clave], nuevo)
@@ -502,11 +546,12 @@ def main():
         json.dump(finales_filtrados, f, ensure_ascii=False, indent=2)
     os.replace(archivo_temporal, ARCHIVO_JSON)
 
-    print(f"✅ Guardados {len(finales_filtrados)} resultados vigentes (fecha Cuba={hoy_cuba}).")
+    print(f"✅ Guardados {len(finales_filtrados)} resultados de hoy/ayer Cuba ({hoy_cuba}/{fecha_ayer}).")
     print("\n=== RESUMEN ===")
     print(f"Total sorteos en JSON: {len(finales_filtrados)}")
     print(f"Fecha Cuba: {hoy_cuba}")
     print(f"Fecha ET: {hoy_et}")
+    informar_cobertura(finales_filtrados)
 
 if __name__ == "__main__":
     main()
