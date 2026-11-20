@@ -22,3 +22,14 @@ scraper mientras se establece una línea base.
 La comprobación de base de datos viva, rutas Django y renderizado de templates es una fase
 dinámica aparte; este reporte lo declara explícitamente como omitido. No se debe interpretar
 un audit estático como validación de producción.
+
+
+## Correcciones seguras aplicadas en la rama de revisión
+
+- El scraper ahora canoniza aliases inequívocos de feeds en el campo `sorteo_nombre` y conserva `nombre_fuente` para trazabilidad. La hora fuente sigue usándose para calcular la fecha del resultado.
+- Se añadió Anguila 10 PM a `SORTEOS_ESPERADOS`.
+- El fixture Loteka (PK 42) se renombró de Loteka 1:30 PM a Loteka 7:50 PM, preservando PK, horarios por día, formas y estado; el horario dominical ya era 19:50.
+- Se acotó el override UTC-4 de Cuba a 2026-11-01–2027-11-07; las fechas anteriores vuelven a consultar tzdata.
+- Choices globales de Django no usados en matriz son informativos, no errores; no se eliminan.
+
+No se corrigen horarios oficiales sin verificar ni se eliminan sorteos como Real Noche.
