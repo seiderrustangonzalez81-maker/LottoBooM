@@ -13,4 +13,14 @@ class NormalizeTests(unittest.TestCase):
         self.assertNotEqual(audit.canon("Florida 9:45 PM"), audit.canon("Florida 9:50 PM"))
     def test_different_draws_not_collapsed(self):
         self.assertNotEqual(audit.canon("Suerte 12:30 PM"), audit.canon("Suerte 6 PM"))
+class CanonicalNamesTests(unittest.TestCase):
+    def test_external_aliases_canonicalize(self):
+        import sys
+        sys.path.insert(0, str(SCRIPT.parents[1]))
+        import scraper
+        self.assertEqual(scraper.canonizar_nombre_sorteo("Anguilla 8AM"), "Anguila 8 AM")
+        self.assertEqual(scraper.canonizar_nombre_sorteo("El Quinielon Dia"), "Quinielón")
+        self.assertEqual(scraper.canonizar_nombre_sorteo("Florida 9:45 PM"), "Florida 9:50 PM")
+        self.assertEqual(scraper.canonizar_nombre_sorteo("Tennessee 6:30 PM"), "Tennessee 6:30 PM")
+
 if __name__=="__main__": unittest.main()
