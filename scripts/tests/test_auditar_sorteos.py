@@ -8,7 +8,7 @@ class NormalizeTests(unittest.TestCase):
         self.assertEqual(audit.norm("  QUINIELÓN  "), "quinielon")
     def test_alias_results(self):
         self.assertEqual(audit.canon("El Quinielon Dia"), audit.canon("Quinielón"))
-        self.assertEqual(audit.canon("Anguilla 8AM"), audit.canon("Anguila 8 AM"))
+        self.assertEqual(audit.canon("Anguilla 8AM"), audit.canon("Anguila 8 AM"))\n        self.assertEqual(audit.canon("Loteka 1:30 PM"), audit.canon("Loteka 7:50 PM"))
     def test_known_schedule_alias(self):
         self.assertNotEqual(audit.canon("Florida 9:45 PM"), audit.canon("Florida 9:50 PM"))
     def test_different_draws_not_collapsed(self):
@@ -28,5 +28,18 @@ class CanonicalNamesTests(unittest.TestCase):
         self.assertEqual(canon("El Quinielon Dia"), "Quinielón")
         self.assertEqual(canon("Florida 9:45 PM"), "Florida 9:50 PM")
         self.assertEqual(canon("Tennessee 6:30 PM"), "Tennessee 6:30 PM")
+
+class CubaOverrideTests(unittest.TestCase):
+    def test_override_has_explicit_start_and_end(self):
+        import importlib.util
+        path=SCRIPT.parents[1]/"LottoBooM"/"utils.py"
+        spec=importlib.util.spec_from_file_location("cuba_utils",path)
+        mod=importlib.util.module_from_spec(spec); spec.loader.exec_module(mod)
+        from datetime import date
+        self.assertFalse(mod.es_verano_cuba(date(2025,1,15)))
+        self.assertTrue(mod.es_verano_cuba(date(2025,7,15)))
+        self.assertTrue(mod.es_verano_cuba(date(2026,11,1)))
+        self.assertTrue(mod.es_verano_cuba(date(2027,11,7)))
+        self.assertFalse(mod.es_verano_cuba(date(2027,11,8)))
 
 if __name__=="__main__": unittest.main()
