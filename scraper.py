@@ -291,7 +291,8 @@ def scrape_principal(page):
             numeros = extraer_numeros_validos(tarjeta)
             if numeros and len(numeros) >= 2:
                 resultados.append({
-                    "sorteo_nombre": nombre,
+                    "sorteo_nombre": canonizar_nombre_sorteo(nombre),
+                    "nombre_fuente": nombre,
                     "numeros": numeros,
                     "fecha": calcular_fecha_sorteo_enloteria(nombre),
                     "fuente": "enloteria",
