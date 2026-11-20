@@ -508,5 +508,15 @@
     ],
     "fecha": "2026-11-20",
     "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "La Primera Noche",
+    "numeros": [
+      "51",
+      "01",
+      "90"
+    ],
+    "fecha": "2026-11-19",
+    "fuente": "enloteria"
   }
 ]
