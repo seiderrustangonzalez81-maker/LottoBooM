@@ -569,8 +569,17 @@ def main():
     dic = {}
     for r in guardados:
         if r.get("fecha") in fechas_validas and r.get("sorteo_nombre"):
+            r = dict(r)
+            nombre_original = r["sorteo_nombre"]
+            nombre_canonico = canonizar_nombre_sorteo(nombre_original)
+            if nombre_canonico != nombre_original:
+                r.setdefault("nombre_fuente", nombre_original)
+                r["sorteo_nombre"] = nombre_canonico
             clave = f"{r['sorteo_nombre']}|{r['fecha']}"
-            dic[clave] = r
+            if clave in dic:
+                dic[clave] = combinar_resultados(dic[clave], r)
+            else:
+                dic[clave] = r
 
     for nuevo in todos_nuevos:
         fecha = nuevo.get("fecha")
