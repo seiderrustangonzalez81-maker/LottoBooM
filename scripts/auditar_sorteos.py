@@ -46,7 +46,7 @@ def template_duplicate_ids(content):
     content=re.sub(r"<script[^>]*>.*?</script>", "", content, flags=re.I|re.S)
     content=re.sub(r"<style[^>]*>.*?</style>", "", content, flags=re.I|re.S)
     content=re.sub(r"<!--.*?-->", "", content, flags=re.S)
-    token=re.compile(r"{%\\s*(if|elif|else|endif)\\b[^%]*%}|\\bid\\s*=\\s*([^\\s>]+)",re.I)
+    token=re.compile(r"{%\s*(if|elif|else|endif)\b[^%]*%}|\bid\s*=\s*([^\s>]+)",re.I)
     stack=[]; next_group=0; found={}
     for m in token.finditer(content):
         directive=m.group(1)
