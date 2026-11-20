@@ -204,6 +204,37 @@ def calcular_fecha_esperada_usa(nombre_db):
 def normalizar_nombre(nombre):
     return " ".join(nombre.split())
 
+ALIASES_NOMBRES_SORTEOS = {
+    "anguilla 8am": "Anguila 8 AM", "anguilla 9am": "Anguila 9 AM",
+    "anguilla 10am": "Anguila 10 AM", "anguilla 11am": "Anguila 11 AM",
+    "anguilla 12pm": "Anguila 12 PM", "anguilla 1pm": "Anguila 1 PM",
+    "anguilla 2pm": "Anguila 2 PM", "anguilla 3pm": "Anguila 3 PM",
+    "anguilla 4pm": "Anguila 4 PM", "anguilla 5pm": "Anguila 5 PM",
+    "anguilla 6pm": "Anguila 6 PM", "anguilla 7pm": "Anguila 7 PM",
+    "anguilla 8pm": "Anguila 8 PM", "anguilla 9pm": "Anguila 9 PM",
+    "anguilla 10pm": "Anguila 10 PM",
+    "haiti bolet 9:30 am": "Haití 1", "haiti bolet 10:30 am": "Haití 2",
+    "haiti bolet 1:30 pm": "Haití 3", "haiti bolet 4:30 pm": "Haití 4",
+    "haiti bolet 5:30 pm": "Haití 5", "haiti bolet 6:30 pm": "Haití 6",
+    "el quemaito mayor": "Quemaito", "el quinielon dia": "Quinielón",
+    "la primera": "Primera", "lotedom": "Lotedom",
+    "florida 9:45 pm": "Florida 9:50 PM",
+    "new jersey 10:57 pm": "New Jersey 10:50 PM",
+    "georgia 6:59 pm": "Georgia 7 PM",
+    "georgia 11:34 pm": "Georgia 11:40 PM",
+    "texas 10:12 pm": "Texas 11 PM",
+}
+def canonizar_nombre_sorteo(nombre):
+    import unicodedata
+    clave = "".join(ch for ch in unicodedata.normalize("NFKD", str(nombre or "").casefold()) if not unicodedata.combining(ch))
+    clave = re.sub(r"[^a-z0-9]+", " ", clave).strip()
+    for alias, canonico in ALIASES_NOMBRES_SORTEOS.items():
+        a = "".join(ch for ch in unicodedata.normalize("NFKD", alias) if not unicodedata.combining(ch))
+        a = re.sub(r"[^a-z0-9]+", " ", a).strip()
+        if a == clave:
+            return canonico
+    return str(nombre or "").strip()
+
 def extraer_numeros_validos(tarjeta_o_soup):
     bolas = tarjeta_o_soup.find_all(class_="result-number")
     if not bolas:
