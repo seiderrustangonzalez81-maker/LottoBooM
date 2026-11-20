@@ -180,7 +180,8 @@ def main():
         try: content=p.read_text(encoding="utf-8")
         except Exception: continue
         ids=re.findall(r'\bid\s*=\s*["\']([^"\']+)["\']',content)
-        ids=[x for x in ids if "{{" not in x and "|" not in x and "${" not in x]\n        dups=[x for x,c in Counter(ids).items() if c>1]
+        ids=[x for x in ids if "{{" not in x and "|" not in x and "${" not in x]
+        dups=[x for x,c in Counter(ids).items() if c>1]
         if dups: duplicate_ids.append(f"{p.relative_to(ROOT)}: {dups[:8]}")
         # Only recognize explicit literal draw labels inside template text/attributes.
         for name in catalog_names:
