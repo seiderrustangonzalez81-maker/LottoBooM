@@ -394,5 +394,65 @@
     "fijo": "05",
     "corrido_1": "",
     "corrido_2": ""
+  },
+  {
+    "sorteo_nombre": "La Primera Noche",
+    "numeros": [
+      "72",
+      "30",
+      "88"
+    ],
+    "fecha": "2026-11-19",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "King Lottery Noche",
+    "numeros": [
+      "03",
+      "80",
+      "61"
+    ],
+    "fecha": "2026-11-19",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Real Noche",
+    "numeros": [
+      "99",
+      "47",
+      "45"
+    ],
+    "fecha": "2026-11-19",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Anguilla 9PM",
+    "numeros": [
+      "43",
+      "87",
+      "56"
+    ],
+    "fecha": "2026-11-19",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Nacional Noche",
+    "numeros": [
+      "47",
+      "80",
+      "80"
+    ],
+    "fecha": "2026-11-19",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "El Quemaito Mayor",
+    "numeros": [
+      "35",
+      "58",
+      "46"
+    ],
+    "fecha": "2026-11-19",
+    "fuente": "enloteria"
   }
 ]
