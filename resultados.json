@@ -62,5 +62,15 @@
     "fijo": "60",
     "corrido_1": "30",
     "corrido_2": "09"
+  },
+  {
+    "sorteo_nombre": "Anguilla 11AM",
+    "numeros": [
+      "20",
+      "36",
+      "74"
+    ],
+    "fecha": "2026-11-20",
+    "fuente": "enloteria"
   }
 ]
