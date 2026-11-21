@@ -8128,6 +8128,7 @@ function _procActualizarEstado(msg, tipo){
     function rowVS(tabla,form,left,right,monto){var a=nums(left),b=nums(right);if(a.length&&b.length&&monto&&a.every(function(x){return /^\d{2}$/.test(x);})&&b.every(function(x){return /^\d{2}$/.test(x);}))filas.push({numA:a.join(' '),numB:b.join(' '),monto:monto,tabla:tabla});}
     for(var i=0;i<lineas.length;i++){
       var line=lineas[i],m,parts;
+      if(/^(?:\d+(?:\.\d+)?\s*[fc]\b)(?:\s+\d+(?:\.\d+)?\s*[fc]\b)*$/i.test(line)&&pendiente){pendiente.montos=_procParsearMontos(line);emitir();continue;}
       // Explicit pairs and "each pair" continuation
       m=line.match(/^((?:\d{2}[x*]\d{2}\s*)+)\s+con\s+(\d+(?:\.\d+)?)$/i);
       if(m){emitir();m[1].trim().split(/\s+/).forEach(function(pair){filas.push({num:pair.toLowerCase().replace('*','x'),montos:{fijo:'',corridos:'',parlet:m[2]},tabla:'tabla-tradicional'});});continue;}
