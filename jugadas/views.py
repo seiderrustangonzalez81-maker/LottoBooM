@@ -363,6 +363,9 @@ def _validar_tablas_crudas_payload(tablas_payload):
             if not isinstance(forms, list) or not forms or not all(isinstance(f, str) for f in forms):
                 errores.append(f'{label}: formas de juego inválidas.')
                 continue
+            if len(forms) != len(set(forms)):
+                errores.append(f'{label}: formas de juego duplicadas.')
+                continue
             if set(forms) - forms_allowed[table_key]:
                 errores.append(f'{label}: forma de juego no permitida para esta tabla.')
                 continue
