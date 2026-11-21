@@ -21,14 +21,14 @@
         if(/^\d+$/.test(t)){if(t.length>4)return {ok:false,message:'Número demasiado largo: '+t+'. Pick 4/5 aún no está admitido.'};if(t.length===1)return {ok:false,message:'Dígito aislado '+t+'. Usa T/D o escribe el número completo.'};lengths.push(t.length);continue;}
         return {ok:false,message:'Token no reconocido: '+t+'.'};
       }
-      if(lengths.indexOf(2)>=0&&lengths.indexOf(3)>=0)return {ok:false,message:'No mezcles números de 2 y 3 dígitos en el mismo grupo.'};
+      if(lengths.indexOf(2)>=0&&lengths.indexOf(3)>=0)return {ok:false,message:'No mezcles números de 2 y 3 dígitos en el mismo grupo.'};\n      if(tokens.indexOf('PICK3')>=0&&lengths.some(function(n){return n!==3;}))return {ok:false,message:'Pick3 requiere números de 3 dígitos.'};
       return {ok:true};
     }
     function instruction(str){
       var m=parseAmounts(str)||{},vals=Object.keys(m).map(function(k){return m[k];}).filter(function(v){return v!==null&&v!=='';});
       if(!vals.length)return {ok:false,message:'No se reconoció ningún monto.'};
       for(var j=0;j<vals.length;j++){var n=Number(vals[j]);if(!isFinite(n)||n<=0)return {ok:false,message:'Todos los montos deben ser mayores que cero.'};}
-      var residual=String(str||'').toLowerCase().replace(/\d+(?:\.\d+)?/g,' ').replace(/\b(con|y|f|c|fijo|corridos?|parlet|parle|parl|palet|parler|parley|candado|candad|candao|kandado|canado|caandado)\b/gi,' ').replace(/[🔒🔐🔓]/g,' ').replace(/[\s:]+/g,' ').trim();
+      var residual=String(str||'').toLowerCase().replace(/\d+(?:\.\d+)?/g,' ').replace(/\b(cada|con|y|f|c|fijo|corridos?|parlet|parle|parl|palet|parler|parley|candado|candad|candao|kandado|canado|caandado)\b/gi,' ').replace(/[🔒🔐🔓]/g,' ').replace(/[\s:]+/g,' ').trim();
       return residual?{ok:false,message:'Texto no reconocido en la instrucción: '+residual+'.'}:{ok:true,montos:m};
     }
     var unsupported=/\b(pick2|pf|pick4|pick5|vs|vspf|vspick2|pick2vspf|vs100|posicion|tripleta|centenas? corridas?)\b/i;
