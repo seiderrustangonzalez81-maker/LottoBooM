@@ -7850,9 +7850,11 @@ function _procNormalizarTexto(texto){
   // 6. fijo → con (SIEMPRE)
   t = t.replace(/\bfijo\b/gi, ' con ');
   
-  // 7. Separar palabras pegadas a números
+  // 7. Separar palabras pegadas a números, preservando pares NNxNN.
+  t = t.replace(/(\d{2})[xX*](\d{2})/g, '$1\uE000$2');
   t = t.replace(/(\d+)([a-zA-Z]+)(\d+)/g, '$1 $2 $3');
   t = t.replace(/(\d+)([a-zA-Z]+)/g, '$1 $2');
+  t = t.replace(/\uE000/g, 'x');
   
   // 8. Limpieza final de espacios (SIEMPRE AL FINAL)
   t = t.replace(/[ \t]+/g, ' ');
@@ -8337,7 +8339,7 @@ function _procActualizarEstado(msg, tipo){
         var st=s.tablasActivas&&s.tablasActivas[tk];
         if(!st){errors.push({line:'—',message:'Sorteo '+(s.nombre||sid)+': no tiene la pestaña '+tk+'.'});return;}
         var forms=st.forms||[];
-        var def=TABLE_DEFS[tk];
+        var def=(typeof TABLE_DEFS!=='undefined')?TABLE_DEFS[tk]:null;
         if(def&&window.ApostarTableValidator&&typeof window.ApostarTableValidator.validateRows==='function'){
           try{
             var mappedRows=porTabla[tk].map(function(row){return _procCrearFilaDestino(row,st,def.kind);});
