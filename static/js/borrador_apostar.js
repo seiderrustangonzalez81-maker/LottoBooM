@@ -54,7 +54,24 @@
     return snap;
   }
 
-  function isEmpty(s){ if (!s) return true; if (s.clienteId) return false; return Object.keys(s.sorteos||{}).length === 0; }
+  function hasNumbers(s){
+    var sorteos=s&&s.sorteos||{},found=false;
+    Object.keys(sorteos).forEach(function(sid){
+      var tabs=sorteos[sid]&&sorteos[sid].tablasActivas||{};
+      Object.keys(tabs).forEach(function(tk){
+        (tabs[tk].rows||[]).forEach(function(row){
+          if(String(row.num||'').trim()||String(row.numA||'').trim()||String(row.numB||'').trim())found=true;
+        });
+      });
+    });
+    return found;
+  }
+  function isEligible(s){
+    if(!s||!s.clienteId||!(s.fpId||s.fpNombre)||!s.orden||!s.orden.length)return false;
+    if(s.gestorId===null && document.getElementById('selGestorCuenta'))return false;
+    return hasNumbers(s);
+  }
+  function isEmpty(s){ return !isEligible(s); }
 
   function scheduleSave(){
     if (_aplicando) return;
@@ -89,7 +106,7 @@
 
   function reabrir(snap){
     var sids = Object.keys(snap.sorteos||{});
-    if (!sids.length) { _aplicando = false; showBanner(snap); return; }
+    if (!sids.length) { _aplicando = false; return; }
     sids.forEach(function(sid){
       var btn = document.querySelector('.sorteo-btn[data-id="'+sid+'"]');
       if (!btn) return;
@@ -106,7 +123,6 @@
         } catch(e){}
       });
       _aplicando = false;
-      showBanner(snap);
     }, 900);
   }
 
@@ -134,18 +150,18 @@
   }
 
   function showBanner(snap){
-    if (document.getElementById('borradorBanner')) return;
+    if (!isEligible(snap) || document.getElementById('borradorBanner')) return;
     var el = document.createElement('div');
     el.id = 'borradorBanner';
     el.style.cssText = 'position:fixed;top:10px;right:10px;z-index:9999;max-width:340px;background:linear-gradient(145deg,#fef3c7,#fde68a);color:#78350f;padding:14px 16px;border-radius:10px;border:2px solid #f59e0b;box-shadow:0 4px 14px rgba(0,0,0,.25);font-family:inherit;font-size:.85rem;';
-    el.innerHTML = '📝 <strong>Tienes una jugada en edición sin enviar</strong><br>'
-      + '<span style="font-size:.78rem;display:block;margin-top:6px;">¿Qué quieres hacer?</span>'
+    el.innerHTML = '📝 <strong>Tienes una apuesta sin guardar</strong><br>'
+      + '<span style="font-size:.78rem;display:block;margin-top:6px;">¿Deseas continuar o borrar el borrador?</span>'
       + '<div style="margin-top:10px;display:flex;gap:8px;">'
-      + '<button type="button" id="borrCont" style="flex:1;padding:8px 10px;background:#6b7280;color:#fff;border:none;border-radius:6px;font-weight:800;cursor:pointer;font-size:.8rem;">Continuar</button>'
+      + '<button type="button" id="borrCont" style="flex:1;padding:8px 10px;background:#2563eb;color:#fff;border:none;border-radius:6px;font-weight:800;cursor:pointer;font-size:.8rem;">Continuar</button>'
       + '<button type="button" id="borrBorr" style="flex:1;padding:8px 10px;background:#dc2626;color:#fff;border:none;border-radius:6px;font-weight:800;cursor:pointer;font-size:.8rem;">Borrar</button>'
       + '</div>';
     document.body.appendChild(el);
-    document.getElementById('borrCont').onclick = function(){ el.remove(); };
+    document.getElementById('borrCont').onclick = function(){ el.remove(); applySnapshot(snap); };
     document.getElementById('borrBorr').onclick = function(){
       clearBorrador();
       el.remove();
@@ -195,9 +211,27 @@
     };
   }
 
+  function hookSubmit(){
+    if (typeof window.enviarApuesta !== 'function' || window._borradorSubmitHooked) return;
+    window._borradorSubmitHooked = true;
+    var original = window.enviarApuesta;
+    window.enviarApuesta = function(dryRun){
+      var result = original.apply(this, arguments);
+      if (!dryRun) {
+        var started = Date.now();
+        var timer = setInterval(function(){
+          if (window.location.pathname.indexOf('mis-apuestas') !== -1) { clearBorrador(); clearInterval(timer); }
+          if (Date.now()-started > 30000) clearInterval(timer);
+        }, 500);
+      }
+      return result;
+    };
+  }
+  window._borradorDraftApi = {snapshot:snapshot,isEligible:isEligible,hasNumbers:hasNumbers,clear:clearBorrador,read:readBorrador,apply:applySnapshot};
+
   function init(){
     attachHooks();
-    // FIX_BORRADOR_CLEAR_ON_SUCCESS_V1: hookSubmit eliminado (ya no necesario)
+    hookSubmit();
     // El borrador se limpia directamente en apostar.html al confirmar éxito
     var snap = readBorrador();
     if (snap && !isEmpty(snap)) {
@@ -207,7 +241,7 @@
         clearBorrador();
         return;
       }
-      setTimeout(function(){ applySnapshot(snap); }, 1500);
+      setTimeout(function(){ showBanner(snap); }, 1500);
     }
   }
 
