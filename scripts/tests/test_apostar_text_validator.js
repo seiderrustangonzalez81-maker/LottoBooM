@@ -239,6 +239,7 @@ test('accepts explicit pairlets completed with "cada parle"',()=>{const r=run('1
 test('rejects orphan instruction',()=>{const r=run('con 5');assert.equal(r.ok,false);});
 test('rejects mixed 2- and 3-digit groups',()=>{const r=run('12 123 con 5');assert.equal(r.ok,false);assert.ok(r.errors.some(e=>/No mezcles/.test(e.message)));});
 test('accepts bracket headers and card metadata',()=>{const r=run('[Cliente X]\nTarjeta 123\n12 34 con 5');assert.equal(r.ok,true);});
+test('supports standalone fixed/corridos suffixes after a number group',()=>{const r=run('12 34\n5f\n10c');assert.equal(r.ok,true,JSON.stringify(r.errors));assert.equal(r.rows[0].montos.fijo,'5');assert.equal(r.rows[0].montos.corridos,'10');});
 test('supports amount suffixes on inline groups (25f)',()=>{const r=run('12 34 5f');assert.equal(r.ok,true);assert.equal(r.rows[0].montos.fijo,'5');});
 test('detects invalid amount text appended to group',()=>{const r=run('12 34 con 5 error');assert.equal(r.ok,false);assert.ok(r.errors.some(e=>/Texto no reconocido/.test(e.message)));});
 
