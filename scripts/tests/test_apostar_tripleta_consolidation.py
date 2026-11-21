@@ -18,13 +18,13 @@ class BettingFormCatalogTests(unittest.TestCase):
         root = Path(__file__).resolve().parents[2]
         fixture = json.loads((root / "sorteos/fixtures/sorteos.json").read_text(encoding="utf-8"))
         html = (root / "jugadas/templates/jugadas/apostar.html").read_text(encoding="utf-8")
-        match = re.search(r"const FJ_TO_TABLE\\s*=\\s*\\{([\\s\\S]*?)\\};", html)
+        match = re.search(r"const FJ_TO_TABLE\s*=\s*\{([\s\S]*?)\};", html)
         self.assertIsNotNone(match, "FJ_TO_TABLE declaration missing")
-        mapping = dict(re.findall(r"'([^']+)'\\s*:\\s*'([^']+)'", match.group(1)))
+        mapping = dict(re.findall(r"'([^']+)'\s*:\s*'([^']+)'", match.group(1)))
         fixture_forms = {form for draw in fixture for form in draw["fields"].get("formas_juego", [])}
         self.assertFalse(fixture_forms - mapping.keys(), f"Unmapped active fixture forms: {fixture_forms - mapping.keys()}")
         defs = html[html.index("const TABLE_DEFS"):html.index("const FORM_LABELS")]
-        table_keys = set(re.findall(r"'(tabla-[^']+)'\\s*:", defs))
+        table_keys = set(re.findall(r"'(tabla-[^']+)'\s*:", defs))
         self.assertFalse(set(mapping.values()) - table_keys, f"Unknown table targets: {set(mapping.values()) - table_keys}")
 
     def test_known_unmapped_choice_is_explicitly_tracked(self):
@@ -32,9 +32,9 @@ class BettingFormCatalogTests(unittest.TestCase):
         root = Path(__file__).resolve().parents[2]
         choices = (root / "sorteos/forms.py").read_text(encoding="utf-8")
         html = (root / "jugadas/templates/jugadas/apostar.html").read_text(encoding="utf-8")
-        match = re.search(r"const FJ_TO_TABLE\\s*=\\s*\\{([\\s\\S]*?)\\};", html)
-        mapping = dict(re.findall(r"'([^']+)'\\s*:\\s*'([^']+)'", match.group(1)))
-        form_choices = set(re.findall(r"\\('([^']+)'\\s*,", choices))
+        match = re.search(r"const FJ_TO_TABLE\s*=\s*\{([\s\S]*?)\};", html)
+        mapping = dict(re.findall(r"'([^']+)'\s*:\s*'([^']+)'", match.group(1)))
+        form_choices = set(re.findall(r"\('([^']+)'\s*,", choices))
         unmapped = form_choices - mapping.keys() - {"superparlet"}
         self.assertEqual(unmapped, {"par frontal"}, "Review form-to-table mapping changes; do not auto-alias without confirming semantics")
 
