@@ -108,3 +108,14 @@ Pendiente de completar antes de cerrar:
 
 - El servidor también compara IDs de sorteos presentes en `tabla_rows` contra los sorteos seleccionados, y exige que cada sorteo de items normales tenga estado de tabla cruda.
 - La ejecución CI #448 sobre el commit `d01883a3bbce0431d7087d850d530f5aceac7753` terminó SUCCESS; incluye las pruebas de validación de filas crudas. Los cambios posteriores de alineación y documentación tienen nueva ejecución en curso.
+
+
+## Continuación: contrato de sorteo ↔ tablas crudas (21 de noviembre de 2026)
+
+- Se encontró que el backend rechazaba tablas crudas de sorteos no seleccionados, pero no rechazaba la omisión de tablas de un sorteo seleccionado. El contrato del frontend serializa el estado de todos los sorteos seleccionados, aunque estén vacíos.
+- Se añadió `_validar_coincidencia_sorteos_tablas`: exige igualdad exacta entre IDs seleccionados y IDs de tablas crudas, rechaza IDs inválidos, duplicados en selección y duplicados en tablas, y reporta sorteos omitidos o extra.
+- La vista de guardado ejecuta esta comprobación antes de crear boletas/jugadas.
+- Se añadieron pruebas para igualdad exacta, sorteo omitido, sorteo extra, duplicados e ID inválido.
+- También se rechazan formas duplicadas en el estado crudo de tablas y se añadió una prueba.
+- CI de estos commits está en ejecución; aún no se marca como validado hasta que termine el run del HEAD actual.
+- Límite pendiente: validar que cada item normal generado coincide semánticamente con las filas crudas (no solo que los IDs y los montos/formas son válidos). Esto requiere reconstrucción/cotejo por tabla y modalidad, y sigue dentro de la auditoría.
