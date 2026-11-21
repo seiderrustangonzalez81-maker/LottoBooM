@@ -122,6 +122,14 @@ def get_item(dictionary, key):
 
 
 @register.filter
+def split(value, separator=','):
+    """Divide un texto por el separador solicitado; devuelve lista vacía si es None."""
+    if value is None:
+        return []
+    return str(value).split(separator)
+
+
+@register.filter
 def dict_key(dictionary, key):
     """Alias de get_item."""
     if not dictionary:
