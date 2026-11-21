@@ -55,7 +55,7 @@ test('table row totals match collected item sums across forms',()=>{
   compareRowTotal({label:'Centenas',kind:'multi',numDigits:3,forms:['centenas corridas']},['centenas corridas'],{num:'123 456',montos:{'centenas corridas':'4'}});
 });
 
-function uiHarness(text,drawIds,checked){
+function uiHarness(text,drawIds,checked,overrides){
   const textarea={value:text||'',scrollTop:0};
   const button={disabled:false,style:{}};
   const checkbox={checked:!!checked};
@@ -74,7 +74,7 @@ function uiHarness(text,drawIds,checked){
   const ids=drawIds||[];
   const sorteos={};
   ids.forEach(id=>{
-    sorteos[String(id)]={nombre:'Test '+id,cargado:true,tablasActivas:{'tabla-tradicional':{forms:['fijo','corridos','parlet','candado'],rows:[]},'tabla-pick3':{forms:['pick3'],rows:[]}}};
+    sorteos[String(id)]=(overrides&&overrides[id])||{nombre:'Test '+id,cargado:true,tablasActivas:{'tabla-tradicional':{forms:['fijo','corridos','parlet','candado'],rows:[]},'tabla-pick3':{forms:['pick3'],rows:[]}}};
   });
   const sandbox={document:doc,window:{ApostarTextValidator:{validate:validate}},ordenSorteos:ids,sorteosActivos:sorteos,_procActualizarEstado:function(){},};
   vm.runInNewContext(source,sandbox);
@@ -176,6 +176,17 @@ test('live processor stays disabled when pasted text is empty',()=>{
   const h=uiHarness('',[1],true);
   assert.equal(h.updateResult.ok,true);
   assert.equal(h.button.disabled,true);
+});
+
+test('live processor disables when a destination form is not enabled',()=>{
+  const h=uiHarness('12 34 con 5',[1],true,{'1':{nombre:'Test',cargado:true,tablasActivas:{'tabla-tradicional':{forms:['corridos'],rows:[]}}}});
+  assert.equal(h.button.disabled,true);
+  assert.match(h.errorBox.innerHTML,/habilita la forma/);
+});
+test('live processor disables while draw configuration is loading',()=>{
+  const h=uiHarness('12 34 con 5',[1],true,{'1':{nombre:'Test',cargado:false,tablasActivas:{}}});
+  assert.equal(h.button.disabled,true);
+  assert.match(h.errorBox.innerHTML,/configuración aún cargando/);
 });
 
 test('live processor disables when selected draw is missing the destination tab',()=>{
