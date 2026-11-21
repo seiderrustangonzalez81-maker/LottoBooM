@@ -44,7 +44,24 @@
     var modality=/\b(pick2|pf|pick3|pick4|pick5|vs|vspf|vspick2|pick2vspf|vs100|pos(?:icion)?|tripleta|centenas?\s+corridas?|solo\s+parlet)\b/i;
     for(var i=0;i<lines.length;i++){
       var line=String(lines[i]||'').trim();if(ignore(line))continue;hasContent=true;
-      if(modality.test(line)){var routed=[];try{routed=parseText(line)||[];}catch(_){} if(!routed.length){err(i+1,'No se pudo interpretar la modalidad o sus números/monto: '+line,rawToken(rawLines[i]));}else{var amountTokens=line.match(/\d+(?:\.\d+)?/g)||[];if(!amountTokens.length||Number(amountTokens[amountTokens.length-1])<=0)err(i+1,'El monto debe ser mayor que cero.');else if(/\.\d{3,}$/.test(amountTokens[amountTokens.length-1]))err(i+1,'Los montos admiten máximo dos decimales.');}continue;}
+      if(modality.test(line)){var routed=[];try{routed=parseText(line)||[];}catch(_){} var expectedTable=null,routeForm=null;
+        if(/\bpick2\b.*\bvspf\b|\bpick2vspf\b/i.test(line)){expectedTable='tabla-pick2vspf';routeForm='pick2vspf';}
+        else if(/\bvspick2\b/i.test(line)){expectedTable='tabla-vspick2';routeForm='vspick2';}
+        else if(/\bvs100\b/i.test(line)){expectedTable='tabla-vs100';routeForm='vs100';}
+        else if(/\bpick3\b/i.test(line)){expectedTable='tabla-pick3';routeForm='pick3';}
+        else if(/\bpick4\b/i.test(line)){expectedTable='tabla-pick4';routeForm='pick4';}
+        else if(/\bpick5\b/i.test(line)){expectedTable='tabla-pick5';routeForm='pick5';}
+        else if(/\bcentenas?\s+corridas?\b/i.test(line)){expectedTable='tabla-centenas';routeForm='centenas corridas';}
+        else if(/\btripleta\b/i.test(line)){expectedTable='tabla-tripleta';routeForm='tripleta';}
+        else if(/\bsolo\s+parlet\b/i.test(line)){expectedTable='tabla-solo-parlet';routeForm='parlet';}
+        else if(/\bpos(?:icion)?\b/i.test(line)){expectedTable='tabla-posiciones';routeForm='posicion';}
+        else if(/\bvspf\b/i.test(line)){expectedTable='tabla-vspf';routeForm='vspf';}
+        else if(/\bvs\b/i.test(line)){expectedTable='tabla-vs';routeForm='vs';}
+        else if(/\bpf\b|\bpick2\b/i.test(line)){expectedTable='tabla-tradicional';routeForm=/\bpf\b/i.test(line)?'pf':'pick2';}
+        if(!routed.length){err(i+1,'No se pudo interpretar la modalidad o sus números/monto: '+line,rawToken(rawLines[i]));}
+        else if(expectedTable&&routed.some(function(row){return row.tabla!==expectedTable;})){err(i+1,'La modalidad '+routeForm+' no se distribuyó en su pestaña correcta; se bloquea el procesamiento.');}
+        else{var amountTokens=line.match(/\d+(?:\.\d+)?/g)||[];if(!amountTokens.length||Number(amountTokens[amountTokens.length-1])<=0)err(i+1,'El monto debe ser mayor que cero.');else if(/\.\d{3,}$/.test(amountTokens[amountTokens.length-1]))err(i+1,'Los montos admiten máximo dos decimales.');}
+        continue;}
       var pairList=line.match(/^((?:[0-9]{2}[xX*][0-9]{2}\s+)*[0-9]{2}[xX*][0-9]{2})\s+con\s+(\d+(?:\.\d+)?)$/i);
       if(pairList){if(Number(pairList[2])<=0)err(i+1,'El monto del parlet debe ser mayor que cero.');else if(/\.\d{3,}$/.test(pairList[2]))err(i+1,'Los montos admiten máximo dos decimales.');continue;}
       var pair=line.match(/^\s*([0-9]{2})\s*[*xX]\s*([0-9]{2})\s*(?:[-\s]\s*([0-9]+(?:\.[0-9]+)?))?\s*$/);
