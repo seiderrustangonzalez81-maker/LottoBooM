@@ -8440,6 +8440,11 @@ function _procActualizarEstado(msg, tipo){
             if(monto>0&&forms.indexOf(form)<0)
               errors.push({line:'—',message:'Sorteo '+(s.nombre||sid)+': habilita la forma "'+form+'" en la pestaña '+tk+'.'});
           });
+          if(Number(row.monto)>0){
+            var formaFila=row.tipo||(forms.length===1?forms[0]:null);
+            if(!formaFila||forms.indexOf(formaFila)<0)
+              errors.push({line:'—',message:'Sorteo '+(s.nombre||sid)+': no se pudo verificar la forma de juego de la pestaña '+tk+'.'});
+          }
         });
         if(st.rows&&st.rows.some(function(r){
           return !!(String(r.num||r.numA||r.numB||'').trim()||
