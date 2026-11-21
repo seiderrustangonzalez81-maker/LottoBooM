@@ -8170,13 +8170,22 @@ function _procActualizarEstado(msg, tipo){
     return _procAgruparFilas(filas);
   }
 
+  // Detector de instrucción global para el validador; el parser conserva su helper local.
+  function _procDetectarInstruccionPos(texto){
+    var m=String(texto||'').match(/\s+(con|candado|kandado|canado|candad|parle|parlet|parl|palet|parler|parley|fijo|corrido)\s/i);
+    if(m)return m.index+1;
+    var em=String(texto||'').match(/\s+([\uD83D\uDD10\uD83D\uDD12\uD83D\uDD13])/);
+    if(em)return em.index+1;
+    var suf=String(texto||'').match(/\s+((?:\d+(?:\.\d+)?\s*[fc]\b)(?:\s+\d+(?:\.\d+)?\s*[fc]\b)*)\s*$/i);
+    return suf?suf.index+1:-1;
+  }
   function _procValidarTexto(texto){
     if(!window.ApostarTextValidator||typeof window.ApostarTextValidator.validate!=='function')
       return {ok:false,rows:[],errors:[{line:1,message:'No se cargó el módulo de validación.'}]};
     return window.ApostarTextValidator.validate(texto,{
       normalize:_procNormalizarTexto,
       parseAmounts:_procParsearMontos,
-      detectInstruction:_detectarInstruccionPos,
+      detectInstruction:_procDetectarInstruccionPos,
       parseText:_procParsearTexto
     });
   }
