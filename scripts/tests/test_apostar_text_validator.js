@@ -243,3 +243,8 @@ test('valid first line cannot make an unparseable later line pass',()=>{
   assert.equal(r.ok,false);
   assert.ok(r.errors.some(e=>e.line===2));
 });
+test('rejects four-digit tokens from being misrouted to traditional',()=>{
+  const r=run('1234 con 5');
+  assert.equal(r.ok,false);
+  assert.ok(r.errors.some(e=>/Pick 4 explícita|4 dígitos/i.test(e.message)));
+});
