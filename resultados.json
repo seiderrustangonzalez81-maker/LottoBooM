@@ -528,5 +528,37 @@
     ],
     "fecha": "2026-11-19",
     "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Anguilla 8PM",
+    "numeros": [
+      "22",
+      "32",
+      "57"
+    ],
+    "fecha": "2026-11-20",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Real Noche",
+    "numeros": [
+      "74",
+      "20",
+      "60"
+    ],
+    "fecha": "2026-11-19",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Georgia 6:59 PM",
+    "fecha": "2026-11-20",
+    "fuente": "lotteryusa",
+    "pick2": "",
+    "pick3": "143",
+    "pick4": "",
+    "pick5": "",
+    "fijo": "43",
+    "corrido_1": "",
+    "corrido_2": ""
   }
 ]
