@@ -131,7 +131,10 @@
     _aplicando = true;
     var sg = document.getElementById('selGestorCuenta');
     if (sg && snap.gestorId) {
-      if ([].some.call(sg.options, function(o){ return o.value === snap.gestorId; })) sg.value = snap.gestorId;
+      if ([].some.call(sg.options, function(o){ return o.value === snap.gestorId; })) {
+        sg.value = snap.gestorId;
+        try { sg.dispatchEvent(new Event('change', {bubbles:true})); } catch(e){}
+      }
     }
     var sc = document.getElementById('selCliente');
     if (sc && snap.clienteId) {
