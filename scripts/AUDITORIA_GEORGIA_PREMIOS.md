@@ -134,3 +134,11 @@ Pendiente de completar antes de cerrar:
 - La validación server-side de disponibilidad de pool tenía un comportamiento fail-open: si el guard interno lanzaba excepción, permitía continuar con el guard omitido.
 - Cambiado a fail-closed: registra el error y responde HTTP 503 sin continuar con el guardado. Esto puede bloquear temporalmente el envío cuando el verificador falla, pero evita aceptar apuestas sin comprobar disponibilidad.
 - Pendiente: probar el escenario de error inducido y revisar concurrencia/locking del consumo de pool. La validación previa a la transacción todavía podría ser vulnerable a carreras entre solicitudes simultáneas; requiere diseño y pruebas de concurrencia antes de darla por cerrada.
+
+
+## Preparación para Python 3.14 (sin cambio de runtime todavía)
+
+- Hay dos manifiestos de dependencias diferentes: raíz `requirements.txt` (pin exacto, Django 5.1.3) y `LottoBooM/requirements.txt` (rangos, Django >=4.2,<5.2). El deploy Render usa el segundo, mientras el workflow de auditoría instala el primero. Esta divergencia debe resolverse antes de cambiar runtime.
+- Render fija actualmente Python 3.11.0; CI de auditoría y scraper también usan Python 3.11.
+- Django 5.1 no es compatible con Python 3.14; Django 5.2.8+ sí lo soporta. La ruta recomendada para una actualización estable será probar primero Django 5.2 LTS en 3.11 y 3.14, unificar/clarificar requirements, ejecutar checks/tests y luego cambiar Render. No se modifica aún el runtime de producción.
+- Antes del upgrade deben verificarse versiones de paquetes con extensiones nativas y todas las dependencias indirectas, además de migraciones y despliegue.
