@@ -233,6 +233,7 @@ test('routes every supported modality to its destination table',()=>{
     assert.ok(result.rows[0].montos&&result.rows[0].montos[form]||result.rows[0].monto,text);
   });
 });
+test('accepts one explicit pair with con amount',()=>{const r=run('12x34 con 10');assert.equal(r.ok,true,JSON.stringify(r.errors));assert.equal(r.rows[0].montos.parlet,'10');});
 test('routes multiple explicit pairs with a shared Parlet amount',()=>{const r=run('12x34 56x78 con 10');assert.equal(r.ok,true,JSON.stringify(r.errors));assert.equal(r.rows.length,2);assert.equal(r.rows[0].montos.parlet,'10');assert.equal(r.rows[1].montos.parlet,'10');});
 test('accepts explicit pairlets completed with "cada parle"',()=>{const r=run('12x34\n13x14\ncada parle 2');assert.equal(r.ok,true);});
 test('rejects orphan instruction',()=>{const r=run('con 5');assert.equal(r.ok,false);});
