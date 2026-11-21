@@ -63,13 +63,14 @@ function uiHarness(text,drawIds,checked){
   const doc={getElementById:(id)=>({procesarText:textarea,btnProcAhora:button,chkProcesar:checkbox,procErrores:errorBox}[id]||null)};
   const helperStart=template.indexOf('function _procNormalizarTexto(texto){');
   const helperEnd=template.indexOf('function _procValidarTexto(texto){',helperStart);
+  const destStart=template.indexOf('function _procValidarDestinos(filas){');
   const uiStart=template.indexOf('function _procRenderErrores');
   const uiEnd=template.indexOf('  (function _bindProcesarText',uiStart);
   assert.ok(uiStart>=0&&uiEnd>uiStart,'live UI helpers must be present');
   const wrapperStart=template.indexOf('function _procValidarTexto(texto){');
   const wrapperEnd=template.indexOf('function _procProcesarTexto(){',wrapperStart);
   assert.ok(wrapperStart>=0&&wrapperEnd>wrapperStart,'validation wrapper must be present');
-  const source=template.slice(helperStart,helperEnd)+template.slice(wrapperStart,wrapperEnd)+template.slice(uiStart,uiEnd)+';this.update=_procActualizarUI;';
+  const source=template.slice(helperStart,helperEnd)+template.slice(wrapperStart,wrapperEnd)+template.slice(destStart,uiStart)+template.slice(uiStart,uiEnd)+';this.update=_procActualizarUI;';
   const ids=drawIds||[];
   const sorteos={};
   ids.forEach(id=>{
