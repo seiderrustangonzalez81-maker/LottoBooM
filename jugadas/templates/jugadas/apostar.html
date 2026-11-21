@@ -36,7 +36,7 @@ document.addEventListener('DOMContentLoaded', function() {
 }
 .proc-mirror .ln{ display:block; }
 .proc-mirror .ln-ok{ color:#15803d; background:rgba(22,163,74,.10); border-radius:4px; }
-.proc-mirror .ln-err{ color:#b91c1c; background:rgba(220,38,38,.10); border-radius:4px; }
+.proc-mirror .ln-err{ color:#b91c1c; background:rgba(220,38,38,.10); border-radius:4px; }\n.proc-mirror .proc-token-err{color:#fff;background:#dc2626;font-weight:900;border-radius:3px;padding:0 2px;}
 
 {% endblock %}
 {% block page_subtitle %}Registra jugadas para tus clientes{% endblock %}
@@ -8461,7 +8461,9 @@ function _procActualizarEstado(msg, tipo){
     if(!validacion||!validacion.errors.length){box.innerHTML='';box.style.display='none';return;}
     box.style.display='block';
     box.innerHTML='<strong>Revisa el texto:</strong><ul style="margin:5px 0 0;padding-left:20px;">'+validacion.errors.map(function(e){
-      return '<li><strong>Línea '+e.line+':</strong> '+String(e.message).replace(/[&<>"]/g,function(ch){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch];})+'</li>';
+      var msg=String(e.message).replace(/[&<>"]/g,function(ch){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch];});
+      var tok=e.token?'<code style="background:#dc2626;color:#fff;padding:1px 4px;border-radius:3px;font-weight:900;">'+String(e.token).replace(/[&<>"]/g,function(ch){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch];})+'</code>':'';
+      return '<li><strong>Línea '+e.line+':</strong> '+msg+(tok?' Token: '+tok:'')+'</li>';
     }).join('')+'</ul>';
   }
   function _procActualizarUI(){
@@ -8473,7 +8475,10 @@ function _procActualizarEstado(msg, tipo){
     var destino={errors:[]};
     if(v.ok&&hayFilas&&haySorteos)destino=_procValidarDestinos(v.rows);
     btn.disabled=!modo||!hayTexto||!v.ok||!hayFilas||!haySorteos||destino.errors.length>0;
-    btn.style.opacity=btn.disabled?'.5':'1';btn.style.cursor=btn.disabled?'not-allowed':'pointer';
+    btn.style.opacity=btn.disabled?'.55':'1';btn.style.cursor=btn.disabled?'not-allowed':'pointer';
+    btn.style.background=btn.disabled?'linear-gradient(135deg,#dc2626,#991b1b)':'linear-gradient(135deg,#16a34a,#15803d)';
+    btn.style.borderColor=btn.disabled?'#991b1b':'#166534';btn.style.boxShadow=btn.disabled?'2px 2px 0 #991b1b':'2px 2px 0 #166534';
+    btn.innerHTML=btn.disabled?'<i class="fas fa-exclamation-triangle"></i> Corregir Errores':'<i class="fas fa-check"></i> Procesar';
     if(!String(ta.value||'').trim())_procActualizarEstado('Pega el texto para revisar automáticamente.','idle');
     else if(!v.ok)_procActualizarEstado('❌ '+v.errors.length+' error(es); no se procesará nada.','error');
     else if(!haySorteos)_procActualizarEstado('Texto válido. Selecciona al menos un sorteo.','idle');
@@ -9277,10 +9282,23 @@ window._BORRADOR_CTX = {
     function render(){
       var lines = ta.value.split('\n');
       var errores=erroresPorLinea();
+      var diag={};
+      try{
+        var vv=window._procValidarTexto?window._procValidarTexto(ta.value||''):{errors:[]};
+        (vv.errors||[]).forEach(function(e){var n=parseInt(e.line,10);if(n>0){diag[n]=diag[n]||[];diag[n].push(e);}});
+      }catch(_){}
       var html = lines.map(function(l,idx){
-        var ok = lineaEsValida(l,idx,errores);
-        var cls = (String(l).trim() === '') ? 'ln' : (ok ? 'ln ln-ok' : 'ln ln-err');
-        return '<span class="'+cls+'">'+escapeHtml(l || ' ')+'</span>';
+        var ok = lineaEsValida(l,idx,errores), cls = (String(l).trim()==='')?'ln':(ok?'ln ln-ok':'ln ln-err');
+        var safe=escapeHtml(l||' ');
+        var ds=diag[idx+1]||[];
+        ds.some(function(e){
+          if(!e.token)return false;
+          var token=String(e.token),pos=l.toLowerCase().indexOf(token.toLowerCase());
+          if(pos<0)return false;
+          safe=escapeHtml(l.slice(0,pos))+'<mark class="proc-token-err">'+escapeHtml(l.slice(pos,pos+token.length))+'</mark>'+escapeHtml(l.slice(pos+token.length));
+          return true;
+        });
+        return '<span class="'+cls+'">'+safe+'</span>';
       }).join('\n');
       mirror.innerHTML = html;
       mirror.scrollTop = ta.scrollTop;
