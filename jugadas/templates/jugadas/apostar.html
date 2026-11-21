@@ -8279,12 +8279,16 @@ function _procActualizarEstado(msg, tipo){
     if (!texto.trim()) return;
     var _validacion=_procValidarTexto(texto);
     _procRenderErrores(_validacion);
-    if(!_validacion.ok){_procActualizarEstado('❌ Corrige '+_validacion.errores.length+' error(es) antes de procesar.','error');return;}
+    if(!_validacion.ok){_procActualizarEstado('❌ Corrige '+_validacion.errors.length+' error(es) antes de procesar.','error');return;}
     var _scrollTop = ta.scrollTop;
     var _selStart = ta.selectionStart;
     var _selEnd = ta.selectionEnd;
-    var textoNorm = _procNormalizarTexto(texto);
-    var filas = _validacion.filas;
+    var filas = Array.isArray(_validacion.rows) ? _validacion.rows : [];
+    if (!filas.length) {
+      _procRenderErrores({errors:[{line:'—',message:'El texto pasó la revisión, pero no produjo filas. No se modificó ninguna tabla.'}]});
+      _procActualizarEstado('❌ No se generaron filas; revisa el formato del texto.','error');
+      return;
+    }
     if (!filas.length){
       if (typeof toast === 'function') toast('No se interpreto ninguna linea valida', 'warning');
       return;
