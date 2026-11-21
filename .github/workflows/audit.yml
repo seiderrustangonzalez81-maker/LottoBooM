@@ -33,6 +33,8 @@ jobs:
           DEBUG: "true"
           SECRET_KEY: "ci-only-not-a-production-secret"
         run: python -m unittest discover -s scripts/tests -v
+      - name: Pruebas JavaScript de apostar
+        run: node --test scripts/tests_js/*.test.cjs
       - name: Publicar reporte como artefacto
         if: always()
         uses: actions/upload-artifact@v4
