@@ -1604,10 +1604,14 @@ def _guardar_apuesta_impl(request):
         # Identificar por nombre, sin depender de un PK ni de una variante horaria del nombre.
         _now_cuba = timezone.now().astimezone(ZoneInfo('America/Havana'))
         _georgia_ids = []
+        _selected_ids = []
         try:
             _selected_ids = [int(x) for x in (_sids_early or []) if str(x).isdigit()]
+            _super_ids_early = json.loads(request.POST.get('superparlet_sorteos', '[]') or '[]')
+            _selected_ids += [int(x) for x in (_super_ids_early or []) if str(x).isdigit()]
+            _selected_ids = list(set(_selected_ids))
             _georgia_ids = list(Sorteo.objects.filter(id__in=_selected_ids, nombre__icontains='Georgia').values_list('id', flat=True))
-        except (TypeError, ValueError):
+        except (TypeError, ValueError, json.JSONDecodeError):
             _georgia_ids = []
         _georgia_selected = bool(_georgia_ids)
         _georgia_closed_window = (_now_cuba.hour == 0 and _now_cuba.minute >= 27) or (_now_cuba.hour == 1 and _now_cuba.minute <= 0)
@@ -1619,7 +1623,7 @@ def _guardar_apuesta_impl(request):
         if _georgia_selected and not _es_admin_f:
             if _georgia_closed_window:
                 return JsonResponse({'success': False, 'message': 'Georgia está cerrado entre las 00:27 y la 01:00 hora Cuba. La apuesta no se trasladará automáticamente al siguiente sorteo.'}, status=400)
-            if len(set(_selected_ids) - set(_georgia_ids)) > 0 and _georgia_expected_date != fecha_apuesta:
+            if len(set(_selected_ids) - set(_georgia_ids)) > 0 and _georgia_expected_date != hoy:
                 return JsonResponse({'success': False, 'message': 'Georgia y otros sorteos tienen fechas efectivas distintas en este horario. Envíalos por separado para no cambiar la fecha de los demás sorteos.'}, status=400)
             if fecha_apuesta != _georgia_expected_date:
                 return JsonResponse({'success': False, 'message': f'La fecha efectiva de Georgia para este horario es {_georgia_expected_date.isoformat()}. Actualiza la fecha y vuelve a procesar.'}, status=400)
