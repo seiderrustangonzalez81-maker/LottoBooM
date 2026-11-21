@@ -8101,186 +8101,57 @@ function _procActualizarEstado(msg, tipo){
   }
 
   function _procParsearTexto(texto){
-    var lineas = String(texto || '').split(/\r?\n/).map(function(l){ return l.trim(); });
-    lineas = lineas.filter(function(l){
-      if (!l) return false;
-      if (/^\[/.test(l)) return false;
-      if (/^tarieta|^tarjeta|^saldo/i.test(l)) return false;
-      return true;
-    });
-
-    var filas = [];
-    var grupoPendiente = null;
-    var parletsExplicitos = [];
-
-    function _emitirGrupo(){
-      if (!grupoPendiente) return;
-      var m = grupoPendiente.montos;
-      var nums = grupoPendiente.nums;
-      var numStr = nums.join(' ');
-
-      var _todos3 = nums.length > 0 && nums.every(function(n){ return /^\d{3}$/.test(n); });
-      if (_todos3 && (m.fijo || m.corridos || m.parlet)){
-        filas.push({
-          num: numStr,
-          montos: { pick3: m.fijo || m.corridos || m.parlet || '' },
-          tabla: 'tabla-pick3'
-        });
-        grupoPendiente = null;
-        return;
+    var lineas=String(texto||'').split(/\\r?\\n/).map(function(l){return l.trim();}).filter(function(l){return l&&!/^\\[/.test(l)&&!/^tarjeta|^tarieta|^saldo/i.test(l);});
+    var filas=[],pendiente=null,pares=[];
+    function emitir(){
+      if(!pendiente)return;
+      var m=pendiente.montos||{},n=pendiente.nums||[],ns=n.join(' ');
+      if(n.length&& (m.fijo||m.corridos||m.parlet||m.candado)){
+        var todos3=n.every(function(x){return /^\\d{3}$/.test(x);});
+        if(todos3&&!m.candado){filas.push({num:ns,montos:{pick3:m.fijo||m.corridos||m.parlet||''},tabla:'tabla-pick3'});}
+        else filas.push({num:ns,montos:{fijo:m.fijo||'',corridos:m.corridos||'',parlet:m.parlet||'',candado:m.candado||''},tabla:'tabla-tradicional'});
       }
-
-      if (nums.length > 0 && (m.fijo || m.corridos || m.parlet || m.candado)){
-        var parletFinal = m.parlet;
-        if (m.candado && !m.parlet) {
-          var pp = _candadoAPorParlet(m.candado, nums.length);
-          if (pp) parletFinal = pp;
-        }
-        filas.push({
-          num: numStr,
-          montos: {
-            fijo: m.fijo || '',
-            corridos: m.corridos || '',
-            parlet: parletFinal || '',
-            candado: m.candado || ''
-          },
-          tabla: 'tabla-tradicional'
-        });
-      }
-
-      grupoPendiente = null;
+      pendiente=null;
     }
-
-    function _candadoAPorParlet(total, n){
-      if (n < 2) return null;
-      var combos = n * (n - 1) / 2;
-      if (combos <= 0) return null;
-      return (parseFloat(total) / combos).toFixed(2);
+    function amount(s){var m=_procParsearMontos(s);return m.fijo||m.corridos||m.parlet||m.candado||((s.match(/\\bcon\\s+(\\d+(?:\\.\\d+)?)/i)||[])[1]||'');}
+    function nums(s){return _procExpandirNumeros(s);}
+    function splitInstr(line){var ix=_procDetectarInstruccionPos(line);return ix>0?[line.slice(0,ix).trim(),line.slice(ix).trim()]:[line,''];}
+    function rowSingle(tabla,form,group,monto){if(!group||!monto)return;filas.push({num:nums(group).join(' '),montos:(form==='pick3'||form==='pick4'||form==='pick5'||form==='vs100'||form==='tripleta')?{[form]:monto}:{[form]:monto},tabla:tabla});}
+    function rowVS(tabla,form,left,right,monto){var a=nums(left),b=nums(right);if(a.length&&b.length&&monto)filas.push({numA:a.join(' '),numB:b.join(' '),monto:monto,tabla:tabla});}
+    for(var i=0;i<lineas.length;i++){
+      var line=lineas[i],m,parts;
+      // Explicit pairs and "each pair" continuation
+      m=line.match(/^([0-9]{2})\\s*[x*]\\s*([0-9]{2})(?:\\s*(?:-|con)?\\s*(\\d+(?:\\.\\d+)?))?$/i);
+      if(m){emitir();filas.push({num:m[1]+'x'+m[2],montos:{fijo:'',corridos:'',parlet:m[3]||''},tabla:'tabla-tradicional'});pares.push(filas.length-1);continue;}
+      if(/^cada\\s+parlet/i.test(line)){m=line.match(/(\\d+(?:\\.\\d+)?)/);if(m)pares.forEach(function(ix){filas[ix].montos.parlet=m[1];});continue;}
+      // Modality syntax is explicit and wins over traditional parsing.
+      m=line.match(/^(?:solo\\s+)?(?:parlet|parle|parl|palet)\\s+(.+?)\\s+(?:con|parlet)\\s+(\\d+(?:\\.\\d+)?)$/i);
+      if(m){emitir();rowSingle('tabla-solo-parlet','parlet',m[1],m[2]);continue;}
+      m=line.match(/^(pick[345])\\s+(.+?)\\s+con\\s+(\\d+(?:\\.\\d+)?)$/i);
+      if(m){emitir();var f=m[1].toLowerCase(),d=f==='pick3'?3:f==='pick4'?4:5;var ns=nums(m[2]);if(ns.length&&ns.every(function(x){return x.length===d;}))rowSingle('tabla-'+f,f,m[2],m[3]);continue;}
+      m=line.match(/^(?:centenas?\\s+corridas?)\\s+(.+?)\\s+con\\s+(\\d+(?:\\.\\d+)?)$/i);
+      if(m){emitir();var nsC=nums(m[1]);if(nsC.length&&nsC.every(function(x){return x.length===3;}))filas.push({num:nsC.join(' '),montos:{'centenas corridas':m[2]},tabla:'tabla-centenas'});continue;}
+      m=line.match(/^(pick2\\s+vs\\s+pf|p2\\s+vs\\s+pf|vs\\s+pick2|vs\\s+pf|vs100|vs)\\s+(.+?)\\s+con\\s+(\\d+(?:\\.\\d+)?)$/i);
+      if(m){emitir();var v=m[1].toLowerCase().replace(/\\s+/g,'');if(v==='pick2vspf'||v==='p2vspf')rowVS('tabla-pick2vspf','pick2vspf',m[2].split(/\\s+(?:y|vs)\\s+/i)[0],m[2].split(/\\s+(?:y|vs)\\s+/i).slice(1).join(' '),m[3]);else if(v==='vspick2')rowVS('tabla-vspick2','vspick2',m[2].split(/\\s+(?:y|vs)\\s+/i)[0],m[2].split(/\\s+(?:y|vs)\\s+/i).slice(1).join(' '),m[3]);else if(v==='vspf')rowVS('tabla-vspf','vspf',m[2].split(/\\s+(?:y|vs)\\s+/i)[0],m[2].split(/\\s+(?:y|vs)\\s+/i).slice(1).join(' '),m[3]);else if(v==='vs')rowVS('tabla-vs','vs',m[2].split(/\\s+vs\\s+/i)[0],m[2].split(/\\s+vs\\s+/i).slice(1).join(' '),m[3]);else rowSingle('tabla-vs100','vs100',m[2],m[3]);continue;}
+      m=line.match(/^(?:pos(?:icion)?\\s*)?(\\d)\\s+(.+?)\\s+con\\s+(\\d+(?:\\.\\d+)?)$/i);
+      if(m&&/^pos/i.test(line)){emitir();var npos=nums(m[2]);if(npos.length)filas.push({posicion:m[1],num:npos.join(' '),monto:m[3],tabla:'tabla-posiciones'});continue;}
+      m=line.match(/^tripleta\\s+(.+?)\\s+con\\s+(\\d+(?:\\.\\d+)?)$/i);
+      if(m){emitir();var nt=nums(m[1]);if(nt.length===3)rowSingle('tabla-tripleta','tripleta',m[1],m[2]);continue;}
+      // VS family with both groups separated by "vs", e.g. 12 34 vs 56 78 con 5
+      m=line.match(/^(.+?)\\s+(vs|vspf|vspick2|pick2vspf)\\s+(.+?)\\s+con\\s+(\\d+(?:\\.\\d+)?)$/i);
+      if(m){emitir();var vv=m[2].toLowerCase(),tb=vv==='vs'?'tabla-vs':vv==='vspf'?'tabla-vspf':vv==='vspick2'?'tabla-vspick2':'tabla-pick2vspf';rowVS(tb,vv,m[1],m[3],m[4]);continue;}
+      // Traditional instructions / trailing amount.
+      parts=splitInstr(line);
+      if(parts[1]){
+        var ntr=nums(parts[0]),mm=_procParsearMontos(parts[1]);
+        if(ntr.length){emitir();pendiente={nums:ntr,montos:mm};emitir();continue;}
+      }
+      if(/^(?:con|fijo|corrido|candado|parlet|parle|parl|palet|🔒)/i.test(line)&&pendiente){pendiente.montos=_procParsearMontos(line);emitir();continue;}
+      var nplain=nums(line);if(nplain.length){emitir();pendiente={nums:nplain,montos:{fijo:'',corridos:'',parlet:'',candado:''}};continue;}
     }
-
-    function _aplicarInstruccion(grupo, instr){
-      if (!grupo || !instr) return;
-      var m = _procParsearMontos(instr);
-      if (m.fijo) grupo.montos.fijo = m.fijo;
-      if (m.corridos) grupo.montos.corridos = m.corridos;
-      if (m.parlet) grupo.montos.parlet = m.parlet;
-      if (m.candado){
-        var pp = _candadoAPorParlet(m.candado, grupo.nums.length);
-        if (pp) {
-          grupo.montos.parlet = pp;
-          grupo.montos.candado = m.candado;  // FIX_CANDADO_V1
-        }
-      }
-    }
-
-    function _detectarInstruccionPos(linea){
-      // Busca el indice donde comienza la instruccion (con/candado/parle/emoji/fijo/corrido)
-      var m = linea.match(/\s+(con|candado|kandado|canado|candad|parle|parlet|parl|palet|parler|parley|fijo|corrido)\s/i);
-      if (m) return m.index + 1;
-      var m2 = linea.match(/\s+(candado|kandado|canado|candad|parle|parlet|parl|palet|parler|parley|fijo|corrido)(?=\s|$)/i);
-      if (m2) return m2.index + 1;
-      var mEmoji = linea.match(/\s+([\uD83D\uDD10\uD83D\uDD12\uD83D\uDD13])/);
-      if (mEmoji) return mEmoji.index + 1;
-      var mSufijo=linea.match(/\s+((?:\d+(?:\.\d+)?\s*[fc]\b)(?:\s+\d+(?:\.\d+)?\s*[fc]\b)*)\s*$/i);
-      if(mSufijo)return mSufijo.index+1;
-      return -1;
-    }
-
-    var i = 0;
-    while (i < lineas.length){
-      var linea = lineas[i];
-      // FIX_SUFFIX_MONTOS_V1: líneas "25 f" / "10 c" aplicadas al grupo previo.
-      if (/^(?:\d+(?:\.\d+)?\s*[fc]\b)(?:\s+\d+(?:\.\d+)?\s*[fc]\b)*$/i.test(linea)){
-        if(grupoPendiente){_aplicarInstruccion(grupoPendiente,linea);_emitirGrupo();}
-        i++;continue;
-      }
-
-
-      // CASO A: parlet explicito "NN*MM-N" o "NNxMM N"
-      var mPE = linea.match(/^\s*([0-9]{2})\s*[*xX]\s*([0-9]{2})\s*(?:[-\s]\s*([0-9]+(?:\.[0-9]+)?))?\s*$/);
-      if (mPE){
-        _emitirGrupo();
-        filas.push({ num: mPE[1] + 'x' + mPE[2], montos: { fijo:'', corridos:'', parlet: mPE[3] || '' } });
-        parletsExplicitos.push(filas.length - 1);
-        i++;
-        continue;
-      }
-
-      // CASO B: "cada parle X" aplica a TODOS los parlets explicitos anteriores
-      if (/^cada\s+parlet/i.test(linea)){
-        var mCada = linea.match(/([0-9]+(?:\.[0-9]+)?)/);
-        if (mCada){
-          for (var pE = 0; pE < parletsExplicitos.length; pE++){
-            filas[parletsExplicitos[pE]].montos.parlet = mCada[1];
-          }
-        }
-        i++;
-        continue;
-      }
-
-      // CASO C: instruccion pura → aplica al grupo pendiente o al ultimo emitido
-      if (/^(con|candado|kandado|canado|candad|parle|parlet|parl|palet|parler|parley)\b/i.test(linea) ||
-          /^[\uD83D\uDD10\uD83D\uDD12\uD83D\uDD13]/.test(linea)){
-        var instrP = linea; // conserva "con": el parser de montos necesita el prefijo
-        if (grupoPendiente){
-          _aplicarInstruccion(grupoPendiente, instrP);
-          _emitirGrupo();
-        } else if (filas.length > 0){
-          // FIX_CANDADO_ULTIMO_V1: aplicar al ultimo grupo emitido
-          var _mm = _procParsearMontos(instrP);
-          if (_mm.candado || _mm.parlet){
-            var _ultima = filas[filas.length - 1];
-            var _numsUlt = String(_ultima.num || '').split(/\s+/).filter(function(x){ return x; });
-            var _montosExtra = { fijo:'', corridos:'', parlet:'', candado:'' };
-            if (_mm.candado){
-              var _pp = _candadoAPorParlet(_mm.candado, _numsUlt.length);
-              if (_pp){ _montosExtra.parlet = _pp; _montosExtra.candado = _mm.candado; }
-            } else if (_mm.parlet){
-              _montosExtra.parlet = _mm.parlet;
-            }
-            filas.push({
-              num: _ultima.num,
-              montos: _montosExtra,
-              tabla: 'tabla-tradicional'
-            });
-          }
-        }
-        i++;
-        continue;
-      }
-
-      // CASO D: linea mixta (grupo + instruccion)
-      var posInstr = _detectarInstruccionPos(linea);
-      if (posInstr > 0){
-        var grupoStr = linea.slice(0, posInstr).trim();
-        var instrStr = linea.slice(posInstr).trim();
-        var numsD = _procExpandirNumeros(grupoStr);
-        if (numsD.length){
-          _emitirGrupo();
-          grupoPendiente = { nums: numsD, montos: { fijo:'', corridos:'', parlet:'' } };
-          _aplicarInstruccion(grupoPendiente, instrStr);
-          _emitirGrupo();
-          i++;
-          continue;
-        }
-      }
-
-      // CASO E: solo numeros → grupo pendiente
-      var numsE = _procExpandirNumeros(linea);
-      if (numsE.length){
-        _emitirGrupo();
-        grupoPendiente = { nums: numsE, montos: { fijo:'', corridos:'', parlet:'' } };
-        i++;
-        continue;
-      }
-
-      i++;
-    }
-    _emitirGrupo();
-    return _procAgruparFilas(filas);
+    emitir();return filas;
   }
 
-  // Detector de instrucción global para el validador; el parser conserva su helper local.
   function _procDetectarInstruccionPos(texto){
     var m=String(texto||'').match(/\s+(con|candado|kandado|canado|candad|parle|parlet|parl|palet|parler|parley|fijo|corrido)\s/i);
     if(m)return m.index+1;
