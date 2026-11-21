@@ -7,7 +7,23 @@ os.environ.setdefault("SECRET_KEY", "ci-only-not-a-production-secret")
 import django
 django.setup()
 
-from jugadas.views import _consolidar_tripletas, _validar_items_payload
+from jugadas.views import _consolidar_tripletas, _validar_items_payload, _validar_items_formas_sorteos
+
+
+class DrawFormValidationTests(unittest.TestCase):
+    def test_accepts_corridos_alias_when_draw_enables_corrido1_or2(self):
+        self.assertEqual(_validar_items_formas_sorteos([{"tipo":"corridos","numero":"12","monto":"1","sorteo_id":1}], {"1":["corrido1"]}), [])
+        self.assertEqual(_validar_items_formas_sorteos([{"tipo":"corridos","numero":"12","monto":"1","sorteo_id":2}], {"2":["corrido2"]}), [])
+
+    def test_accepts_centenas_alias(self):
+        self.assertEqual(_validar_items_formas_sorteos([{"tipo":"centenas corridas","numero":"123","monto":"1","sorteo_id":1}], {"1":["centena corrida1"]}), [])
+
+    def test_rejects_disabled_form_and_wrong_draw(self):
+        self.assertTrue(_validar_items_formas_sorteos([{"tipo":"pick2","numero":"12","monto":"1","sorteo_id":1}], {"1":["fijo"]}))
+        self.assertTrue(_validar_items_formas_sorteos([{"tipo":"fijo","numero":"12","monto":"1","sorteo_id":2}], {"1":["fijo"]}))
+
+    def test_item_without_draw_id_must_be_allowed_on_all_selected_draws(self):
+        self.assertTrue(_validar_items_formas_sorteos([{"tipo":"corridos","numero":"12","monto":"1"}], {"1":["corrido1"],"2":["pick2"]}))
 
 
 class PayloadValidationTests(unittest.TestCase):
