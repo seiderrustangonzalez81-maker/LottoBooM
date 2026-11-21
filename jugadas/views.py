@@ -5,7 +5,7 @@ import logging
 import traceback
 import os
 import threading
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 from datetime import datetime, timedelta, time
 from collections import defaultdict
 from zoneinfo import ZoneInfo
