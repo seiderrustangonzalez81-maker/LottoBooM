@@ -14,10 +14,10 @@
     function nums(group){
       var tokens=String(group||'').toUpperCase().replace(/[-;,_]/g,' ').replace(/\s+/g,' ').trim().split(' ').filter(Boolean);
       if(!tokens.length)return {ok:false,message:'No se encontraron números.'};
-      var lengths=[],pendingLetter=null;
+      var lengths=[],pendingLetter=null,pendingUsed=false;
       for(var i=0;i<tokens.length;i++){
         var t=tokens[i];
-        if(t==='T'||t==='D'){pendingLetter=t;continue;}
+        if(t==='T'||t==='D'){pendingLetter=t;pendingUsed=false;continue;}
         if(/^[TD]\d$/.test(t)||t==='PA'||t==='PAREJAS'||t==='PICK3'||/^\d{2}V$/.test(t)){pendingLetter=null;continue;}
         if(/^\d+$/.test(t)){
           if(t.length>4)return {ok:false,message:'Número demasiado largo: '+t+'. Pick 4/5 aún no está admitido.'};
@@ -26,7 +26,7 @@
         }
         return {ok:false,message:'Token no reconocido: '+t+'.'};
       }
-      if(pendingLetter)return {ok:false,message:'La letra T/D quedó sin dígito.'};
+      if(pendingLetter&&!pendingUsed)return {ok:false,message:'La letra T/D quedó sin dígito.'};
       if(lengths.indexOf(2)>=0&&lengths.indexOf(3)>=0)return {ok:false,message:'No mezcles números de 2 y 3 dígitos en el mismo grupo.'};
       if(tokens.indexOf('PICK3')>=0&&lengths.some(function(n){return n!==3;}))return {ok:false,message:'Pick3 requiere números de 3 dígitos.'};
       return {ok:true};
