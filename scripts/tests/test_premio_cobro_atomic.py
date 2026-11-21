@@ -2,7 +2,7 @@ import os
 import unittest
 from decimal import Decimal
 from types import SimpleNamespace
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "LottoBooM.settings")
 os.environ.setdefault("DEBUG", "true")
@@ -47,7 +47,7 @@ class PremioCobroAtomicTests(unittest.TestCase):
         def assert_atomic(*args, **kwargs):
             self.assertTrue(connection.in_atomic_block, "payout step escaped transaction.atomic")
 
-        self.premio.save = patch_save = unittest.mock.Mock(side_effect=assert_atomic)
+        self.premio.save = patch_save = Mock(side_effect=assert_atomic)
         with (
             patch.object(Premio.objects, "select_for_update", return_value="locked-prize-query") as lock,
             patch("resultados.views.get_object_or_404", return_value=self.premio) as get_prize,
