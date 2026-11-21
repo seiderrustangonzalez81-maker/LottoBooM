@@ -67,3 +67,12 @@ Esta regla prevalece sobre cualquier ajuste automático anterior que reste o sum
 - POST mixto Georgia + otro sorteo → fecha especial solo para Georgia.
 
 **Estado:** regla de negocio establecida y documentada; aún no certificada como implementada en runtime. La implementación debe resolver fecha por sorteo en backend y actualizar UI/tests antes de declararla completa.
+
+## Implementación inicial de la regla (21 de noviembre de 2026)
+
+Se inició implementación en esta rama:
+- `jugadas/templates/jugadas/apostar.html`: elimina el PK fijo y calcula la fecha mostrada usando `America/Havana`; 00:00–00:26 mantiene hoy, 00:27–01:00 mantiene hoy (ventana cerrada), y desde 01:01 calcula mañana. No usa la fecha UTC del navegador.
+- `jugadas/views.py`: detecta Georgia por nombre seleccionado, aplica validación de fecha desde servidor y rechaza a usuarios no privilegiados durante 00:27–01:00. Evita la normalización que cambiaba la fecha Georgia a hoy. Si Georgia y otros sorteos requieren días efectivos distintos, exige enviarlos separados para evitar desplazar la fecha de los demás. Banco/superadmin mantienen permisos de carga tardía.
+- Se agregó este documento con la regla y los casos de límite.
+
+**Pendiente de verificación:** todavía no se ejecutaron pruebas locales ni pruebas de integración del endpoint. El código actual sigue usando una fecha global de POST en partes de la creación/validación de jugadas; por eso la regla mixta está protegida mediante rechazo, no implementada como fechas independientes en un mismo envío. Revisar también el horario efectivo Georgia en `sorteos/fixtures/sorteos.json` y `sorteos/utils.py`, porque las horas de fixture todavía no se han alineado con la conversión del resultado oficial a Cuba.
