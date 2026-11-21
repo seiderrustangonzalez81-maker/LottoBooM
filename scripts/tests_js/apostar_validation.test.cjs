@@ -15,7 +15,7 @@ function helpers(text) {
       const m = String(value || '').match(/\s+con\s+/i);
       return m ? m.index + 1 : -1;
     },
-    parseText: value => [{ num: '07 17 27 37 47 57 67 77 87 97', montos: { fijo: '25' }, tabla: 'tabla-tradicional' }]
+    parseText: value => String(value||'').match(/\\bvs\\b/i) ? [{numA:'12 34',numB:'56 78',monto:'5',tabla:'tabla-vs'}] : [{ num: '07 17 27 37 47 57 67 77 87 97', montos: { fijo: '25' }, tabla: 'tabla-tradicional' }]
   };
 }
 
