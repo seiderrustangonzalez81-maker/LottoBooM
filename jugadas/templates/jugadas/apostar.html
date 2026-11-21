@@ -8233,6 +8233,37 @@ function _procActualizarEstado(msg, tipo){
       _filasPorTabla[t].push(f);
     });
 
+    // PRECHECK: nunca omitir sorteos/tablas/formas silenciosamente ni reemplazar filas sin aviso.
+    var _preErrores=[],_tablasDestino=[],_filasExistentes=0;
+    ordenSorteos.forEach(function(sidRaw){
+      var sid=String(sidRaw),s=sorteosActivos[sid];
+      if(!s){_preErrores.push({line:'—',message:'Sorteo '+sid+': panel no encontrado.'});return;}
+      if(!s.cargado){_preErrores.push({line:'—',message:'Sorteo '+(s.nombre||sid)+': aún no terminó de cargar.'});return;}
+      Object.keys(_filasPorTabla).forEach(function(tkTabla){
+        var st=s.tablasActivas&&s.tablasActivas[tkTabla];
+        if(!st){_preErrores.push({line:'—',message:'Sorteo '+(s.nombre||sid)+': no tiene la tabla '+tkTabla+'.'});return;}
+        var forms=st.forms||[];
+        _filasPorTabla[tkTabla].forEach(function(f){
+          Object.keys(f.montos||{}).forEach(function(form){
+            var monto=parseFloat(f.montos[form])||0;
+            if(monto<=0||form==='candado')return;
+            if(forms.indexOf(form)<0)_preErrores.push({line:'—',message:'Sorteo '+(s.nombre||sid)+': habilita la forma "'+form+'" en la pestaña '+tkTabla+' antes de procesar.'});
+          });
+        });
+        if(st.rows&&st.rows.some(function(r){return (r.num||r.numA||r.numB||Object.keys(r.montos||{}).some(function(k){return parseFloat(r.montos[k])>0;})||parseFloat(r.monto)>0);}))_filasExistentes++;
+        _tablasDestino.push((s.nombre||sid)+' / '+tkTabla);
+      });
+    });
+    if(_preErrores.length){
+      _procRenderErrores({errors:_preErrores});
+      _procActualizarEstado('❌ No se aplicó nada: '+_preErrores.length+' problema(s) de destino.','error');
+      return;
+    }
+    if(_filasExistentes>0&&!window.confirm('El procesador reemplazará las filas actuales en las tablas destino ('+_filasExistentes+' tabla(s) con datos). ¿Continuar?')){
+      _procActualizarEstado('Procesamiento cancelado; las filas existentes se conservaron.','idle');
+      return;
+    }
+
     // PARSER_V1_REPLICAR: aplicar la misma jugada a TODOS los sorteos seleccionados
     ordenSorteos.forEach(function(sidRaw){
       var sid = String(sidRaw);
