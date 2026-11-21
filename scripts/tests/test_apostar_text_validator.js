@@ -188,6 +188,19 @@ test('rejects a final number group without amount',()=>{const r=run('12 34');ass
 test('rejects unknown tokens instead of silently dropping them',()=>{const r=run('12 34 blabla con 5');assert.equal(r.ok,false);assert.ok(r.errors.some(e=>/Token no reconocido/.test(e.message)));});
 test('rejects zero amount',()=>{const r=run('12 34 con 0');assert.equal(r.ok,false);assert.ok(r.errors.some(e=>/mayores que cero/.test(e.message)));});
 test('routes Pick4 explicit text into Pick4 and validates digit length',()=>{const r=run('pick4 1234 con 5');assert.equal(r.ok,true,JSON.stringify(r.errors));assert.equal(r.rows[0].tabla,'tabla-pick4');assert.equal(r.rows[0].montos.pick4,'5');const bad=run('pick4 123 con 5');assert.equal(bad.ok,false);});
+test('supports VS PF abbreviation expansions and preserves Pick4/Pick5 full tokens',()=>{
+  const vs=run('T7 vspf D3 con 20');
+  assert.equal(vs.ok,true,JSON.stringify(vs.errors));
+  assert.equal(vs.rows[0].tabla,'tabla-vspf');
+  assert.equal(vs.rows[0].numA.split(' ').length,10);
+  assert.equal(vs.rows[0].numB.split(' ').length,10);
+  const p4=run('pick4 1234 5678 con 5');
+  assert.equal(p4.ok,true,JSON.stringify(p4.errors));
+  assert.equal(p4.rows[0].num,'1234 5678');
+  const p5=run('pick5 12345 67890 con 5');
+  assert.equal(p5.ok,true,JSON.stringify(p5.errors));
+  assert.equal(p5.rows[0].num,'12345 67890');
+});
 test('routes every supported modality to its destination table',()=>{
   const cases=[
     ['pick2 12 34 con 5','tabla-tradicional','pick2'],
