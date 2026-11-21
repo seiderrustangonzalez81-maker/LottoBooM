@@ -9,7 +9,7 @@ const start=template.indexOf('function _procNormalizarTexto(texto){');
 const end=template.indexOf('function _procValidarTexto(texto){',start);
 assert.ok(start>=0&&end>start,'parser helpers must be present in apostar.html');
 const sandbox={};
-vm.runInNewContext(template.slice(start,end)+';this.helpers={normalize:_procNormalizarTexto,parseAmounts:_procParsearMontos,detectInstruction:_detectarInstruccionPos,parseText:_procParsearTexto,expandNumbers:_procExpandirNumeros};',sandbox);
+vm.runInNewContext(template.slice(start,end)+';this.helpers={normalize:_procNormalizarTexto,parseAmounts:_procParsearMontos,detectInstruction:_procDetectarInstruccionPos,parseText:_procParsearTexto,expandNumbers:_procExpandirNumeros};',sandbox);
 const h=sandbox.helpers;
 function run(text){return validate(text,h);}
 
