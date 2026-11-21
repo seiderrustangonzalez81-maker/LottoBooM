@@ -842,5 +842,17 @@
     "fijo": "36",
     "corrido_1": "16",
     "corrido_2": "30"
+  },
+  {
+    "sorteo_nombre": "New York 2:30 PM",
+    "fecha": "2026-11-21",
+    "fuente": "lotteryusa",
+    "pick2": "",
+    "pick3": "390",
+    "pick4": "1715",
+    "pick5": "",
+    "fijo": "90",
+    "corrido_1": "17",
+    "corrido_2": "15"
   }
 ]
