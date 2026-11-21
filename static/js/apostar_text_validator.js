@@ -9,7 +9,7 @@
     var detectInstruction=helpers.detectInstruction||function(){return -1;};
     var rawLines=String(text||'').split(/\r?\n/), normalized=normalize(text), lines=normalized.split(/\r?\n/), errors=[], pending=false, explicitPairs=0, hasContent=false;
     function err(line,message,token){errors.push({line:line,message:message,token:token||null});}
-    function rawToken(raw){var s=String(raw||''),m=s.match(/\b\d+(?:\.\d+)?[a-z]+\b/i)||s.match(/\b\d+(?:\.\d+)?\s+[a-z]+\b/i);return m?m[0]:null;}
+    function rawToken(raw){var s=String(raw||''),m=s.match(/\b\d+(?:\.\d+)?[a-z]+\b/i);return m?m[0]:null;}
     function ignore(line){return !line||/^\[/.test(line)||/^(tarjeta|tarieta|saldo)\b/i.test(line);}
     function suffixOnly(line){return /^(?:\d+(?:\.\d+)?\s*[fc]\b)(?:\s+\d+(?:\.\d+)?\s*[fc]\b)*$/i.test(line);}
     function nums(group){
