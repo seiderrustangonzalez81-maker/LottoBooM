@@ -147,6 +147,19 @@ test('tripleta row validation requires exactly three numbers and positive amount
 test('tripleta helper refuses incomplete rows',()=>{assert.deepEqual(tripleta.itemForRow(['12','34'],5,9),[]);assert.deepEqual(tripleta.itemForRow(['12','34','ab'],5,9),[]);});
 test('accepts T/D shorthand with a following amount',()=>{const a=run('T 7 con 25');assert.equal(a.ok,true,JSON.stringify(a.errors));const b=run('D 8 1 5 con 50');assert.equal(b.ok,true,JSON.stringify(b.errors));});
 test('accepts inline traditional numbers and fixed amount',()=>{const r=run('12 34 con 5');assert.equal(r.ok,true);assert.equal(r.errors.length,0);assert.ok(r.rows.length>0);});
+test('routes Pick 3 text to the Pick 3 tab rather than Tradicional',()=>{
+  const r=run('pick3 123 con 5');
+  assert.equal(r.ok,true,JSON.stringify(r.errors));
+  assert.ok(r.rows.length>0);
+  assert.equal(r.rows[0].tabla,'tabla-pick3');
+  assert.equal(r.rows[0].montos.pick3,'5');
+});
+test('routes traditional text to the Tradicional tab',()=>{
+  const r=run('12 34 con 5');
+  assert.equal(r.ok,true,JSON.stringify(r.errors));
+  assert.equal(r.rows[0].tabla,'tabla-tradicional');
+  assert.equal(r.rows[0].montos.fijo,'5');
+});
 test('accepts group on previous line with amount instruction',()=>{const r=run('12 34\ncon 5 y 2');assert.equal(r.ok,true);});
 test('rejects a final number group without amount',()=>{const r=run('12 34');assert.equal(r.ok,false);assert.ok(r.errors.some(e=>/último grupo/.test(e.message)));});
 test('rejects unknown tokens instead of silently dropping them',()=>{const r=run('12 34 blabla con 5');assert.equal(r.ok,false);assert.ok(r.errors.some(e=>/Token no reconocido/.test(e.message)));});
@@ -160,8 +173,6 @@ test('supports amount suffixes on inline groups (25f)',()=>{const r=run('12 34 5
 test('detects invalid amount text appended to group',()=>{const r=run('12 34 con 5 error');assert.equal(r.ok,false);assert.ok(r.errors.some(e=>/Texto no reconocido/.test(e.message)));});
 
 test('live processor disables when selected draw is missing the destination tab',()=>{
-  const h=uiHarness('pick3 123 con 5',[1],true);
-  delete h; // exercise the same UI harness with a draw exposing no Pick 3 tab
   const textarea={value:'pick3 123 con 5',scrollTop:0},button={disabled:false,style:{}},checkbox={checked:true},errorBox={style:{},innerHTML:''};
   const doc={getElementById:id=>({procesarText:textarea,btnProcAhora:button,chkProcesar:checkbox,procErrores:errorBox}[id]||null)};
   const a=template.indexOf('function _procNormalizarTexto(texto){'),b=template.indexOf('function _procValidarTexto(texto){',a),u=template.indexOf('function _procValidarDestinos(filas){'),z=template.indexOf('  (function _bindProcesarText',u);
