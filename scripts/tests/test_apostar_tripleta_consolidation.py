@@ -44,6 +44,32 @@ class PayloadValidationTests(unittest.TestCase):
         self.assertTrue(_validar_items_payload([{"tipo":"","numero":"12","monto":"1"}]))
         self.assertTrue(_validar_items_payload([{"tipo":"fijo","numero":"","monto":"1"}]))
 
+    def test_validates_number_format_by_form(self):
+        valid = [
+            {"tipo":"pick2","numero":"12","monto":"1"},
+            {"tipo":"pick3","numero":"123","monto":"1"},
+            {"tipo":"pick4","numero":"1234","monto":"1"},
+            {"tipo":"pick5","numero":"12345","monto":"1"},
+            {"tipo":"vs","numero":"12x34","monto":"1"},
+            {"tipo":"superparlet","numero":"12x34 56x78","monto":"1"},
+            {"tipo":"tripleta","numero":"12 34 56","monto":"1"},
+            {"tipo":"centenas corridas","numero":"123","monto":"1"},
+        ]
+        for item in valid:
+            self.assertEqual(_validar_items_payload([item]), [], item)
+        invalid = [
+            {"tipo":"pick2","numero":"123","monto":"1"},
+            {"tipo":"pick3","numero":"12","monto":"1"},
+            {"tipo":"pick4","numero":"123","monto":"1"},
+            {"tipo":"pick5","numero":"1234","monto":"1"},
+            {"tipo":"vs","numero":"1234","monto":"1"},
+            {"tipo":"tripleta","numero":"12 34","monto":"1"},
+            {"tipo":"superparlet","numero":"12x34,56x78","monto":"1"},
+            {"tipo":"mystery","numero":"12","monto":"1"},
+        ]
+        for item in invalid:
+            self.assertTrue(_validar_items_payload([item]), item)
+
     def test_rejects_invalid_sorteo_id_and_position(self):
         self.assertTrue(_validar_items_payload([{"tipo":"fijo","numero":"12","monto":"1","sorteo_id":"x"}]))
         self.assertTrue(_validar_items_payload([{"tipo":"posicion","numero":"12","monto":"1","posicion":"4"}]))
