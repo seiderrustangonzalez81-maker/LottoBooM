@@ -1741,15 +1741,22 @@ def _guardar_apuesta_impl(request):
             return JsonResponse({'success': False, 'message': f'Error en formato de datos: {str(e)}'}, status=400)
 
         # Validación del payload antes de cualquier creación de boletas/jugadas.
+        if not isinstance(sorteos_ids, list) or not isinstance(super_sorteos_ids, list):
+            return JsonResponse({'success': False, 'message': 'La selección de sorteos debe ser una lista.'}, status=400)
         if items_normales and not tablas_crudas:
             return JsonResponse({'success': False, 'message': 'Falta la validación de filas originales. Actualiza la página y vuelve a enviar la apuesta.'}, status=400)
         errores_tablas = _validar_tablas_crudas_payload(tablas_crudas)
         if errores_tablas:
             return JsonResponse({'success': False, 'message': 'Filas de apuestas inválidas.', 'errores': errores_tablas[:30]}, status=400)
+        sorteos_raw_ids = {str(d.get('sorteo_id')) for d in tablas_crudas if isinstance(d, dict)}
+        sorteos_seleccionados = {str(sid) for sid in sorteos_ids if str(sid).isdigit()}
+        if sorteos_raw_ids - sorteos_seleccionados:
+            return JsonResponse({'success': False, 'message': 'Las filas enviadas incluyen sorteos que no están seleccionados.'}, status=400)
+        item_draw_ids = {str(it.get('sorteo_id')) for it in items_normales if isinstance(it, dict) and str(it.get('sorteo_id') or '').isdigit()}
+        if item_draw_ids - sorteos_raw_ids:
+            return JsonResponse({'success': False, 'message': 'Faltan tablas originales para uno o más sorteos con jugadas.'}, status=400)
         errores_payload = _validar_items_payload(items_normales, 'Jugadas', validar_numero=False)
         errores_payload += _validar_items_payload(items_super, 'Superparlet', validar_numero=False)
-        if not isinstance(sorteos_ids, list) or not isinstance(super_sorteos_ids, list):
-            return JsonResponse({'success': False, 'message': 'La selección de sorteos debe ser una lista.'}, status=400)
         if errores_payload:
             return JsonResponse({'success': False, 'message': 'Payload de apuestas inválido.', 'errores': errores_payload[:20]}, status=400)
 
