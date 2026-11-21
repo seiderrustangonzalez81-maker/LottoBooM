@@ -8334,6 +8334,9 @@ function _procActualizarEstado(msg, tipo){
             var canonicalForms=forms.map(function(form){return resolverForma(form,def);});
             var tableErrors=window.ApostarTableValidator.validateRows(mappedRows,def,canonicalForms,{expandToken:expandirToken,numerosEnFila:numerosEnFila,contarParletsDeFila:contarParletsDeFila});
             tableErrors.forEach(function(te){errors.push({line:'—',message:'Sorteo '+(s.nombre||sid)+', '+tk+', fila '+te.row+': '+te.message});});
+            if(def.kind==='multi'&&canonicalForms.indexOf('candado')>=0&&canonicalForms.indexOf('parlet')>=0){
+              porTabla[tk].forEach(function(row,ri){var cand=Number(row.montos&&row.montos.candado)||0,par=Number(row.montos&&row.montos.parlet)||0;if(cand<=0)return;var plays=contarParletsDeFila(row,def.numDigits,def.maxNums),expected=Math.round(par*plays*100)/100;if(plays<1||par<=0||Math.abs(cand-expected)>0.01)errors.push({line:'—',message:'Sorteo '+(s.nombre||sid)+', '+tk+', fila '+(ri+1)+': Candado debe coincidir con Parlet × combinaciones.'});});
+            }
           }catch(validationError){errors.push({line:'—',message:'Sorteo '+(s.nombre||sid)+', '+tk+': fallo la validación de filas ('+(validationError.message||validationError)+').'});}
         }
         porTabla[tk].forEach(function(row){
