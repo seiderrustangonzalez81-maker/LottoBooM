@@ -1506,8 +1506,15 @@ def mis_premios(request):
     return render(request, 'resultados/mis_premios.html', context)
 
 @login_required
+@transaction.atomic
 def solicitar_cobro(request, premio_id):
-    premio = get_object_or_404(Premio, id=premio_id, jugada__usuario=request.user)
+    # Bloquea el registro durante el cobro: dos POST simultáneos no pueden
+    # acreditar el mismo premio. La operación completa revierte si falla un paso.
+    premio = get_object_or_404(
+        Premio.objects.select_for_update(),
+        id=premio_id,
+        jugada__usuario=request.user,
+    )
 
     if premio.cobrado or premio.estado == 'pagado':
         messages.info(
