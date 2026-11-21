@@ -34,7 +34,10 @@ class BettingFormCatalogTests(unittest.TestCase):
         html = (root / "jugadas/templates/jugadas/apostar.html").read_text(encoding="utf-8")
         match = re.search(r"const FJ_TO_TABLE\s*=\s*\{([\s\S]*?)\};", html)
         mapping = dict(re.findall(r"'([^']+)'\s*:\s*'([^']+)'", match.group(1)))
-        form_choices = set(re.findall(r"\('([^']+)'\s*,", choices))
+        choices_start = choices.index("FORMAS_JUEGO_CHOICES = [")
+        choices_end = choices.index("]", choices_start)
+        choice_block = choices[choices_start:choices_end]
+        form_choices = set(re.findall(r"\('([^']+)'\s*,", choice_block))
         unmapped = form_choices - mapping.keys() - {"superparlet"}
         self.assertEqual(unmapped, {"par frontal"}, "Review form-to-table mapping changes; do not auto-alias without confirming semantics")
 
