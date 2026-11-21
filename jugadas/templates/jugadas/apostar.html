@@ -8410,7 +8410,7 @@ function _procActualizarEstado(msg, tipo){
 
       var panel = document.querySelector('.sp-panel[data-sorteo-id="' + sid + '"]');
       if (panel){
-        if (String(sidRaw) === String(ordenSorteos[0])){
+        if (String(sid) === String(ordenSorteos[0])){
           panel.classList.remove('sp-esclavo-procesar');
         } else {
           panel.classList.add('sp-esclavo-procesar');
@@ -8422,8 +8422,8 @@ function _procActualizarEstado(msg, tipo){
     if (typeof recalcGlobal === 'function') recalcGlobal();
     try { ta.scrollTop = _scrollTop; ta.selectionStart = _selStart; ta.selectionEnd = _selEnd; } catch(_){}
     if (aplicados === 0){
-      _procActualizarEstado('\u26a0\ufe0f Ningun sorteo tiene tabla Tradicional', 'error');
-      if (typeof toast === 'function') toast('Ningun sorteo tiene tabla Tradicional', 'warning');
+      _procActualizarEstado('\u26a0\ufe0f Ningún sorteo recibió filas', 'error');
+      if (typeof toast === 'function') toast('Ningún sorteo recibió filas', 'warning');
     } else {
       _procActualizarEstado('\u2705 ' + filas.length + ' fila(s) \u2192 ' + aplicados + ' sorteo(s)', 'ok');
       if (typeof toast === 'function') toast('OK: ' + filas.length + ' fila(s) aplicadas a ' + aplicados + ' sorteo(s)', 'success');
