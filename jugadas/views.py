@@ -182,29 +182,42 @@ def _boleta_duplicada(cliente_id, forma_pago_id, fecha_sorteo, items):
 # Helper · Consolidar tripletas (FIX_TRIPLETA_V1)
 # ═══════════════════════════════════════════════════════════════
 def _consolidar_tripletas(items):
-    """Agrupa items tripleta con mismo (sorteo_id, monto) en uno solo."""
+    """Conserva filas agrupadas; convierte items legacy (un número por item) en tripletas completas."""
     if not items:
         return items
     otros = []
-    tripletas_por_key = {}
+    legacy_por_key = {}
     for it in items:
         tipo = (it.get('tipo') or '').strip().lower()
         if tipo != 'tripleta':
             otros.append(it)
             continue
+        numeros = str(it.get('numero', '') or '').split()
+        # Nuevo formato: una fila del frontend ya viene como "NN NN NN".
+        if len(numeros) == 3:
+            if not all(len(n) == 2 and n.isdigit() for n in numeros):
+                raise ValueError('Tripleta debe contener exactamente tres números de dos dígitos.')
+            otros.append(it)
+            continue
+        if len(numeros) > 3:
+            raise ValueError('Una jugada Tripleta no puede contener más de tres números.')
+        # Formato anterior: el frontend enviaba un item por cada número.
         key = (it.get('sorteo_id'), str(it.get('monto', 0)))
-        if key not in tripletas_por_key:
-            tripletas_por_key[key] = {
-                'tipo': it.get('tipo'),
-                'numero': it.get('numero', ''),
-                'monto': it.get('monto', 0),
-                'sorteo_id': it.get('sorteo_id'),
-            }
-        else:
-            nums_prev = tripletas_por_key[key]['numero']
-            nums_new = it.get('numero', '')
-            tripletas_por_key[key]['numero'] = (nums_prev + ' ' + nums_new).strip()
-    return otros + list(tripletas_por_key.values())
+        legacy_por_key.setdefault(key, []).extend(numeros)
+    for (sorteo_id, monto), numeros in legacy_por_key.items():
+        if len(numeros) % 3:
+            raise ValueError('Tripleta incompleta: los números deben agruparse de tres en tres.')
+        for i in range(0, len(numeros), 3):
+            grupo = numeros[i:i + 3]
+            if not all(len(n) == 2 and n.isdigit() for n in grupo):
+                raise ValueError('Tripleta debe contener números de dos dígitos.')
+            otros.append({
+                'tipo': 'tripleta',
+                'numero': ' '.join(grupo),
+                'monto': monto,
+                'sorteo_id': sorteo_id,
+            })
+    return otros
 
 
 # ─── Rangos de teléfonos offline ─────────────────────────────
