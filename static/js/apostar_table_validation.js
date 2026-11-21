@@ -8,7 +8,7 @@
     function amount(value){
       if(value===undefined||value===null||String(value).trim()==='')return {blank:true,value:0};
       var n=Number(value);
-      if(!isFinite(n)||n<0||Math.round(n*100)!==n*100)return {invalid:true,value:n};
+      if(!isFinite(n)||n<0||Math.abs(n*100-Math.round(n*100))>1e-8)return {invalid:true,value:n};
       return {blank:false,value:n};
     }
     function validTokens(text,digits,allowPairs){
