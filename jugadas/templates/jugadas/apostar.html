@@ -8116,7 +8116,7 @@ function _procActualizarEstado(msg, tipo){
     function amount(s){var m=_procParsearMontos(s);return m.fijo||m.corridos||m.parlet||m.candado||((s.match(/\bcon\s+(\d+(?:\.\d+)?)/i)||[])[1]||'');}
     function nums(s){return _procExpandirNumeros(s);}
     function splitInstr(line){var ix=_procDetectarInstruccionPos(line);return ix>0?[line.slice(0,ix).trim(),line.slice(ix).trim()]:[line,''];}
-    function rowSingle(tabla,form,group,monto){if(!group||!monto)return;filas.push({num:nums(group).join(' '),montos:(form==='pick3'||form==='pick4'||form==='pick5'||form==='vs100'||form==='tripleta')?{[form]:monto}:{[form]:monto},tabla:tabla});}
+    function rowSingle(tabla,form,group,monto){if(!group||!monto)return;var n=(form==='pick4'||form==='pick5')?String(group).trim().split(/\s+/):nums(group);filas.push({num:n.join(' '),montos:{[form]:monto},tabla:tabla});}
     function rowVS(tabla,form,left,right,monto){var a=nums(left),b=nums(right);if(a.length&&b.length&&monto)filas.push({numA:a.join(' '),numB:b.join(' '),monto:monto,tabla:tabla});}
     for(var i=0;i<lineas.length;i++){
       var line=lineas[i],m,parts;
