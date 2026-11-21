@@ -244,8 +244,8 @@
   {
     "sorteo_nombre": "Loteka Tarde",
     "numeros": [
-      "47",
-      "07",
+      "21",
+      "97",
       "84"
     ],
     "fecha": "2026-11-20",
@@ -742,5 +742,17 @@
     ],
     "fecha": "2026-11-21",
     "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Georgia 12:30 PM",
+    "fecha": "2026-11-21",
+    "fuente": "lotteryusa",
+    "pick2": "",
+    "pick3": "039",
+    "pick4": "9725",
+    "pick5": "",
+    "fijo": "39",
+    "corrido_1": "97",
+    "corrido_2": "25"
   }
 ]
