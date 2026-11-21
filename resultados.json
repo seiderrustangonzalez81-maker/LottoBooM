@@ -854,5 +854,15 @@
     "fijo": "90",
     "corrido_1": "17",
     "corrido_2": "15"
+  },
+  {
+    "sorteo_nombre": "Anguilla 4PM",
+    "numeros": [
+      "15",
+      "54",
+      "95"
+    ],
+    "fecha": "2026-11-21",
+    "fuente": "enloteria"
   }
 ]
