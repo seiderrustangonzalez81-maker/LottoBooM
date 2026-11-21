@@ -225,7 +225,7 @@ test('routes every supported modality to its destination table',()=>{
     assert.ok(result.rows[0].montos&&result.rows[0].montos[form]||result.rows[0].monto,text);
   });
 });
-test('accepts explicit pairlets completed with "cada parle"',()=>{const r=run('12x34\n13x14\ncada parle 2');assert.equal(r.ok,true);});
+test('routes multiple explicit pairs with a shared Parlet amount',()=>{const r=run('12x34 56x78 con 10');assert.equal(r.ok,true,JSON.stringify(r.errors));assert.equal(r.rows.length,2);assert.equal(r.rows[0].montos.parlet,'10');assert.equal(r.rows[1].montos.parlet,'10');});\ntest('accepts explicit pairlets completed with "cada parle"',()=>{const r=run('12x34\n13x14\ncada parle 2');assert.equal(r.ok,true);});
 test('rejects orphan instruction',()=>{const r=run('con 5');assert.equal(r.ok,false);});
 test('rejects mixed 2- and 3-digit groups',()=>{const r=run('12 123 con 5');assert.equal(r.ok,false);assert.ok(r.errors.some(e=>/No mezcles/.test(e.message)));});
 test('accepts bracket headers and card metadata',()=>{const r=run('[Cliente X]\nTarjeta 123\n12 34 con 5');assert.equal(r.ok,true);});
@@ -267,7 +267,7 @@ test('user invalid block produces three line errors and preserves token 5p',()=>
   assert.equal(r.errors.length,3);
   assert.ok(r.errors.some(e=>e.line===3&&e.token==='5p'));
   assert.ok(r.errors.some(e=>e.line===4&&/Token no reconocido/.test(e.message)));
-  assert.ok(r.errors.some(e=>e.line===5&&/monto|instrucción/i.test(e.message)));
+  assert.ok(r.errors.some(e=>e.line===5&&/monto|instrucción/i.test(e.message)),JSON.stringify(r.errors));
 });
 
 test('valid first line cannot make an unparseable later line pass',()=>{
