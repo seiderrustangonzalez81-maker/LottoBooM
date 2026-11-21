@@ -194,24 +194,6 @@
   }
 
   function hookSubmit(){
-    if (typeof window.enviarApuesta !== 'function') return;
-    if (window._borradorSubmitHooked) return;
-    window._borradorSubmitHooked = true;
-    var _orig = window.enviarApuesta;
-    window.enviarApuesta = function(dryRun){
-      var r = _orig.apply(this, arguments);
-      if (!dryRun) {
-        setTimeout(function(){
-          var sa = getSA();
-          var vacio = !sa || Object.keys(sa).length === 0;
-          if (vacio) clearBorrador();
-        }, 3500);
-      }
-      return r;
-    };
-  }
-
-  function hookSubmit(){
     if (typeof window.enviarApuesta !== 'function' || window._borradorSubmitHooked) return;
     window._borradorSubmitHooked = true;
     var original = window.enviarApuesta;
