@@ -38,6 +38,9 @@ test('validador permite modalidad explícita si el parser la enruta y bloquea si
   assert.equal(valid.ok, true, JSON.stringify(valid.errors));
   const invalid = validator.validate('12 34 vs 56 78 con 5', {...helpers(), parseText: () => []});
   assert.equal(invalid.ok, false);
+  const wrongDestination = validator.validate('12 34 vs 56 78 con 5', {...helpers(), parseText: () => [{num:'12 34',montos:{fijo:'5'},tabla:'tabla-tradicional'}]});
+  assert.equal(wrongDestination.ok, false);
+  assert.match(wrongDestination.errors[0].message,/pestaña correcta/i);
 });
 
 test('validador bloquea texto que no produce jugadas', () => {
