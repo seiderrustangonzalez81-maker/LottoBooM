@@ -95,3 +95,13 @@ Pendiente de completar antes de cerrar:
 - Probar restauración real de cliente/gestor/FP/sorteos/tablas con navegador (incluida carga asíncrona).
 - Validar en backend la representación de filas originales; actualmente el POST de apuesta transmite items ya recolectados y el servidor no recibe el estado crudo de las filas. El backend valida items/importe, pero aún no puede verificar por sí solo una fila de interfaz omitida sin número o sin importe.
 - Completar pruebas de auto-fila por todas las tablas y de render/restore para asegurar que no hay duplicados.
+
+### Protección de filas sin importe (implementación en curso)
+
+- `apostar.html` envía ahora un JSON adicional `tabla_rows` con el estado original de tablas, filas, números, formas e importes.
+- `jugadas/views.py` incorpora `_validar_tablas_crudas_payload`: valida estructura/tipos de tabla, formas permitidas e importes; rechaza filas con números y sin monto positivo, así como importes sin números. Se ejecuta antes de crear boletas/jugadas.
+- Si hay jugadas normales, el backend exige el payload de filas crudas; un cliente desactualizado debe recargar para enviar el nuevo contrato.
+- Se añadió `scripts/tests/test_apostar_raw_rows_validation.py` para fila vacía, números sin importe, importe positivo, VS, posiciones, importe sin números, forma no permitida y tipo de tabla incorrecto.
+- La fila vacía final sigue siendo válida. La validación de importes se hace con Decimal, no con floats.
+
+**Pendiente:** CI del commit con estas pruebas, comprobación de correspondencia entre IDs de sorteos seleccionados y tablas enviadas, y revisar si los valores de números crudos necesitan validación de longitud/formato adicional en servidor. No sustituye la prueba práctica de navegador.
