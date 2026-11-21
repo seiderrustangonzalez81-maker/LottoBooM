@@ -8108,8 +8108,10 @@ function _procActualizarEstado(msg, tipo){
       var m=pendiente.montos||{},n=pendiente.nums||[],ns=n.join(' ');
       if(n.length&& (m.fijo||m.corridos||m.parlet||m.candado)){
         var todos3=n.every(function(x){return /^\d{3}$/.test(x);});
+        var parletMonto=m.parlet||'';
+        if(m.candado&&!parletMonto&&n.length>=2){var combos=n.length*(n.length-1)/2;if(combos>0)parletMonto=(Number(m.candado)/combos).toFixed(2);}
         if(todos3&&!m.candado){filas.push({num:ns,montos:{pick3:m.fijo||m.corridos||m.parlet||''},tabla:'tabla-pick3'});}
-        else filas.push({num:ns,montos:{fijo:m.fijo||'',corridos:m.corridos||'',parlet:m.parlet||'',candado:m.candado||''},tabla:'tabla-tradicional'});
+        else filas.push({num:ns,montos:{fijo:m.fijo||'',corridos:m.corridos||'',parlet:parletMonto,candado:m.candado||''},tabla:'tabla-tradicional'});
       }
       pendiente=null;
     }
