@@ -225,7 +225,7 @@ test('live processor disables when selected draw is missing the destination tab'
 });
 
 test('user invalid block produces three line errors and preserves token 5p',()=>{
-  const r=run('T7 con 25\\n123 456 con 20\\n12 con 5p\\nhola mundo\\n34 56 con');
+  const r=run('T7 con 25\n123 456 con 20\n12 con 5p\nhola mundo\n34 56 con');
   assert.equal(r.ok,false);
   assert.equal(r.errors.length,3);
   assert.ok(r.errors.some(e=>e.line===3&&e.token==='5p'));
@@ -234,7 +234,7 @@ test('user invalid block produces three line errors and preserves token 5p',()=>
 });
 
 test('valid first line cannot make an unparseable later line pass',()=>{
-  const r=validate('12 34 con 5\\ntexto no reconocido',{
+  const r=validate('12 34 con 5\ntexto no reconocido',{
     normalize:x=>String(x||''),
     parseAmounts:x=>{const m=String(x||'').match(/con\\s+(\\d+)/i);return m?{fijo:m[1]}:{};},
     detectInstruction:x=>{const m=String(x||'').match(/\\s+con\\s+/i);return m?m.index+1:-1;},
