@@ -454,9 +454,9 @@
   {
     "sorteo_nombre": "El Quemaito Mayor",
     "numeros": [
+      "46",
       "24",
-      "35",
-      "58"
+      "35"
     ],
     "fecha": "2026-11-20",
     "fuente": "enloteria"
@@ -644,9 +644,9 @@
   {
     "sorteo_nombre": "El Quinielon Dia",
     "numeros": [
+      "80",
       "24",
-      "27",
-      "07"
+      "27"
     ],
     "fecha": "2026-11-21",
     "fuente": "enloteria"
@@ -667,6 +667,16 @@
       "03",
       "59",
       "26"
+    ],
+    "fecha": "2026-11-21",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "LoteDom",
+    "numeros": [
+      "47",
+      "91",
+      "76"
     ],
     "fecha": "2026-11-21",
     "fuente": "enloteria"
