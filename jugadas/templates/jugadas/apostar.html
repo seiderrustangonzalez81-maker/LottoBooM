@@ -8116,7 +8116,2175 @@ function _procActualizarEstado(msg, tipo){
     function amount(s){var m=_procParsearMontos(s);return m.fijo||m.corridos||m.parlet||m.candado||((s.match(/\bcon\s+(\d+(?:\.\d+)?)/i)||[])[1]||'');}
     function nums(s){return _procExpandirNumeros(s);}
     function splitInstr(line){var ix=_procDetectarInstruccionPos(line);return ix>0?[line.slice(0,ix).trim(),line.slice(ix).trim()]:[line,''];}
-    function rowSingle(tabla,form,group,monto){if(!group||!monto)return;var n=(form==='pick4'||form==='pick5')?String(group).trim().split(/\s+/):nums(group);filas.push({num:n.join(' '),montos:{[form]:monto},tabla:tabla});}
+    function rowSingle(tabla,form,group,monto){if(!group||!monto)return;var n=(form==='pick4'||form==='pick5')?String(group).trim().split(/\s+/):nums(group),d=form==='pick3'?3:form==='pick4'?4:form==='pick5'?5:form==='vs100'||form==='tripleta'||form==='parlet'?2:null;if(d&&n.some(function(x){return !new RegExp('^\\d{'+d+'}
+    function rowVS(tabla,form,left,right,monto){var a=nums(left),b=nums(right);if(a.length&&b.length&&monto&&a.every(function(x){return /^\d{2}$/.test(x);})&&b.every(function(x){return /^\d{2}$/.test(x);}))filas.push({numA:a.join(' '),numB:b.join(' '),monto:monto,tabla:tabla});}
+    for(var i=0;i<lineas.length;i++){
+      var line=lineas[i],m,parts;
+      // Explicit pairs and "each pair" continuation
+      m=line.match(/^([0-9]{2})\s*[x*]\s*([0-9]{2})(?:\s*(?:-|con)?\s*(\d+(?:\.\d+)?))?$/i);
+      if(m){emitir();filas.push({num:m[1]+'x'+m[2],montos:{fijo:'',corridos:'',parlet:m[3]||''},tabla:'tabla-tradicional'});pares.push(filas.length-1);continue;}
+      if(/^cada\s+parlet/i.test(line)){m=line.match(/(\d+(?:\.\d+)?)/);if(m)pares.forEach(function(ix){filas[ix].montos.parlet=m[1];});continue;}
+      // Modality syntax is explicit and wins over traditional parsing.
+      m=line.match(/^(?:solo\s+)?(?:parlet|parle|parl|palet)\s+(.+?)\s+(?:con|parlet)\s+(\d+(?:\.\d+)?)$/i);
+      if(m){emitir();rowSingle('tabla-solo-parlet','parlet',m[1],m[2]);continue;}
+      m=line.match(/^(pick2|pf)\s+(.+?)\s+con\s+(\d+(?:\.\d+)?)$/i);
+      if(m){emitir();var ff=m[1].toLowerCase(),nn=nums(m[2]);if(nn.length&&nn.every(function(x){return x.length===2;}))filas.push({num:nn.join(' '),montos:{[ff]:m[3]},tabla:'tabla-tradicional'});continue;}
+      m=line.match(/^(.+?)\s+(pick2|pf)\s+con\s+(\d+(?:\.\d+)?)$/i);
+      if(m){emitir();var ff2=m[2].toLowerCase(),nn2=nums(m[1]);if(nn2.length&&nn2.every(function(x){return x.length===2;}))filas.push({num:nn2.join(' '),montos:{[ff2]:m[3]},tabla:'tabla-tradicional'});continue;}
+      m=line.match(/^(pick[345])\s+(.+?)\s+con\s+(\d+(?:\.\d+)?)$/i);
+      if(m){emitir();var f=m[1].toLowerCase(),d=f==='pick3'?3:f==='pick4'?4:5;var ns=m[2].trim().split(/\s+/);if(ns.length&&ns.every(function(x){return new RegExp('^\\d{'+d+'}$').test(x);}))rowSingle('tabla-'+f,f,m[2],m[3]);
+      m=line.match(/^(?:centenas?\s+corridas?)\s+(.+?)\s+con\s+(\d+(?:\.\d+)?)$/i);
+      if(m){emitir();var nsC=nums(m[1]);if(nsC.length&&nsC.every(function(x){return x.length===3;}))filas.push({num:nsC.join(' '),montos:{'centenas corridas':m[2]},tabla:'tabla-centenas'});continue;}
+      m=line.match(/^(pick2\s+vs\s+pf|p2\s+vs\s+pf|vs\s+pick2|vs\s+pf|vs100|vs)\s+(.+?)\s+con\s+(\d+(?:\.\d+)?)$/i);
+      if(m){emitir();var v=m[1].toLowerCase().replace(/\s+/g,'');if(v==='pick2vspf'||v==='p2vspf')rowVS('tabla-pick2vspf','pick2vspf',m[2].split(/\s+(?:y|vs)\s+/i)[0],m[2].split(/\s+(?:y|vs)\s+/i).slice(1).join(' '),m[3]);else if(v==='vspick2')rowVS('tabla-vspick2','vspick2',m[2].split(/\s+(?:y|vs)\s+/i)[0],m[2].split(/\s+(?:y|vs)\s+/i).slice(1).join(' '),m[3]);else if(v==='vspf')rowVS('tabla-vspf','vspf',m[2].split(/\s+(?:y|vs)\s+/i)[0],m[2].split(/\s+(?:y|vs)\s+/i).slice(1).join(' '),m[3]);else if(v==='vs')rowVS('tabla-vs','vs',m[2].split(/\s+vs\s+/i)[0],m[2].split(/\s+vs\s+/i).slice(1).join(' '),m[3]);else rowSingle('tabla-vs100','vs100',m[2],m[3]);continue;}
+      m=line.match(/^(?:pos(?:icion)?\s*)?(\d)\s+(.+?)\s+con\s+(\d+(?:\.\d+)?)$/i);
+      if(m&&/^pos/i.test(line)){emitir();var npos=nums(m[2]);if(npos.length)filas.push({posicion:m[1],num:npos.join(' '),monto:m[3],tabla:'tabla-posiciones'});continue;}
+      m=line.match(/^tripleta\s+(.+?)\s+con\s+(\d+(?:\.\d+)?)$/i);
+      if(m){emitir();var nt=nums(m[1]);if(nt.length===3)rowSingle('tabla-tripleta','tripleta',m[1],m[2]);continue;}
+      // VS family with both groups separated by "vs", e.g. 12 34 vs 56 78 con 5
+      m=line.match(/^(.+?)\s+(vs|vspf|vspick2|pick2vspf)\s+(.+?)\s+con\s+(\d+(?:\.\d+)?)$/i);
+      if(m){emitir();var vv=m[2].toLowerCase(),tb=vv==='vs'?'tabla-vs':vv==='vspf'?'tabla-vspf':vv==='vspick2'?'tabla-vspick2':'tabla-pick2vspf';rowVS(tb,vv,m[1],m[3],m[4]);continue;}
+      // Traditional instructions / trailing amount.
+      parts=splitInstr(line);
+      if(parts[1]){
+        var ntr=nums(parts[0]),mm=_procParsearMontos(parts[1]);
+        if(ntr.length){emitir();pendiente={nums:ntr,montos:mm};emitir();continue;}
+      }
+      if(/^(?:con|fijo|corrido|candado|parlet|parle|parl|palet|🔒)/i.test(line)&&pendiente){pendiente.montos=_procParsearMontos(line);emitir();continue;}
+      var nplain=nums(line);if(nplain.length){emitir();pendiente={nums:nplain,montos:{fijo:'',corridos:'',parlet:'',candado:''}};continue;}
+    }
+    emitir();return filas;
+  }
+
+  function _procDetectarInstruccionPos(texto){
+    var m=String(texto||'').match(/\s+(con|candado|kandado|canado|candad|parle|parlet|parl|palet|parler|parley|fijo|corrido)\s/i);
+    if(m)return m.index+1;
+    var em=String(texto||'').match(/\s+([\uD83D\uDD10\uD83D\uDD12\uD83D\uDD13])/);
+    if(em)return em.index+1;
+    var suf=String(texto||'').match(/\s+((?:\d+(?:\.\d+)?\s*[fc]\b)(?:\s+\d+(?:\.\d+)?\s*[fc]\b)*)\s*$/i);
+    return suf?suf.index+1:-1;
+  }
+  function _procValidarTexto(texto){
+    if(!window.ApostarTextValidator||typeof window.ApostarTextValidator.validate!=='function')
+      return {ok:false,rows:[],errors:[{line:1,message:'No se cargó el módulo de validación.'}]};
+    return window.ApostarTextValidator.validate(texto,{
+      normalize:_procNormalizarTexto,
+      parseAmounts:_procParsearMontos,
+      detectInstruction:_procDetectarInstruccionPos,
+      parseText:_procParsearTexto
+    });
+  }
+  function _procProcesarTexto(){
+    var ta = document.getElementById('procesarText');
+    if (!ta) return;
+    var texto = ta.value || '';
+    if (!texto.trim()) return;
+    var _validacion=_procValidarTexto(texto);
+    _procRenderErrores(_validacion);
+    if(!_validacion.ok){_procActualizarEstado('❌ Corrige '+_validacion.errors.length+' error(es) antes de procesar.','error');return;}
+    var _scrollTop = ta.scrollTop;
+    var _selStart = ta.selectionStart;
+    var _selEnd = ta.selectionEnd;
+    var filas = Array.isArray(_validacion.rows) ? _validacion.rows : [];
+    if (!filas.length) {
+      _procRenderErrores({errors:[{line:'—',message:'El texto pasó la revisión, pero no produjo filas. No se modificó ninguna tabla.'}]});
+      _procActualizarEstado('❌ No se generaron filas; revisa el formato del texto.','error');
+      return;
+    }
+    if (!filas.length){
+      if (typeof toast === 'function') toast('No se interpreto ninguna linea valida', 'warning');
+      return;
+    }
+    if (!ordenSorteos.length){
+      if (typeof toast === 'function') toast('Selecciona al menos un sorteo', 'warning');
+      return;
+    }
+    var tk = 'tabla-tradicional';
+    var aplicados = 0;
+
+    // FIX_PARSER_ESPERA_CARGA_V1: si el primer sorteo no está cargado, esperar y reintentar
+    var _matriz = sorteosActivos[String(ordenSorteos[0])];
+    if (_matriz && !_matriz.cargado){
+      if (!window._procReintentos) window._procReintentos = 0;
+      if (window._procReintentos < 30){ // 30 × 500ms = 15s
+        window._procReintentos++;
+        _procActualizarEstado('\u23f3 Esperando carga de sorteos... (' + window._procReintentos + '/30)', 'proc');
+        clearTimeout(window._procRetryT);
+        window._procRetryT = setTimeout(function(){
+          try { _procProcesarTexto(); } catch(e){ console.error('[procesar retry]', e); }
+        }, 500);
+        return;
+      } else {
+        _procActualizarEstado('\u274c Los sorteos tardaron demasiado en cargar', 'error');
+        window._procReintentos = 0;
+        return;
+      }
+    } else if (_matriz && _matriz.cargado){
+      window._procReintentos = 0;
+    }
+
+    // FIX_PICK3_ROUTE_V1: agrupar filas por tabla
+    var _filasPorTabla = {};
+    filas.forEach(function(f){
+      var t = f.tabla || 'tabla-tradicional';
+      if (!_filasPorTabla[t]) _filasPorTabla[t] = [];
+      _filasPorTabla[t].push(f);
+    });
+
+    // PRECHECK compartido con la UI: si falta una pestaña/forma, no habilitar Procesar ni modificar tablas.
+    var _destino=_procValidarDestinos(filas);
+    var _preErrores=_destino.errors;
+    var _filasExistentes=_destino.filasExistentes;
+    if(_preErrores.length){
+      _procRenderErrores({errors:_preErrores});
+      _procActualizarEstado('❌ No se aplicó nada: '+_preErrores.length+' problema(s) de destino.','error');
+      return;
+    }
+    // Construir todas las filas destino en memoria antes de tocar ninguna tabla.
+    var _planAplicacion=[];
+    try{
+      ordenSorteos.forEach(function(sidRaw){
+        var sid=String(sidRaw),s=sorteosActivos[sid];
+        if(!s||!s.cargado)throw new Error('Sorteo '+sid+' no está cargado.');
+        var staged={sid:sid,tablas:{},primera:null};
+        Object.keys(_filasPorTabla).forEach(function(tkTabla){
+          var st=s.tablasActivas&&s.tablasActivas[tkTabla];
+          if(!st)throw new Error('Sorteo '+(s.nombre||sid)+': falta pestaña '+tkTabla+'.');
+          var kind=(TABLE_DEFS[tkTabla]&&TABLE_DEFS[tkTabla].kind)||'multi';
+          var mapped=_filasPorTabla[tkTabla].map(function(f){return _procCrearFilaDestino(f,st,kind);});
+          if(mapped.length!==_filasPorTabla[tkTabla].length)throw new Error('Mapeo incompleto para '+tkTabla+'.');
+          staged.tablas[tkTabla]=mapped;
+          if(!staged.primera)staged.primera=tkTabla;
+        });
+        _planAplicacion.push(staged);
+      });
+    }catch(_stageErr){
+      _procRenderErrores({errors:[{line:'—',message:'No se aplicó ninguna tabla: fallo el pre-mapeo de filas. '+(_stageErr.message||_stageErr)}]});
+      _procActualizarEstado('❌ No se aplicó nada: el pre-mapeo falló.','error');
+      return;
+    }
+    if(!_planAplicacion.length){
+      _procActualizarEstado('❌ No se aplicó nada: no hay sorteos preparados.','error');
+      return;
+    }
+
+    if(_filasExistentes>0&&!window.confirm('El procesador reemplazará las filas actuales en las tablas destino ('+_filasExistentes+' tabla(s) con datos). ¿Continuar?')){
+      _procActualizarEstado('Procesamiento cancelado; las filas existentes se conservaron.','idle');
+      return;
+    }
+
+    // Aplicar únicamente el plan completo previamente validado y mapeado.
+    _planAplicacion.forEach(function(plan){
+      var sid=plan.sid,s=sorteosActivos[sid];
+      Object.keys(plan.tablas).forEach(function(tkTabla){
+        s.tablasActivas[tkTabla].rows=plan.tablas[tkTabla];
+      });
+      s.tabActual=plan.primera||tk;
+      if (typeof renderTabsSorteo === 'function') renderTabsSorteo(sid);
+      if (typeof renderMiniResumenSorteo === 'function') renderMiniResumenSorteo(sid);
+
+      var panel = document.querySelector('.sp-panel[data-sorteo-id="' + sid + '"]');
+      if (panel){
+        if (String(sid) === String(ordenSorteos[0])){
+          panel.classList.remove('sp-esclavo-procesar');
+        } else {
+          panel.classList.add('sp-esclavo-procesar');
+        }
+      }
+      aplicados++;
+    });
+
+    if (typeof recalcGlobal === 'function') recalcGlobal();
+    try { ta.scrollTop = _scrollTop; ta.selectionStart = _selStart; ta.selectionEnd = _selEnd; } catch(_){}
+    if (aplicados === 0){
+      _procActualizarEstado('\u26a0\ufe0f Ningún sorteo recibió filas', 'error');
+      if (typeof toast === 'function') toast('Ningún sorteo recibió filas', 'warning');
+    } else {
+      _procActualizarEstado('\u2705 ' + filas.length + ' fila(s) \u2192 ' + aplicados + ' sorteo(s)', 'ok');
+      if (typeof toast === 'function') toast('OK: ' + filas.length + ' fila(s) aplicadas a ' + aplicados + ' sorteo(s)', 'success');
+    }
+  }
+
+  function _procValidarDestinos(filas){
+    var errors=[],filasExistentes=0,porTabla={};
+    (filas||[]).forEach(function(f){
+      var tk=f.tabla||'tabla-tradicional';
+      if(!porTabla[tk])porTabla[tk]=[];
+      porTabla[tk].push(f);
+    });
+    if(!ordenSorteos.length)errors.push({line:'—',message:'Selecciona al menos un sorteo.'});
+    ordenSorteos.forEach(function(sidRaw){
+      var sid=String(sidRaw),s=sorteosActivos[sid];
+      if(!s){errors.push({line:'—',message:'Sorteo '+sid+': panel no encontrado.'});return;}
+      if(!s.cargado){errors.push({line:'—',message:'Sorteo '+(s.nombre||sid)+': configuración aún cargando.'});return;}
+      Object.keys(porTabla).forEach(function(tk){
+        var st=s.tablasActivas&&s.tablasActivas[tk];
+        if(!st){errors.push({line:'—',message:'Sorteo '+(s.nombre||sid)+': no tiene la pestaña '+tk+'.'});return;}
+        var forms=st.forms||[];
+        porTabla[tk].forEach(function(row){
+          Object.keys(row.montos||{}).forEach(function(form){
+            var monto=Number(row.montos[form])||0;
+            if(monto>0&&forms.indexOf(form)<0)
+              errors.push({line:'—',message:'Sorteo '+(s.nombre||sid)+': habilita la forma "'+form+'" en la pestaña '+tk+'.'});
+          });
+          if(Number(row.monto)>0){
+            var formaFila=row.tipo||(forms.length===1?forms[0]:null);
+            if(!formaFila||forms.indexOf(formaFila)<0)
+              errors.push({line:'—',message:'Sorteo '+(s.nombre||sid)+': no se pudo verificar la forma de juego de la pestaña '+tk+'.'});
+          }
+        });
+        if(st.rows&&st.rows.some(function(r){
+          return !!(String(r.num||r.numA||r.numB||'').trim()||
+            Object.keys(r.montos||{}).some(function(k){return Number(r.montos[k])>0;})||
+            Number(r.monto)>0);
+        }))filasExistentes++;
+      });
+    });
+    return {errors:errors,filasExistentes:filasExistentes,tablas:Object.keys(porTabla)};
+  }
+
+  function _procRenderErrores(validacion){
+    var box=document.getElementById('procErrores');if(!box)return;
+    if(!validacion||!validacion.errors.length){box.innerHTML='';box.style.display='none';return;}
+    box.style.display='block';
+    box.innerHTML='<strong>Revisa el texto:</strong><ul style="margin:5px 0 0;padding-left:20px;">'+validacion.errors.map(function(e){
+      var msg=String(e.message).replace(/[&<>"]/g,function(ch){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch];});
+      var tok=e.token?'<code style="background:#dc2626;color:#fff;padding:1px 4px;border-radius:3px;font-weight:900;">'+String(e.token).replace(/[&<>"]/g,function(ch){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch];})+'</code>':'';
+      return '<li><strong>Línea '+e.line+':</strong> '+msg+(tok?' Token: '+tok:'')+'</li>';
+    }).join('')+'</ul>';
+  }
+  function _procActualizarUI(){
+    var ta=document.getElementById('procesarText'),btn=document.getElementById('btnProcAhora'),chk=document.getElementById('chkProcesar');
+    if(!ta||!btn)return;
+    var v=_procValidarTexto(ta.value||'');_procRenderErrores(v);
+    var modo=!!(chk&&chk.checked),haySorteos=typeof ordenSorteos!=='undefined'&&ordenSorteos.length>0;
+    var hayTexto=!!String(ta.value||'').trim(),hayFilas=!!(v.rows&&v.rows.length);
+    var destino={errors:[]};
+    if(v.ok&&hayFilas&&haySorteos)destino=_procValidarDestinos(v.rows);
+    var hayError=!v.ok||destino.errors.length>0;
+    btn.disabled=!modo||!hayTexto||!v.ok||!hayFilas||!haySorteos||destino.errors.length>0;
+    btn.style.opacity=btn.disabled?'.7':'1';btn.style.cursor=btn.disabled?'not-allowed':'pointer';
+    var colorBtn=hayError?'red':(btn.disabled?'idle':'green');
+    btn.style.background=hayError?'linear-gradient(135deg,#dc2626,#991b1b)':(btn.disabled?'linear-gradient(135deg,#f59e0b,#b45309)':'linear-gradient(135deg,#16a34a,#15803d)');
+    btn.style.borderColor=hayError?'#991b1b':(btn.disabled?'#92400e':'#166534');btn.style.boxShadow=hayError?'2px 2px 0 #991b1b':(btn.disabled?'2px 2px 0 #92400e':'2px 2px 0 #166534');
+    btn.innerHTML=hayError?'<i class="fas fa-exclamation-triangle"></i> Corregir Errores':(!hayTexto?'Pega texto':(!haySorteos?'Selecciona Sorteo':(!modo?'Activa Procesar':'<i class="fas fa-check"></i> Procesar')));
+    if(!String(ta.value||'').trim())_procActualizarEstado('Pega el texto para revisar automáticamente.','idle');
+    else if(!v.ok)_procActualizarEstado('❌ '+v.errors.length+' error(es); no se procesará nada.','error');
+    else if(destino.errors.length){_procRenderErrores({errors:destino.errors});_procActualizarEstado('❌ '+destino.errors.length+' problema(s) con pestañas/formas de los sorteos.','error');}
+    else if(!haySorteos)_procActualizarEstado('Texto válido. Selecciona al menos un sorteo.','idle');
+    else if(!modo)_procActualizarEstado('Texto y destinos válidos. Activa la casilla Procesar para habilitar el botón.','idle');
+    else {_procRenderErrores(v);_procActualizarEstado('✅ '+v.rows.length+' fila(s) válidas en sus pestañas destino. Listo para procesar.','ok');}
+    return v;
+  }
+  (function _bindProcesarText(){
+    function _procFeedback(estado){
+      var ta = document.getElementById('procesarText');
+      if (!ta) return;
+      if (estado === 'procesando'){
+        ta.style.borderColor = '#2563eb';
+        ta.style.boxShadow = '0 0 0 3px rgba(37,99,235,.2)';
+      } else if (estado === 'ok'){
+        ta.style.borderColor = '#16a34a';
+        ta.style.boxShadow = '0 0 0 3px rgba(22,163,74,.2)';
+        setTimeout(function(){
+          if (ta) { ta.style.borderColor = '#fdba74'; ta.style.boxShadow = ''; }
+        }, 800);
+      } else {
+        ta.style.borderColor = '#fdba74';
+        ta.style.boxShadow = '';
+      }
+    }
+    window._procFeedback = _procFeedback;
+
+    function bind(){
+      var ta = document.getElementById('procesarText');
+      if (!ta || ta.dataset.procBound === '1') return;
+      ta.dataset.procBound = '1';
+
+      // FIX_MOVIL_PARSER_V1: debounces adaptados a movil
+      var esMovil = _procEsMovil();
+      var D_PASTE  = esMovil ? 300 : 50;
+      var D_INPUT  = esMovil ? 800 : 250;
+      var D_CHANGE = esMovil ? 400 : 200;
+      var D_KEY    = esMovil ? 500 : 300;
+
+      function _programar(delay){
+        clearTimeout(ta._procT);
+        _procFeedback('procesando');
+        _procActualizarEstado('\u23f3 Procesando...', 'proc');
+        ta._procT = setTimeout(function(){
+          try {
+            _procProcesarTexto();
+            _procFeedback('ok');
+          } catch(e){
+            console.error('[procesar]', e);
+            _procFeedback('error');
+            _procActualizarEstado('\u274c Error: ' + (e && e.message ? e.message : 'desconocido'), 'error');
+          }
+        }, delay);
+      }
+
+      var btnAhora = document.getElementById('btnProcAhora');
+      if (btnAhora && btnAhora.dataset.bound !== '1'){
+        btnAhora.dataset.bound = '1';
+        btnAhora.addEventListener('click', function(){
+          try {
+            var vClick=_procActualizarUI();
+            if(!vClick||!vClick.ok||btnAhora.disabled){_procActualizarEstado('❌ Corrige los errores antes de procesar.','error');return;}
+            _procFeedback('procesando');
+            _procActualizarEstado('\u26a1 Procesando...', 'proc');
+            _procProcesarTexto();
+            _procFeedback('ok');
+          } catch(e){
+            console.error('[procesar]', e);
+            _procFeedback('error');
+            _procActualizarEstado('\u274c Error: ' + (e && e.message ? e.message : 'desconocido'), 'error');
+          }
+        });
+      }
+
+      ta.addEventListener('input',_procActualizarUI);
+      ta.addEventListener('paste',function(){setTimeout(_procActualizarUI,0);});
+      var chkProcesar=document.getElementById('chkProcesar');
+      if(chkProcesar)chkProcesar.addEventListener('change',_procActualizarUI);
+      document.addEventListener('click',function(ev){if(ev.target.closest&&ev.target.closest('.sorteo-btn'))setTimeout(_procActualizarUI,300);},true);
+      _procActualizarUI();
+      // El texto se valida en vivo; el botón solo aplica cuando está correcto.
+    }
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', bind);
+    } else {
+      setTimeout(bind, 400);
+    }
+  })();
+
+  // Exponer parser para debug
+  window._procProcesarTexto = _procProcesarTexto;
+  window._procNormalizarTexto = _procNormalizarTexto;
+  window._procParsearTexto = _procParsearTexto;
+  window._procValidarTexto = _procValidarTexto;
+  window._procExpandirNumeros = _procExpandirNumeros;
+  window._procParsearMontos = _procParsearMontos;
+  // FIX_PARSER_ESPERA_CARGA_V1: exponer variables para debug
+  window.ordenSorteos = ordenSorteos;
+  window.sorteosActivos = sorteosActivos;
+  window._procParsearTexto = _procParsearTexto;
+
+  window.autoformatear = autoformatear;
+window.expandirToken = expandirToken;
+window.numerosEnFila = numerosEnFila;
+window.autoformatearSoloParlet = autoformatearSoloParlet;
+window.autoformatearGrupo = autoformatearGrupo;
+console.log('[apostar] Funciones expuestas al scope global para debug');
+});
+
+/* BLOQUEO_SUBMIT_V1: interceptor en captura */
+document.addEventListener('click', function(ev){
+  var btn = ev.target.closest && ev.target.closest('#btnGo, #btnEnviar, .btn-enviar, button[type="submit"], [data-action="enviar"]');
+  if (!btn) return;
+  var exc = _hayExcepcionesActivas();
+  if (!exc.bloqueado) return;
+  ev.preventDefault();
+  ev.stopPropagation();
+  ev.stopImmediatePropagation();
+  _avisarExcepciones(exc);
+  return false;
+}, true);
+
+document.addEventListener('submit', function(ev){
+  var exc = _hayExcepcionesActivas();
+  if (!exc.bloqueado) return;
+  ev.preventDefault();
+  ev.stopPropagation();
+  _avisarExcepciones(exc);
+  return false;
+}, true);
+
+
+
+/* ═══════════════════════════════════════════════════════════════
+   APOSTAR_DRAFT_V1 — Autoguardado y restauración de borrador
+   ═══════════════════════════════════════════════════════════════ */
+(function(){
+  'use strict';
+
+  var KEY_PREFIX = 'apostar_draft_v1_';
+  var TTL_MS     = 7 * 24 * 60 * 60 * 1000;   // 7 días
+  var SAVE_DEBOUNCE = 1000;                    // 1s
+
+  function getBoletaKey(){
+    try {
+      var u = new URLSearchParams(window.location.search);
+      var id = u.get('edit_boleta');
+      if (id) return KEY_PREFIX + 'boleta_' + id;
+    } catch(_){}
+    return KEY_PREFIX + 'nuevo';
+  }
+
+  function snapshot(){
+    var snap = {
+      version: 1,
+      ts: Date.now(),
+      url: window.location.pathname + window.location.search,
+      ordenSorteos: (typeof ordenSorteos !== 'undefined' && Array.isArray(ordenSorteos)) ? ordenSorteos.slice() : [],
+      fpSel: (typeof fpSel !== 'undefined') ? fpSel : null,
+      fecha: (document.getElementById('inpFecha') || {}).value || null,
+      sorteoData: {}
+    };
+    try {
+      if (typeof sorteosActivos === 'undefined') return snap;
+      Object.keys(sorteosActivos).forEach(function(sid){
+        var s = sorteosActivos[sid];
+        var sData = {
+          sid: s.sid, nombre: s.nombre,
+          tabActual: s.tabActual,
+          tablasActivas: {}
+        };
+        Object.keys(s.tablasActivas || {}).forEach(function(tk){
+          var st = s.tablasActivas[tk];
+          sData.tablasActivas[tk] = {
+            forms: (st.forms || []).slice(),
+            rows: (st.rows || []).map(function(r){
+              return {
+                num: r.num || '',
+                numA: r.numA || '',
+                numB: r.numB || '',
+                posicion: r.posicion || '1',
+                monto: r.monto || '',
+                montos: Object.assign({}, r.montos || {})
+              };
+            })
+          };
+        });
+        snap.sorteoData[sid] = sData;
+      });
+    } catch(e){ console.warn('[draft snapshot]', e); }
+    return snap;
+  }
+
+  function isEmpty(snap){
+    if (!snap) return true;
+    if (snap.ordenSorteos && snap.ordenSorteos.length) return false;
+    if (!snap.sorteoData) return true;
+    var n = 0;
+    Object.keys(snap.sorteoData).forEach(function(sid){
+      var s = snap.sorteoData[sid];
+      Object.keys(s.tablasActivas || {}).forEach(function(tk){
+        var rows = s.tablasActivas[tk].rows || [];
+        rows.forEach(function(r){
+          if ((r.num || '').trim() || (r.numA || '').trim() || (r.numB || '').trim() || r.monto) n++;
+        });
+      });
+    });
+    return n === 0;
+  }
+
+  function save(){
+    try {
+      var snap = snapshot();
+      if (isEmpty(snap)) {
+        try { localStorage.removeItem(getBoletaKey()); } catch(_){}
+        return;
+      }
+      localStorage.setItem(getBoletaKey(), JSON.stringify(snap));
+    } catch(e){ console.warn('[draft save]', e); }
+  }
+
+  var saveTimer = null;
+  function scheduleSave(){
+    if (saveTimer) clearTimeout(saveTimer);
+    saveTimer = setTimeout(save, SAVE_DEBOUNCE);
+  }
+
+  function load(){
+    try {
+      var raw = localStorage.getItem(getBoletaKey());
+      if (!raw) return null;
+      var snap = JSON.parse(raw);
+      if (!snap || !snap.ts) return null;
+      if (Date.now() - snap.ts > TTL_MS) {
+        localStorage.removeItem(getBoletaKey());
+        return null;
+      }
+      return snap;
+    } catch(e){ return null; }
+  }
+
+  function clear(){
+    try { localStorage.removeItem(getBoletaKey()); } catch(_){}
+  }
+
+  function restore(snap){
+    if (!snap || !snap.sorteoData) return false;
+    var restored = false;
+    try {
+      // 1) Recrear paneles desde cero
+      if (typeof sorteosActivos !== 'undefined'){
+        Object.keys(sorteosActivos).forEach(function(sid){
+          try { if (typeof quitarPanelSorteo === 'function') quitarPanelSorteo(sid); } catch(_){}
+          try { delete sorteosActivos[sid]; } catch(_){}
+        });
+      }
+      if (typeof ordenSorteos !== 'undefined'){
+        ordenSorteos.length = 0;
+      }
+
+      // 2) Crear cada panel guardado
+      Object.keys(snap.sorteoData).forEach(function(sid){
+        var sData = snap.sorteoData[sid];
+        try {
+          if (typeof agregarPanelSorteo === 'function'){
+            agregarPanelSorteo(sData.sid, sData.nombre, 9999);
+          }
+          var s = (typeof sorteosActivos !== 'undefined') ? sorteosActivos[sData.sid] : null;
+          if (!s) return;
+          s.tabActual = sData.tabActual;
+          Object.keys(sData.tablasActivas).forEach(function(tk){
+            s.tablasActivas[tk] = {
+              forms: sData.tablasActivas[tk].forms.slice(),
+              rows: sData.tablasActivas[tk].rows.map(function(r){
+                return {
+                  num: r.num || '',
+                  numA: r.numA || '',
+                  numB: r.numB || '',
+                  posicion: r.posicion || '1',
+                  monto: r.monto || '',
+                  montos: Object.assign({}, r.montos || {})
+                };
+              })
+            };
+          });
+          if (typeof renderTablaActivaSorteo === 'function'){
+            renderTablaActivaSorteo(sData.sid);
+          }
+          if (typeof renderTabsSorteo === 'function'){
+            try { renderTabsSorteo(sData.sid); } catch(_){}
+          }
+          restored = true;
+        } catch(e){ console.warn('[draft restore sorteo]', e); }
+      });
+
+      // 3) Restaurar orden de sorteos
+      if (snap.ordenSorteos && typeof ordenSorteos !== 'undefined'){
+        ordenSorteos.length = 0;
+        snap.ordenSorteos.forEach(function(x){ ordenSorteos.push(x); });
+      }
+
+      // 4) Forma de pago (por chip click)
+      if (snap.fpSel){
+        try {
+          var chip = document.querySelector('.chip-fp[data-n="' + snap.fpSel + '"], [data-fp="' + snap.fpSel + '"]');
+          if (chip) chip.click();
+        } catch(_){}
+      }
+
+      // 5) Fecha — FIX_FECHA_HOY_V1 (2026-10-14):
+      // Si la fecha del borrador es pasada, forzar hoy. Evita el 400
+      // "solo pueden apostar desde hoy en adelante" cuando hay drafts viejos.
+      if (snap.fecha){
+        var f = document.getElementById('inpFecha');
+        if (f) {
+          var _hoyISO = new Date().toLocaleDateString('en-CA');
+          f.value = (snap.fecha < _hoyISO) ? _hoyISO : snap.fecha;
+          try { f.dispatchEvent(new Event('change', {bubbles:true})); } catch(_){}
+        }
+      }
+    } catch(e){ console.warn('[draft restore]', e); }
+    return restored;
+  }
+
+  // ═══ Exponer API ═══
+  window.apostarDraft = {
+    save: save, load: load, clear: clear,
+    restore: restore,
+    exists: function(){ return load() !== null; },
+    _snapshot: snapshot   // debug
+  };
+  console.log('[apostarDraft] API lista. Clave:', getBoletaKey());
+
+  // ═══ Hook A: si el usuario limpia manualmente → borrar draft ═══
+  try {
+    var _resetOriginal = window.resetAll;
+    if (typeof resetAll === 'function'){
+      window.resetAll = function(){
+        try { clear(); console.log('[apostarDraft] borrado por resetAll()'); } catch(_){}
+        return _resetOriginal.apply(this, arguments);
+      };
+    }
+  } catch(_){}
+
+  // ═══ Hook B: al enviar OK → borrar draft ═══
+  try {
+    var _enviarOriginal = window.enviarApuesta;
+    if (typeof enviarApuesta === 'function'){
+      window.enviarApuesta = function(dryRun){
+        var ret = _enviarOriginal.apply(this, arguments);
+        // Si NO es dryRun (envío real), el fetch tiene éxito → clear
+        if (!dryRun){
+          // Observamos cuándo cambia location para saber si redirigió con éxito
+          var checkInterval = setInterval(function(){
+            if (window.location.pathname.indexOf('mis-apuestas') !== -1){
+              try { clear(); } catch(_){}
+              clearInterval(checkInterval);
+            }
+          }, 500);
+          setTimeout(function(){ clearInterval(checkInterval); }, 30000);
+        }
+        return ret;
+      };
+    }
+  } catch(_){}
+
+  // ═══ Hook C: autosave con MutationObserver (debounced) ═══
+  function attachObserver(){
+    var target = document.querySelector('.sp-panel')?.parentElement
+              || document.getElementById('panelesSorteo')
+              || document.getElementById('sorteosPaneles')
+              || document.body;
+    if (!target) return;
+
+    var mo = new MutationObserver(function(muts){
+      for (var i = 0; i < muts.length; i++){
+        var t = muts[i].target;
+        // Ignorar cambios en el banner de draft
+        if (t && t.closest && t.closest('#apostarDraftBanner')) continue;
+        scheduleSave();
+        return;
+      }
+    });
+    mo.observe(target, {childList:true, subtree:true, characterData:true,
+                       attributes:true, attributeFilter:['value','data-value']});
+
+    // También en inputs/change para cubrir edición de texto
+    target.addEventListener('input',  scheduleSave, true);
+    target.addEventListener('change', scheduleSave, true);
+    console.log('[apostarDraft] autosave enganchado en', target.id || target.className);
+  }
+
+  // ═══ Arrancar al cargar DOM ═══
+  function boot(){
+    // 1) ¿Venimos con boleta a editar?
+    var urlBoleta = null;
+    try { urlBoleta = new URLSearchParams(window.location.search).get('edit_boleta'); } catch(_){}
+
+    var saved = load();
+
+    // 2) Auto-restaurar si hay draft y (a) no hay URL de edición o (b) coincide la boleta
+    if (saved){
+      var urlKey = getBoletaKey();
+      var sameBoleta = (urlBoleta && saved.url && saved.url.indexOf('edit_boleta=' + urlBoleta) !== -1);
+      var newDraft   = (!urlBoleta);
+
+      if (sameBoleta || newDraft){
+        var ok = restore(saved);
+        if (ok){
+          console.log('[apostarDraft] borrador restaurado automáticamente');
+          // Aviso pequeño discreto
+          var toast = document.createElement('div');
+          toast.style.cssText = 'position:fixed;bottom:16px;left:16px;z-index:99998;'+
+            'background:#4f46e5;color:#fff;padding:10px 14px;border-radius:10px;'+
+            'font-size:.82rem;font-weight:700;box-shadow:0 8px 24px rgba(79,70,229,.35);';
+          toast.textContent = '📌 Borrador restaurado';
+          document.body.appendChild(toast);
+          setTimeout(function(){ toast.remove(); }, 3500);
+        }
+      } else if (saved && !sameBoleta && urlBoleta){
+        // Hay draft de OTRA boleta → mostrar banner para decidir
+        var banner = document.createElement('div');
+        banner.id = 'apostarDraftBanner';
+        banner.style.cssText = 'position:fixed;top:12px;left:50%;transform:translateX(-50%);'+
+          'z-index:99998;background:#fef3c7;color:#92400e;padding:10px 16px;border-radius:10px;'+
+          'font-size:.85rem;font-weight:700;box-shadow:0 8px 24px rgba(0,0,0,.15);'+
+          'display:flex;gap:10px;align-items:center;flex-wrap:wrap;max-width:92vw;';
+        banner.innerHTML = '<span>📌 Tienes un borrador de otra boleta</span>'+
+          '<button id="apDraftDiscard" style="background:#dc2626;color:#fff;border:none;padding:6px 12px;border-radius:8px;font-weight:700;cursor:pointer;font-size:.78rem;">Descartar y cargar esta boleta</button>';
+        document.body.appendChild(banner);
+        document.getElementById('apDraftDiscard').onclick = function(){
+          clear();
+          banner.remove();
+          location.reload();
+        };
+      }
+    }
+
+    attachObserver();
+
+    // 3) Guardar al salir (último intento)
+    window.addEventListener('beforeunload', function(){
+      try { save(); } catch(_){}
+    });
+  }
+
+  if (document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', boot);
+  } else {
+    setTimeout(boot, 300); // dar tiempo a que la inicialización de apostar termine
+  }
+
+})();
+
+
+/* FIX_COL_FIJO_COLOR_V1 */
+(function(){function m(t){if(!t)return;var th=t.querySelectorAll("thead th"),i=-1;th.forEach(function(x,j){if((x.textContent||"").trim().toLowerCase()==="fijo"){i=j;x.classList.add("col-fijo")}else{x.classList.remove("col-fijo")}});if(i<0)return;t.querySelectorAll("tbody tr").forEach(function(r){var c=r.children;for(var k=0;k<c.length;k++){if(k===i)c[k].classList.add("col-fijo");else c[k].classList.remove("col-fijo")}})}function e(){document.querySelectorAll(".tabla-ap").forEach(m)}e();var _t=null;new MutationObserver(function(){clearTimeout(_t);_t=setTimeout(e,60)}).observe(document.body,{childList:true,subtree:true});document.addEventListener("click",function(ev){if(ev.target.closest(".tab-btn,.tab,[data-tab],[data-sorteo-tab]"))setTimeout(e,80)});window.__fixColFijo=e;})();
+
+/* FIX_AUTO_ADD_FILA_V2 - red de seguridad: garantiza fila vacia al final tras cada render */
+(function(){
+  if (window.__fixAutoAddV2) return;
+  window.__fixAutoAddV2 = true;
+  var _origRender = window.renderTablaActivaSorteo;
+  if (!_origRender) { console.warn("FIX_AUTO_ADD_FILA_V2: falta renderTablaActivaSorteo"); return; }
+  function check(sid){
+    try {
+      var s = sorteosActivos[sid];
+      if (!s) return;
+      var tk = s.tabActual;
+      var st = s.tablasActivas[tk];
+      var def = TABLE_DEFS[tk];
+      if (!st || !def) return;
+      var last = st.rows[st.rows.length - 1];
+      if (last && typeof _filaTieneContenido === "function" && _filaTieneContenido(last, def)) {
+        st.rows.push(newRow(st.forms, def.kind));
+        _origRender.call(window, sid);
+      }
+    } catch(_){}
+  }
+  window.renderTablaActivaSorteo = function(sid){
+    _origRender.apply(this, arguments);
+    check(sid);
+  };
+  console.log("OK FIX_AUTO_ADD_FILA_V2 activo");
+})();
+</script>
+
+{# ═══════ FIX_RECARGA_GLOBAL_V1: boton global + sync modal ═══════ #}
+<script>
+(function(){
+  'use strict';
+  document.addEventListener('DOMContentLoaded', function(){
+    var btnGlobal = document.getElementById('btnRecargarGlobal');
+    var selCli    = document.getElementById('mrrClienteSelect');
+    var mrrCli    = document.getElementById('mrrCliente');
+    var mrrFondo  = document.getElementById('mrrFondoActual');
+    var modalEl   = document.getElementById('modalRecargaRapida');
+    if (!btnGlobal || !modalEl || !selCli) return;
+
+    btnGlobal.addEventListener('click', function(e){
+      e.preventDefault();
+      selCli.value = '';
+      if (mrrCli)   mrrCli.textContent = '—';
+      if (mrrFondo) { mrrFondo.textContent = '$0.00'; mrrFondo.style.color = ''; }
+      var montoInp = document.getElementById('mrrMonto');
+      if (montoInp) montoInp.value = '';
+      var errBox = document.getElementById('mrrError');
+      if (errBox) errBox.style.display = 'none';
+
+      try {
+        if (typeof cliente !== 'undefined' && cliente && cliente.id){
+          var opt = selCli.querySelector('option[value="' + cliente.id + '"]');
+          if (opt){
+            selCli.value = cliente.id;
+            if (mrrCli) mrrCli.textContent = cliente.nombre || opt.textContent;
+          }
+        }
+      } catch(_){}
+
+      bootstrap.Modal.getOrCreateInstance(modalEl).show();
+    });
+
+    // FIX_MODAL_FP_V1: usar el saldo de la FP seleccionada
+    var selFp = document.getElementById('mrrFormaPago');
+    var _cacheSaldo = null;
+
+    function _actualizarFondoModal(){
+      if (!mrrFondo) return;
+      if (!_cacheSaldo || !selFp || !selFp.value){
+        mrrFondo.textContent = '$0.00';
+        mrrFondo.style.color = '';
+        return;
+      }
+      var fpId = selFp.value;
+      var saldoFp = parseFloat((_cacheSaldo.saldos || {})[fpId] || 0);
+      var bonoFp  = parseFloat((_cacheSaldo.bonos_por_fp || {})[fpId] || 0);
+      var ppFp    = parseFloat((_cacheSaldo.postpagos_por_fp || {})[fpId] || 0);
+      var total = saldoFp + bonoFp - ppFp;
+      var txt = (total < 0 ? '-$' : '$') + Math.abs(total).toFixed(2);
+      mrrFondo.textContent = txt;
+      mrrFondo.style.color = total < 0 ? '#b91c1c' : '#047857';
+    }
+
+    function _cargarSaldoModal(clienteId){
+      if (!clienteId){
+        _cacheSaldo = null;
+        _actualizarFondoModal();
+        return;
+      }
+      fetch("{% url 'jugadas:api_verificar_saldo' %}?usuario_id=" + clienteId, {
+        headers: { 'Accept': 'application/json' },
+        credentials: 'same-origin'
+      })
+      .then(function(r){ return r.ok ? r.json() : null; })
+      .then(function(d){
+        if (!d) return;
+        _cacheSaldo = d;
+        _actualizarFondoModal();
+      })
+      .catch(function(){});
+    }
+
+    selCli.addEventListener('change', function(){
+      var opt = selCli.options[selCli.selectedIndex];
+      if (opt && opt.value){
+        if (mrrCli) mrrCli.textContent = opt.dataset.nombre || opt.textContent;
+        _cargarSaldoModal(opt.value);
+      } else {
+        if (mrrCli)   mrrCli.textContent = '—';
+        _cacheSaldo = null;
+        _actualizarFondoModal();
+      }
+    });
+
+    if (selFp){
+      selFp.addEventListener('change', _actualizarFondoModal);
+    }
+  });
+})();
+
+// ═══════════════════════════════════════════════════════════════
+// FIX_RECARGA_TOTAL_V1: hook global que NO depende de variables internas
+// ═══════════════════════════════════════════════════════════════
+(function(){
+  console.log('[RECARGA_V1] Init');
+  var URL_API = "{% url 'roles:api_recarga_rapida' %}";
+
+  function getCliente() {
+    var sel = document.getElementById('selCliente');
+    if (!sel || !sel.value) return null;
+    var opt = sel.selectedIndex >= 0 ? sel.options[sel.selectedIndex] : null;
+    return { id: sel.value, nombre: opt ? (opt.dataset.nombre || opt.textContent) : sel.value };
+  }
+  function getFp() {
+    var chip = document.querySelector('.fp-chip.active');
+    if (!chip) return null;
+    return chip.dataset.fpId || chip.dataset.id || chip.dataset.formaPago || null;
+  }
+  function getCsrf() {
+    var m = document.cookie.match(/csrftoken=([^;]+)/);
+    return m ? m[1] : '';
+  }
+
+  function poblarModal() {
+    console.log('[RECARGA_V1] poblarModal');
+    var c = getCliente();
+    var f = getFp();
+    console.log('[RECARGA_V1] cliente:', c, '| fp:', f);
+
+    if (c && c.id) {
+      var selC = document.getElementById('mrrClienteSelect');
+      if (selC) {
+        var val = String(c.id), ex = false;
+        for (var i=0; i<selC.options.length; i++) if (String(selC.options[i].value)===val) {ex=true;break;}
+        if (!ex) { var o=document.createElement('option'); o.value=val; o.textContent=(c.nombre||'Cliente')+' (actual)'; selC.appendChild(o); }
+        selC.value = val;
+      }
+      var lbl = document.getElementById('mrrCliente');
+      if (lbl) lbl.textContent = c.nombre || '';
+    }
+    if (f) {
+      var selFp = document.getElementById('mrrFormaPago');
+      if (selFp) selFp.value = String(f);
+    }
+    var inpMonto = document.getElementById('mrrMonto');
+    if (inpMonto) inpMonto.value = '';
+    var errBox = document.getElementById('mrrError');
+    if (errBox) errBox.style.display = 'none';
+    var chip = document.querySelector('.fp-chip.active');
+    var fondo = chip && chip.querySelector('strong') ? chip.querySelector('strong').textContent : '$0.00';
+    var lblFondo = document.getElementById('mrrFondoActual');
+    if (lblFondo) lblFondo.textContent = fondo;
+  }
+
+  function hookModal() {
+    var modalEl = document.getElementById('modalRecargaRapida');
+    if (!modalEl) { setTimeout(hookModal, 500); return; }
+    if (modalEl.dataset.rv1 === '1') return;
+    modalEl.dataset.rv1 = '1';
+    modalEl.addEventListener('show.bs.modal', poblarModal);
+    modalEl.addEventListener('shown.bs.modal', poblarModal);
+    console.log('[RECARGA_V1] Modal hookeado');
+  }
+
+  function hookConfirm() {
+    var btn = document.getElementById('mrrConfirmar');
+    if (!btn) { setTimeout(hookConfirm, 500); return; }
+    if (btn.dataset.rv1 === '1') return;
+    btn.dataset.rv1 = '1';
+    btn.addEventListener('click', function(e){
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      console.log('[RECARGA_V1] Confirmar clickeado');
+
+      var selCli = document.getElementById('mrrClienteSelect');
+      var selFp = document.getElementById('mrrFormaPago');
+      var inpMonto = document.getElementById('mrrMonto');
+      var errBox = document.getElementById('mrrError');
+      var cliId = selCli ? String(selCli.value || '').trim() : '';
+      var fpId = selFp ? String(selFp.value || '').trim() : '';
+      var monto = parseFloat(inpMonto ? inpMonto.value : '0') || 0;
+
+      console.log('[RECARGA_V1] Valores:', {cliId: cliId, fpId: fpId, monto: monto});
+
+      if (!cliId) { if (errBox) {errBox.textContent='Selecciona un cliente.'; errBox.style.display='block';} return; }
+      if (!fpId) { if (errBox) {errBox.textContent='Selecciona forma de pago.'; errBox.style.display='block';} return; }
+      if (monto <= 0) { if (errBox) {errBox.textContent='Monto debe ser mayor a 0.'; errBox.style.display='block';} return; }
+      if (errBox) errBox.style.display = 'none';
+
+      btn.disabled = true;
+      var old = btn.innerHTML;
+      btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Procesando...';
+
+      var reqId = 'rr_' + Date.now() + '_' + Math.random().toString(36).slice(2,10);
+      var fd = new FormData();
+      fd.append('usuario_id', cliId);
+      fd.append('forma_pago_id', fpId);
+      fd.append('monto', monto.toFixed(2));
+      fd.append('request_id', reqId);
+      fd.append('csrfmiddlewaretoken', getCsrf());
+
+      console.log('[RECARGA_V1] POST a:', URL_API);
+
+      fetch(URL_API, {method: 'POST', body: fd, headers: {'X-Requested-With': 'XMLHttpRequest'}})
+      .then(function(r){ console.log('[RECARGA_V1] HTTP:', r.status); return r.text(); })
+      .then(function(txt){
+        console.log('[RECARGA_V1] Respuesta:', txt.slice(0,300));
+        var d; try { d = JSON.parse(txt); } catch(_) { d = {success:false, error:'Respuesta inválida: '+txt.slice(0,100)}; }
+        btn.disabled = false; btn.innerHTML = old;
+        if (d.success) {
+          var m = document.getElementById('modalRecargaRapida');
+          if (m) try { bootstrap.Modal.getInstance(m).hide(); } catch(_) {}
+          if (typeof toast === 'function') {
+            toast('💰 Recarga: $' + (d.monto||monto).toFixed(2) + ' en ' + (d.forma_pago_nombre||'') + '. Saldo: $' + (d.saldo_actual||0).toFixed(2), 'success');
+          } else { alert('Recarga exitosa: $' + (d.monto||monto).toFixed(2)); }
+          if (typeof cargarFormasPago === 'function') cargarFormasPago();
+
+          /* FIX_RECARGA_SALDO_AUTO_V1: actualizar saldo sin recargar página */
+          (function(){
+            var _num = (typeof d.saldo_actual === 'number') ? d.saldo_actual : parseFloat(d.saldo_actual || 0);
+            var _fmt = function(n){ return '$' + parseFloat(n||0).toFixed(2); };
+            console.log('[RECARGA_SALDO_V1] Update saldo:', _num);
+
+            if (!isNaN(_num)) {
+              var _chipA = document.querySelector('.fp-chip.active');
+              if (_chipA) {
+                var _sA = _chipA.querySelector('strong');
+                if (_sA) _sA.textContent = _fmt(_num);
+              }
+              ['ftFondo','prFondo','bsFondo','apFabTotal','mrrFondoActual'].forEach(function(id){
+                var el = document.getElementById(id);
+                if (el) el.textContent = _fmt(_num);
+              });
+            }
+
+            var _sel2 = document.getElementById('selCliente');
+            if (_sel2 && _sel2.value) {
+              fetch('/jugadas/api/forma-pago-cliente/?cliente_id=' + encodeURIComponent(_sel2.value), {headers:{'X-Requested-With':'XMLHttpRequest'}})
+              .then(function(r){ return r.json(); })
+              .then(function(data){
+                var forms = data && (data.formas_pago || data.formas || data.fondos);
+                if (Array.isArray(forms)) {
+                  forms.forEach(function(fp){
+                    var chip = document.querySelector('.fp-chip[data-fp-id="' + fp.id + '"]') || document.querySelector('.fp-chip[data-id="' + fp.id + '"]');
+                    if (chip) {
+                      var st = chip.querySelector('strong');
+                      if (st) st.textContent = _fmt(fp.monto || fp.saldo || 0);
+                    }
+                  });
+                  console.log('[RECARGA_SALDO_V1] Chips refrescados desde API');
+                }
+              })
+              .catch(function(e){ console.warn('[RECARGA_SALDO_V1] fetch err:', e); });
+            }
+
+            if (typeof actualizarVisibilidad === 'function') {
+              setTimeout(function(){ try { actualizarVisibilidad(); } catch(_){} }, 200);
+            }
+            if (typeof recalcGlobal === 'function') {
+              try { recalcGlobal(); } catch(_){}
+            }
+          })();
+        } else {
+          if (errBox) { errBox.textContent = d.error || 'Error'; errBox.style.display = 'block'; }
+        }
+      })
+      .catch(function(err){
+        console.error('[RECARGA_V1] Error:', err);
+        btn.disabled = false; btn.innerHTML = old;
+        if (errBox) { errBox.textContent = 'Error: ' + err.message; errBox.style.display = 'block'; }
+      });
+    });
+    console.log('[RECARGA_V1] Confirmar hookeado');
+  }
+
+  hookModal(); hookConfirm();
+  setTimeout(hookModal, 1000); setTimeout(hookConfirm, 1000);
+  setTimeout(hookModal, 3000); setTimeout(hookConfirm, 3000);
+})();
+</script>
+
+
+<script>
+window._BORRADOR_CTX = {
+  userId: {{ request.user.id|default:0 }},
+  editMode: {% if edit_boleta_data or es_modo_reenviar %}true{% else %}false{% endif %}
+};
+</script>
+<script src="{% static 'js/borrador_apostar.js' %}?v=20261022b"></script>
+
+
+<script>
+/* FIX_RESALTADO_LINEAS_V1: espejo que colorea cada línea según el Parser */
+(function(){
+  function init(){
+    var ta = document.getElementById('procesarText');
+    var mirror = document.getElementById('procesarHighlight');
+    if (!ta || !mirror || ta.dataset.mirrorBound) return;
+    ta.dataset.mirrorBound = '1';
+
+    function escapeHtml(s){
+      return String(s).replace(/[&<>"']/g, function(ch){
+        return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch];
+      });
+    }
+
+    function erroresPorLinea(){
+      try{
+        var v=(typeof window._procValidarTexto==='function')?window._procValidarTexto(ta.value||''):{errors:[]};
+        var set={};
+        (v.errors||[]).forEach(function(e){var n=parseInt(e.line,10);if(n>0)set[n]=true;});
+        return set;
+      }catch(e){return {1:true};}
+    }
+    function lineaEsValida(linea,index,errores){
+      var txt=String(linea||'').trim();
+      if(!txt)return true;
+      if(/^\[/.test(txt)||/^(tarjeta|tarieta|saldo)\b/i.test(txt))return true;
+      return !errores[index+1];
+    }
+    function render(){
+      var lines = ta.value.split('\n');
+      var errores=erroresPorLinea();
+      var diag={};
+      try{
+        var vv=window._procValidarTexto?window._procValidarTexto(ta.value||''):{errors:[]};
+        (vv.errors||[]).forEach(function(e){var n=parseInt(e.line,10);if(n>0){diag[n]=diag[n]||[];diag[n].push(e);}});
+      }catch(_){}
+      var html = lines.map(function(l,idx){
+        var ok = lineaEsValida(l,idx,errores), cls = (String(l).trim()==='')?'ln':(ok?'ln ln-ok':'ln ln-err');
+        var safe=escapeHtml(l||' ');
+        var ds=diag[idx+1]||[];
+        ds.some(function(e){
+          if(!e.token)return false;
+          var token=String(e.token),pos=l.toLowerCase().indexOf(token.toLowerCase());
+          if(pos<0)return false;
+          safe=escapeHtml(l.slice(0,pos))+'<mark class="proc-token-err">'+escapeHtml(l.slice(pos,pos+token.length))+'</mark>'+escapeHtml(l.slice(pos+token.length));
+          return true;
+        });
+        return '<span class="'+cls+'">'+safe+'</span>';
+      }).join('\n');
+      mirror.innerHTML = html;
+      mirror.scrollTop = ta.scrollTop;
+    }
+
+    ta.addEventListener('input', render);
+    ta.addEventListener('scroll', function(){ mirror.scrollTop = ta.scrollTop; });
+    ta.addEventListener('paste', function(){ setTimeout(render, 0); });
+    render();
+  }
+
+  if (document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    setTimeout(init, 300);
+  }
+})();
+</script>
+
+{% endblock extra_js %}).test(x);}))rowSingle('tabla-'+f,f,m[2],m[3]);continue;}
+      m=line.match(/^(?:centenas?\s+corridas?)\s+(.+?)\s+con\s+(\d+(?:\.\d+)?)$/i);
+      if(m){emitir();var nsC=nums(m[1]);if(nsC.length&&nsC.every(function(x){return x.length===3;}))filas.push({num:nsC.join(' '),montos:{'centenas corridas':m[2]},tabla:'tabla-centenas'});continue;}
+      m=line.match(/^(pick2\s+vs\s+pf|p2\s+vs\s+pf|vs\s+pick2|vs\s+pf|vs100|vs)\s+(.+?)\s+con\s+(\d+(?:\.\d+)?)$/i);
+      if(m){emitir();var v=m[1].toLowerCase().replace(/\s+/g,'');if(v==='pick2vspf'||v==='p2vspf')rowVS('tabla-pick2vspf','pick2vspf',m[2].split(/\s+(?:y|vs)\s+/i)[0],m[2].split(/\s+(?:y|vs)\s+/i).slice(1).join(' '),m[3]);else if(v==='vspick2')rowVS('tabla-vspick2','vspick2',m[2].split(/\s+(?:y|vs)\s+/i)[0],m[2].split(/\s+(?:y|vs)\s+/i).slice(1).join(' '),m[3]);else if(v==='vspf')rowVS('tabla-vspf','vspf',m[2].split(/\s+(?:y|vs)\s+/i)[0],m[2].split(/\s+(?:y|vs)\s+/i).slice(1).join(' '),m[3]);else if(v==='vs')rowVS('tabla-vs','vs',m[2].split(/\s+vs\s+/i)[0],m[2].split(/\s+vs\s+/i).slice(1).join(' '),m[3]);else rowSingle('tabla-vs100','vs100',m[2],m[3]);continue;}
+      m=line.match(/^(?:pos(?:icion)?\s*)?(\d)\s+(.+?)\s+con\s+(\d+(?:\.\d+)?)$/i);
+      if(m&&/^pos/i.test(line)){emitir();var npos=nums(m[2]);if(npos.length)filas.push({posicion:m[1],num:npos.join(' '),monto:m[3],tabla:'tabla-posiciones'});continue;}
+      m=line.match(/^tripleta\s+(.+?)\s+con\s+(\d+(?:\.\d+)?)$/i);
+      if(m){emitir();var nt=nums(m[1]);if(nt.length===3)rowSingle('tabla-tripleta','tripleta',m[1],m[2]);continue;}
+      // VS family with both groups separated by "vs", e.g. 12 34 vs 56 78 con 5
+      m=line.match(/^(.+?)\s+(vs|vspf|vspick2|pick2vspf)\s+(.+?)\s+con\s+(\d+(?:\.\d+)?)$/i);
+      if(m){emitir();var vv=m[2].toLowerCase(),tb=vv==='vs'?'tabla-vs':vv==='vspf'?'tabla-vspf':vv==='vspick2'?'tabla-vspick2':'tabla-pick2vspf';rowVS(tb,vv,m[1],m[3],m[4]);continue;}
+      // Traditional instructions / trailing amount.
+      parts=splitInstr(line);
+      if(parts[1]){
+        var ntr=nums(parts[0]),mm=_procParsearMontos(parts[1]);
+        if(ntr.length){emitir();pendiente={nums:ntr,montos:mm};emitir();continue;}
+      }
+      if(/^(?:con|fijo|corrido|candado|parlet|parle|parl|palet|🔒)/i.test(line)&&pendiente){pendiente.montos=_procParsearMontos(line);emitir();continue;}
+      var nplain=nums(line);if(nplain.length){emitir();pendiente={nums:nplain,montos:{fijo:'',corridos:'',parlet:'',candado:''}};continue;}
+    }
+    emitir();return filas;
+  }
+
+  function _procDetectarInstruccionPos(texto){
+    var m=String(texto||'').match(/\s+(con|candado|kandado|canado|candad|parle|parlet|parl|palet|parler|parley|fijo|corrido)\s/i);
+    if(m)return m.index+1;
+    var em=String(texto||'').match(/\s+([\uD83D\uDD10\uD83D\uDD12\uD83D\uDD13])/);
+    if(em)return em.index+1;
+    var suf=String(texto||'').match(/\s+((?:\d+(?:\.\d+)?\s*[fc]\b)(?:\s+\d+(?:\.\d+)?\s*[fc]\b)*)\s*$/i);
+    return suf?suf.index+1:-1;
+  }
+  function _procValidarTexto(texto){
+    if(!window.ApostarTextValidator||typeof window.ApostarTextValidator.validate!=='function')
+      return {ok:false,rows:[],errors:[{line:1,message:'No se cargó el módulo de validación.'}]};
+    return window.ApostarTextValidator.validate(texto,{
+      normalize:_procNormalizarTexto,
+      parseAmounts:_procParsearMontos,
+      detectInstruction:_procDetectarInstruccionPos,
+      parseText:_procParsearTexto
+    });
+  }
+  function _procProcesarTexto(){
+    var ta = document.getElementById('procesarText');
+    if (!ta) return;
+    var texto = ta.value || '';
+    if (!texto.trim()) return;
+    var _validacion=_procValidarTexto(texto);
+    _procRenderErrores(_validacion);
+    if(!_validacion.ok){_procActualizarEstado('❌ Corrige '+_validacion.errors.length+' error(es) antes de procesar.','error');return;}
+    var _scrollTop = ta.scrollTop;
+    var _selStart = ta.selectionStart;
+    var _selEnd = ta.selectionEnd;
+    var filas = Array.isArray(_validacion.rows) ? _validacion.rows : [];
+    if (!filas.length) {
+      _procRenderErrores({errors:[{line:'—',message:'El texto pasó la revisión, pero no produjo filas. No se modificó ninguna tabla.'}]});
+      _procActualizarEstado('❌ No se generaron filas; revisa el formato del texto.','error');
+      return;
+    }
+    if (!filas.length){
+      if (typeof toast === 'function') toast('No se interpreto ninguna linea valida', 'warning');
+      return;
+    }
+    if (!ordenSorteos.length){
+      if (typeof toast === 'function') toast('Selecciona al menos un sorteo', 'warning');
+      return;
+    }
+    var tk = 'tabla-tradicional';
+    var aplicados = 0;
+
+    // FIX_PARSER_ESPERA_CARGA_V1: si el primer sorteo no está cargado, esperar y reintentar
+    var _matriz = sorteosActivos[String(ordenSorteos[0])];
+    if (_matriz && !_matriz.cargado){
+      if (!window._procReintentos) window._procReintentos = 0;
+      if (window._procReintentos < 30){ // 30 × 500ms = 15s
+        window._procReintentos++;
+        _procActualizarEstado('\u23f3 Esperando carga de sorteos... (' + window._procReintentos + '/30)', 'proc');
+        clearTimeout(window._procRetryT);
+        window._procRetryT = setTimeout(function(){
+          try { _procProcesarTexto(); } catch(e){ console.error('[procesar retry]', e); }
+        }, 500);
+        return;
+      } else {
+        _procActualizarEstado('\u274c Los sorteos tardaron demasiado en cargar', 'error');
+        window._procReintentos = 0;
+        return;
+      }
+    } else if (_matriz && _matriz.cargado){
+      window._procReintentos = 0;
+    }
+
+    // FIX_PICK3_ROUTE_V1: agrupar filas por tabla
+    var _filasPorTabla = {};
+    filas.forEach(function(f){
+      var t = f.tabla || 'tabla-tradicional';
+      if (!_filasPorTabla[t]) _filasPorTabla[t] = [];
+      _filasPorTabla[t].push(f);
+    });
+
+    // PRECHECK compartido con la UI: si falta una pestaña/forma, no habilitar Procesar ni modificar tablas.
+    var _destino=_procValidarDestinos(filas);
+    var _preErrores=_destino.errors;
+    var _filasExistentes=_destino.filasExistentes;
+    if(_preErrores.length){
+      _procRenderErrores({errors:_preErrores});
+      _procActualizarEstado('❌ No se aplicó nada: '+_preErrores.length+' problema(s) de destino.','error');
+      return;
+    }
+    // Construir todas las filas destino en memoria antes de tocar ninguna tabla.
+    var _planAplicacion=[];
+    try{
+      ordenSorteos.forEach(function(sidRaw){
+        var sid=String(sidRaw),s=sorteosActivos[sid];
+        if(!s||!s.cargado)throw new Error('Sorteo '+sid+' no está cargado.');
+        var staged={sid:sid,tablas:{},primera:null};
+        Object.keys(_filasPorTabla).forEach(function(tkTabla){
+          var st=s.tablasActivas&&s.tablasActivas[tkTabla];
+          if(!st)throw new Error('Sorteo '+(s.nombre||sid)+': falta pestaña '+tkTabla+'.');
+          var kind=(TABLE_DEFS[tkTabla]&&TABLE_DEFS[tkTabla].kind)||'multi';
+          var mapped=_filasPorTabla[tkTabla].map(function(f){return _procCrearFilaDestino(f,st,kind);});
+          if(mapped.length!==_filasPorTabla[tkTabla].length)throw new Error('Mapeo incompleto para '+tkTabla+'.');
+          staged.tablas[tkTabla]=mapped;
+          if(!staged.primera)staged.primera=tkTabla;
+        });
+        _planAplicacion.push(staged);
+      });
+    }catch(_stageErr){
+      _procRenderErrores({errors:[{line:'—',message:'No se aplicó ninguna tabla: fallo el pre-mapeo de filas. '+(_stageErr.message||_stageErr)}]});
+      _procActualizarEstado('❌ No se aplicó nada: el pre-mapeo falló.','error');
+      return;
+    }
+    if(!_planAplicacion.length){
+      _procActualizarEstado('❌ No se aplicó nada: no hay sorteos preparados.','error');
+      return;
+    }
+
+    if(_filasExistentes>0&&!window.confirm('El procesador reemplazará las filas actuales en las tablas destino ('+_filasExistentes+' tabla(s) con datos). ¿Continuar?')){
+      _procActualizarEstado('Procesamiento cancelado; las filas existentes se conservaron.','idle');
+      return;
+    }
+
+    // Aplicar únicamente el plan completo previamente validado y mapeado.
+    _planAplicacion.forEach(function(plan){
+      var sid=plan.sid,s=sorteosActivos[sid];
+      Object.keys(plan.tablas).forEach(function(tkTabla){
+        s.tablasActivas[tkTabla].rows=plan.tablas[tkTabla];
+      });
+      s.tabActual=plan.primera||tk;
+      if (typeof renderTabsSorteo === 'function') renderTabsSorteo(sid);
+      if (typeof renderMiniResumenSorteo === 'function') renderMiniResumenSorteo(sid);
+
+      var panel = document.querySelector('.sp-panel[data-sorteo-id="' + sid + '"]');
+      if (panel){
+        if (String(sid) === String(ordenSorteos[0])){
+          panel.classList.remove('sp-esclavo-procesar');
+        } else {
+          panel.classList.add('sp-esclavo-procesar');
+        }
+      }
+      aplicados++;
+    });
+
+    if (typeof recalcGlobal === 'function') recalcGlobal();
+    try { ta.scrollTop = _scrollTop; ta.selectionStart = _selStart; ta.selectionEnd = _selEnd; } catch(_){}
+    if (aplicados === 0){
+      _procActualizarEstado('\u26a0\ufe0f Ningún sorteo recibió filas', 'error');
+      if (typeof toast === 'function') toast('Ningún sorteo recibió filas', 'warning');
+    } else {
+      _procActualizarEstado('\u2705 ' + filas.length + ' fila(s) \u2192 ' + aplicados + ' sorteo(s)', 'ok');
+      if (typeof toast === 'function') toast('OK: ' + filas.length + ' fila(s) aplicadas a ' + aplicados + ' sorteo(s)', 'success');
+    }
+  }
+
+  function _procValidarDestinos(filas){
+    var errors=[],filasExistentes=0,porTabla={};
+    (filas||[]).forEach(function(f){
+      var tk=f.tabla||'tabla-tradicional';
+      if(!porTabla[tk])porTabla[tk]=[];
+      porTabla[tk].push(f);
+    });
+    if(!ordenSorteos.length)errors.push({line:'—',message:'Selecciona al menos un sorteo.'});
+    ordenSorteos.forEach(function(sidRaw){
+      var sid=String(sidRaw),s=sorteosActivos[sid];
+      if(!s){errors.push({line:'—',message:'Sorteo '+sid+': panel no encontrado.'});return;}
+      if(!s.cargado){errors.push({line:'—',message:'Sorteo '+(s.nombre||sid)+': configuración aún cargando.'});return;}
+      Object.keys(porTabla).forEach(function(tk){
+        var st=s.tablasActivas&&s.tablasActivas[tk];
+        if(!st){errors.push({line:'—',message:'Sorteo '+(s.nombre||sid)+': no tiene la pestaña '+tk+'.'});return;}
+        var forms=st.forms||[];
+        porTabla[tk].forEach(function(row){
+          Object.keys(row.montos||{}).forEach(function(form){
+            var monto=Number(row.montos[form])||0;
+            if(monto>0&&forms.indexOf(form)<0)
+              errors.push({line:'—',message:'Sorteo '+(s.nombre||sid)+': habilita la forma "'+form+'" en la pestaña '+tk+'.'});
+          });
+          if(Number(row.monto)>0){
+            var formaFila=row.tipo||(forms.length===1?forms[0]:null);
+            if(!formaFila||forms.indexOf(formaFila)<0)
+              errors.push({line:'—',message:'Sorteo '+(s.nombre||sid)+': no se pudo verificar la forma de juego de la pestaña '+tk+'.'});
+          }
+        });
+        if(st.rows&&st.rows.some(function(r){
+          return !!(String(r.num||r.numA||r.numB||'').trim()||
+            Object.keys(r.montos||{}).some(function(k){return Number(r.montos[k])>0;})||
+            Number(r.monto)>0);
+        }))filasExistentes++;
+      });
+    });
+    return {errors:errors,filasExistentes:filasExistentes,tablas:Object.keys(porTabla)};
+  }
+
+  function _procRenderErrores(validacion){
+    var box=document.getElementById('procErrores');if(!box)return;
+    if(!validacion||!validacion.errors.length){box.innerHTML='';box.style.display='none';return;}
+    box.style.display='block';
+    box.innerHTML='<strong>Revisa el texto:</strong><ul style="margin:5px 0 0;padding-left:20px;">'+validacion.errors.map(function(e){
+      var msg=String(e.message).replace(/[&<>"]/g,function(ch){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch];});
+      var tok=e.token?'<code style="background:#dc2626;color:#fff;padding:1px 4px;border-radius:3px;font-weight:900;">'+String(e.token).replace(/[&<>"]/g,function(ch){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch];})+'</code>':'';
+      return '<li><strong>Línea '+e.line+':</strong> '+msg+(tok?' Token: '+tok:'')+'</li>';
+    }).join('')+'</ul>';
+  }
+  function _procActualizarUI(){
+    var ta=document.getElementById('procesarText'),btn=document.getElementById('btnProcAhora'),chk=document.getElementById('chkProcesar');
+    if(!ta||!btn)return;
+    var v=_procValidarTexto(ta.value||'');_procRenderErrores(v);
+    var modo=!!(chk&&chk.checked),haySorteos=typeof ordenSorteos!=='undefined'&&ordenSorteos.length>0;
+    var hayTexto=!!String(ta.value||'').trim(),hayFilas=!!(v.rows&&v.rows.length);
+    var destino={errors:[]};
+    if(v.ok&&hayFilas&&haySorteos)destino=_procValidarDestinos(v.rows);
+    var hayError=!v.ok||destino.errors.length>0;
+    btn.disabled=!modo||!hayTexto||!v.ok||!hayFilas||!haySorteos||destino.errors.length>0;
+    btn.style.opacity=btn.disabled?'.7':'1';btn.style.cursor=btn.disabled?'not-allowed':'pointer';
+    var colorBtn=hayError?'red':(btn.disabled?'idle':'green');
+    btn.style.background=hayError?'linear-gradient(135deg,#dc2626,#991b1b)':(btn.disabled?'linear-gradient(135deg,#f59e0b,#b45309)':'linear-gradient(135deg,#16a34a,#15803d)');
+    btn.style.borderColor=hayError?'#991b1b':(btn.disabled?'#92400e':'#166534');btn.style.boxShadow=hayError?'2px 2px 0 #991b1b':(btn.disabled?'2px 2px 0 #92400e':'2px 2px 0 #166534');
+    btn.innerHTML=hayError?'<i class="fas fa-exclamation-triangle"></i> Corregir Errores':(!hayTexto?'Pega texto':(!haySorteos?'Selecciona Sorteo':(!modo?'Activa Procesar':'<i class="fas fa-check"></i> Procesar')));
+    if(!String(ta.value||'').trim())_procActualizarEstado('Pega el texto para revisar automáticamente.','idle');
+    else if(!v.ok)_procActualizarEstado('❌ '+v.errors.length+' error(es); no se procesará nada.','error');
+    else if(destino.errors.length){_procRenderErrores({errors:destino.errors});_procActualizarEstado('❌ '+destino.errors.length+' problema(s) con pestañas/formas de los sorteos.','error');}
+    else if(!haySorteos)_procActualizarEstado('Texto válido. Selecciona al menos un sorteo.','idle');
+    else if(!modo)_procActualizarEstado('Texto y destinos válidos. Activa la casilla Procesar para habilitar el botón.','idle');
+    else {_procRenderErrores(v);_procActualizarEstado('✅ '+v.rows.length+' fila(s) válidas en sus pestañas destino. Listo para procesar.','ok');}
+    return v;
+  }
+  (function _bindProcesarText(){
+    function _procFeedback(estado){
+      var ta = document.getElementById('procesarText');
+      if (!ta) return;
+      if (estado === 'procesando'){
+        ta.style.borderColor = '#2563eb';
+        ta.style.boxShadow = '0 0 0 3px rgba(37,99,235,.2)';
+      } else if (estado === 'ok'){
+        ta.style.borderColor = '#16a34a';
+        ta.style.boxShadow = '0 0 0 3px rgba(22,163,74,.2)';
+        setTimeout(function(){
+          if (ta) { ta.style.borderColor = '#fdba74'; ta.style.boxShadow = ''; }
+        }, 800);
+      } else {
+        ta.style.borderColor = '#fdba74';
+        ta.style.boxShadow = '';
+      }
+    }
+    window._procFeedback = _procFeedback;
+
+    function bind(){
+      var ta = document.getElementById('procesarText');
+      if (!ta || ta.dataset.procBound === '1') return;
+      ta.dataset.procBound = '1';
+
+      // FIX_MOVIL_PARSER_V1: debounces adaptados a movil
+      var esMovil = _procEsMovil();
+      var D_PASTE  = esMovil ? 300 : 50;
+      var D_INPUT  = esMovil ? 800 : 250;
+      var D_CHANGE = esMovil ? 400 : 200;
+      var D_KEY    = esMovil ? 500 : 300;
+
+      function _programar(delay){
+        clearTimeout(ta._procT);
+        _procFeedback('procesando');
+        _procActualizarEstado('\u23f3 Procesando...', 'proc');
+        ta._procT = setTimeout(function(){
+          try {
+            _procProcesarTexto();
+            _procFeedback('ok');
+          } catch(e){
+            console.error('[procesar]', e);
+            _procFeedback('error');
+            _procActualizarEstado('\u274c Error: ' + (e && e.message ? e.message : 'desconocido'), 'error');
+          }
+        }, delay);
+      }
+
+      var btnAhora = document.getElementById('btnProcAhora');
+      if (btnAhora && btnAhora.dataset.bound !== '1'){
+        btnAhora.dataset.bound = '1';
+        btnAhora.addEventListener('click', function(){
+          try {
+            var vClick=_procActualizarUI();
+            if(!vClick||!vClick.ok||btnAhora.disabled){_procActualizarEstado('❌ Corrige los errores antes de procesar.','error');return;}
+            _procFeedback('procesando');
+            _procActualizarEstado('\u26a1 Procesando...', 'proc');
+            _procProcesarTexto();
+            _procFeedback('ok');
+          } catch(e){
+            console.error('[procesar]', e);
+            _procFeedback('error');
+            _procActualizarEstado('\u274c Error: ' + (e && e.message ? e.message : 'desconocido'), 'error');
+          }
+        });
+      }
+
+      ta.addEventListener('input',_procActualizarUI);
+      ta.addEventListener('paste',function(){setTimeout(_procActualizarUI,0);});
+      var chkProcesar=document.getElementById('chkProcesar');
+      if(chkProcesar)chkProcesar.addEventListener('change',_procActualizarUI);
+      document.addEventListener('click',function(ev){if(ev.target.closest&&ev.target.closest('.sorteo-btn'))setTimeout(_procActualizarUI,300);},true);
+      _procActualizarUI();
+      // El texto se valida en vivo; el botón solo aplica cuando está correcto.
+    }
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', bind);
+    } else {
+      setTimeout(bind, 400);
+    }
+  })();
+
+  // Exponer parser para debug
+  window._procProcesarTexto = _procProcesarTexto;
+  window._procNormalizarTexto = _procNormalizarTexto;
+  window._procParsearTexto = _procParsearTexto;
+  window._procValidarTexto = _procValidarTexto;
+  window._procExpandirNumeros = _procExpandirNumeros;
+  window._procParsearMontos = _procParsearMontos;
+  // FIX_PARSER_ESPERA_CARGA_V1: exponer variables para debug
+  window.ordenSorteos = ordenSorteos;
+  window.sorteosActivos = sorteosActivos;
+  window._procParsearTexto = _procParsearTexto;
+
+  window.autoformatear = autoformatear;
+window.expandirToken = expandirToken;
+window.numerosEnFila = numerosEnFila;
+window.autoformatearSoloParlet = autoformatearSoloParlet;
+window.autoformatearGrupo = autoformatearGrupo;
+console.log('[apostar] Funciones expuestas al scope global para debug');
+});
+
+/* BLOQUEO_SUBMIT_V1: interceptor en captura */
+document.addEventListener('click', function(ev){
+  var btn = ev.target.closest && ev.target.closest('#btnGo, #btnEnviar, .btn-enviar, button[type="submit"], [data-action="enviar"]');
+  if (!btn) return;
+  var exc = _hayExcepcionesActivas();
+  if (!exc.bloqueado) return;
+  ev.preventDefault();
+  ev.stopPropagation();
+  ev.stopImmediatePropagation();
+  _avisarExcepciones(exc);
+  return false;
+}, true);
+
+document.addEventListener('submit', function(ev){
+  var exc = _hayExcepcionesActivas();
+  if (!exc.bloqueado) return;
+  ev.preventDefault();
+  ev.stopPropagation();
+  _avisarExcepciones(exc);
+  return false;
+}, true);
+
+
+
+/* ═══════════════════════════════════════════════════════════════
+   APOSTAR_DRAFT_V1 — Autoguardado y restauración de borrador
+   ═══════════════════════════════════════════════════════════════ */
+(function(){
+  'use strict';
+
+  var KEY_PREFIX = 'apostar_draft_v1_';
+  var TTL_MS     = 7 * 24 * 60 * 60 * 1000;   // 7 días
+  var SAVE_DEBOUNCE = 1000;                    // 1s
+
+  function getBoletaKey(){
+    try {
+      var u = new URLSearchParams(window.location.search);
+      var id = u.get('edit_boleta');
+      if (id) return KEY_PREFIX + 'boleta_' + id;
+    } catch(_){}
+    return KEY_PREFIX + 'nuevo';
+  }
+
+  function snapshot(){
+    var snap = {
+      version: 1,
+      ts: Date.now(),
+      url: window.location.pathname + window.location.search,
+      ordenSorteos: (typeof ordenSorteos !== 'undefined' && Array.isArray(ordenSorteos)) ? ordenSorteos.slice() : [],
+      fpSel: (typeof fpSel !== 'undefined') ? fpSel : null,
+      fecha: (document.getElementById('inpFecha') || {}).value || null,
+      sorteoData: {}
+    };
+    try {
+      if (typeof sorteosActivos === 'undefined') return snap;
+      Object.keys(sorteosActivos).forEach(function(sid){
+        var s = sorteosActivos[sid];
+        var sData = {
+          sid: s.sid, nombre: s.nombre,
+          tabActual: s.tabActual,
+          tablasActivas: {}
+        };
+        Object.keys(s.tablasActivas || {}).forEach(function(tk){
+          var st = s.tablasActivas[tk];
+          sData.tablasActivas[tk] = {
+            forms: (st.forms || []).slice(),
+            rows: (st.rows || []).map(function(r){
+              return {
+                num: r.num || '',
+                numA: r.numA || '',
+                numB: r.numB || '',
+                posicion: r.posicion || '1',
+                monto: r.monto || '',
+                montos: Object.assign({}, r.montos || {})
+              };
+            })
+          };
+        });
+        snap.sorteoData[sid] = sData;
+      });
+    } catch(e){ console.warn('[draft snapshot]', e); }
+    return snap;
+  }
+
+  function isEmpty(snap){
+    if (!snap) return true;
+    if (snap.ordenSorteos && snap.ordenSorteos.length) return false;
+    if (!snap.sorteoData) return true;
+    var n = 0;
+    Object.keys(snap.sorteoData).forEach(function(sid){
+      var s = snap.sorteoData[sid];
+      Object.keys(s.tablasActivas || {}).forEach(function(tk){
+        var rows = s.tablasActivas[tk].rows || [];
+        rows.forEach(function(r){
+          if ((r.num || '').trim() || (r.numA || '').trim() || (r.numB || '').trim() || r.monto) n++;
+        });
+      });
+    });
+    return n === 0;
+  }
+
+  function save(){
+    try {
+      var snap = snapshot();
+      if (isEmpty(snap)) {
+        try { localStorage.removeItem(getBoletaKey()); } catch(_){}
+        return;
+      }
+      localStorage.setItem(getBoletaKey(), JSON.stringify(snap));
+    } catch(e){ console.warn('[draft save]', e); }
+  }
+
+  var saveTimer = null;
+  function scheduleSave(){
+    if (saveTimer) clearTimeout(saveTimer);
+    saveTimer = setTimeout(save, SAVE_DEBOUNCE);
+  }
+
+  function load(){
+    try {
+      var raw = localStorage.getItem(getBoletaKey());
+      if (!raw) return null;
+      var snap = JSON.parse(raw);
+      if (!snap || !snap.ts) return null;
+      if (Date.now() - snap.ts > TTL_MS) {
+        localStorage.removeItem(getBoletaKey());
+        return null;
+      }
+      return snap;
+    } catch(e){ return null; }
+  }
+
+  function clear(){
+    try { localStorage.removeItem(getBoletaKey()); } catch(_){}
+  }
+
+  function restore(snap){
+    if (!snap || !snap.sorteoData) return false;
+    var restored = false;
+    try {
+      // 1) Recrear paneles desde cero
+      if (typeof sorteosActivos !== 'undefined'){
+        Object.keys(sorteosActivos).forEach(function(sid){
+          try { if (typeof quitarPanelSorteo === 'function') quitarPanelSorteo(sid); } catch(_){}
+          try { delete sorteosActivos[sid]; } catch(_){}
+        });
+      }
+      if (typeof ordenSorteos !== 'undefined'){
+        ordenSorteos.length = 0;
+      }
+
+      // 2) Crear cada panel guardado
+      Object.keys(snap.sorteoData).forEach(function(sid){
+        var sData = snap.sorteoData[sid];
+        try {
+          if (typeof agregarPanelSorteo === 'function'){
+            agregarPanelSorteo(sData.sid, sData.nombre, 9999);
+          }
+          var s = (typeof sorteosActivos !== 'undefined') ? sorteosActivos[sData.sid] : null;
+          if (!s) return;
+          s.tabActual = sData.tabActual;
+          Object.keys(sData.tablasActivas).forEach(function(tk){
+            s.tablasActivas[tk] = {
+              forms: sData.tablasActivas[tk].forms.slice(),
+              rows: sData.tablasActivas[tk].rows.map(function(r){
+                return {
+                  num: r.num || '',
+                  numA: r.numA || '',
+                  numB: r.numB || '',
+                  posicion: r.posicion || '1',
+                  monto: r.monto || '',
+                  montos: Object.assign({}, r.montos || {})
+                };
+              })
+            };
+          });
+          if (typeof renderTablaActivaSorteo === 'function'){
+            renderTablaActivaSorteo(sData.sid);
+          }
+          if (typeof renderTabsSorteo === 'function'){
+            try { renderTabsSorteo(sData.sid); } catch(_){}
+          }
+          restored = true;
+        } catch(e){ console.warn('[draft restore sorteo]', e); }
+      });
+
+      // 3) Restaurar orden de sorteos
+      if (snap.ordenSorteos && typeof ordenSorteos !== 'undefined'){
+        ordenSorteos.length = 0;
+        snap.ordenSorteos.forEach(function(x){ ordenSorteos.push(x); });
+      }
+
+      // 4) Forma de pago (por chip click)
+      if (snap.fpSel){
+        try {
+          var chip = document.querySelector('.chip-fp[data-n="' + snap.fpSel + '"], [data-fp="' + snap.fpSel + '"]');
+          if (chip) chip.click();
+        } catch(_){}
+      }
+
+      // 5) Fecha — FIX_FECHA_HOY_V1 (2026-10-14):
+      // Si la fecha del borrador es pasada, forzar hoy. Evita el 400
+      // "solo pueden apostar desde hoy en adelante" cuando hay drafts viejos.
+      if (snap.fecha){
+        var f = document.getElementById('inpFecha');
+        if (f) {
+          var _hoyISO = new Date().toLocaleDateString('en-CA');
+          f.value = (snap.fecha < _hoyISO) ? _hoyISO : snap.fecha;
+          try { f.dispatchEvent(new Event('change', {bubbles:true})); } catch(_){}
+        }
+      }
+    } catch(e){ console.warn('[draft restore]', e); }
+    return restored;
+  }
+
+  // ═══ Exponer API ═══
+  window.apostarDraft = {
+    save: save, load: load, clear: clear,
+    restore: restore,
+    exists: function(){ return load() !== null; },
+    _snapshot: snapshot   // debug
+  };
+  console.log('[apostarDraft] API lista. Clave:', getBoletaKey());
+
+  // ═══ Hook A: si el usuario limpia manualmente → borrar draft ═══
+  try {
+    var _resetOriginal = window.resetAll;
+    if (typeof resetAll === 'function'){
+      window.resetAll = function(){
+        try { clear(); console.log('[apostarDraft] borrado por resetAll()'); } catch(_){}
+        return _resetOriginal.apply(this, arguments);
+      };
+    }
+  } catch(_){}
+
+  // ═══ Hook B: al enviar OK → borrar draft ═══
+  try {
+    var _enviarOriginal = window.enviarApuesta;
+    if (typeof enviarApuesta === 'function'){
+      window.enviarApuesta = function(dryRun){
+        var ret = _enviarOriginal.apply(this, arguments);
+        // Si NO es dryRun (envío real), el fetch tiene éxito → clear
+        if (!dryRun){
+          // Observamos cuándo cambia location para saber si redirigió con éxito
+          var checkInterval = setInterval(function(){
+            if (window.location.pathname.indexOf('mis-apuestas') !== -1){
+              try { clear(); } catch(_){}
+              clearInterval(checkInterval);
+            }
+          }, 500);
+          setTimeout(function(){ clearInterval(checkInterval); }, 30000);
+        }
+        return ret;
+      };
+    }
+  } catch(_){}
+
+  // ═══ Hook C: autosave con MutationObserver (debounced) ═══
+  function attachObserver(){
+    var target = document.querySelector('.sp-panel')?.parentElement
+              || document.getElementById('panelesSorteo')
+              || document.getElementById('sorteosPaneles')
+              || document.body;
+    if (!target) return;
+
+    var mo = new MutationObserver(function(muts){
+      for (var i = 0; i < muts.length; i++){
+        var t = muts[i].target;
+        // Ignorar cambios en el banner de draft
+        if (t && t.closest && t.closest('#apostarDraftBanner')) continue;
+        scheduleSave();
+        return;
+      }
+    });
+    mo.observe(target, {childList:true, subtree:true, characterData:true,
+                       attributes:true, attributeFilter:['value','data-value']});
+
+    // También en inputs/change para cubrir edición de texto
+    target.addEventListener('input',  scheduleSave, true);
+    target.addEventListener('change', scheduleSave, true);
+    console.log('[apostarDraft] autosave enganchado en', target.id || target.className);
+  }
+
+  // ═══ Arrancar al cargar DOM ═══
+  function boot(){
+    // 1) ¿Venimos con boleta a editar?
+    var urlBoleta = null;
+    try { urlBoleta = new URLSearchParams(window.location.search).get('edit_boleta'); } catch(_){}
+
+    var saved = load();
+
+    // 2) Auto-restaurar si hay draft y (a) no hay URL de edición o (b) coincide la boleta
+    if (saved){
+      var urlKey = getBoletaKey();
+      var sameBoleta = (urlBoleta && saved.url && saved.url.indexOf('edit_boleta=' + urlBoleta) !== -1);
+      var newDraft   = (!urlBoleta);
+
+      if (sameBoleta || newDraft){
+        var ok = restore(saved);
+        if (ok){
+          console.log('[apostarDraft] borrador restaurado automáticamente');
+          // Aviso pequeño discreto
+          var toast = document.createElement('div');
+          toast.style.cssText = 'position:fixed;bottom:16px;left:16px;z-index:99998;'+
+            'background:#4f46e5;color:#fff;padding:10px 14px;border-radius:10px;'+
+            'font-size:.82rem;font-weight:700;box-shadow:0 8px 24px rgba(79,70,229,.35);';
+          toast.textContent = '📌 Borrador restaurado';
+          document.body.appendChild(toast);
+          setTimeout(function(){ toast.remove(); }, 3500);
+        }
+      } else if (saved && !sameBoleta && urlBoleta){
+        // Hay draft de OTRA boleta → mostrar banner para decidir
+        var banner = document.createElement('div');
+        banner.id = 'apostarDraftBanner';
+        banner.style.cssText = 'position:fixed;top:12px;left:50%;transform:translateX(-50%);'+
+          'z-index:99998;background:#fef3c7;color:#92400e;padding:10px 16px;border-radius:10px;'+
+          'font-size:.85rem;font-weight:700;box-shadow:0 8px 24px rgba(0,0,0,.15);'+
+          'display:flex;gap:10px;align-items:center;flex-wrap:wrap;max-width:92vw;';
+        banner.innerHTML = '<span>📌 Tienes un borrador de otra boleta</span>'+
+          '<button id="apDraftDiscard" style="background:#dc2626;color:#fff;border:none;padding:6px 12px;border-radius:8px;font-weight:700;cursor:pointer;font-size:.78rem;">Descartar y cargar esta boleta</button>';
+        document.body.appendChild(banner);
+        document.getElementById('apDraftDiscard').onclick = function(){
+          clear();
+          banner.remove();
+          location.reload();
+        };
+      }
+    }
+
+    attachObserver();
+
+    // 3) Guardar al salir (último intento)
+    window.addEventListener('beforeunload', function(){
+      try { save(); } catch(_){}
+    });
+  }
+
+  if (document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', boot);
+  } else {
+    setTimeout(boot, 300); // dar tiempo a que la inicialización de apostar termine
+  }
+
+})();
+
+
+/* FIX_COL_FIJO_COLOR_V1 */
+(function(){function m(t){if(!t)return;var th=t.querySelectorAll("thead th"),i=-1;th.forEach(function(x,j){if((x.textContent||"").trim().toLowerCase()==="fijo"){i=j;x.classList.add("col-fijo")}else{x.classList.remove("col-fijo")}});if(i<0)return;t.querySelectorAll("tbody tr").forEach(function(r){var c=r.children;for(var k=0;k<c.length;k++){if(k===i)c[k].classList.add("col-fijo");else c[k].classList.remove("col-fijo")}})}function e(){document.querySelectorAll(".tabla-ap").forEach(m)}e();var _t=null;new MutationObserver(function(){clearTimeout(_t);_t=setTimeout(e,60)}).observe(document.body,{childList:true,subtree:true});document.addEventListener("click",function(ev){if(ev.target.closest(".tab-btn,.tab,[data-tab],[data-sorteo-tab]"))setTimeout(e,80)});window.__fixColFijo=e;})();
+
+/* FIX_AUTO_ADD_FILA_V2 - red de seguridad: garantiza fila vacia al final tras cada render */
+(function(){
+  if (window.__fixAutoAddV2) return;
+  window.__fixAutoAddV2 = true;
+  var _origRender = window.renderTablaActivaSorteo;
+  if (!_origRender) { console.warn("FIX_AUTO_ADD_FILA_V2: falta renderTablaActivaSorteo"); return; }
+  function check(sid){
+    try {
+      var s = sorteosActivos[sid];
+      if (!s) return;
+      var tk = s.tabActual;
+      var st = s.tablasActivas[tk];
+      var def = TABLE_DEFS[tk];
+      if (!st || !def) return;
+      var last = st.rows[st.rows.length - 1];
+      if (last && typeof _filaTieneContenido === "function" && _filaTieneContenido(last, def)) {
+        st.rows.push(newRow(st.forms, def.kind));
+        _origRender.call(window, sid);
+      }
+    } catch(_){}
+  }
+  window.renderTablaActivaSorteo = function(sid){
+    _origRender.apply(this, arguments);
+    check(sid);
+  };
+  console.log("OK FIX_AUTO_ADD_FILA_V2 activo");
+})();
+</script>
+
+{# ═══════ FIX_RECARGA_GLOBAL_V1: boton global + sync modal ═══════ #}
+<script>
+(function(){
+  'use strict';
+  document.addEventListener('DOMContentLoaded', function(){
+    var btnGlobal = document.getElementById('btnRecargarGlobal');
+    var selCli    = document.getElementById('mrrClienteSelect');
+    var mrrCli    = document.getElementById('mrrCliente');
+    var mrrFondo  = document.getElementById('mrrFondoActual');
+    var modalEl   = document.getElementById('modalRecargaRapida');
+    if (!btnGlobal || !modalEl || !selCli) return;
+
+    btnGlobal.addEventListener('click', function(e){
+      e.preventDefault();
+      selCli.value = '';
+      if (mrrCli)   mrrCli.textContent = '—';
+      if (mrrFondo) { mrrFondo.textContent = '$0.00'; mrrFondo.style.color = ''; }
+      var montoInp = document.getElementById('mrrMonto');
+      if (montoInp) montoInp.value = '';
+      var errBox = document.getElementById('mrrError');
+      if (errBox) errBox.style.display = 'none';
+
+      try {
+        if (typeof cliente !== 'undefined' && cliente && cliente.id){
+          var opt = selCli.querySelector('option[value="' + cliente.id + '"]');
+          if (opt){
+            selCli.value = cliente.id;
+            if (mrrCli) mrrCli.textContent = cliente.nombre || opt.textContent;
+          }
+        }
+      } catch(_){}
+
+      bootstrap.Modal.getOrCreateInstance(modalEl).show();
+    });
+
+    // FIX_MODAL_FP_V1: usar el saldo de la FP seleccionada
+    var selFp = document.getElementById('mrrFormaPago');
+    var _cacheSaldo = null;
+
+    function _actualizarFondoModal(){
+      if (!mrrFondo) return;
+      if (!_cacheSaldo || !selFp || !selFp.value){
+        mrrFondo.textContent = '$0.00';
+        mrrFondo.style.color = '';
+        return;
+      }
+      var fpId = selFp.value;
+      var saldoFp = parseFloat((_cacheSaldo.saldos || {})[fpId] || 0);
+      var bonoFp  = parseFloat((_cacheSaldo.bonos_por_fp || {})[fpId] || 0);
+      var ppFp    = parseFloat((_cacheSaldo.postpagos_por_fp || {})[fpId] || 0);
+      var total = saldoFp + bonoFp - ppFp;
+      var txt = (total < 0 ? '-$' : '$') + Math.abs(total).toFixed(2);
+      mrrFondo.textContent = txt;
+      mrrFondo.style.color = total < 0 ? '#b91c1c' : '#047857';
+    }
+
+    function _cargarSaldoModal(clienteId){
+      if (!clienteId){
+        _cacheSaldo = null;
+        _actualizarFondoModal();
+        return;
+      }
+      fetch("{% url 'jugadas:api_verificar_saldo' %}?usuario_id=" + clienteId, {
+        headers: { 'Accept': 'application/json' },
+        credentials: 'same-origin'
+      })
+      .then(function(r){ return r.ok ? r.json() : null; })
+      .then(function(d){
+        if (!d) return;
+        _cacheSaldo = d;
+        _actualizarFondoModal();
+      })
+      .catch(function(){});
+    }
+
+    selCli.addEventListener('change', function(){
+      var opt = selCli.options[selCli.selectedIndex];
+      if (opt && opt.value){
+        if (mrrCli) mrrCli.textContent = opt.dataset.nombre || opt.textContent;
+        _cargarSaldoModal(opt.value);
+      } else {
+        if (mrrCli)   mrrCli.textContent = '—';
+        _cacheSaldo = null;
+        _actualizarFondoModal();
+      }
+    });
+
+    if (selFp){
+      selFp.addEventListener('change', _actualizarFondoModal);
+    }
+  });
+})();
+
+// ═══════════════════════════════════════════════════════════════
+// FIX_RECARGA_TOTAL_V1: hook global que NO depende de variables internas
+// ═══════════════════════════════════════════════════════════════
+(function(){
+  console.log('[RECARGA_V1] Init');
+  var URL_API = "{% url 'roles:api_recarga_rapida' %}";
+
+  function getCliente() {
+    var sel = document.getElementById('selCliente');
+    if (!sel || !sel.value) return null;
+    var opt = sel.selectedIndex >= 0 ? sel.options[sel.selectedIndex] : null;
+    return { id: sel.value, nombre: opt ? (opt.dataset.nombre || opt.textContent) : sel.value };
+  }
+  function getFp() {
+    var chip = document.querySelector('.fp-chip.active');
+    if (!chip) return null;
+    return chip.dataset.fpId || chip.dataset.id || chip.dataset.formaPago || null;
+  }
+  function getCsrf() {
+    var m = document.cookie.match(/csrftoken=([^;]+)/);
+    return m ? m[1] : '';
+  }
+
+  function poblarModal() {
+    console.log('[RECARGA_V1] poblarModal');
+    var c = getCliente();
+    var f = getFp();
+    console.log('[RECARGA_V1] cliente:', c, '| fp:', f);
+
+    if (c && c.id) {
+      var selC = document.getElementById('mrrClienteSelect');
+      if (selC) {
+        var val = String(c.id), ex = false;
+        for (var i=0; i<selC.options.length; i++) if (String(selC.options[i].value)===val) {ex=true;break;}
+        if (!ex) { var o=document.createElement('option'); o.value=val; o.textContent=(c.nombre||'Cliente')+' (actual)'; selC.appendChild(o); }
+        selC.value = val;
+      }
+      var lbl = document.getElementById('mrrCliente');
+      if (lbl) lbl.textContent = c.nombre || '';
+    }
+    if (f) {
+      var selFp = document.getElementById('mrrFormaPago');
+      if (selFp) selFp.value = String(f);
+    }
+    var inpMonto = document.getElementById('mrrMonto');
+    if (inpMonto) inpMonto.value = '';
+    var errBox = document.getElementById('mrrError');
+    if (errBox) errBox.style.display = 'none';
+    var chip = document.querySelector('.fp-chip.active');
+    var fondo = chip && chip.querySelector('strong') ? chip.querySelector('strong').textContent : '$0.00';
+    var lblFondo = document.getElementById('mrrFondoActual');
+    if (lblFondo) lblFondo.textContent = fondo;
+  }
+
+  function hookModal() {
+    var modalEl = document.getElementById('modalRecargaRapida');
+    if (!modalEl) { setTimeout(hookModal, 500); return; }
+    if (modalEl.dataset.rv1 === '1') return;
+    modalEl.dataset.rv1 = '1';
+    modalEl.addEventListener('show.bs.modal', poblarModal);
+    modalEl.addEventListener('shown.bs.modal', poblarModal);
+    console.log('[RECARGA_V1] Modal hookeado');
+  }
+
+  function hookConfirm() {
+    var btn = document.getElementById('mrrConfirmar');
+    if (!btn) { setTimeout(hookConfirm, 500); return; }
+    if (btn.dataset.rv1 === '1') return;
+    btn.dataset.rv1 = '1';
+    btn.addEventListener('click', function(e){
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      console.log('[RECARGA_V1] Confirmar clickeado');
+
+      var selCli = document.getElementById('mrrClienteSelect');
+      var selFp = document.getElementById('mrrFormaPago');
+      var inpMonto = document.getElementById('mrrMonto');
+      var errBox = document.getElementById('mrrError');
+      var cliId = selCli ? String(selCli.value || '').trim() : '';
+      var fpId = selFp ? String(selFp.value || '').trim() : '';
+      var monto = parseFloat(inpMonto ? inpMonto.value : '0') || 0;
+
+      console.log('[RECARGA_V1] Valores:', {cliId: cliId, fpId: fpId, monto: monto});
+
+      if (!cliId) { if (errBox) {errBox.textContent='Selecciona un cliente.'; errBox.style.display='block';} return; }
+      if (!fpId) { if (errBox) {errBox.textContent='Selecciona forma de pago.'; errBox.style.display='block';} return; }
+      if (monto <= 0) { if (errBox) {errBox.textContent='Monto debe ser mayor a 0.'; errBox.style.display='block';} return; }
+      if (errBox) errBox.style.display = 'none';
+
+      btn.disabled = true;
+      var old = btn.innerHTML;
+      btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Procesando...';
+
+      var reqId = 'rr_' + Date.now() + '_' + Math.random().toString(36).slice(2,10);
+      var fd = new FormData();
+      fd.append('usuario_id', cliId);
+      fd.append('forma_pago_id', fpId);
+      fd.append('monto', monto.toFixed(2));
+      fd.append('request_id', reqId);
+      fd.append('csrfmiddlewaretoken', getCsrf());
+
+      console.log('[RECARGA_V1] POST a:', URL_API);
+
+      fetch(URL_API, {method: 'POST', body: fd, headers: {'X-Requested-With': 'XMLHttpRequest'}})
+      .then(function(r){ console.log('[RECARGA_V1] HTTP:', r.status); return r.text(); })
+      .then(function(txt){
+        console.log('[RECARGA_V1] Respuesta:', txt.slice(0,300));
+        var d; try { d = JSON.parse(txt); } catch(_) { d = {success:false, error:'Respuesta inválida: '+txt.slice(0,100)}; }
+        btn.disabled = false; btn.innerHTML = old;
+        if (d.success) {
+          var m = document.getElementById('modalRecargaRapida');
+          if (m) try { bootstrap.Modal.getInstance(m).hide(); } catch(_) {}
+          if (typeof toast === 'function') {
+            toast('💰 Recarga: $' + (d.monto||monto).toFixed(2) + ' en ' + (d.forma_pago_nombre||'') + '. Saldo: $' + (d.saldo_actual||0).toFixed(2), 'success');
+          } else { alert('Recarga exitosa: $' + (d.monto||monto).toFixed(2)); }
+          if (typeof cargarFormasPago === 'function') cargarFormasPago();
+
+          /* FIX_RECARGA_SALDO_AUTO_V1: actualizar saldo sin recargar página */
+          (function(){
+            var _num = (typeof d.saldo_actual === 'number') ? d.saldo_actual : parseFloat(d.saldo_actual || 0);
+            var _fmt = function(n){ return '$' + parseFloat(n||0).toFixed(2); };
+            console.log('[RECARGA_SALDO_V1] Update saldo:', _num);
+
+            if (!isNaN(_num)) {
+              var _chipA = document.querySelector('.fp-chip.active');
+              if (_chipA) {
+                var _sA = _chipA.querySelector('strong');
+                if (_sA) _sA.textContent = _fmt(_num);
+              }
+              ['ftFondo','prFondo','bsFondo','apFabTotal','mrrFondoActual'].forEach(function(id){
+                var el = document.getElementById(id);
+                if (el) el.textContent = _fmt(_num);
+              });
+            }
+
+            var _sel2 = document.getElementById('selCliente');
+            if (_sel2 && _sel2.value) {
+              fetch('/jugadas/api/forma-pago-cliente/?cliente_id=' + encodeURIComponent(_sel2.value), {headers:{'X-Requested-With':'XMLHttpRequest'}})
+              .then(function(r){ return r.json(); })
+              .then(function(data){
+                var forms = data && (data.formas_pago || data.formas || data.fondos);
+                if (Array.isArray(forms)) {
+                  forms.forEach(function(fp){
+                    var chip = document.querySelector('.fp-chip[data-fp-id="' + fp.id + '"]') || document.querySelector('.fp-chip[data-id="' + fp.id + '"]');
+                    if (chip) {
+                      var st = chip.querySelector('strong');
+                      if (st) st.textContent = _fmt(fp.monto || fp.saldo || 0);
+                    }
+                  });
+                  console.log('[RECARGA_SALDO_V1] Chips refrescados desde API');
+                }
+              })
+              .catch(function(e){ console.warn('[RECARGA_SALDO_V1] fetch err:', e); });
+            }
+
+            if (typeof actualizarVisibilidad === 'function') {
+              setTimeout(function(){ try { actualizarVisibilidad(); } catch(_){} }, 200);
+            }
+            if (typeof recalcGlobal === 'function') {
+              try { recalcGlobal(); } catch(_){}
+            }
+          })();
+        } else {
+          if (errBox) { errBox.textContent = d.error || 'Error'; errBox.style.display = 'block'; }
+        }
+      })
+      .catch(function(err){
+        console.error('[RECARGA_V1] Error:', err);
+        btn.disabled = false; btn.innerHTML = old;
+        if (errBox) { errBox.textContent = 'Error: ' + err.message; errBox.style.display = 'block'; }
+      });
+    });
+    console.log('[RECARGA_V1] Confirmar hookeado');
+  }
+
+  hookModal(); hookConfirm();
+  setTimeout(hookModal, 1000); setTimeout(hookConfirm, 1000);
+  setTimeout(hookModal, 3000); setTimeout(hookConfirm, 3000);
+})();
+</script>
+
+
+<script>
+window._BORRADOR_CTX = {
+  userId: {{ request.user.id|default:0 }},
+  editMode: {% if edit_boleta_data or es_modo_reenviar %}true{% else %}false{% endif %}
+};
+</script>
+<script src="{% static 'js/borrador_apostar.js' %}?v=20261022b"></script>
+
+
+<script>
+/* FIX_RESALTADO_LINEAS_V1: espejo que colorea cada línea según el Parser */
+(function(){
+  function init(){
+    var ta = document.getElementById('procesarText');
+    var mirror = document.getElementById('procesarHighlight');
+    if (!ta || !mirror || ta.dataset.mirrorBound) return;
+    ta.dataset.mirrorBound = '1';
+
+    function escapeHtml(s){
+      return String(s).replace(/[&<>"']/g, function(ch){
+        return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch];
+      });
+    }
+
+    function erroresPorLinea(){
+      try{
+        var v=(typeof window._procValidarTexto==='function')?window._procValidarTexto(ta.value||''):{errors:[]};
+        var set={};
+        (v.errors||[]).forEach(function(e){var n=parseInt(e.line,10);if(n>0)set[n]=true;});
+        return set;
+      }catch(e){return {1:true};}
+    }
+    function lineaEsValida(linea,index,errores){
+      var txt=String(linea||'').trim();
+      if(!txt)return true;
+      if(/^\[/.test(txt)||/^(tarjeta|tarieta|saldo)\b/i.test(txt))return true;
+      return !errores[index+1];
+    }
+    function render(){
+      var lines = ta.value.split('\n');
+      var errores=erroresPorLinea();
+      var diag={};
+      try{
+        var vv=window._procValidarTexto?window._procValidarTexto(ta.value||''):{errors:[]};
+        (vv.errors||[]).forEach(function(e){var n=parseInt(e.line,10);if(n>0){diag[n]=diag[n]||[];diag[n].push(e);}});
+      }catch(_){}
+      var html = lines.map(function(l,idx){
+        var ok = lineaEsValida(l,idx,errores), cls = (String(l).trim()==='')?'ln':(ok?'ln ln-ok':'ln ln-err');
+        var safe=escapeHtml(l||' ');
+        var ds=diag[idx+1]||[];
+        ds.some(function(e){
+          if(!e.token)return false;
+          var token=String(e.token),pos=l.toLowerCase().indexOf(token.toLowerCase());
+          if(pos<0)return false;
+          safe=escapeHtml(l.slice(0,pos))+'<mark class="proc-token-err">'+escapeHtml(l.slice(pos,pos+token.length))+'</mark>'+escapeHtml(l.slice(pos+token.length));
+          return true;
+        });
+        return '<span class="'+cls+'">'+safe+'</span>';
+      }).join('\n');
+      mirror.innerHTML = html;
+      mirror.scrollTop = ta.scrollTop;
+    }
+
+    ta.addEventListener('input', render);
+    ta.addEventListener('scroll', function(){ mirror.scrollTop = ta.scrollTop; });
+    ta.addEventListener('paste', function(){ setTimeout(render, 0); });
+    render();
+  }
+
+  if (document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    setTimeout(init, 300);
+  }
+})();
+</script>
+
+{% endblock extra_js %}).test(x);}))return;if(form==='tripleta'&&n.length!==3)return;filas.push({num:n.join(' '),montos:{[form]:monto},tabla:tabla});}
     function rowVS(tabla,form,left,right,monto){var a=nums(left),b=nums(right);if(a.length&&b.length&&monto)filas.push({numA:a.join(' '),numB:b.join(' '),monto:monto,tabla:tabla});}
     for(var i=0;i<lineas.length;i++){
       var line=lineas[i],m,parts;
