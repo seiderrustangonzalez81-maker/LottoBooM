@@ -2286,6 +2286,7 @@ D 8 1 5 con 50f y 20c" style="width:100%;padding:10px;border:1.5px solid #fdba74
 </div>
             <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:8px;flex-wrap:wrap;">
               <small id="procEstado" style="font-size:.7rem;font-weight:700;color:#78350f;">Edita el texto y se procesará solo</small>
+              <div id="procErrores" role="alert" style="display:none;width:100%;margin-top:8px;padding:8px 10px;background:#fee2e2;border:1px solid #fca5a5;border-radius:8px;color:#991b1b;font-size:.78rem;"></div>
               <button type="button" id="btnProcAhora" style="padding:6px 14px;background:linear-gradient(135deg,#ea580c,#c2410c);color:#fff;border:2px solid #7c2d12;border-radius:10px;font-weight:800;font-size:.78rem;cursor:pointer;font-family:inherit;box-shadow:2px 2px 0 #7c2d12;">
                 <i class="fas fa-bolt"></i> Procesar
               </button>
@@ -8070,12 +8071,20 @@ function _procActualizarEstado(msg, tipo){
       if (m2) return m2.index + 1;
       var mEmoji = linea.match(/\s+([\uD83D\uDD10\uD83D\uDD12\uD83D\uDD13])/);
       if (mEmoji) return mEmoji.index + 1;
+      var mSufijo=linea.match(/\s+((?:\d+(?:\.\d+)?\s*[fc]\b)(?:\s+\d+(?:\.\d+)?\s*[fc]\b)*)\s*$/i);
+      if(mSufijo)return mSufijo.index+1;
       return -1;
     }
 
     var i = 0;
     while (i < lineas.length){
       var linea = lineas[i];
+      // FIX_SUFFIX_MONTOS_V1: líneas "25 f" / "10 c" aplicadas al grupo previo.
+      if (/^(?:\d+(?:\.\d+)?\s*[fc]\b)(?:\s+\d+(?:\.\d+)?\s*[fc]\b)*$/i.test(linea)){
+        if(grupoPendiente){_aplicarInstruccion(grupoPendiente,linea);_emitirGrupo();}
+        i++;continue;
+      }
+
 
       // CASO A: parlet explicito "NN*MM-N" o "NNxMM N"
       var mPE = linea.match(/^\s*([0-9]{2})\s*[*xX]\s*([0-9]{2})\s*(?:[-\s]\s*([0-9]+(?:\.[0-9]+)?))?\s*$/);
@@ -8161,16 +8170,29 @@ function _procActualizarEstado(msg, tipo){
     return _procAgruparFilas(filas);
   }
 
+  function _procValidarTexto(texto){
+    if(!window.ApostarTextValidator||typeof window.ApostarTextValidator.validate!=='function')
+      return {ok:false,rows:[],errors:[{line:1,message:'No se cargó el módulo de validación.'}]};
+    return window.ApostarTextValidator.validate(texto,{
+      normalize:_procNormalizarTexto,
+      parseAmounts:_procParsearMontos,
+      detectInstruction:_detectarInstruccionPos,
+      parseText:_procParsearTexto
+    });
+  }
   function _procProcesarTexto(){
     var ta = document.getElementById('procesarText');
     if (!ta) return;
     var texto = ta.value || '';
     if (!texto.trim()) return;
+    var _validacion=_procValidarTexto(texto);
+    _procRenderErrores(_validacion);
+    if(!_validacion.ok){_procActualizarEstado('❌ Corrige '+_validacion.errores.length+' error(es) antes de procesar.','error');return;}
     var _scrollTop = ta.scrollTop;
     var _selStart = ta.selectionStart;
     var _selEnd = ta.selectionEnd;
     var textoNorm = _procNormalizarTexto(texto);
-    var filas = _procParsearTexto(textoNorm);
+    var filas = _validacion.filas;
     if (!filas.length){
       if (typeof toast === 'function') toast('No se interpreto ninguna linea valida', 'warning');
       return;
@@ -8265,6 +8287,27 @@ function _procActualizarEstado(msg, tipo){
     }
   }
 
+  function _procRenderErrores(validacion){
+    var box=document.getElementById('procErrores');if(!box)return;
+    if(!validacion||!validacion.errors.length){box.innerHTML='';box.style.display='none';return;}
+    box.style.display='block';
+    box.innerHTML='<strong>Revisa el texto:</strong><ul style="margin:5px 0 0;padding-left:20px;">'+validacion.errors.map(function(e){
+      return '<li><strong>Línea '+e.line+':</strong> '+String(e.message).replace(/[&<>"]/g,function(ch){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch];})+'</li>';
+    }).join('')+'</ul>';
+  }
+  function _procActualizarUI(){
+    var ta=document.getElementById('procesarText'),btn=document.getElementById('btnProcAhora'),chk=document.getElementById('chkProcesar');
+    if(!ta||!btn)return;
+    var v=_procValidarTexto(ta.value||'');_procRenderErrores(v);
+    var modo=!!(chk&&chk.checked),haySorteos=typeof ordenSorteos!=='undefined'&&ordenSorteos.length>0;
+    btn.disabled=!modo||!v.ok||!haySorteos;
+    btn.style.opacity=btn.disabled?'.5':'1';btn.style.cursor=btn.disabled?'not-allowed':'pointer';
+    if(!String(ta.value||'').trim())_procActualizarEstado('Pega el texto para revisar automáticamente.','idle');
+    else if(!v.ok)_procActualizarEstado('❌ '+v.errors.length+' error(es); no se procesará nada.','error');
+    else if(!haySorteos)_procActualizarEstado('Texto válido. Selecciona al menos un sorteo.','idle');
+    else _procActualizarEstado('✅ '+v.rows.length+' fila(s) interpretadas; listo para procesar.','ok');
+    return v;
+  }
   (function _bindProcesarText(){
     function _procFeedback(estado){
       var ta = document.getElementById('procesarText');
@@ -8318,6 +8361,8 @@ function _procActualizarEstado(msg, tipo){
         btnAhora.dataset.bound = '1';
         btnAhora.addEventListener('click', function(){
           try {
+            var vClick=_procActualizarUI();
+            if(!vClick||!vClick.ok||btnAhora.disabled){_procActualizarEstado('❌ Corrige los errores antes de procesar.','error');return;}
             _procFeedback('procesando');
             _procActualizarEstado('\u26a1 Procesando...', 'proc');
             _procProcesarTexto();
@@ -8330,8 +8375,13 @@ function _procActualizarEstado(msg, tipo){
         });
       }
 
-      // FIX_PROCESAR_MANUAL_V1: solo el botón procesa, no el textarea
-      // (listeners de input/change/blur/keydown desactivados)
+      ta.addEventListener('input',_procActualizarUI);
+      ta.addEventListener('paste',function(){setTimeout(_procActualizarUI,0);});
+      var chkProcesar=document.getElementById('chkProcesar');
+      if(chkProcesar)chkProcesar.addEventListener('change',_procActualizarUI);
+      document.addEventListener('click',function(ev){if(ev.target.closest&&ev.target.closest('.sorteo-btn'))setTimeout(_procActualizarUI,300);},true);
+      _procActualizarUI();
+      // El texto se valida en vivo; el botón solo aplica cuando está correcto.
     }
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', bind);
@@ -8344,6 +8394,7 @@ function _procActualizarEstado(msg, tipo){
   window._procProcesarTexto = _procProcesarTexto;
   window._procNormalizarTexto = _procNormalizarTexto;
   window._procParsearTexto = _procParsearTexto;
+  window._procValidarTexto = _procValidarTexto;
   window._procExpandirNumeros = _procExpandirNumeros;
   window._procParsearMontos = _procParsearMontos;
   // FIX_PARSER_ESPERA_CARGA_V1: exponer variables para debug
