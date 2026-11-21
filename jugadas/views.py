@@ -280,6 +280,105 @@ def _validar_items_payload(items, etiqueta='jugadas', validar_numero=True):
     return errores
 
 
+def _validar_tablas_crudas_payload(tablas_payload):
+    """Valida filas originales para que filas con números sin monto no puedan omitirse."""
+    errores = []
+    if not isinstance(tablas_payload, list):
+        return ['Tablas: se esperaba una lista de tablas por sorteo.']
+    kinds = {
+        'tabla-tradicional': 'multi', 'tabla-pick3': 'single',
+        'tabla-centenas': 'multi', 'tabla-pick4': 'single',
+        'tabla-pick5': 'single', 'tabla-vs': 'vs_groups',
+        'tabla-solo-parlet': 'solo_parlet', 'tabla-vspf': 'vs_groups',
+        'tabla-vspick2': 'vs_groups', 'tabla-pick2vspf': 'vs_groups',
+        'tabla-vs100': 'single', 'tabla-posiciones': 'posiciones',
+        'tabla-tripleta': 'single',
+    }
+    forms_allowed = {
+        'tabla-tradicional': {'pick2','pf','fijo','corridos','parlet','candado'},
+        'tabla-pick3': {'pick3'}, 'tabla-centenas': {'centenas corridas'},
+        'tabla-pick4': {'pick4'}, 'tabla-pick5': {'pick5'},
+        'tabla-vs': {'vs'}, 'tabla-solo-parlet': {'parlet'},
+        'tabla-vspf': {'vspf'}, 'tabla-vspick2': {'vspick2'},
+        'tabla-pick2vspf': {'pick2vspf'}, 'tabla-vs100': {'vs100'},
+        'tabla-posiciones': {'posicion'}, 'tabla-tripleta': {'tripleta'},
+    }
+    seen_draws = set()
+    for draw in tablas_payload:
+        if not isinstance(draw, dict):
+            errores.append('Tablas: registro de sorteo inválido.')
+            continue
+        sid = str(draw.get('sorteo_id') or '')
+        if not sid.isdigit():
+            errores.append('Tablas: ID de sorteo inválido.')
+            continue
+        if sid in seen_draws:
+            errores.append(f'Sorteo {sid}: tablas duplicadas en payload.')
+            continue
+        seen_draws.add(sid)
+        tables = draw.get('tablas')
+        if not isinstance(tables, dict):
+            errores.append(f'Sorteo {sid}: estructura de tablas inválida.')
+            continue
+        for table_key, table in tables.items():
+            label = f'Sorteo {sid}, tabla {table_key}'
+            if table_key not in kinds or not isinstance(table, dict):
+                errores.append(f'{label}: tabla no reconocida o inválida.')
+                continue
+            kind = kinds[table_key]
+            if table.get('kind') != kind:
+                errores.append(f'{label}: tipo de tabla no coincide con el catálogo.')
+                continue
+            forms = table.get('forms', [])
+            if not isinstance(forms, list) or not forms or not all(isinstance(f, str) for f in forms):
+                errores.append(f'{label}: formas de juego inválidas.')
+                continue
+            if set(forms) - forms_allowed[table_key]:
+                errores.append(f'{label}: forma de juego no permitida para esta tabla.')
+                continue
+            rows = table.get('rows')
+            if not isinstance(rows, list):
+                errores.append(f'{label}: filas debe ser una lista.')
+                continue
+            for row_index, row in enumerate(rows, start=1):
+                row_label = f'{label}, fila {row_index}'
+                if not isinstance(row, dict):
+                    errores.append(f'{row_label}: fila inválida.')
+                    continue
+                if kind == 'vs_groups':
+                    has_numbers = bool(str(row.get('numA') or '').strip() or str(row.get('numB') or '').strip())
+                    amount_values = [row.get('monto', '')]
+                elif kind == 'posiciones':
+                    has_numbers = bool(str(row.get('num') or '').strip())
+                    amount_values = [row.get('monto', '')]
+                else:
+                    has_numbers = bool(str(row.get('num') or '').strip())
+                    montos = row.get('montos') or {}
+                    if not isinstance(montos, dict):
+                        errores.append(f'{row_label}: montos debe ser un objeto.')
+                        continue
+                    amount_values = [montos.get(form, '') for form in forms]
+                positive = False
+                nonblank = False
+                for value in amount_values:
+                    if value is None or str(value).strip() == '':
+                        continue
+                    nonblank = True
+                    try:
+                        amount = Decimal(str(value))
+                        if not amount.is_finite() or amount < 0 or amount != amount.quantize(Decimal('0.01')):
+                            raise InvalidOperation
+                        if amount > 0:
+                            positive = True
+                    except (InvalidOperation, ValueError, TypeError):
+                        errores.append(f'{row_label}: importe inválido (máximo dos decimales, no negativo).')
+                if has_numbers and not positive:
+                    errores.append(f'{row_label}: contiene números pero no tiene importe positivo en ninguna forma.')
+                if nonblank and positive and not has_numbers:
+                    errores.append(f'{row_label}: tiene importe pero no contiene números.')
+    return errores
+
+
 def _consolidar_tripletas(items):
     """Conserva filas agrupadas; convierte items legacy (un número por item) en tripletas completas."""
     if not items:
@@ -1636,11 +1735,17 @@ def _guardar_apuesta_impl(request):
             items_super = json.loads(super_data) if super_data else []
             sorteos_ids = json.loads(sorteos_str) if sorteos_str else []
             super_sorteos_ids = json.loads(super_sorteos_str) if super_sorteos_str else []
+            tablas_crudas = json.loads(request.POST.get('tabla_rows', '[]') or '[]')
         except json.JSONDecodeError as e:
             logger.error(f"JSON decode error: {e}")
             return JsonResponse({'success': False, 'message': f'Error en formato de datos: {str(e)}'}, status=400)
 
         # Validación del payload antes de cualquier creación de boletas/jugadas.
+        if items_normales and not tablas_crudas:
+            return JsonResponse({'success': False, 'message': 'Falta la validación de filas originales. Actualiza la página y vuelve a enviar la apuesta.'}, status=400)
+        errores_tablas = _validar_tablas_crudas_payload(tablas_crudas)
+        if errores_tablas:
+            return JsonResponse({'success': False, 'message': 'Filas de apuestas inválidas.', 'errores': errores_tablas[:30]}, status=400)
         errores_payload = _validar_items_payload(items_normales, 'Jugadas', validar_numero=False)
         errores_payload += _validar_items_payload(items_super, 'Superparlet', validar_numero=False)
         if not isinstance(sorteos_ids, list) or not isinstance(super_sorteos_ids, list):
