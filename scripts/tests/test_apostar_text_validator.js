@@ -13,6 +13,9 @@ vm.runInNewContext(template.slice(start,end)+';this.helpers={normalize:_procNorm
 const h=sandbox.helpers;
 function run(text){return validate(text,h);}
 
+const tripleta=require('../../static/js/apostar_tripleta.js');
+test('tripleta table row becomes one grouped item with one amount',()=>{const a=tripleta.itemForRow(['12','34','56'],5,9);assert.equal(a.length,1);assert.equal(a[0].numero,'12 34 56');assert.equal(a[0].monto,5);});
+test('tripleta helper refuses incomplete rows',()=>{assert.deepEqual(tripleta.itemForRow(['12','34'],5,9),[]);assert.deepEqual(tripleta.itemForRow(['12','34','ab'],5,9),[]);});
 test('accepts T/D shorthand with a following amount',()=>{const a=run('T 7 con 25');assert.equal(a.ok,true,JSON.stringify(a.errors));const b=run('D 8 1 5 con 50');assert.equal(b.ok,true,JSON.stringify(b.errors));});
 test('accepts inline traditional numbers and fixed amount',()=>{const r=run('12 34 con 5');assert.equal(r.ok,true);assert.equal(r.errors.length,0);assert.ok(r.rows.length>0);});
 test('accepts group on previous line with amount instruction',()=>{const r=run('12 34\ncon 5 y 2');assert.equal(r.ok,true);});
