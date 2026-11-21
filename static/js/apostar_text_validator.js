@@ -33,6 +33,8 @@
       return {ok:true};
     }
     function instruction(str){
+      var rawAmounts=String(str||'').match(/\d+(?:\.\d+)?/g)||[];
+      if(rawAmounts.some(function(v){return /\.\d{3,}$/.test(v);}))return {ok:false,message:'Los montos admiten máximo dos decimales.'};
       var m=parseAmounts(str)||{},vals=Object.keys(m).map(function(k){return m[k];}).filter(function(v){return v!==null&&v!=='';});
       if(!vals.length)return {ok:false,message:'No se reconoció ningún monto.'};
       for(var j=0;j<vals.length;j++){var n=Number(vals[j]);if(!isFinite(n)||n<=0)return {ok:false,message:'Todos los montos deben ser mayores que cero.'};if(/\.\d{3,}$/.test(String(vals[j])))return {ok:false,message:'Los montos admiten máximo dos decimales.'};}
