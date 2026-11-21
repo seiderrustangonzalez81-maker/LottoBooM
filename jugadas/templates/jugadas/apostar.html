@@ -8101,8 +8101,7 @@ function _procActualizarEstado(msg, tipo){
   }
 
   function _procParsearTexto(texto){
-    var lineas=String(texto||'').split(/\r?
-/).map(function(l){return l.trim();}).filter(function(l){return l&&!/^\[/.test(l)&&!/^tarjeta|^tarieta|^saldo/i.test(l);});
+    var lineas=String(texto||'').split(/\r?\n/).map(function(l){return l.trim();}).filter(function(l){return l&&!/^\[/.test(l)&&!/^tarjeta|^tarieta|^saldo/i.test(l);});
     var filas=[],pendiente=null,pares=[];
     function emitir(){
       if(!pendiente)return;
