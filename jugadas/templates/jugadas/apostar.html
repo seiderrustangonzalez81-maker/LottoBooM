@@ -8325,6 +8325,15 @@ function _procActualizarEstado(msg, tipo){
         var st=s.tablasActivas&&s.tablasActivas[tk];
         if(!st){errors.push({line:'—',message:'Sorteo '+(s.nombre||sid)+': no tiene la pestaña '+tk+'.'});return;}
         var forms=st.forms||[];
+        var def=TABLE_DEFS[tk];
+        if(def&&window.ApostarTableValidator&&typeof window.ApostarTableValidator.validateRows==='function'){
+          try{
+            var mappedRows=porTabla[tk].map(function(row){return _procCrearFilaDestino(row,st,def.kind);});
+            var canonicalForms=forms.map(function(form){return resolverForma(form,def);});
+            var tableErrors=window.ApostarTableValidator.validateRows(mappedRows,def,canonicalForms,{expandToken:expandirToken,numerosEnFila:numerosEnFila,contarParletsDeFila:contarParletsDeFila});
+            tableErrors.forEach(function(te){errors.push({line:'—',message:'Sorteo '+(s.nombre||sid)+', '+tk+', fila '+te.row+': '+te.message});});
+          }catch(validationError){errors.push({line:'—',message:'Sorteo '+(s.nombre||sid)+', '+tk+': fallo la validación de filas ('+(validationError.message||validationError)+').'});}
+        }
         porTabla[tk].forEach(function(row){
           Object.keys(row.montos||{}).forEach(function(form){
             var monto=Number(row.montos[form])||0;
