@@ -424,9 +424,9 @@
   {
     "sorteo_nombre": "La Primera Noche",
     "numeros": [
-      "51",
-      "01",
-      "90"
+      "04",
+      "90",
+      "49"
     ],
     "fecha": "2026-11-20",
     "fuente": "enloteria"
@@ -891,6 +891,16 @@
       "26",
       "48",
       "11"
+    ],
+    "fecha": "2026-11-21",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Anguilla 7PM",
+    "numeros": [
+      "16",
+      "10",
+      "02"
     ],
     "fecha": "2026-11-21",
     "fuente": "enloteria"
