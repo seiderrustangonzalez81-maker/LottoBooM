@@ -33,10 +33,11 @@ test('validador bloquea grupos sin monto', () => {
   assert.ok(result.errors.length > 0);
 });
 
-test('validador bloquea formas avanzadas que el parser no distribuye', () => {
-  const result = validator.validate('12 34 vs 56 78 con 5', helpers());
-  assert.equal(result.ok, false);
-  assert.match(result.errors[0].message, /no admitida/i);
+test('validador permite modalidad explícita si el parser la enruta y bloquea si no genera fila', () => {
+  const valid = validator.validate('12 34 vs 56 78 con 5', helpers());
+  assert.equal(valid.ok, true, JSON.stringify(valid.errors));
+  const invalid = validator.validate('12 34 vs 56 78 con 5', {...helpers(), parseText: () => []});
+  assert.equal(invalid.ok, false);
 });
 
 test('validador bloquea texto que no produce jugadas', () => {
