@@ -54,6 +54,32 @@ test('table row totals match collected item sums across forms',()=>{
   compareRowTotal({label:'Pick4',kind:'single',numDigits:4,forms:['pick4']},['pick4'],{num:'1234 5678',montos:{pick4:'2'}});
   compareRowTotal({label:'Centenas',kind:'multi',numDigits:3,forms:['centenas corridas']},['centenas corridas'],{num:'123 456',montos:{'centenas corridas':'4'}});
 });
+
+function uiHarness(text,drawIds,checked){
+  const textarea={value:text||'',scrollTop:0};
+  const button={disabled:false,style:{}};
+  const checkbox={checked:!!checked};
+  const errorBox={style:{},innerHTML:''};
+  const doc={getElementById:(id)=>({procesarText:textarea,btnProcAhora:button,chkProcesar:checkbox,procErrores:errorBox}[id]||null)};
+  const helperStart=template.indexOf('function _procNormalizarTexto(texto){');
+  const helperEnd=template.indexOf('function _procValidarTexto(texto){',helperStart);
+  const source=template.slice(helperStart,helperEnd)+extractFunction('_procValidarTexto')+extractFunction('_procRenderErrores')+extractFunction('_procActualizarUI')+';this.update=_procActualizarUI;';
+  const sandbox={document:doc,window:{ApostarTextValidator:validate},ordenSorteos:drawIds||[],_procActualizarEstado:function(){},};
+  vm.runInNewContext(source,sandbox);
+  sandbox.update();
+  return {button,checkbox,errorBox,textarea};
+}
+test('live processor button enables only for valid text, mode and selected draw',()=>{
+  assert.equal(uiHarness('12 34 con 5',[1],true).button.disabled,false);
+  assert.equal(uiHarness('12 34 con 5 bad',[1],true).button.disabled,true);
+  assert.equal(uiHarness('12 34 con 5',[],true).button.disabled,true);
+  assert.equal(uiHarness('12 34 con 5',[1],false).button.disabled,true);
+});
+test('live UI renders line diagnostics for invalid pasted text',()=>{
+  const h=uiHarness('12 34 bad con 5',[1],true);
+  assert.equal(h.errorBox.style.display,'block');
+  assert.match(h.errorBox.innerHTML,/Línea/);
+});
 test('blocks candado when Parlet is not active',()=>{assert.ok(candadoErrors(['candado'],0,5,1).length>0);});
 test('blocks linked candado amounts that do not match Parlet combinations',()=>{assert.ok(candadoErrors(['parlet','candado'],2,5,3).length>0);});
 test('allows candado amount matching Parlet times combinations',()=>{assert.equal(candadoErrors(['parlet','candado'],2,6,3).length,0);});
