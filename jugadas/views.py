@@ -216,7 +216,7 @@ def _validar_items_formas_sorteos(items, formas_por_sorteo):
     return errores
 
 
-def _validar_items_payload(items, etiqueta='jugadas'):
+def _validar_items_payload(items, etiqueta='jugadas', validar_numero=True):
     """Valida estructura y montos antes de entrar al flujo transaccional."""
     errores = []
     if not isinstance(items, list):
@@ -235,6 +235,29 @@ def _validar_items_payload(items, etiqueta='jugadas'):
             errores.append(f'{etiqueta} #{idx}: número vacío.')
         elif len(numero) > 20:
             errores.append(f'{etiqueta} #{idx}: número excede 20 caracteres.')
+        if validar_numero and numero and tipo:
+            tipo_lower = tipo.lower()
+            formas_2 = {'fijo', 'corridos', 'corrido', 'corrido1', 'corrido2', 'pick2', 'pf', 'par frontal', 'vs100', 'posicion'}
+            formas_3 = {'pick3', 'centenas corridas', 'centena corrida', 'centena corrida1', 'centena corrida2'}
+            formas_4 = {'pick4'}
+            formas_5 = {'pick5'}
+            formas_pares = {'parlet', 'candado', 'vs', 'vspf', 'vspick2', 'pick2vspf'}
+            if tipo_lower in formas_2 and not re.fullmatch(r'\\d{2}', numero):
+                errores.append(f'{etiqueta} #{idx}: {tipo} requiere un número de dos dígitos.')
+            elif tipo_lower in formas_3 and not re.fullmatch(r'\\d{3}', numero):
+                errores.append(f'{etiqueta} #{idx}: {tipo} requiere un número de tres dígitos.')
+            elif tipo_lower in formas_4 and not re.fullmatch(r'\\d{4}', numero):
+                errores.append(f'{etiqueta} #{idx}: Pick 4 requiere cuatro dígitos.')
+            elif tipo_lower in formas_5 and not re.fullmatch(r'\\d{5}', numero):
+                errores.append(f'{etiqueta} #{idx}: Pick 5 requiere cinco dígitos.')
+            elif tipo_lower in formas_pares and not re.fullmatch(r'\\d{2}[xX]\\d{2}', numero):
+                errores.append(f'{etiqueta} #{idx}: {tipo} requiere un par NNxNN.')
+            elif tipo_lower == 'tripleta' and (len(numero.split()) != 3 or not all(re.fullmatch(r'\\d{2}', n) for n in numero.split())):
+                errores.append(f'{etiqueta} #{idx}: Tripleta requiere exactamente tres números de dos dígitos.')
+            elif tipo_lower == 'superparlet' and not re.fullmatch(r'(?:\\d{2}[xX]\\d{2})(?:\\s+\\d{2}[xX]\\d{2})*', numero):
+                errores.append(f'{etiqueta} #{idx}: Superparlet requiere pares NNxNN separados por espacios.')
+            elif tipo_lower not in formas_2 | formas_3 | formas_4 | formas_5 | formas_pares | {'tripleta', 'superparlet'}:
+                errores.append(f'{etiqueta} #{idx}: forma de juego no reconocida: {tipo}.')
         try:
             monto = Decimal(str(item.get('monto', '')))
             if not monto.is_finite():
@@ -1605,8 +1628,8 @@ def _guardar_apuesta_impl(request):
             return JsonResponse({'success': False, 'message': f'Error en formato de datos: {str(e)}'}, status=400)
 
         # Validación del payload antes de cualquier creación de boletas/jugadas.
-        errores_payload = _validar_items_payload(items_normales, 'Jugadas')
-        errores_payload += _validar_items_payload(items_super, 'Superparlet')
+        errores_payload = _validar_items_payload(items_normales, 'Jugadas', validar_numero=False)
+        errores_payload += _validar_items_payload(items_super, 'Superparlet', validar_numero=False)
         if not isinstance(sorteos_ids, list) or not isinstance(super_sorteos_ids, list):
             return JsonResponse({'success': False, 'message': 'La selección de sorteos debe ser una lista.'}, status=400)
         if errores_payload:
