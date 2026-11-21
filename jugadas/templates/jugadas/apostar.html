@@ -3637,6 +3637,7 @@ function quitarPanelSorteo(sid){
   actualizarCountSorteos();
   recalcGlobal();
 }
+  if (typeof _procActualizarUI === 'function') setTimeout(_procActualizarUI, 0);
 
 function renderPanelSorteo(sid){
   const s = sorteosActivos[sid];
