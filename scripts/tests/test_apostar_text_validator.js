@@ -75,6 +75,44 @@ function uiHarness(text,drawIds,checked){
   const updateResult=sandbox.update();
   return {button,checkbox,errorBox,textarea,updateResult};
 }
+
+const tableValidator=require('../../static/js/apostar_table_validation.js');
+function tableRowHarness(){
+  function expandToken(t,d){return [String(t)];}
+  function numbersInRow(row,d,max){
+    const nums=[],pairs=[];
+    String(row.num||'').trim().split(/\s+/).filter(Boolean).forEach(t=>{
+      const m=t.match(/^(\d{2})[xX](\d{2})$/);if(m){pairs.push(m[1]+'x'+m[2]);return;}
+      nums.push(...expandToken(t,d));
+    });
+    return {numeros:max?nums.slice(0,max):nums,paresExplicitos:pairs};
+  }
+  function countPairs(row){const n=numbersInRow(row,2).numeros.length;return n*(n-1)/2+numbersInRow(row,2).paresExplicitos.length;}
+  return {expandToken,numerosEnFila:numbersInRow,contarParletsDeFila:countPairs};
+}
+function validateRows(rows,def,forms){return tableValidator.validateRows(rows,def,forms,tableRowHarness());}
+test('validates table row amounts and prevents missing data from being silently skipped',()=>{
+  assert.equal(validateRows([{num:'12 34',montos:{fijo:'2'}}],{kind:'multi',numDigits:2,forms:['fijo']},['fijo']).length,0);
+  assert.ok(validateRows([{num:'',montos:{fijo:'2'}}],{kind:'multi',numDigits:2,forms:['fijo']},['fijo']).length>0);
+  assert.ok(validateRows([{num:'12 34',montos:{fijo:''}}],{kind:'multi',numDigits:2,forms:['fijo']},['fijo']).length>0);
+  assert.ok(validateRows([{num:'123',montos:{fijo:'2'}}],{kind:'multi',numDigits:2,forms:['fijo']},['fijo']).length>0);
+  assert.ok(validateRows([{num:'12 12 12',montos:{fijo:'2'}}],{kind:'multi',numDigits:2,forms:['fijo']},['fijo']).length>0);
+});
+test('validates parlet combinations and explicit pairs',()=>{
+  assert.equal(validateRows([{num:'12 34 12x34',montos:{parlet:'2'}}],{kind:'multi',numDigits:2,forms:['parlet']},['parlet']).length,0);
+  assert.ok(validateRows([{num:'12',montos:{parlet:'2'}}],{kind:'multi',numDigits:2,forms:['parlet']},['parlet']).length>0);
+  assert.ok(validateRows([{num:'12x34',montos:{fijo:'2'}}],{kind:'multi',numDigits:2,forms:['fijo']},['fijo']).length>0);
+});
+test('validates tripleta row count, VS groups, positions and Pick4 digits',()=>{
+  assert.equal(validateRows([{num:'12 34 56',montos:{tripleta:'5'}}],{kind:'single',numDigits:2,maxNums:3,forms:['tripleta']},['tripleta']).length,0);
+  assert.ok(validateRows([{num:'12 34 56 78',montos:{tripleta:'5'}}],{kind:'single',numDigits:2,maxNums:3,forms:['tripleta']},['tripleta']).length>0);
+  assert.equal(validateRows([{numA:'12 34',numB:'56',monto:'3'}],{kind:'vs_groups',numDigits:2,forms:['vs']},['vs']).length,0);
+  assert.ok(validateRows([{numA:'12 34',numB:'',monto:'3'}],{kind:'vs_groups',numDigits:2,forms:['vs']},['vs']).length>0);
+  assert.equal(validateRows([{num:'12 34',monto:'2',posicion:'2'}],{kind:'posiciones',numDigits:2,forms:['posicion']},['posicion']).length,0);
+  assert.ok(validateRows([{num:'12 34',monto:'2',posicion:'4'}],{kind:'posiciones',numDigits:2,forms:['posicion']},['posicion']).length>0);
+  assert.equal(validateRows([{num:'1234',montos:{pick4:'1'}}],{kind:'single',numDigits:4,forms:['pick4']},['pick4']).length,0);
+  assert.ok(validateRows([{num:'123',montos:{pick4:'1'}}],{kind:'single',numDigits:4,forms:['pick4']},['pick4']).length>0);
+});
 test('live processor button enables only for valid text, mode and selected draw',()=>{
   const valid=uiHarness('12 34 con 5',[1],true);assert.equal(valid.updateResult.ok,true,JSON.stringify(valid.updateResult));assert.equal(valid.button.disabled,false,JSON.stringify({validation:valid.updateResult,checkbox:valid.checkbox}));
   assert.equal(uiHarness('12 34 con 5 bad',[1],true).button.disabled,true);
