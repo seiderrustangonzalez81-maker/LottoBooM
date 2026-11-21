@@ -46,9 +46,9 @@
       if(pair){if(pair[3]&&Number(pair[3])<=0)err(i+1,'El monto del parlet debe ser mayor que cero.');else if(!pair[3])explicitPairs++;continue;}
       if(/^cada\s+parlet\b/i.test(line)){var each=instruction(line);if(!explicitPairs)err(i+1,'“Cada parlet” no tiene pares explícitos anteriores.');else if(!each.ok)err(i+1,each.message);else explicitPairs=0;continue;}
       if(suffixOnly(line)){var suf=instruction(line);if(!suf.ok)err(i+1,suf.message);else if(pending)pending=false;else err(i+1,'Monto sin grupo de números asociado.');continue;}
-      if(/^(con|candado|parlet|parle|parl|palet|parler|parley)\b/i.test(line)||/^[🔒🔐🔓]/.test(line)){var only=instruction(line);if(!only.ok)err(i+1,only.message,(line.match(/\\b\\d+(?:\\.\\d+)?\\s*[a-z]+\\b/i)||[])[0]||null);else if(pending)pending=false;else if(explicitPairs&&(only.montos.parlet||only.montos.candado))explicitPairs=0;else err(i+1,'Instrucción sin números anteriores.');continue;}
+      if(/^(con|candado|parlet|parle|parl|palet|parler|parley)\b/i.test(line)||/^[🔒🔐🔓]/.test(line)){var only=instruction(line);if(!only.ok)err(i+1,only.message,(line.match(/\b\d+(?:\.\d+)?\s*[a-z]+\b/i)||[])[0]||null);else if(pending)pending=false;else if(explicitPairs&&(only.montos.parlet||only.montos.candado))explicitPairs=0;else err(i+1,'Instrucción sin números anteriores.');continue;}
       var pos=detectInstruction(line);
-      if(pos>0){var n=nums(line.slice(0,pos).trim()),m=instruction(line.slice(pos).trim());if(!n.ok)err(i+1,n.message,n.token);else if(!m.ok)err(i+1,m.message,(instrStr.match(/\\b\\d+(?:\\.\\d+)?\\s*[a-z]+\\b/i)||[])[0]||null);else if(pending)err(i+1,'Hay un grupo anterior sin monto asociado.');continue;}
+      if(pos>0){var n=nums(line.slice(0,pos).trim()),m=instruction(line.slice(pos).trim());if(!n.ok)err(i+1,n.message,n.token);else if(!m.ok)err(i+1,m.message,(instrStr.match(/\b\d+(?:\.\d+)?\s*[a-z]+\b/i)||[])[0]||null);else if(pending)err(i+1,'Hay un grupo anterior sin monto asociado.');continue;}
       var pure=nums(line);if(pure.ok){if(pending)err(i+1,'El grupo anterior no tiene monto asociado.');pending=true;}else err(i+1,pure.message,pure.token);
     }
     if(pending)err(lines.length,'El último grupo de números quedó sin monto.');
