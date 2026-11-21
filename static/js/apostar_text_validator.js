@@ -22,7 +22,7 @@
         if(/^\d+$/.test(t)){
           if(t.length>4)return {ok:false,message:'Número demasiado largo: '+t+'. Pick 4/5 aún no está admitido.'};
           if(t.length===1&&!pendingLetter)return {ok:false,message:'Dígito aislado '+t+'. Usa T/D o escribe el número completo.'};
-          lengths.push(t.length);if(t.length!==1)pendingLetter=null;continue;
+          lengths.push(t.length);if(t.length===1)pendingUsed=true;else{pendingLetter=null;pendingUsed=false;}continue;
         }
         return {ok:false,message:'Token no reconocido: '+t+'.'};
       }
