@@ -652,5 +652,15 @@
     ],
     "fecha": "2026-11-20",
     "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Leidsa",
+    "numeros": [
+      "29",
+      "54",
+      "38"
+    ],
+    "fecha": "2026-11-20",
+    "fuente": "enloteria"
   }
 ]
