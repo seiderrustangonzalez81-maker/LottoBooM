@@ -6,6 +6,7 @@ from pathlib import Path
 import sys
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "LottoBooM.settings")
 # CI must use isolated settings and never inherit production connection variables.
 os.environ.pop("DATABASE_URL", None)
@@ -61,25 +62,12 @@ for directory in template_dirs:
 engine = engines["django"]
 failed = []
 for path in sorted(set(template_files)):
-    # Convert to template-relative path for configured dirs/app dirs.
-    candidates = []
-    for directory in template_dirs:
-        try:
-            candidates.append(path.relative_to(directory).as_posix())
-        except ValueError:
-            pass
-    loaded = False
-    for name in candidates:
-        try:
-            engine.get_template(name)
-            loaded = True
-            break
-        except Exception:
-            continue
-    if not loaded:
-        failed.append(str(path))
+    try:
+        engine.from_string(path.read_text(encoding="utf-8"))
+    except Exception as exc:
+        failed.append(f"{path}: {type(exc).__name__}: {exc}")
 if failed:
-    print("Template loading failures (template names could not be resolved):")
+    print("Template syntax errors:")
     for item in failed[:30]:
         print(" -", item)
     sys.exit(1)
