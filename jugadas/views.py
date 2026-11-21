@@ -1784,9 +1784,14 @@ def _guardar_apuesta_impl(request):
         errores_coincidencia = _validar_coincidencia_sorteos_tablas(sorteos_ids, tablas_crudas)
         if errores_coincidencia:
             return JsonResponse({'success': False, 'message': 'Selección de sorteos y filas originales no coincide.', 'errores': errores_coincidencia}, status=400)
-        item_draw_ids = {str(it.get('sorteo_id')) for it in items_normales if isinstance(it, dict) and str(it.get('sorteo_id') or '').isdigit()}
-        if item_draw_ids - sorteos_raw_ids:
-            return JsonResponse({'success': False, 'message': 'Faltan tablas originales para uno o más sorteos con jugadas.'}, status=400)
+        item_draw_ids = set()
+        for item in items_normales:
+            if not isinstance(item, dict) or isinstance(item.get('sorteo_id'), bool) or not str(item.get('sorteo_id') or '').isdigit():
+                return JsonResponse({'success': False, 'message': 'Cada jugada normal debe incluir un ID de sorteo válido.'}, status=400)
+            item_draw_ids.add(str(item['sorteo_id']))
+        selected_draw_ids = {str(sid) for sid in sorteos_ids}
+        if item_draw_ids - selected_draw_ids:
+            return JsonResponse({'success': False, 'message': 'Hay jugadas asignadas a sorteos no seleccionados.'}, status=400)
         errores_payload = _validar_items_payload(items_normales, 'Jugadas', validar_numero=False)
         errores_payload += _validar_items_payload(items_super, 'Superparlet', validar_numero=False)
         if errores_payload:
