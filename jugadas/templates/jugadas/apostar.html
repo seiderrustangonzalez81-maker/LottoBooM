@@ -8486,15 +8486,18 @@ function _procActualizarEstado(msg, tipo){
     var hayTexto=!!String(ta.value||'').trim(),hayFilas=!!(v.rows&&v.rows.length);
     var destino={errors:[]};
     if(v.ok&&hayFilas&&haySorteos)destino=_procValidarDestinos(v.rows);
+    var hayError=!v.ok||destino.errors.length>0;
     btn.disabled=!modo||!hayTexto||!v.ok||!hayFilas||!haySorteos||destino.errors.length>0;
-    btn.style.opacity=btn.disabled?'.55':'1';btn.style.cursor=btn.disabled?'not-allowed':'pointer';
-    btn.style.background=btn.disabled?'linear-gradient(135deg,#dc2626,#991b1b)':'linear-gradient(135deg,#16a34a,#15803d)';
-    btn.style.borderColor=btn.disabled?'#991b1b':'#166534';btn.style.boxShadow=btn.disabled?'2px 2px 0 #991b1b':'2px 2px 0 #166534';
-    btn.innerHTML=btn.disabled?'<i class="fas fa-exclamation-triangle"></i> Corregir Errores':'<i class="fas fa-check"></i> Procesar';
+    btn.style.opacity=btn.disabled?'.7':'1';btn.style.cursor=btn.disabled?'not-allowed':'pointer';
+    var colorBtn=hayError?'red':(btn.disabled?'idle':'green');
+    btn.style.background=hayError?'linear-gradient(135deg,#dc2626,#991b1b)':(btn.disabled?'linear-gradient(135deg,#f59e0b,#b45309)':'linear-gradient(135deg,#16a34a,#15803d)');
+    btn.style.borderColor=hayError?'#991b1b':(btn.disabled?'#92400e':'#166534');btn.style.boxShadow=hayError?'2px 2px 0 #991b1b':(btn.disabled?'2px 2px 0 #92400e':'2px 2px 0 #166534');
+    btn.innerHTML=hayError?'<i class="fas fa-exclamation-triangle"></i> Corregir Errores':(!hayTexto?'Pega texto':(!haySorteos?'Selecciona Sorteo':(!modo?'Activa Procesar':'<i class="fas fa-check"></i> Procesar')));
     if(!String(ta.value||'').trim())_procActualizarEstado('Pega el texto para revisar automáticamente.','idle');
     else if(!v.ok)_procActualizarEstado('❌ '+v.errors.length+' error(es); no se procesará nada.','error');
-    else if(!haySorteos)_procActualizarEstado('Texto válido. Selecciona al menos un sorteo.','idle');
     else if(destino.errors.length){_procRenderErrores({errors:destino.errors});_procActualizarEstado('❌ '+destino.errors.length+' problema(s) con pestañas/formas de los sorteos.','error');}
+    else if(!haySorteos)_procActualizarEstado('Texto válido. Selecciona al menos un sorteo.','idle');
+    else if(!modo)_procActualizarEstado('Texto y destinos válidos. Activa la casilla Procesar para habilitar el botón.','idle');
     else {_procRenderErrores(v);_procActualizarEstado('✅ '+v.rows.length+' fila(s) válidas en sus pestañas destino. Listo para procesar.','ok');}
     return v;
   }
