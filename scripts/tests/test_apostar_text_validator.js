@@ -76,7 +76,7 @@ function uiHarness(text,drawIds,checked){
   return {button,checkbox,errorBox,textarea};
 }
 test('live processor button enables only for valid text, mode and selected draw',()=>{
-  const valid=uiHarness('12 34 con 5',[1],true);assert.equal(valid.button.disabled,false,JSON.stringify(valid.updateResult));
+  const valid=uiHarness('12 34 con 5',[1],true);assert.equal(valid.updateResult.ok,true,JSON.stringify(valid.updateResult));assert.equal(valid.button.disabled,false,JSON.stringify({validation:valid.updateResult,checkbox:valid.checkbox}));
   assert.equal(uiHarness('12 34 con 5 bad',[1],true).button.disabled,true);
   assert.equal(uiHarness('12 34 con 5',[],true).button.disabled,true);
   assert.equal(uiHarness('12 34 con 5',[1],false).button.disabled,true);
