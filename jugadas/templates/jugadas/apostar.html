@@ -8141,7 +8141,7 @@ function _procActualizarEstado(msg, tipo){
       m=line.match(/^(pick2\s+vs\s+pf|p2\s+vs\s+pf|vs\s+pick2|vs\s+pf|vs100|vs)\s+(.+?)\s+con\s+(\d+(?:\.\d+)?)$/i);
       if(m){emitir();var v=m[1].toLowerCase().replace(/\s+/g,'');if(v==='pick2vspf'||v==='p2vspf')rowVS('tabla-pick2vspf','pick2vspf',m[2].split(/\s+(?:y|vs)\s+/i)[0],m[2].split(/\s+(?:y|vs)\s+/i).slice(1).join(' '),m[3]);else if(v==='vspick2')rowVS('tabla-vspick2','vspick2',m[2].split(/\s+(?:y|vs)\s+/i)[0],m[2].split(/\s+(?:y|vs)\s+/i).slice(1).join(' '),m[3]);else if(v==='vspf')rowVS('tabla-vspf','vspf',m[2].split(/\s+(?:y|vs)\s+/i)[0],m[2].split(/\s+(?:y|vs)\s+/i).slice(1).join(' '),m[3]);else if(v==='vs')rowVS('tabla-vs','vs',m[2].split(/\s+vs\s+/i)[0],m[2].split(/\s+vs\s+/i).slice(1).join(' '),m[3]);else rowSingle('tabla-vs100','vs100',m[2],m[3]);continue;}
       m=line.match(/^(?:pos(?:icion)?\s*)?(\d)\s+(.+?)\s+con\s+(\d+(?:\.\d+)?)$/i);
-      if(m&&/^pos/i.test(line)){emitir();var npos=nums(m[2]);if(npos.length)filas.push({posicion:m[1],num:npos.join(' '),monto:m[3],tabla:'tabla-posiciones'});continue;}
+      if(m&&/^pos/i.test(line)){emitir();var npos=nums(m[2]);if(npos.length&&npos.every(function(x){return /^\d{2}$/.test(x);}))filas.push({posicion:m[1],num:npos.join(' '),monto:m[3],tabla:'tabla-posiciones'});continue;}
       m=line.match(/^tripleta\s+(.+?)\s+con\s+(\d+(?:\.\d+)?)$/i);
       if(m){emitir();var nt=nums(m[1]);if(nt.length===3)rowSingle('tabla-tripleta','tripleta',m[1],m[2]);continue;}
       m=line.match(/^(.+?)\s+pick2\s+vspf\s+(.+?)\s+con\s+(\d+(?:\.\d+)?)$/i);
