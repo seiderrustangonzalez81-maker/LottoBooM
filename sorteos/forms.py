@@ -114,26 +114,5 @@ class SorteoForm(forms.ModelForm):
                 except ValueError:
                     raise forms.ValidationError(f'La hora de {dia} en "{temporada}" no es válida.')
         return horarios
-
-    def clean_formas_juego(self):
-        return list(self.cleaned_data.get('formas_juego', [])))
-        for temporada, dias in horarios.items():
-            if not isinstance(temporada, str) or not temporada.strip():
-                raise forms.ValidationError('Cada temporada debe tener un nombre válido.')
-            if not isinstance(dias, dict):
-                raise forms.ValidationError(f'La temporada "{temporada}" debe contener un objeto de días.')
-            for dia, hora in dias.items():
-                if str(dia).lower() not in dias_validos:
-                    raise forms.ValidationError(f'Día no reconocido en "{temporada}": {dia}.')
-                if hora in (None, ''):
-                    continue
-                if not isinstance(hora, str) or not patron_hora.fullmatch(hora):
-                    raise forms.ValidationError(f'La hora de {dia} en "{temporada}" debe usar HH:MM o estar vacía.')
-                try:
-                    datetime.strptime(hora, '%H:%M')
-                except ValueError:
-                    raise forms.ValidationError(f'La hora de {dia} en "{temporada}" no es válida.')
-        return horarios
-
     def clean_formas_juego(self):
         return list(self.cleaned_data.get('formas_juego', []))
