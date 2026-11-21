@@ -86,6 +86,15 @@ test('live UI renders line diagnostics for invalid pasted text',()=>{
   assert.equal(h.errorBox.style.display,'block');
   assert.match(h.errorBox.innerHTML,/Línea/);
 });
+test('table totals cover Pick2, PF, Fijo, Corridos, Pick3, Pick5 and VS variants',()=>{
+  compareRowTotal({label:'Trad all',kind:'multi',numDigits:2,forms:['pick2','pf','fijo','corridos','parlet']},['pick2','pf','fijo','corridos','parlet'],{num:'12 34',montos:{pick2:'1',pf:'2',fijo:'3',corridos:'4',parlet:'5'}});
+  compareRowTotal({label:'Pick3',kind:'single',numDigits:3,forms:['pick3']},['pick3'],{num:'123 456',montos:{pick3:'4'}});
+  compareRowTotal({label:'Pick5',kind:'single',numDigits:5,forms:['pick5']},['pick5'],{num:'12345 67890',montos:{pick5:'1.5'}});
+  compareRowTotal({label:'VS PF',kind:'vs_groups',numDigits:2,forms:['vspf']},['vspf'],{numA:'12 34',numB:'56',monto:'2'});
+  compareRowTotal({label:'VS Pick2',kind:'vs_groups',numDigits:2,forms:['vspick2']},['vspick2'],{numA:'12',numB:'56 78',monto:'2'});
+  compareRowTotal({label:'Pick2 vs PF',kind:'vs_groups',numDigits:2,forms:['pick2vspf']},['pick2vspf'],{numA:'12 34',numB:'56 78',monto:'1'});
+  compareRowTotal({label:'Solo Parlet',kind:'solo_parlet',numDigits:2,forms:['parlet']},['parlet'],{num:'12 34 56',montos:{parlet:'3'}});
+});
 test('blocks candado when Parlet is not active',()=>{assert.ok(candadoErrors(['candado'],0,5,1).length>0);});
 test('blocks linked candado amounts that do not match Parlet combinations',()=>{assert.ok(candadoErrors(['parlet','candado'],2,5,3).length>0);});
 test('allows candado amount matching Parlet times combinations',()=>{assert.equal(candadoErrors(['parlet','candado'],2,6,3).length,0);});
