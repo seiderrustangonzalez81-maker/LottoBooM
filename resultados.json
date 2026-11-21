@@ -794,9 +794,19 @@
     "pick2": "39",
     "pick3": "583",
     "pick4": "6936",
-    "pick5": "",
+    "pick5": "34811",
     "fijo": "83",
     "corrido_1": "69",
     "corrido_2": "36"
+  },
+  {
+    "sorteo_nombre": "Loteka Tarde",
+    "numeros": [
+      "21",
+      "97",
+      "84"
+    ],
+    "fecha": "2026-11-21",
+    "fuente": "enloteria"
   }
 ]
