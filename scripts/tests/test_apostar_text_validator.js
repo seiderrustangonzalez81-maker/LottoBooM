@@ -187,7 +187,7 @@ test('accepts group on previous line with amount instruction',()=>{const r=run('
 test('rejects a final number group without amount',()=>{const r=run('12 34');assert.equal(r.ok,false);assert.ok(r.errors.some(e=>/último grupo/.test(e.message)));});
 test('rejects unknown tokens instead of silently dropping them',()=>{const r=run('12 34 blabla con 5');assert.equal(r.ok,false);assert.ok(r.errors.some(e=>/Token no reconocido/.test(e.message)));});
 test('rejects zero amount',()=>{const r=run('12 34 con 0');assert.equal(r.ok,false);assert.ok(r.errors.some(e=>/mayores que cero/.test(e.message)));});
-test('rejects unsupported pick4 instead of silently ignoring it',()=>{const r=run('pick4 1234 con 5');assert.equal(r.ok,false);assert.match(r.errors[0].message,/no admitida/i);});
+test('routes Pick4 explicit text into Pick4 and validates digit length',()=>{const r=run('pick4 1234 con 5');assert.equal(r.ok,true,JSON.stringify(r.errors));assert.equal(r.rows[0].tabla,'tabla-pick4');assert.equal(r.rows[0].montos.pick4,'5');const bad=run('pick4 123 con 5');assert.equal(bad.ok,false);});
 test('accepts explicit pairlets completed with "cada parle"',()=>{const r=run('12x34\n13x14\ncada parle 2');assert.equal(r.ok,true);});
 test('rejects orphan instruction',()=>{const r=run('con 5');assert.equal(r.ok,false);});
 test('rejects mixed 2- and 3-digit groups',()=>{const r=run('12 123 con 5');assert.equal(r.ok,false);assert.ok(r.errors.some(e=>/No mezcles/.test(e.message)));});
