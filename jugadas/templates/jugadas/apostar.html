@@ -8345,7 +8345,8 @@ function _procActualizarEstado(msg, tipo){
         if(!st){errors.push({line:'—',message:'Sorteo '+(s.nombre||sid)+': no tiene la pestaña '+tk+'.'});return;}
         var forms=st.forms||[];
         var def=(typeof TABLE_DEFS!=='undefined')?TABLE_DEFS[tk]:null;
-        var canonicalForms=def?forms.map(function(form){return resolverForma(form,def);}):forms.slice();
+        var canonicalizeForm=function(form){return def&&typeof resolverForma==='function'?resolverForma(form,def):form;};
+        var canonicalForms=forms.map(canonicalizeForm);
         if(def&&window.ApostarTableValidator&&typeof window.ApostarTableValidator.validateRows==='function'){
           try{
             var mappedRows=porTabla[tk].map(function(row){return _procCrearFilaDestino(row,st,def.kind,tk);});
@@ -8361,12 +8362,12 @@ function _procActualizarEstado(msg, tipo){
         porTabla[tk].forEach(function(row){
           Object.keys(row.montos||{}).forEach(function(form){
             var monto=Number(row.montos[form])||0;
-            if(monto>0&&canonicalForms.indexOf(resolverForma(form,def))<0)
+            if(monto>0&&canonicalForms.indexOf(canonicalizeForm(form))<0)
               errors.push({line:'—',message:'Sorteo '+(s.nombre||sid)+': habilita la forma "'+form+'" en la pestaña '+tk+'.'});
           });
           if(Number(row.monto)>0){
-            var formaFila=row.tipo||(forms.length===1?resolverForma(forms[0],def):null);
-            if(!formaFila||canonicalForms.indexOf(resolverForma(formaFila,def))<0)
+            var formaFila=row.tipo||(forms.length===1?canonicalizeForm(forms[0]):null);
+            if(!formaFila||canonicalForms.indexOf(canonicalizeForm(formaFila))<0)
               errors.push({line:'—',message:'Sorteo '+(s.nombre||sid)+': no se pudo verificar la forma de juego de la pestaña '+tk+'.'});
           }
         });
