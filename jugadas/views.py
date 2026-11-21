@@ -2095,9 +2095,13 @@ def _guardar_apuesta_impl(request):
                         'errores': _errores_pool,
                     }, status=400)
         except Exception as _ePool:
-            # Fail-open: si la validación falla por bug interno,
-            # permitimos pasar pero dejamos rastro en logs.
-            import traceback as _tb; logger.warning('[GUARD_POOL_BACKEND_V1] error interno: ' + str(_ePool) + '\n' + _tb.format_exc())
+            # Fail-closed: nunca aceptar apuestas si no se pudo comprobar el pool.
+            import traceback as _tb
+            logger.error('[GUARD_POOL_BACKEND_V1] validación no disponible: ' + str(_ePool) + '\n' + _tb.format_exc())
+            return JsonResponse({
+                'success': False,
+                'message': 'No se pudo verificar el disponible del gestor. No se guardó la apuesta; inténtalo de nuevo.',
+            }, status=503)
         # ═══ FIN GUARD_POOL_BACKEND_V1 ═══
 
         with transaction.atomic():
