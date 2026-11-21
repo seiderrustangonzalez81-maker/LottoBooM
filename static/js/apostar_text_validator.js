@@ -43,7 +43,7 @@
     for(var i=0;i<lines.length;i++){
       var line=String(lines[i]||'').trim();if(ignore(line))continue;hasContent=true;
       if(modality.test(line)){var routed=[];try{routed=parseText(line)||[];}catch(_){} if(!routed.length){err(i+1,'No se pudo interpretar la modalidad o sus números/monto: '+line,rawToken(rawLines[i]));}else{var amountTokens=line.match(/\d+(?:\.\d+)?/g)||[];if(!amountTokens.length||Number(amountTokens[amountTokens.length-1])<=0)err(i+1,'El monto debe ser mayor que cero.');else if(/\.\d{3,}$/.test(amountTokens[amountTokens.length-1]))err(i+1,'Los montos admiten máximo dos decimales.');}continue;}
-      var pair=line.match(/^\s*([0-9]{2})\s*[*xX]\s*([0-9]{2})\s*(?:[-\s]\s*([0-9]+(?:\.[0-9]+)?))?\s*$/);
+      var pairList=line.match(/^((?:[0-9]{2}[xX*][0-9]{2}\\s+){1,}[0-9]{2}[xX*][0-9]{2})\\s+con\\s+(\\d+(?:\\.\\d+)?)$/i);\n      if(pairList){if(Number(pairList[2])<=0)err(i+1,'El monto del parlet debe ser mayor que cero.');else if(/\\.\\d{3,}$/.test(pairList[2]))err(i+1,'Los montos admiten máximo dos decimales.');continue;}\n      var pair=line.match(/^\s*([0-9]{2})\s*[*xX]\s*([0-9]{2})\s*(?:[-\s]\s*([0-9]+(?:\.[0-9]+)?))?\s*$/);
       if(pair){if(pair[3]&&Number(pair[3])<=0)err(i+1,'El monto del parlet debe ser mayor que cero.');else if(!pair[3])explicitPairs++;continue;}
       if(/^cada\s+parlet\b/i.test(line)){var each=instruction(line);if(!explicitPairs)err(i+1,'“Cada parlet” no tiene pares explícitos anteriores.');else if(!each.ok)err(i+1,each.message);else explicitPairs=0;continue;}
       if(suffixOnly(line)){var suf=instruction(line);if(!suf.ok)err(i+1,suf.message);else if(pending)pending=false;else err(i+1,'Monto sin grupo de números asociado.');continue;}
