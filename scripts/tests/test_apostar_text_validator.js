@@ -44,6 +44,29 @@ function compareRowTotal(def,forms,row){
   const actual=items.reduce((sum,it)=>sum+Number(it.monto),0);
   assert.equal(actual,calc,def.label+': item sum should equal displayed row total');
 }
+function destinationRowHarness(){
+  const start=template.indexOf('function newRow(forms, kind){');
+  const end=template.indexOf('function numerosEnFila(row, numDigits, maxNums){',start);
+  assert.ok(start>=0&&end>start,'newRow and destination mapper must exist');
+  const sandbox={};
+  vm.runInNewContext(template.slice(start,end)+';this.create=_procCrearFilaDestino;',sandbox);
+  return sandbox;
+}
+test('parsed data maps into multi, positions and VS table row structures',()=>{
+  const h=destinationRowHarness();
+  const multi=h.create({num:'12 34',montos:{fijo:'2'}},{forms:['fijo']},'multi');
+  assert.equal(multi.num,'12 34');
+  assert.equal(multi.montos.fijo,'2');
+  const positions=h.create({posicion:'3',num:'12 34',monto:'5'},{forms:['posicion']},'posiciones');
+  assert.equal(positions.posicion,'3');
+  assert.equal(positions.num,'12 34');
+  assert.equal(positions.monto,'5');
+  const vs=h.create({numA:'12 34',numB:'56 78',monto:'4'},{forms:['vs']},'vs_groups');
+  assert.equal(vs.numA,'12 34');
+  assert.equal(vs.numB,'56 78');
+  assert.equal(vs.monto,'4');
+});
+
 test('table row totals match collected item sums across forms',()=>{
   compareRowTotal({label:'Trad',kind:'multi',numDigits:2,forms:['fijo','parlet','candado']},['fijo','parlet','candado'],{num:'12 34 56',montos:{fijo:'2',parlet:'3',candado:'18'}});
   compareRowTotal({label:'Parlet explicit',kind:'multi',numDigits:2,forms:['parlet']},['parlet'],{num:'12 34 12x34',montos:{parlet:'2'}});
