@@ -4,22 +4,46 @@
 {% block page_title %}🎲 Apostar
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // FIX_GEORGIA_JS: Forzar fecha futura al seleccionar Georgia 12:34 AM
+    // Georgia fecha efectiva: usa la hora calendario de Cuba, no el UTC del navegador.
     const sorteoSelect = document.querySelector('select[name="sorteo"]') || document.getElementById('id_sorteo');
     const fechaInput = document.querySelector('input[name="fecha_sorteo"]') || document.querySelector('input[name="fecha"]') || document.getElementById('id_fecha_sorteo');
 
+    function fechaCubaGeorgia() {
+        const parts = new Intl.DateTimeFormat('en-CA', {
+            timeZone: 'America/Havana', year: 'numeric', month: '2-digit', day: '2-digit',
+            hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23'
+        }).formatToParts(new Date()).reduce((acc, p) => {
+            if (p.type !== 'literal') acc[p.type] = p.value;
+            return acc;
+        }, {});
+        const hoy = parts.year + '-' + parts.month + '-' + parts.day;
+        const hora = Number(parts.hour), minuto = Number(parts.minute);
+        // 00:00–00:26: ciclo del día Cuba. 00:27–01:00: cerrado (fecha no se desplaza).
+        // Desde 01:01 hasta el final del día: próximo ciclo, fecha siguiente.
+        if (hora === 0 && minuto <= 26) return hoy;
+        if ((hora === 0 && minuto >= 27) || (hora === 1 && minuto <= 0)) return hoy;
+        const d = new Date(hoy + 'T12:00:00Z');
+        d.setUTCDate(d.getUTCDate() + 1);
+        return d.toISOString().slice(0, 10);
+    }
+
+    function esGeorgiaSeleccionada() {
+        if (!sorteoSelect) return false;
+        const option = sorteoSelect.options[sorteoSelect.selectedIndex];
+        return !!option && /georgia/i.test(option.text || option.label || '');
+    }
+
+    function sincronizarFechaGeorgia() {
+        if (!fechaInput || !esGeorgiaSeleccionada()) return;
+        const fecha = fechaCubaGeorgia();
+        fechaInput.value = fecha;
+        if (fechaInput._flatpickr) fechaInput._flatpickr.setDate(fecha, true);
+        fechaInput.dispatchEvent(new Event('change', {bubbles: true}));
+    }
+
     if (sorteoSelect && fechaInput) {
-        sorteoSelect.addEventListener('change', function() {
-            if (this.value === '54') {
-                let manana = new Date();
-                manana.setDate(manana.getDate() + 1);
-                let fechaFmt = manana.toISOString().split('T')[0];
-                fechaInput.value = fechaFmt;
-                if (fechaInput._flatpickr) {
-                    fechaInput._flatpickr.setDate(fechaFmt);
-                }
-            }
-        });
+        sorteoSelect.addEventListener('change', sincronizarFechaGeorgia);
+        sincronizarFechaGeorgia();
     }
 });
 </script>
