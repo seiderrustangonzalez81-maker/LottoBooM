@@ -8116,8 +8116,8 @@ function _procActualizarEstado(msg, tipo){
     function amount(s){var m=_procParsearMontos(s);return m.fijo||m.corridos||m.parlet||m.candado||((s.match(/\bcon\s+(\d+(?:\.\d+)?)/i)||[])[1]||'');}
     function nums(s){return _procExpandirNumeros(s);}
     function splitInstr(line){var ix=_procDetectarInstruccionPos(line);return ix>0?[line.slice(0,ix).trim(),line.slice(ix).trim()]:[line,''];}
-    function rowSingle(tabla,form,group,monto){if(!group||!monto)return;var n=(form==='pick4'||form==='pick5')?String(group).trim().split(/\s+/):nums(group),d=form==='pick3'?3:form==='pick4'?4:form==='pick5'?5:form==='vs100'||form==='tripleta'||form==='parlet'?2:null;if(d&&n.some(function(x){return !new RegExp('^\\d{'+d+'}
-    function rowVS(tabla,form,left,right,monto){var a=nums(left),b=nums(right);if(a.length&&b.length&&monto&&a.every(function(x){return /^\d{2}$/.test(x);})&&b.every(function(x){return /^\d{2}$/.test(x);}))filas.push({numA:a.join(' '),numB:b.join(' '),monto:monto,tabla:tabla});}
+    function rowSingle(tabla,form,group,monto){if(!group||!monto)return;var n=(form==='pick4'||form==='pick5')?String(group).trim().split(/\s+/):nums(group),d=form==='pick3'?3:form==='pick4'?4:form==='pick5'?5:form==='vs100'||form==='tripleta'||form==='parlet'?2:null;if(d&&n.some(function(x){return String(x).length!==d||!/^[0-9]+$/.test(String(x));}))return;if(form==='tripleta'&&n.length!==3)return;filas.push({num:n.join(' '),montos:{[form]:monto},tabla:tabla});}
+function rowVS(tabla,form,left,right,monto){var a=nums(left),b=nums(right);if(a.length&&b.length&&monto&&a.every(function(x){return /^\d{2}$/.test(x);})&&b.every(function(x){return /^\d{2}$/.test(x);}))filas.push({numA:a.join(' '),numB:b.join(' '),monto:monto,tabla:tabla});}
     for(var i=0;i<lineas.length;i++){
       var line=lineas[i],m,parts;
       // Explicit pairs and "each pair" continuation
