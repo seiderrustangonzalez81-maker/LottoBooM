@@ -8365,35 +8365,46 @@ function _procActualizarEstado(msg, tipo){
       _procActualizarEstado('❌ No se aplicó nada: '+_preErrores.length+' problema(s) de destino.','error');
       return;
     }
+    // Construir todas las filas destino en memoria antes de tocar ninguna tabla.
+    var _planAplicacion=[];
+    try{
+      ordenSorteos.forEach(function(sidRaw){
+        var sid=String(sidRaw),s=sorteosActivos[sid];
+        if(!s||!s.cargado)throw new Error('Sorteo '+sid+' no está cargado.');
+        var staged={sid:sid,tablas:{},primera:null};
+        Object.keys(_filasPorTabla).forEach(function(tkTabla){
+          var st=s.tablasActivas&&s.tablasActivas[tkTabla];
+          if(!st)throw new Error('Sorteo '+(s.nombre||sid)+': falta pestaña '+tkTabla+'.');
+          var kind=(TABLE_DEFS[tkTabla]&&TABLE_DEFS[tkTabla].kind)||'multi';
+          var mapped=_filasPorTabla[tkTabla].map(function(f){return _procCrearFilaDestino(f,st,kind);});
+          if(mapped.length!==_filasPorTabla[tkTabla].length)throw new Error('Mapeo incompleto para '+tkTabla+'.');
+          staged.tablas[tkTabla]=mapped;
+          if(!staged.primera)staged.primera=tkTabla;
+        });
+        _planAplicacion.push(staged);
+      });
+    }catch(_stageErr){
+      _procRenderErrores({errors:[{line:'—',message:'No se aplicó ninguna tabla: fallo el pre-mapeo de filas. '+(_stageErr.message||_stageErr)}]});
+      _procActualizarEstado('❌ No se aplicó nada: el pre-mapeo falló.','error');
+      return;
+    }
+    if(!_planAplicacion.length){
+      _procActualizarEstado('❌ No se aplicó nada: no hay sorteos preparados.','error');
+      return;
+    }
+
     if(_filasExistentes>0&&!window.confirm('El procesador reemplazará las filas actuales en las tablas destino ('+_filasExistentes+' tabla(s) con datos). ¿Continuar?')){
       _procActualizarEstado('Procesamiento cancelado; las filas existentes se conservaron.','idle');
       return;
     }
 
-    // PARSER_V1_REPLICAR: aplicar la misma jugada a TODOS los sorteos seleccionados
-    ordenSorteos.forEach(function(sidRaw){
-      var sid = String(sidRaw);
-      var s = sorteosActivos[sid];
-      if (!s) return;
-      if (!s.cargado) return;
-
-      var _aplicadoEsteSorteo = false;
-      var _primeraTablaAplicada = null;
-
-      Object.keys(_filasPorTabla).forEach(function(tkTabla){
-        var st = s.tablasActivas && s.tablasActivas[tkTabla];
-        if (!st) return;  // FIX_PICK3_ROUTE_V1: sorteo no tiene esa tabla → ignorar silencioso
-        var _kind = (TABLE_DEFS[tkTabla] && TABLE_DEFS[tkTabla].kind) || 'multi';
-        st.rows = _filasPorTabla[tkTabla].map(function(f){
-          return _procCrearFilaDestino(f, st, _kind);
-        });
-        if (!_primeraTablaAplicada) _primeraTablaAplicada = tkTabla;
-        _aplicadoEsteSorteo = true;
+    // Aplicar únicamente el plan completo previamente validado y mapeado.
+    _planAplicacion.forEach(function(plan){
+      var sid=plan.sid,s=sorteosActivos[sid];
+      Object.keys(plan.tablas).forEach(function(tkTabla){
+        s.tablasActivas[tkTabla].rows=plan.tablas[tkTabla];
       });
-
-      if (!_aplicadoEsteSorteo) return;
-
-      s.tabActual = _primeraTablaAplicada || tk;
+      s.tabActual=plan.primera||tk;
       if (typeof renderTabsSorteo === 'function') renderTabsSorteo(sid);
       if (typeof renderMiniResumenSorteo === 'function') renderMiniResumenSorteo(sid);
 
