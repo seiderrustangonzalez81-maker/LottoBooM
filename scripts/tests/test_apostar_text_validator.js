@@ -216,7 +216,15 @@ test('routes every supported modality to its destination table',()=>{
     ['vs100 12 34 con 5','tabla-vs100','vs100'],
     ['pos 2 12 34 con 5','tabla-posiciones','posicion'],
     ['tripleta 12 34 56 con 5','tabla-tripleta','tripleta'],
-    ['solo parlet 12 34 56 con 5','tabla-solo-parlet','parlet']
+    ['solo parlet 12 34 56 con 5','tabla-solo-parlet','parlet'],
+    ['12 34 pick2 con 5','tabla-tradicional','pick2'],
+    ['12 34 pf con 5','tabla-tradicional','pf'],
+    ['123 456 pick3 con 5','tabla-pick3','pick3'],
+    ['1234 5678 pick4 con 5','tabla-pick4','pick4'],
+    ['12345 67890 pick5 con 5','tabla-pick5','pick5'],
+    ['123 456 centenas corridas con 5','tabla-centenas','centenas corridas'],
+    ['12 34 vs100 con 5','tabla-vs100','vs100'],
+    ['12 34 56 tripleta con 5','tabla-tripleta','tripleta'],
   ];
   cases.forEach(([text,table,form])=>{
     const result=run(text);
