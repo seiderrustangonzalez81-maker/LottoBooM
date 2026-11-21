@@ -1198,7 +1198,6 @@ def superparlet(request):
 @login_required
 def apostar(request):
     user = request.user
-    _intentar_actualizar_loteria() # <--- AGREGA ESTA LÍNEA AQUÍ
     # ═══════════════════════════════════════════════════════════════
     # BLOQUEO PARA AUDITORES: no pueden apostar, solo supervisar
     # ═══════════════════════════════════════════════════════════════
@@ -1217,6 +1216,9 @@ def apostar(request):
 
     if request.method != 'GET':
         return JsonResponse({'error': 'Método no permitido en esta URL'}, status=405)
+
+    # La actualización en background solo se dispara en un GET permitido, no en POST ni auditor.
+    _intentar_actualizar_loteria()
 
     # FIX_APOSTAR_PRESELECT: params para preseleccion de cliente y aviso de recarga
     cliente_preseleccionado_id = request.GET.get('cliente_id', '').strip()
