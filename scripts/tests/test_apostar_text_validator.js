@@ -14,6 +14,17 @@ const h=sandbox.helpers;
 function run(text){return validate(text,h);}
 
 const tripleta=require('../../static/js/apostar_tripleta.js');
+function candadoErrors(forms,montoPar,montoCand,nPlays){
+  const template=fs.readFileSync('jugadas/templates/jugadas/apostar.html','utf8');
+  const a=template.indexOf('function _validarCandadoApuesta(){');
+  const b=template.indexOf('function enviarApuesta(dryRun){',a);
+  const sandbox={ordenSorteos:[1],sorteosActivos:{'1':{nombre:'Test',tablasActivas:{'tabla-tradicional':{forms:forms,rows:[{num:'12 34',montos:{parlet:montoPar,candado:montoCand},numPlays:nPlays}]}}}},TABLE_DEFS:{'tabla-tradicional':{kind:'multi',numDigits:2}},contarParletsDeFila:(row)=>row.numPlays};
+  vm.runInNewContext(template.slice(a,b)+';this.check=_validarCandadoApuesta;',sandbox);
+  return sandbox.check();
+}
+test('blocks candado when Parlet is not active',()=>{assert.ok(candadoErrors(['candado'],0,5,1).length>0);});
+test('blocks linked candado amounts that do not match Parlet combinations',()=>{assert.ok(candadoErrors(['parlet','candado'],2,5,3).length>0);});
+test('allows candado amount matching Parlet times combinations',()=>{assert.equal(candadoErrors(['parlet','candado'],2,6,3).length,0);});
 test('tripleta table row becomes one grouped item with one amount',()=>{const a=tripleta.itemForRow(['12','34','56'],5,9);assert.equal(a.length,1);assert.equal(a[0].numero,'12 34 56');assert.equal(a[0].monto,5);});
 test('tripleta row validation requires exactly three numbers and positive amount',()=>{assert.equal(tripleta.validateRow('12 34 56',['12','34','56'],7),null);assert.match(tripleta.validateRow('12 34 56 78',['12','34','56','78'],7),/exactamente tres/);assert.match(tripleta.validateRow('12 34 56',['12','34','56'],0),/monto/);});
 test('tripleta helper refuses incomplete rows',()=>{assert.deepEqual(tripleta.itemForRow(['12','34'],5,9),[]);assert.deepEqual(tripleta.itemForRow(['12','34','ab'],5,9),[]);});
