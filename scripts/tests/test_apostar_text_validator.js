@@ -172,6 +172,12 @@ test('accepts bracket headers and card metadata',()=>{const r=run('[Cliente X]\n
 test('supports amount suffixes on inline groups (25f)',()=>{const r=run('12 34 5f');assert.equal(r.ok,true);assert.equal(r.rows[0].montos.fijo,'5');});
 test('detects invalid amount text appended to group',()=>{const r=run('12 34 con 5 error');assert.equal(r.ok,false);assert.ok(r.errors.some(e=>/Texto no reconocido/.test(e.message)));});
 
+test('live processor stays disabled when pasted text is empty',()=>{
+  const h=uiHarness('',[1],true);
+  assert.equal(h.updateResult.ok,true);
+  assert.equal(h.button.disabled,true);
+});
+
 test('live processor disables when selected draw is missing the destination tab',()=>{
   const textarea={value:'pick3 123 con 5',scrollTop:0},button={disabled:false,style:{}},checkbox={checked:true},errorBox={style:{},innerHTML:''};
   const doc={getElementById:id=>({procesarText:textarea,btnProcAhora:button,chkProcesar:checkbox,procErrores:errorBox}[id]||null)};
