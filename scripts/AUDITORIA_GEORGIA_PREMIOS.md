@@ -119,3 +119,11 @@ Pendiente de completar antes de cerrar:
 - También se rechazan formas duplicadas en el estado crudo de tablas y se añadió una prueba.
 - CI de estos commits está en ejecución; aún no se marca como validado hasta que termine el run del HEAD actual.
 - Límite pendiente: validar que cada item normal generado coincide semánticamente con las filas crudas (no solo que los IDs y los montos/formas son válidos). Esto requiere reconstrucción/cotejo por tabla y modalidad, y sigue dentro de la auditoría.
+
+
+## Hallazgo adicional crítico en la validación del POST
+
+- La vista contenía una comprobación de IDs de jugadas que referenciaba `sorteos_raw_ids`, variable que no se definía en ese flujo. Esto podía provocar una excepción al guardar y terminar en HTTP 500.
+- Se sustituyó por un helper explícito que exige que cada jugada normal tenga un ID de sorteo válido y que ese ID pertenezca a la selección enviada.
+- Se añadieron pruebas unitarias para ID presente/seleccionado, ausente, no seleccionado y booleano.
+- Este hallazgo confirma por qué la auditoría continúa con lectura del flujo real, además de pruebas previas. CI para el HEAD actual debe pasar antes de considerar la corrección verificada.
