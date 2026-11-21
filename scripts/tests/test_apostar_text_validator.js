@@ -13,6 +13,7 @@ vm.runInNewContext(template.slice(start,end)+';this.helpers={normalize:_procNorm
 const h=sandbox.helpers;
 function run(text){return validate(text,h);}
 
+test('accepts T/D shorthand with a following amount',()=>{assert.equal(run('T 7 con 25').ok,true);assert.equal(run('D 8 1 5 con 50').ok,true);});
 test('accepts inline traditional numbers and fixed amount',()=>{const r=run('12 34 con 5');assert.equal(r.ok,true);assert.equal(r.errors.length,0);assert.ok(r.rows.length>0);});
 test('accepts group on previous line with amount instruction',()=>{const r=run('12 34\ncon 5 y 2');assert.equal(r.ok,true);});
 test('rejects a final number group without amount',()=>{const r=run('12 34');assert.equal(r.ok,false);assert.ok(r.errors.some(e=>/último grupo/.test(e.message)));});
