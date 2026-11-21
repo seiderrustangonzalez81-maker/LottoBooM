@@ -1575,34 +1575,17 @@ def _guardar_apuesta_impl(request):
         except ValueError:
             return JsonResponse({'success': False, 'message': 'Formato de fecha inválido. Use YYYY-MM-DD.'}, status=400)
 
-        # ═══ FIX ZONA HORARIA CUBA (Para evitar que clientes de España envíen fecha de mañana) ═══
+        # Zona horaria y regla especial Georgia: la fecha Georgia se calcula en Cuba.
         CUBA_TZ = ZoneInfo('America/Havana')
         ahora_cuba = timezone.now().astimezone(CUBA_TZ)
         hoy = ahora_cuba.date()
-
-        # Si la fecha enviada por el navegador es el día de hoy o mañana (por el desfase),
-        # la forzamos a la fecha real de Cuba.
-        # Definir si el usuario es admin (banco o superadmin)
         _es_admin_f = request.user.is_superuser or request.user.roles.filter(tipo__in=['banco', 'superadmin'], activo=True).exists()
-
-        if not _es_admin_f and abs((fecha_apuesta - hoy).days) <= 1:
-            fecha_apuesta = hoy
-        # ══════════════════════════════════════════════════════════════════════════════════════
-
-        limite_futuro = hoy + timedelta(days=365)  # FIX_FUTURO_1ANO_V1
-
-        # FIX_FUTURO_1ANO_V1 + FIX_USUARIO_URGENTE_V1
-        _u = request.user
-        _es_admin_f = _u.is_superuser or _u.roles.filter(tipo__in=['superadmin','banco'], activo=True).exists()
         _sids_early = []
         try:
             _sstr = request.POST.get('sorteos', '[]')
             _sids_early = json.loads(_sstr) if _sstr else []
         except Exception:
             pass
-        # Georgia nocturno: fecha/ventana oficial por hora de Cuba.
-        # Identificar por nombre, sin depender de un PK ni de una variante horaria del nombre.
-        _now_cuba = timezone.now().astimezone(ZoneInfo('America/Havana'))
         _georgia_ids = []
         _selected_ids = []
         try:
@@ -1614,6 +1597,13 @@ def _guardar_apuesta_impl(request):
         except (TypeError, ValueError, json.JSONDecodeError):
             _georgia_ids = []
         _georgia_selected = bool(_georgia_ids)
+
+        # La normalización convencional no debe cambiar la fecha que el selector
+        # Georgia calcula para su próximo ciclo.
+        if not _es_admin_f and not _georgia_selected and abs((fecha_apuesta - hoy).days) <= 1:
+            fecha_apuesta = hoy
+
+        limite_futuro = hoy + timedelta(days=365)  # FIX_FUTURO_1ANO_V1
         _georgia_closed_window = (_now_cuba.hour == 0 and _now_cuba.minute >= 27) or (_now_cuba.hour == 1 and _now_cuba.minute <= 0)
         _georgia_expected_date = hoy
         if not (_now_cuba.hour == 0 and _now_cuba.minute <= 26):
