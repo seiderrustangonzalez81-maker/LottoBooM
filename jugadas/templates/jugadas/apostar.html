@@ -3773,6 +3773,7 @@ function cargarConfigSorteo(sid){
       renderTabsSorteo(sid);
       renderMiniResumenSorteo(sid);
       recalcGlobal();
+      if (typeof _procActualizarUI === 'function') setTimeout(_procActualizarUI, 0);
       if (modoReplicar){
         sincronizarMatrizASlaves();
         Object.keys(sorteosActivos).forEach(function(s){ aplicarModoEsclavo(s); });
@@ -8329,27 +8330,10 @@ function _procActualizarEstado(msg, tipo){
       _filasPorTabla[t].push(f);
     });
 
-    // PRECHECK: nunca omitir sorteos/tablas/formas silenciosamente ni reemplazar filas sin aviso.
-    var _preErrores=[],_tablasDestino=[],_filasExistentes=0;
-    ordenSorteos.forEach(function(sidRaw){
-      var sid=String(sidRaw),s=sorteosActivos[sid];
-      if(!s){_preErrores.push({line:'—',message:'Sorteo '+sid+': panel no encontrado.'});return;}
-      if(!s.cargado){_preErrores.push({line:'—',message:'Sorteo '+(s.nombre||sid)+': aún no terminó de cargar.'});return;}
-      Object.keys(_filasPorTabla).forEach(function(tkTabla){
-        var st=s.tablasActivas&&s.tablasActivas[tkTabla];
-        if(!st){_preErrores.push({line:'—',message:'Sorteo '+(s.nombre||sid)+': no tiene la tabla '+tkTabla+'.'});return;}
-        var forms=st.forms||[];
-        _filasPorTabla[tkTabla].forEach(function(f){
-          Object.keys(f.montos||{}).forEach(function(form){
-            var monto=parseFloat(f.montos[form])||0;
-            if(monto<=0||form==='candado')return;
-            if(forms.indexOf(form)<0)_preErrores.push({line:'—',message:'Sorteo '+(s.nombre||sid)+': habilita la forma "'+form+'" en la pestaña '+tkTabla+' antes de procesar.'});
-          });
-        });
-        if(st.rows&&st.rows.some(function(r){return (r.num||r.numA||r.numB||Object.keys(r.montos||{}).some(function(k){return parseFloat(r.montos[k])>0;})||parseFloat(r.monto)>0);}))_filasExistentes++;
-        _tablasDestino.push((s.nombre||sid)+' / '+tkTabla);
-      });
-    });
+    // PRECHECK compartido con la UI: si falta una pestaña/forma, no habilitar Procesar ni modificar tablas.
+    var _destino=_procValidarDestinos(filas);
+    var _preErrores=_destino.errors;
+    var _filasExistentes=_destino.filasExistentes;
     if(_preErrores.length){
       _procRenderErrores({errors:_preErrores});
       _procActualizarEstado('❌ No se aplicó nada: '+_preErrores.length+' problema(s) de destino.','error');
@@ -8414,6 +8398,39 @@ function _procActualizarEstado(msg, tipo){
     }
   }
 
+  function _procValidarDestinos(filas){
+    var errors=[],filasExistentes=0,porTabla={};
+    (filas||[]).forEach(function(f){
+      var tk=f.tabla||'tabla-tradicional';
+      if(!porTabla[tk])porTabla[tk]=[];
+      porTabla[tk].push(f);
+    });
+    if(!ordenSorteos.length)errors.push({line:'—',message:'Selecciona al menos un sorteo.'});
+    ordenSorteos.forEach(function(sidRaw){
+      var sid=String(sidRaw),s=sorteosActivos[sid];
+      if(!s){errors.push({line:'—',message:'Sorteo '+sid+': panel no encontrado.'});return;}
+      if(!s.cargado){errors.push({line:'—',message:'Sorteo '+(s.nombre||sid)+': configuración aún cargando.'});return;}
+      Object.keys(porTabla).forEach(function(tk){
+        var st=s.tablasActivas&&s.tablasActivas[tk];
+        if(!st){errors.push({line:'—',message:'Sorteo '+(s.nombre||sid)+': no tiene la pestaña '+tk+'.'});return;}
+        var forms=st.forms||[];
+        porTabla[tk].forEach(function(row){
+          Object.keys(row.montos||{}).forEach(function(form){
+            var monto=Number(row.montos[form])||0;
+            if(monto>0&&forms.indexOf(form)<0)
+              errors.push({line:'—',message:'Sorteo '+(s.nombre||sid)+': habilita la forma "'+form+'" en la pestaña '+tk+'.'});
+          });
+        });
+        if(st.rows&&st.rows.some(function(r){
+          return !!(String(r.num||r.numA||r.numB||'').trim()||
+            Object.keys(r.montos||{}).some(function(k){return Number(r.montos[k])>0;})||
+            Number(r.monto)>0);
+        }))filasExistentes++;
+      });
+    });
+    return {errors:errors,filasExistentes:filasExistentes,tablas:Object.keys(porTabla)};
+  }
+
   function _procRenderErrores(validacion){
     var box=document.getElementById('procErrores');if(!box)return;
     if(!validacion||!validacion.errors.length){box.innerHTML='';box.style.display='none';return;}
@@ -8427,12 +8444,15 @@ function _procActualizarEstado(msg, tipo){
     if(!ta||!btn)return;
     var v=_procValidarTexto(ta.value||'');_procRenderErrores(v);
     var modo=!!(chk&&chk.checked),haySorteos=typeof ordenSorteos!=='undefined'&&ordenSorteos.length>0;
-    btn.disabled=!modo||!v.ok||!haySorteos;
+    var destino={errors:[]};
+    if(v.ok&&v.rows&&v.rows.length&&haySorteos)destino=_procValidarDestinos(v.rows);
+    btn.disabled=!modo||!v.ok||!haySorteos||destino.errors.length>0;
     btn.style.opacity=btn.disabled?'.5':'1';btn.style.cursor=btn.disabled?'not-allowed':'pointer';
     if(!String(ta.value||'').trim())_procActualizarEstado('Pega el texto para revisar automáticamente.','idle');
     else if(!v.ok)_procActualizarEstado('❌ '+v.errors.length+' error(es); no se procesará nada.','error');
     else if(!haySorteos)_procActualizarEstado('Texto válido. Selecciona al menos un sorteo.','idle');
-    else _procActualizarEstado('✅ '+v.rows.length+' fila(s) interpretadas; listo para procesar.','ok');
+    else if(destino.errors.length){_procRenderErrores({errors:destino.errors});_procActualizarEstado('❌ '+destino.errors.length+' problema(s) con pestañas/formas de los sorteos.','error');}
+    else {_procRenderErrores(v);_procActualizarEstado('✅ '+v.rows.length+' fila(s) válidas en sus pestañas destino. Listo para procesar.','ok');}
     return v;
   }
   (function _bindProcesarText(){
