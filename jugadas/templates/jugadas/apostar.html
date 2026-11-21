@@ -5809,6 +5809,21 @@ function _validarCandadoApuesta(){
   return errores;
 }
 
+function _serializarTablasCrudasApuesta(){
+  return ordenSorteos.map(function(sid){
+    var s=sorteosActivos[String(sid)],tablas={};
+    if(!s)return null;
+    Object.keys(s.tablasActivas||{}).forEach(function(tk){
+      var st=s.tablasActivas[tk],def=TABLE_DEFS[tk];
+      if(!st||!def)return;
+      tablas[tk]={kind:def.kind,forms:(st.forms||[]).slice(),rows:(st.rows||[]).map(function(row){
+        return {num:row.num||'',numA:row.numA||'',numB:row.numB||'',posicion:row.posicion||'1',monto:row.monto||'',montos:Object.assign({},row.montos||{})};
+      })};
+    });
+    return {sorteo_id:String(sid),nombre:s.nombre||'',tablas:tablas};
+  }).filter(Boolean);
+}
+
 function enviarApuesta(dryRun){
   if (typeof dryRun === 'undefined') dryRun = false;
 
@@ -5848,6 +5863,7 @@ function enviarApuesta(dryRun){
 
   const fd = new FormData();
   fd.append('carrito_data', JSON.stringify(items));
+  fd.append('tabla_rows', JSON.stringify(_serializarTablasCrudasApuesta()));
   fd.append('sorteos', JSON.stringify(ordenSorteos.map(x => parseInt(x))));
   fd.append('fecha', $('inpFecha').value);
   fd.append('cliente_id', clienteRealId);
