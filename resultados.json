@@ -650,5 +650,25 @@
     ],
     "fecha": "2026-11-21",
     "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Anguilla 12PM",
+    "numeros": [
+      "72",
+      "38",
+      "63"
+    ],
+    "fecha": "2026-11-21",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "La Primera",
+    "numeros": [
+      "03",
+      "59",
+      "26"
+    ],
+    "fecha": "2026-11-21",
+    "fuente": "enloteria"
   }
 ]
