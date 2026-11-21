@@ -70,7 +70,7 @@ function uiHarness(text,drawIds,checked){
   const wrapperEnd=template.indexOf('function _procProcesarTexto(){',wrapperStart);
   assert.ok(wrapperStart>=0&&wrapperEnd>wrapperStart,'validation wrapper must be present');
   const source=template.slice(helperStart,helperEnd)+template.slice(wrapperStart,wrapperEnd)+template.slice(uiStart,uiEnd)+';this.update=_procActualizarUI;';
-  const sandbox={document:doc,window:{ApostarTextValidator:validate},ordenSorteos:drawIds||[],_procActualizarEstado:function(){},};
+  const sandbox={document:doc,window:{ApostarTextValidator:{validate:validate}},ordenSorteos:drawIds||[],_procActualizarEstado:function(){},};
   vm.runInNewContext(source,sandbox);
   const updateResult=sandbox.update();
   return {button,checkbox,errorBox,textarea,updateResult};
