@@ -46,3 +46,24 @@ Rama de trabajo: `audit/repository-alignment`. No modificar `main` ni fusionar P
 ## Estado
 
 Este documento registra hallazgos de lectura del código; no certifica pruebas ejecutadas ni una corrección terminada. Los cambios de lógica financiera/fechas deben ir acompañados de tests y ejecución de CI antes de declarar el paquete listo.
+
+## Regla operativa de fecha y ventana para Georgia (establecida por el usuario)
+
+Esta regla prevalece sobre cualquier ajuste automático anterior que reste o sume días por el nombre del sorteo, el ID fijo, la zona horaria del navegador o una fecha enviada por el cliente. Hora de referencia: **America/Havana**.
+
+- **00:00:00–00:26:59:** la apuesta de Georgia corresponde al resultado cuya fecha efectiva es **el día Cuba en curso**. Se acepta hasta el minuto 00:26 inclusive; a partir de 00:27 se cierra esta ventana.
+- **00:27:00–01:00:59:** Georgia está cerrado para el ciclo de madrugada. No se acepta a clientes/comerciales ni se traslada silenciosamente al siguiente ciclo. Banco/superadmin pueden cargar fuera de tiempo conforme a sus permisos, pero deben conservar la fecha del ciclo que cargan explícitamente y quedar sujetos a validación/reconciliación.
+- **01:01:00–23:59:59:** la apuesta corresponde al **próximo ciclo de Georgia**, cuya fecha efectiva se deriva del instante de sorteo convertido a hora Cuba; el selector debe mostrar la fecha del siguiente ciclo (normalmente el día siguiente), y no una fecha basada en UTC del navegador.
+- La regla se aplica únicamente a Georgia nocturno; si el envío contiene otros sorteos, sus fechas no se desplazan por la regla Georgia.
+- El backend es autoritativo; el frontend solo refleja el cálculo. Se rechaza la manipulación de fecha para clientes/comerciales y no se debe guardar una fecha de Georgia inferida por `toISOString()` ni por un ID hard-coded.
+- La fecha efectiva guardada debe ser estable para jugadas, boletas, premios, resultados, reportes y auditoría. Cambiar el día del sistema no debe reetiquetar registros ya persistidos.
+
+### Pruebas obligatorias de límites
+
+- Cuba 00:00, 00:26:59 → fecha efectiva del día en curso; aceptada.
+- Cuba 00:27:00, 00:59:59 y 01:00:59 → ciclo de madrugada cerrado para clientes/comerciales; rechazada sin auto-traslado.
+- Cuba 01:01:00 y 23:59:59 → siguiente ciclo Georgia; fecha efectiva del siguiente resultado.
+- Verificar cambios de offset de Georgia y Cuba y el override UTC−4 vigente hasta la fecha documentada; conversión debe basarse en el instante del sorteo, no en el offset del navegador.
+- POST mixto Georgia + otro sorteo → fecha especial solo para Georgia.
+
+**Estado:** regla de negocio establecida y documentada; aún no certificada como implementada en runtime. La implementación debe resolver fecha por sorteo en backend y actualizar UI/tests antes de declararla completa.
