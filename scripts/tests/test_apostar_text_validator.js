@@ -188,6 +188,30 @@ test('rejects a final number group without amount',()=>{const r=run('12 34');ass
 test('rejects unknown tokens instead of silently dropping them',()=>{const r=run('12 34 blabla con 5');assert.equal(r.ok,false);assert.ok(r.errors.some(e=>/Token no reconocido/.test(e.message)));});
 test('rejects zero amount',()=>{const r=run('12 34 con 0');assert.equal(r.ok,false);assert.ok(r.errors.some(e=>/mayores que cero/.test(e.message)));});
 test('routes Pick4 explicit text into Pick4 and validates digit length',()=>{const r=run('pick4 1234 con 5');assert.equal(r.ok,true,JSON.stringify(r.errors));assert.equal(r.rows[0].tabla,'tabla-pick4');assert.equal(r.rows[0].montos.pick4,'5');const bad=run('pick4 123 con 5');assert.equal(bad.ok,false);});
+test('routes every supported modality to its destination table',()=>{
+  const cases=[
+    ['pick2 12 34 con 5','tabla-tradicional','pick2'],
+    ['pf 12 34 con 5','tabla-tradicional','pf'],
+    ['pick3 123 456 con 5','tabla-pick3','pick3'],
+    ['pick4 1234 5678 con 5','tabla-pick4','pick4'],
+    ['pick5 12345 67890 con 5','tabla-pick5','pick5'],
+    ['centenas corridas 123 456 con 5','tabla-centenas','centenas corridas'],
+    ['12 34 vs 56 78 con 5','tabla-vs','vs'],
+    ['12 vspf 34 con 5','tabla-vspf','vspf'],
+    ['12 vspick2 34 con 5','tabla-vspick2','vspick2'],
+    ['12 34 pick2vspf 56 con 5','tabla-pick2vspf','pick2vspf'],
+    ['vs100 12 34 con 5','tabla-vs100','vs100'],
+    ['pos 2 12 34 con 5','tabla-posiciones','posicion'],
+    ['tripleta 12 34 56 con 5','tabla-tripleta','tripleta'],
+    ['solo parlet 12 34 56 con 5','tabla-solo-parlet','parlet']
+  ];
+  cases.forEach(([text,table,form])=>{
+    const result=run(text);
+    assert.equal(result.ok,true,text+': '+JSON.stringify(result.errors));
+    assert.equal(result.rows[0].tabla,table,text);
+    assert.ok(result.rows[0].montos&&result.rows[0].montos[form]||result.rows[0].monto,text);
+  });
+});
 test('accepts explicit pairlets completed with "cada parle"',()=>{const r=run('12x34\n13x14\ncada parle 2');assert.equal(r.ok,true);});
 test('rejects orphan instruction',()=>{const r=run('con 5');assert.equal(r.ok,false);});
 test('rejects mixed 2- and 3-digit groups',()=>{const r=run('12 123 con 5');assert.equal(r.ok,false);assert.ok(r.errors.some(e=>/No mezcles/.test(e.message)));});
