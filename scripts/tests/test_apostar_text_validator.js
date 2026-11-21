@@ -63,7 +63,10 @@ function uiHarness(text,drawIds,checked){
   const doc={getElementById:(id)=>({procesarText:textarea,btnProcAhora:button,chkProcesar:checkbox,procErrores:errorBox}[id]||null)};
   const helperStart=template.indexOf('function _procNormalizarTexto(texto){');
   const helperEnd=template.indexOf('function _procValidarTexto(texto){',helperStart);
-  const source=template.slice(helperStart,helperEnd)+extractFunction('_procValidarTexto')+extractFunction('_procRenderErrores')+extractFunction('_procActualizarUI')+';this.update=_procActualizarUI;';
+  const uiStart=template.indexOf('function _procRenderErrores');
+  const uiEnd=template.indexOf('  (function _bindProcesarText',uiStart);
+  assert.ok(uiStart>=0&&uiEnd>uiStart,'live UI helpers must be present');
+  const source=template.slice(helperStart,helperEnd)+extractFunction('_procValidarTexto')+template.slice(uiStart,uiEnd)+';this.update=_procActualizarUI;';
   const sandbox={document:doc,window:{ApostarTextValidator:validate},ordenSorteos:drawIds||[],_procActualizarEstado:function(){},};
   vm.runInNewContext(source,sandbox);
   sandbox.update();
