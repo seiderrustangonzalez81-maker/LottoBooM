@@ -39,10 +39,10 @@
       var residual=String(str||'').toLowerCase().replace(/\d+(?:\.\d+)?/g,' ').replace(/\b(cada|con|y|f|c|fijo|corridos?|parlet|parle|parl|palet|parler|parley|candado|candad|candao|kandado|canado|caandado)\b/gi,' ').replace(/[🔒🔐🔓]/g,' ').replace(/[\s:]+/g,' ').trim();
       return residual?{ok:false,message:'Texto no reconocido en la instrucción: '+residual+'.'}:{ok:true,montos:m};
     }
-    var unsupported=/\b(pick2|pf|pick4|pick5|vs|vspf|vspick2|pick2vspf|vs100|posicion|tripleta|centenas? corridas?)\b/i;
+    var modality=/\b(pick2|pf|pick3|pick4|pick5|vs|vspf|vspick2|pick2vspf|vs100|pos(?:icion)?|tripleta|centenas?\s+corridas?|solo\s+parlet)\b/i;
     for(var i=0;i<lines.length;i++){
       var line=String(lines[i]||'').trim();if(ignore(line))continue;hasContent=true;
-      if(unsupported.test(line)){err(i+1,'Forma de juego aún no admitida por el parser: '+line.match(unsupported)[0]+'.');continue;}
+      if(modality.test(line)){var routed=[];try{routed=parseText(line)||[];}catch(_){} if(!routed.length){err(i+1,'No se pudo interpretar la modalidad o sus números/monto: '+line,rawToken(rawLines[i]));}else{var amountTokens=line.match(/\d+(?:\.\d+)?/g)||[];if(!amountTokens.length||Number(amountTokens[amountTokens.length-1])<=0)err(i+1,'El monto debe ser mayor que cero.');}continue;}
       var pair=line.match(/^\s*([0-9]{2})\s*[*xX]\s*([0-9]{2})\s*(?:[-\s]\s*([0-9]+(?:\.[0-9]+)?))?\s*$/);
       if(pair){if(pair[3]&&Number(pair[3])<=0)err(i+1,'El monto del parlet debe ser mayor que cero.');else if(!pair[3])explicitPairs++;continue;}
       if(/^cada\s+parlet\b/i.test(line)){var each=instruction(line);if(!explicitPairs)err(i+1,'“Cada parlet” no tiene pares explícitos anteriores.');else if(!each.ok)err(i+1,each.message);else explicitPairs=0;continue;}
