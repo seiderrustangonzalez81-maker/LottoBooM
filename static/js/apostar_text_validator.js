@@ -17,11 +17,12 @@
       var lengths=[];
       for(var i=0;i<tokens.length;i++){
         var t=tokens[i];
-        if(t==='T'||t==='D'||/^[TD]\d$/.test(t)||t==='PA'||t==='PAREJAS'||/^\d{2}V$/.test(t))continue;
+        if(t==='T'||t==='D'||/^[TD]\d$/.test(t)||t==='PA'||t==='PAREJAS'||t==='PICK3'||/^\d{2}V$/.test(t))continue;
         if(/^\d+$/.test(t)){if(t.length>4)return {ok:false,message:'Número demasiado largo: '+t+'. Pick 4/5 aún no está admitido.'};if(t.length===1)return {ok:false,message:'Dígito aislado '+t+'. Usa T/D o escribe el número completo.'};lengths.push(t.length);continue;}
         return {ok:false,message:'Token no reconocido: '+t+'.'};
       }
-      if(lengths.indexOf(2)>=0&&lengths.indexOf(3)>=0)return {ok:false,message:'No mezcles números de 2 y 3 dígitos en el mismo grupo.'};\n      if(tokens.indexOf('PICK3')>=0&&lengths.some(function(n){return n!==3;}))return {ok:false,message:'Pick3 requiere números de 3 dígitos.'};
+      if(lengths.indexOf(2)>=0&&lengths.indexOf(3)>=0)return {ok:false,message:'No mezcles números de 2 y 3 dígitos en el mismo grupo.'};
+      if(tokens.indexOf('PICK3')>=0&&lengths.some(function(n){return n!==3;}))return {ok:false,message:'Pick3 requiere números de 3 dígitos.'};
       return {ok:true};
     }
     function instruction(str){
@@ -37,7 +38,7 @@
       if(unsupported.test(line)){err(i+1,'Forma de juego aún no admitida por el parser: '+line.match(unsupported)[0]+'.');continue;}
       var pair=line.match(/^\s*([0-9]{2})\s*[*xX]\s*([0-9]{2})\s*(?:[-\s]\s*([0-9]+(?:\.[0-9]+)?))?\s*$/);
       if(pair){if(pair[3]&&Number(pair[3])<=0)err(i+1,'El monto del parlet debe ser mayor que cero.');else if(!pair[3])explicitPairs++;continue;}
-      if(/^cada\s+parle\b/i.test(line)){var each=instruction(line);if(!explicitPairs)err(i+1,'“Cada parlet” no tiene pares explícitos anteriores.');else if(!each.ok)err(i+1,each.message);else explicitPairs=0;continue;}
+      if(/^cada\s+parlet\b/i.test(line)){var each=instruction(line);if(!explicitPairs)err(i+1,'“Cada parlet” no tiene pares explícitos anteriores.');else if(!each.ok)err(i+1,each.message);else explicitPairs=0;continue;}
       if(suffixOnly(line)){var suf=instruction(line);if(!suf.ok)err(i+1,suf.message);else if(pending)pending=false;else err(i+1,'Monto sin grupo de números asociado.');continue;}
       if(/^(con|candado|parlet|parle|parl|palet|parler|parley)\b/i.test(line)||/^[🔒🔐🔓]/.test(line)){var only=instruction(line);if(!only.ok)err(i+1,only.message);else if(pending)pending=false;else if(explicitPairs&&(only.montos.parlet||only.montos.candado))explicitPairs=0;else err(i+1,'Instrucción sin números anteriores.');continue;}
       var pos=detectInstruction(line);
