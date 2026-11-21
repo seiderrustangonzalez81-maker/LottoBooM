@@ -72,8 +72,8 @@ function uiHarness(text,drawIds,checked){
   const source=template.slice(helperStart,helperEnd)+template.slice(wrapperStart,wrapperEnd)+template.slice(uiStart,uiEnd)+';this.update=_procActualizarUI;';
   const sandbox={document:doc,window:{ApostarTextValidator:validate},ordenSorteos:drawIds||[],_procActualizarEstado:function(){},};
   vm.runInNewContext(source,sandbox);
-  sandbox.update();
-  return {button,checkbox,errorBox,textarea};
+  const updateResult=sandbox.update();
+  return {button,checkbox,errorBox,textarea,updateResult};
 }
 test('live processor button enables only for valid text, mode and selected draw',()=>{
   const valid=uiHarness('12 34 con 5',[1],true);assert.equal(valid.updateResult.ok,true,JSON.stringify(valid.updateResult));assert.equal(valid.button.disabled,false,JSON.stringify({validation:valid.updateResult,checkbox:valid.checkbox}));
