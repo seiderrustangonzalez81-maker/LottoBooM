@@ -1943,7 +1943,11 @@ def _guardar_apuesta_impl(request):
                                 'message': f'⛔ Números restringidos para "{sorteo.nombre}": {", ".join(restringidos)}.'
                             }, status=400)
             except Exception as e:
-                logger.warning(f"Validación de números restringidos omitida: {e}")
+                logger.exception("No se pudo verificar números restringidos; apuesta rechazada.")
+                return JsonResponse({
+                    'success': False,
+                    'message': 'No se pudo verificar la lista de números restringidos. No se guardó la apuesta; inténtalo de nuevo.',
+                }, status=503)
 
         # FIX_RELAJAR_FONDO_V1: banco/comercial/superadmin pueden apostar
         # si el cliente tiene CUALQUIER relación con el gestor (Fondo, Postpago
@@ -1951,12 +1955,9 @@ def _guardar_apuesta_impl(request):
         def _tiene_relacion_gestor(_cliente, _gestor):
             if Fondo.objects.filter(usuario=_cliente, asignado_por=_gestor, activo=True).exists():
                 return True
-            try:
-                from roles.models import Postpago as _PP
-                if _PP.objects.filter(cliente=_cliente, gestor=_gestor, activo=True).exists():
-                    return True
-            except Exception:
-                pass
+            from roles.models import Postpago as _PP
+            if _PP.objects.filter(cliente=_cliente, gestor=_gestor, activo=True).exists():
+                return True
             if Subordinacion.objects.filter(subordinado=_cliente, jefe=_gestor, activo=True).exists():
                 return True
             return False
