@@ -1,3 +1,15 @@
+import os
+import sys
+from pathlib import Path
+
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(PROJECT_ROOT))
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "LottoBooM.settings")
+os.environ.setdefault("DEBUG", "true")
+os.environ.setdefault("SECRET_KEY", "ci-only-not-a-production-secret")
+import django
+django.setup()
+
 import unittest
 from django.core.exceptions import ValidationError
 from sorteos.forms import SorteoForm
