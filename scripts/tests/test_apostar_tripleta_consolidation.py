@@ -7,7 +7,30 @@ os.environ.setdefault("SECRET_KEY", "ci-only-not-a-production-secret")
 import django
 django.setup()
 
-from jugadas.views import _consolidar_tripletas
+from jugadas.views import _consolidar_tripletas, _validar_items_payload
+
+
+class PayloadValidationTests(unittest.TestCase):
+    def test_valid_payload_item(self):
+        self.assertEqual(_validar_items_payload([{"tipo":"fijo","numero":"12","monto":"1.25","sorteo_id":3}]), [])
+
+    def test_rejects_zero_negative_and_nonfinite_amounts(self):
+        for amount in ["0", "-2", "NaN", "Infinity", ""]:
+            self.assertTrue(_validar_items_payload([{"tipo":"fijo","numero":"12","monto":amount}]), amount)
+
+    def test_rejects_more_than_two_decimals_and_overflow(self):
+        self.assertTrue(_validar_items_payload([{"tipo":"fijo","numero":"12","monto":"1.001"}]))
+        self.assertTrue(_validar_items_payload([{"tipo":"fijo","numero":"12","monto":"100000000.00"}]))
+
+    def test_rejects_invalid_shape_empty_type_or_number(self):
+        self.assertTrue(_validar_items_payload("not a list"))
+        self.assertTrue(_validar_items_payload([None]))
+        self.assertTrue(_validar_items_payload([{"tipo":"","numero":"12","monto":"1"}]))
+        self.assertTrue(_validar_items_payload([{"tipo":"fijo","numero":"","monto":"1"}]))
+
+    def test_rejects_invalid_sorteo_id_and_position(self):
+        self.assertTrue(_validar_items_payload([{"tipo":"fijo","numero":"12","monto":"1","sorteo_id":"x"}]))
+        self.assertTrue(_validar_items_payload([{"tipo":"posicion","numero":"12","monto":"1","posicion":"4"}]))
 
 
 class TripletaConsolidationTests(unittest.TestCase):
