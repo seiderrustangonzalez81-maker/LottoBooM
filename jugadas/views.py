@@ -242,19 +242,19 @@ def _validar_items_payload(items, etiqueta='jugadas', validar_numero=True):
             formas_4 = {'pick4'}
             formas_5 = {'pick5'}
             formas_pares = {'parlet', 'candado', 'vs', 'vspf', 'vspick2', 'pick2vspf'}
-            if tipo_lower in formas_2 and not re.fullmatch(r'\\d{2}', numero):
+            if tipo_lower in formas_2 and not re.fullmatch(r'\d{2}', numero):
                 errores.append(f'{etiqueta} #{idx}: {tipo} requiere un número de dos dígitos.')
-            elif tipo_lower in formas_3 and not re.fullmatch(r'\\d{3}', numero):
+            elif tipo_lower in formas_3 and not re.fullmatch(r'\d{3}', numero):
                 errores.append(f'{etiqueta} #{idx}: {tipo} requiere un número de tres dígitos.')
-            elif tipo_lower in formas_4 and not re.fullmatch(r'\\d{4}', numero):
+            elif tipo_lower in formas_4 and not re.fullmatch(r'\d{4}', numero):
                 errores.append(f'{etiqueta} #{idx}: Pick 4 requiere cuatro dígitos.')
-            elif tipo_lower in formas_5 and not re.fullmatch(r'\\d{5}', numero):
+            elif tipo_lower in formas_5 and not re.fullmatch(r'\d{5}', numero):
                 errores.append(f'{etiqueta} #{idx}: Pick 5 requiere cinco dígitos.')
-            elif tipo_lower in formas_pares and not re.fullmatch(r'\\d{2}[xX]\\d{2}', numero):
+            elif tipo_lower in formas_pares and not re.fullmatch(r'\d{2}[xX]\d{2}', numero):
                 errores.append(f'{etiqueta} #{idx}: {tipo} requiere un par NNxNN.')
-            elif tipo_lower == 'tripleta' and (len(numero.split()) != 3 or not all(re.fullmatch(r'\\d{2}', n) for n in numero.split())):
+            elif tipo_lower == 'tripleta' and (len(numero.split()) != 3 or not all(re.fullmatch(r'\d{2}', n) for n in numero.split())):
                 errores.append(f'{etiqueta} #{idx}: Tripleta requiere exactamente tres números de dos dígitos.')
-            elif tipo_lower == 'superparlet' and not re.fullmatch(r'(?:\\d{2}[xX]\\d{2})(?:\\s+\\d{2}[xX]\\d{2})*', numero):
+            elif tipo_lower == 'superparlet' and not re.fullmatch(r'(?:\d{2}[xX]\d{2})(?:\s+\d{2}[xX]\d{2})*', numero):
                 errores.append(f'{etiqueta} #{idx}: Superparlet requiere pares NNxNN separados por espacios.')
             elif tipo_lower not in formas_2 | formas_3 | formas_4 | formas_5 | formas_pares | {'tripleta', 'superparlet'}:
                 errores.append(f'{etiqueta} #{idx}: forma de juego no reconocida: {tipo}.')
