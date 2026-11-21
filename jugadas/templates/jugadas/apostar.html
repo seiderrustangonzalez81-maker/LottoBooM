@@ -8101,7 +8101,8 @@ function _procActualizarEstado(msg, tipo){
   }
 
   function _procParsearTexto(texto){
-    var lineas=String(texto||'').split(/\r?\n/).map(function(l){return l.trim();}).filter(function(l){return l&&!/^\[/.test(l)&&!/^tarjeta|^tarieta|^saldo/i.test(l);});
+    var lineas=String(texto||'').split(/\r?
+/).map(function(l){return l.trim();}).filter(function(l){return l&&!/^\[/.test(l)&&!/^tarjeta|^tarieta|^saldo/i.test(l);});
     var filas=[],pendiente=null,pares=[];
     function emitir(){
       if(!pendiente)return;
@@ -8121,7 +8122,9 @@ function _procActualizarEstado(msg, tipo){
     for(var i=0;i<lineas.length;i++){
       var line=lineas[i],m,parts;
       // Explicit pairs and "each pair" continuation
-      m=line.match(/^((?:\d{2}[x*]\d{2}\s*)+)\s+con\s+(\d+(?:\.\d+)?)$/i);\n      if(m){emitir();m[1].trim().split(/\s+/).forEach(function(pair){filas.push({num:pair.toLowerCase().replace('*','x'),montos:{fijo:'',corridos:'',parlet:m[2]},tabla:'tabla-tradicional'});});continue;}\n      m=line.match(/^([0-9]{2})\s*[x*]\s*([0-9]{2})(?:\s*(?:-|con)?\s*(\d+(?:\.\d+)?))?$/i);
+      m=line.match(/^((?:\d{2}[x*]\d{2}\s*)+)\s+con\s+(\d+(?:\.\d+)?)$/i);
+      if(m){emitir();m[1].trim().split(/\s+/).forEach(function(pair){filas.push({num:pair.toLowerCase().replace('*','x'),montos:{fijo:'',corridos:'',parlet:m[2]},tabla:'tabla-tradicional'});});continue;}
+      m=line.match(/^([0-9]{2})\s*[x*]\s*([0-9]{2})(?:\s*(?:-|con)?\s*(\d+(?:\.\d+)?))?$/i);
       if(m){emitir();filas.push({num:m[1]+'x'+m[2],montos:{fijo:'',corridos:'',parlet:m[3]||''},tabla:'tabla-tradicional'});pares.push(filas.length-1);continue;}
       if(/^cada\s+parlet/i.test(line)){m=line.match(/(\d+(?:\.\d+)?)/);if(m)pares.forEach(function(ix){filas[ix].montos.parlet=m[1];});continue;}
       // Modality syntax is explicit and wins over traditional parsing.
@@ -8141,7 +8144,9 @@ function _procActualizarEstado(msg, tipo){
       if(m&&/^pos/i.test(line)){emitir();var npos=nums(m[2]);if(npos.length)filas.push({posicion:m[1],num:npos.join(' '),monto:m[3],tabla:'tabla-posiciones'});continue;}
       m=line.match(/^tripleta\s+(.+?)\s+con\s+(\d+(?:\.\d+)?)$/i);
       if(m){emitir();var nt=nums(m[1]);if(nt.length===3)rowSingle('tabla-tripleta','tripleta',m[1],m[2]);continue;}
-      m=line.match(/^(.+?)\s+pick2\s+vspf\s+(.+?)\s+con\s+(\d+(?:\.\d+)?)$/i);\n      if(m){emitir();rowVS('tabla-pick2vspf','pick2vspf',m[1],m[2],m[3]);continue;}\n      // VS family with both groups separated by "vs", e.g. 12 34 vs 56 78 con 5
+      m=line.match(/^(.+?)\s+pick2\s+vspf\s+(.+?)\s+con\s+(\d+(?:\.\d+)?)$/i);
+      if(m){emitir();rowVS('tabla-pick2vspf','pick2vspf',m[1],m[2],m[3]);continue;}
+      // VS family with both groups separated by "vs", e.g. 12 34 vs 56 78 con 5
       m=line.match(/^(.+?)\s+(vs|vspf|vspick2|pick2vspf)\s+(.+?)\s+con\s+(\d+(?:\.\d+)?)$/i);
       if(m){emitir();var vv=m[2].toLowerCase(),tb=vv==='vs'?'tabla-vs':vv==='vspf'?'tabla-vspf':vv==='vspick2'?'tabla-vspick2':'tabla-pick2vspf';rowVS(tb,vv,m[1],m[3],m[4]);continue;}
       // Traditional instructions / trailing amount.
