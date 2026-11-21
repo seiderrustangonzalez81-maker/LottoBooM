@@ -149,3 +149,17 @@ Pendiente de completar antes de cerrar:
 - La consulta de números restringidos también era fail-open: ante una excepción se omitía la verificación y el POST continuaba. Se cambió a HTTP 503 con rechazo explícito cuando no puede comprobarse.
 - La comprobación de relación con gestor tenía un `except: pass` alrededor de la consulta de Postpago. Se eliminó ese fail-open silencioso; una consulta fallida ya no se interpreta como ausencia de relación y el error se propaga para detener el flujo.
 - Requiere prueba práctica con fallo de base de datos y pruebas de roles/relaciones (Fondo, Postpago y Subordinación).
+
+
+## Auditoría inicial del procesamiento de premios (pendiente de corrección segura)
+
+Revisión de `resultados/procesamiento.py`, `resultados/reconciliacion.py`, `resultados/models.py`:
+
+1. El worker procesa resultados en un thread daemon y no hay mecanismo durable de cola. Reinicios del proceso pueden interrumpir el cálculo.
+2. Si falla el ingreso automático al fondo, el premio se deja pendiente, pero el resultado puede terminar marcado `completado` sin registrar un estado parcial/errores de pago estructurado.
+3. Reprocesar resultados existentes omite premios que ya existen, por lo que un premio pendiente por fallo de pago no se reintenta automáticamente.
+4. `reconciliar_premio_jugada` crea el premio y después intenta pagar, con excepción de pago absorbida; necesita transacción/idempotencia y ruta de reintento explícita.
+5. El modelo `Premio` no muestra restricción única por jugada en Meta. El chequeo previo por existencia no evita duplicados ante ejecuciones concurrentes.
+6. El signal post_save de Resultado recalcula y vuelve a procesar al editar, pero requiere verificar reversión de premios ya pagados cuando el resultado cambia. No se debe corregir balances con resta simple sin registro financiero de reverso.
+
+No se aplican todavía cambios de pagos/reversos en esta fase: son operaciones financieras y deben tener pruebas de idempotencia, concurrencia, reintento, premio pendiente, cambio de resultado y reverso auditado antes de tocar la lógica.
