@@ -8344,11 +8344,13 @@ function _procActualizarEstado(msg, tipo){
         if(!st){errors.push({line:'—',message:'Sorteo '+(s.nombre||sid)+': no tiene la pestaña '+tk+'.'});return;}
         var forms=st.forms||[];
         var def=(typeof TABLE_DEFS!=='undefined')?TABLE_DEFS[tk]:null;
+        var canonicalForms=def?forms.map(function(form){return resolverForma(form,def);}):forms.slice();
         if(def&&window.ApostarTableValidator&&typeof window.ApostarTableValidator.validateRows==='function'){
           try{
             var mappedRows=porTabla[tk].map(function(row){return _procCrearFilaDestino(row,st,def.kind,tk);});
-            var canonicalForms=forms.map(function(form){return resolverForma(form,def);});
-            var tableErrors=window.ApostarTableValidator.validateRows(mappedRows,def,canonicalForms,{expandToken:expandirToken,numerosEnFila:numerosEnFila,contarParletsDeFila:contarParletsDeFila});
+            var rowsForValidation=mappedRows.map(function(row){var copy=Object.assign({},row);if(copy.montos){var canonicalMontos={};Object.keys(copy.montos).forEach(function(form){var key=resolverForma(form,def);canonicalMontos[key]=(Number(canonicalMontos[key])||0)+(Number(copy.montos[form])||0);});copy.montos=canonicalMontos;}return copy;});
+            canonicalForms=canonicalForms.filter(function(form,index,list){return list.indexOf(form)===index;});
+            var tableErrors=window.ApostarTableValidator.validateRows(rowsForValidation,def,canonicalForms,{expandToken:expandirToken,numerosEnFila:numerosEnFila,contarParletsDeFila:contarParletsDeFila});
             tableErrors.forEach(function(te){errors.push({line:'—',message:'Sorteo '+(s.nombre||sid)+', '+tk+', fila '+te.row+': '+te.message});});
             if(def.kind==='multi'&&canonicalForms.indexOf('candado')>=0&&canonicalForms.indexOf('parlet')>=0){
               porTabla[tk].forEach(function(row,ri){var cand=Number(row.montos&&row.montos.candado)||0,par=Number(row.montos&&row.montos.parlet)||0;if(cand<=0)return;var plays=contarParletsDeFila(row,def.numDigits,def.maxNums),expected=Math.round(par*plays*100)/100;if(plays<1||par<=0||Math.abs(cand-expected)>0.01)errors.push({line:'—',message:'Sorteo '+(s.nombre||sid)+', '+tk+', fila '+(ri+1)+': Candado debe coincidir con Parlet × combinaciones.'});});
@@ -8358,12 +8360,12 @@ function _procActualizarEstado(msg, tipo){
         porTabla[tk].forEach(function(row){
           Object.keys(row.montos||{}).forEach(function(form){
             var monto=Number(row.montos[form])||0;
-            if(monto>0&&forms.indexOf(form)<0)
+            if(monto>0&&canonicalForms.indexOf(resolverForma(form,def))<0)
               errors.push({line:'—',message:'Sorteo '+(s.nombre||sid)+': habilita la forma "'+form+'" en la pestaña '+tk+'.'});
           });
           if(Number(row.monto)>0){
-            var formaFila=row.tipo||(forms.length===1?forms[0]:null);
-            if(!formaFila||forms.indexOf(formaFila)<0)
+            var formaFila=row.tipo||(forms.length===1?resolverForma(forms[0],def):null);
+            if(!formaFila||canonicalForms.indexOf(resolverForma(formaFila,def))<0)
               errors.push({line:'—',message:'Sorteo '+(s.nombre||sid)+': no se pudo verificar la forma de juego de la pestaña '+tk+'.'});
           }
         });
