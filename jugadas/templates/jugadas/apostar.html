@@ -5712,6 +5712,34 @@ function _validarTripletasApuesta(){
   return errores;
 }
 
+function _validarCandadoApuesta(){
+  var errores=[];
+  ordenSorteos.forEach(function(sid){
+    var s=sorteosActivos[String(sid)];if(!s)return;
+    Object.keys(s.tablasActivas||{}).forEach(function(tk){
+      var st=s.tablasActivas[tk],def=TABLE_DEFS[tk];
+      if(!st||!def||!(st.forms||[]).includes('candado'))return;
+      (st.rows||[]).forEach(function(row,idx){
+        var montoCand=parseFloat(row.montos&&row.montos.candado)||0;
+        if(montoCand<=0)return;
+        if(!(st.forms||[]).includes('parlet')){
+          errores.push({sorteo:s.nombre||sid,mensaje:'Candado · fila '+(idx+1)+': habilita Parlet también; Candado solo no genera items ni suma al total.'});return;
+        }
+        var montoPar=parseFloat(row.montos&&row.montos.parlet)||0;
+        var nPlays=contarParletsDeFila(row,def.numDigits,def.maxNums);
+        if(nPlays<1||montoPar<=0){
+          errores.push({sorteo:s.nombre||sid,mensaje:'Candado · fila '+(idx+1)+': no hay combinaciones Parlet válidas para respaldar el monto.'});return;
+        }
+        var esperado=Math.round(montoPar*nPlays*100)/100;
+        if(Math.abs(montoCand-esperado)>0.01){
+          errores.push({sorteo:s.nombre||sid,mensaje:'Candado · fila '+(idx+1)+': monto espejo no coincide con Parlet × combinaciones. Revisa la fila.'});
+        }
+      });
+    });
+  });
+  return errores;
+}
+
 function enviarApuesta(dryRun){
   if (typeof dryRun === 'undefined') dryRun = false;
 
@@ -5730,9 +5758,11 @@ function enviarApuesta(dryRun){
   // ═══ FIN GUARD_ENVIAR_APUESTA_V1 ═══
 
   var _erroresTripleta=_validarTripletasApuesta();
-  if(_erroresTripleta.length){
-    _erroresTripleta.slice(0,5).forEach(function(e){toast('❌ '+e.sorteo+': '+e.mensaje,'danger');});
-    if(_erroresTripleta.length>5)toast('Y '+(_erroresTripleta.length-5)+' error(es) de Tripleta adicionales.','warning');
+  var _erroresCandado=_validarCandadoApuesta();
+  var _erroresEspeciales=_erroresTripleta.concat(_erroresCandado);
+  if(_erroresEspeciales.length){
+    _erroresEspeciales.slice(0,5).forEach(function(e){toast('❌ '+e.sorteo+': '+e.mensaje,'danger');});
+    if(_erroresEspeciales.length>5)toast('Y '+(_erroresEspeciales.length-5)+' error(es) adicionales.','warning');
     return;
   }
   const items = recolectarItems();
