@@ -209,12 +209,12 @@
       return result;
     };
   }
-  window._borradorDraftApi = {snapshot:snapshot,isEligible:isEligible,hasNumbers:hasNumbers,clear:clearBorrador,read:readBorrador,apply:applySnapshot};
+  window._borradorDraftApi = {snapshot:snapshot,isEligible:isEligible,hasNumbers:hasNumbers,clear:clearBorrador,read:readBorrador,apply:applySnapshot,storageKey:KEY};
 
   function init(){
     attachHooks();
     hookSubmit();
-    // El borrador se limpia directamente en apostar.html al confirmar éxito
+    // Limpiar únicamente al confirmar redirección de envío exitoso.
     var snap = readBorrador();
     if (snap && !isEmpty(snap)) {
       // FIX_BORRADOR_EDAD_V1: no mostrar si tiene más de 12h (huérfano)
