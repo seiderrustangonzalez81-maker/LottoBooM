@@ -66,7 +66,10 @@ function uiHarness(text,drawIds,checked){
   const uiStart=template.indexOf('function _procRenderErrores');
   const uiEnd=template.indexOf('  (function _bindProcesarText',uiStart);
   assert.ok(uiStart>=0&&uiEnd>uiStart,'live UI helpers must be present');
-  const source=template.slice(helperStart,helperEnd)+extractFunction('_procValidarTexto')+template.slice(uiStart,uiEnd)+';this.update=_procActualizarUI;';
+  const wrapperStart=template.indexOf('function _procValidarTexto(texto){');
+  const wrapperEnd=template.indexOf('function _procProcesarTexto(){',wrapperStart);
+  assert.ok(wrapperStart>=0&&wrapperEnd>wrapperStart,'validation wrapper must be present');
+  const source=template.slice(helperStart,helperEnd)+template.slice(wrapperStart,wrapperEnd)+template.slice(uiStart,uiEnd)+';this.update=_procActualizarUI;';
   const sandbox={document:doc,window:{ApostarTextValidator:validate},ordenSorteos:drawIds||[],_procActualizarEstado:function(){},};
   vm.runInNewContext(source,sandbox);
   sandbox.update();
