@@ -8444,9 +8444,10 @@ function _procActualizarEstado(msg, tipo){
     if(!ta||!btn)return;
     var v=_procValidarTexto(ta.value||'');_procRenderErrores(v);
     var modo=!!(chk&&chk.checked),haySorteos=typeof ordenSorteos!=='undefined'&&ordenSorteos.length>0;
+    var hayTexto=!!String(ta.value||'').trim(),hayFilas=!!(v.rows&&v.rows.length);
     var destino={errors:[]};
-    if(v.ok&&v.rows&&v.rows.length&&haySorteos)destino=_procValidarDestinos(v.rows);
-    btn.disabled=!modo||!v.ok||!haySorteos||destino.errors.length>0;
+    if(v.ok&&hayFilas&&haySorteos)destino=_procValidarDestinos(v.rows);
+    btn.disabled=!modo||!hayTexto||!v.ok||!hayFilas||!haySorteos||destino.errors.length>0;
     btn.style.opacity=btn.disabled?'.5':'1';btn.style.cursor=btn.disabled?'not-allowed':'pointer';
     if(!String(ta.value||'').trim())_procActualizarEstado('Pega el texto para revisar automáticamente.','idle');
     else if(!v.ok)_procActualizarEstado('❌ '+v.errors.length+' error(es); no se procesará nada.','error');
