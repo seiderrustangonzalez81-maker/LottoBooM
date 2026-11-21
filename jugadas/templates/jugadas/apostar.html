@@ -4672,6 +4672,29 @@ function newRow(forms, kind){
   return { num:'', montos };
 }
 
+function _procCrearFilaDestino(fila, st, kind){
+  var row = newRow(st.forms || [], kind);
+  if (kind === 'posiciones'){
+    row.posicion = String(fila.posicion || '1');
+    row.num = String(fila.num || '');
+    row.monto = fila.monto == null ? '' : String(fila.monto);
+    return row;
+  }
+  if (kind === 'vs_groups'){
+    row.numA = String(fila.numA || '');
+    row.numB = String(fila.numB || '');
+    row.monto = fila.monto == null ? '' : String(fila.monto);
+    return row;
+  }
+  row.num = String(fila.num || '');
+  Object.keys(fila.montos || {}).forEach(function(form){
+    if (row.montos && Object.prototype.hasOwnProperty.call(row.montos, form)){
+      row.montos[form] = fila.montos[form];
+    }
+  });
+  return row;
+}
+
 function numerosEnFila(row, numDigits, maxNums){
   const num = (row.num || '').trim();
   if (!num) return { numeros: [], paresExplicitos: [] };
@@ -8361,12 +8384,7 @@ function _procActualizarEstado(msg, tipo){
         if (!st) return;  // FIX_PICK3_ROUTE_V1: sorteo no tiene esa tabla → ignorar silencioso
         var _kind = (TABLE_DEFS[tkTabla] && TABLE_DEFS[tkTabla].kind) || 'multi';
         st.rows = _filasPorTabla[tkTabla].map(function(f){
-          var r = newRow(st.forms, _kind);
-          r.num = f.num;
-          Object.keys(f.montos).forEach(function(k){
-            if (k in r.montos) r.montos[k] = f.montos[k];
-          });
-          return r;
+          return _procCrearFilaDestino(f, st, _kind);
         });
         if (!_primeraTablaAplicada) _primeraTablaAplicada = tkTabla;
         _aplicadoEsteSorteo = true;
