@@ -3948,18 +3948,14 @@ function bindColumnaActiva(cont){
 
 /* FIX_AUTO_ADD_FILA_V1 — auto-inserción de fila cuando la última tiene contenido */
 function _filaTieneContenido(row, def){
-  if (!row) return false;
+  // Solo los números deben activar la creación automática de otra fila.
+  // Un importe sin números es inválido y no debe generar filas en cascada.
+  if (!row || !def) return false;
   if (def.kind === 'posiciones') return String(row.num||'').trim() !== '';
   if (def.kind === 'vs_groups') {
     return String(row.numA||'').trim() !== '' || String(row.numB||'').trim() !== '';
   }
-  if (String(row.num||'').trim() !== '') return true;
-  if (row.montos) {
-    for (var k in row.montos) {
-      if (parseFloat(row.montos[k]) > 0) return true;
-    }
-  }
-  return false;
+  return String(row.num||'').trim() !== '';
 }
 
 function _autoAddFilaSiNecesario(cont, st, def, sid, i){
