@@ -2758,6 +2758,7 @@ D 8 1 5 con 50f y 20c" style="width:100%;padding:10px;border:1.5px solid #fdba74
 {% block extra_js %}
 <script src="{% static 'js/apostar_text_validator.js' %}?v=20261121a"></script>
 <script src="{% static 'js/apostar_tripleta.js' %}?v=20261121a"></script>
+<script src="{% static 'js/apostar_table_validation.js' %}?v=20261121a"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function(){
 'use strict';
@@ -5690,6 +5691,23 @@ $('btnPwdOk').addEventListener('click', ()=>{
   });
 });
 
+function _validarFilasApuesta(){
+  var errores=[];
+  if(!window.ApostarTableValidator||!window.ApostarTableValidator.validateRows)
+    return [{sorteo:'—',mensaje:'No está disponible el validador de filas.'}];
+  ordenSorteos.forEach(function(sid){
+    var s=sorteosActivos[String(sid)];if(!s)return;
+    Object.keys(s.tablasActivas||{}).forEach(function(tk){
+      var st=s.tablasActivas[tk],def=TABLE_DEFS[tk];if(!st||!def)return;
+      var rowErrors=window.ApostarTableValidator.validateRows(st.rows||[],def,st.forms||[],{
+        expandToken:expandirToken,numerosEnFila:numerosEnFila,contarParletsDeFila:contarParletsDeFila
+      });
+      rowErrors.forEach(function(e){errores.push({sorteo:s.nombre||sid,mensaje:tk+' · fila '+e.row+': '+e.message});});
+    });
+  });
+  return errores;
+}
+
 function _validarTripletasApuesta(){
   var errores=[];
   if(!window.ApostarTripleta||!window.ApostarTripleta.validateRow){
@@ -5757,9 +5775,10 @@ function enviarApuesta(dryRun){
   } catch(_eG){ console.warn('[GUARD_ENVIAR]', _eG); }
   // ═══ FIN GUARD_ENVIAR_APUESTA_V1 ═══
 
+  var _erroresFilas=_validarFilasApuesta();
   var _erroresTripleta=_validarTripletasApuesta();
   var _erroresCandado=_validarCandadoApuesta();
-  var _erroresEspeciales=_erroresTripleta.concat(_erroresCandado);
+  var _erroresEspeciales=_erroresFilas.concat(_erroresTripleta,_erroresCandado);
   if(_erroresEspeciales.length){
     _erroresEspeciales.slice(0,5).forEach(function(e){toast('❌ '+e.sorteo+': '+e.mensaje,'danger');});
     if(_erroresEspeciales.length>5)toast('Y '+(_erroresEspeciales.length-5)+' error(es) adicionales.','warning');
