@@ -22,6 +22,38 @@ function candadoErrors(forms,montoPar,montoCand,nPlays){
   vm.runInNewContext(template.slice(a,b)+';this.check=_validarCandadoApuesta;',sandbox);
   return sandbox.check();
 }
+
+function extractFunction(name){
+  const start=template.indexOf('function '+name+'(');
+  const end=template.indexOf('\nfunction ',start+10);
+  assert.ok(start>=0&&end>start,'function '+name+' must be present');
+  return template.slice(start,end);
+}
+function tableHarness(){
+  const source=['numerosEnFila','expandirToken','expandirGrupoVS','calcRowTotal','recolectarItemsDeSorteo'].map(extractFunction).join('\n');
+  const sandbox={TABLE_DEFS:{},sorteosActivos:{},window:{ApostarTripleta:tripleta}};
+  vm.runInNewContext(source+';this.calc=calcRowTotal;this.collect=recolectarItemsDeSorteo;',sandbox);
+  return sandbox;
+}
+function compareRowTotal(def,forms,row){
+  const h=tableHarness(),sid=1,tk='table';
+  h.TABLE_DEFS[tk]=def;
+  h.sorteosActivos[sid]={tablasActivas:{[tk]:{forms:forms,rows:[row]}}};
+  const calc=h.calc(row,forms,def.numDigits,def.kind,def.maxNums);
+  const items=h.collect(sid);
+  const actual=items.reduce((sum,it)=>sum+Number(it.monto),0);
+  assert.equal(actual,calc,def.label+': item sum should equal displayed row total');
+}
+test('table row totals match collected item sums across forms',()=>{
+  compareRowTotal({label:'Trad',kind:'multi',numDigits:2,forms:['fijo','parlet','candado']},['fijo','parlet','candado'],{num:'12 34 56',montos:{fijo:'2',parlet:'3',candado:'18'}});
+  compareRowTotal({label:'Parlet explicit',kind:'multi',numDigits:2,forms:['parlet']},['parlet'],{num:'12 34 12x34',montos:{parlet:'2'}});
+  compareRowTotal({label:'VS',kind:'vs_groups',numDigits:2,forms:['vs']},['vs'],{numA:'12 34',numB:'56 78',monto:'3'});
+  compareRowTotal({label:'VS100',kind:'single',numDigits:2,forms:['vs100']},['vs100'],{num:'12 34',montos:{vs100:'1.5'}});
+  compareRowTotal({label:'Pos',kind:'posiciones',numDigits:2,forms:['posicion']},['posicion'],{num:'12 34 56',monto:'2',posicion:'2'});
+  compareRowTotal({label:'Tripleta',kind:'single',numDigits:2,maxNums:3,forms:['tripleta']},['tripleta'],{num:'12 34 56',montos:{tripleta:'5'}});
+  compareRowTotal({label:'Pick4',kind:'single',numDigits:4,forms:['pick4']},['pick4'],{num:'1234 5678',montos:{pick4:'2'}});
+  compareRowTotal({label:'Centenas',kind:'multi',numDigits:3,forms:['centenas corridas']},['centenas corridas'],{num:'123 456',montos:{'centenas corridas':'4'}});
+});
 test('blocks candado when Parlet is not active',()=>{assert.ok(candadoErrors(['candado'],0,5,1).length>0);});
 test('blocks linked candado amounts that do not match Parlet combinations',()=>{assert.ok(candadoErrors(['parlet','candado'],2,5,3).length>0);});
 test('allows candado amount matching Parlet times combinations',()=>{assert.equal(candadoErrors(['parlet','candado'],2,6,3).length,0);});
