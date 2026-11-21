@@ -8101,19 +8101,19 @@ function _procActualizarEstado(msg, tipo){
   }
 
   function _procParsearTexto(texto){
-    var lineas=String(texto||'').split(/\\r?\\n/).map(function(l){return l.trim();}).filter(function(l){return l&&!/^\\[/.test(l)&&!/^tarjeta|^tarieta|^saldo/i.test(l);});
+    var lineas=String(texto||'').split(/\r?\n/).map(function(l){return l.trim();}).filter(function(l){return l&&!/^\[/.test(l)&&!/^tarjeta|^tarieta|^saldo/i.test(l);});
     var filas=[],pendiente=null,pares=[];
     function emitir(){
       if(!pendiente)return;
       var m=pendiente.montos||{},n=pendiente.nums||[],ns=n.join(' ');
       if(n.length&& (m.fijo||m.corridos||m.parlet||m.candado)){
-        var todos3=n.every(function(x){return /^\\d{3}$/.test(x);});
+        var todos3=n.every(function(x){return /^\d{3}$/.test(x);});
         if(todos3&&!m.candado){filas.push({num:ns,montos:{pick3:m.fijo||m.corridos||m.parlet||''},tabla:'tabla-pick3'});}
         else filas.push({num:ns,montos:{fijo:m.fijo||'',corridos:m.corridos||'',parlet:m.parlet||'',candado:m.candado||''},tabla:'tabla-tradicional'});
       }
       pendiente=null;
     }
-    function amount(s){var m=_procParsearMontos(s);return m.fijo||m.corridos||m.parlet||m.candado||((s.match(/\\bcon\\s+(\\d+(?:\\.\\d+)?)/i)||[])[1]||'');}
+    function amount(s){var m=_procParsearMontos(s);return m.fijo||m.corridos||m.parlet||m.candado||((s.match(/\bcon\s+(\d+(?:\.\d+)?)/i)||[])[1]||'');}
     function nums(s){return _procExpandirNumeros(s);}
     function splitInstr(line){var ix=_procDetectarInstruccionPos(line);return ix>0?[line.slice(0,ix).trim(),line.slice(ix).trim()]:[line,''];}
     function rowSingle(tabla,form,group,monto){if(!group||!monto)return;filas.push({num:nums(group).join(' '),montos:(form==='pick3'||form==='pick4'||form==='pick5'||form==='vs100'||form==='tripleta')?{[form]:monto}:{[form]:monto},tabla:tabla});}
@@ -8121,24 +8121,28 @@ function _procActualizarEstado(msg, tipo){
     for(var i=0;i<lineas.length;i++){
       var line=lineas[i],m,parts;
       // Explicit pairs and "each pair" continuation
-      m=line.match(/^([0-9]{2})\\s*[x*]\\s*([0-9]{2})(?:\\s*(?:-|con)?\\s*(\\d+(?:\\.\\d+)?))?$/i);
+      m=line.match(/^([0-9]{2})\s*[x*]\s*([0-9]{2})(?:\s*(?:-|con)?\s*(\d+(?:\.\d+)?))?$/i);
       if(m){emitir();filas.push({num:m[1]+'x'+m[2],montos:{fijo:'',corridos:'',parlet:m[3]||''},tabla:'tabla-tradicional'});pares.push(filas.length-1);continue;}
-      if(/^cada\\s+parlet/i.test(line)){m=line.match(/(\\d+(?:\\.\\d+)?)/);if(m)pares.forEach(function(ix){filas[ix].montos.parlet=m[1];});continue;}
+      if(/^cada\s+parlet/i.test(line)){m=line.match(/(\d+(?:\.\d+)?)/);if(m)pares.forEach(function(ix){filas[ix].montos.parlet=m[1];});continue;}
       // Modality syntax is explicit and wins over traditional parsing.
-      m=line.match(/^(?:solo\\s+)?(?:parlet|parle|parl|palet)\\s+(.+?)\\s+(?:con|parlet)\\s+(\\d+(?:\\.\\d+)?)$/i);
+      m=line.match(/^(?:solo\s+)?(?:parlet|parle|parl|palet)\s+(.+?)\s+(?:con|parlet)\s+(\d+(?:\.\d+)?)$/i);
       if(m){emitir();rowSingle('tabla-solo-parlet','parlet',m[1],m[2]);continue;}
-      m=line.match(/^(pick[345])\\s+(.+?)\\s+con\\s+(\\d+(?:\\.\\d+)?)$/i);
+      m=line.match(/^(pick2|pf)\s+(.+?)\s+con\s+(\d+(?:\.\d+)?)$/i);
+      if(m){emitir();var ff=m[1].toLowerCase(),nn=nums(m[2]);if(nn.length&&nn.every(function(x){return x.length===2;}))filas.push({num:nn.join(' '),montos:{[ff]:m[3]},tabla:'tabla-tradicional'});continue;}
+      m=line.match(/^(.+?)\s+(pick2|pf)\s+con\s+(\d+(?:\.\d+)?)$/i);
+      if(m){emitir();var ff2=m[2].toLowerCase(),nn2=nums(m[1]);if(nn2.length&&nn2.every(function(x){return x.length===2;}))filas.push({num:nn2.join(' '),montos:{[ff2]:m[3]},tabla:'tabla-tradicional'});continue;}
+      m=line.match(/^(pick[345])\s+(.+?)\s+con\s+(\d+(?:\.\d+)?)$/i);
       if(m){emitir();var f=m[1].toLowerCase(),d=f==='pick3'?3:f==='pick4'?4:5;var ns=nums(m[2]);if(ns.length&&ns.every(function(x){return x.length===d;}))rowSingle('tabla-'+f,f,m[2],m[3]);continue;}
-      m=line.match(/^(?:centenas?\\s+corridas?)\\s+(.+?)\\s+con\\s+(\\d+(?:\\.\\d+)?)$/i);
+      m=line.match(/^(?:centenas?\s+corridas?)\s+(.+?)\s+con\s+(\d+(?:\.\d+)?)$/i);
       if(m){emitir();var nsC=nums(m[1]);if(nsC.length&&nsC.every(function(x){return x.length===3;}))filas.push({num:nsC.join(' '),montos:{'centenas corridas':m[2]},tabla:'tabla-centenas'});continue;}
-      m=line.match(/^(pick2\\s+vs\\s+pf|p2\\s+vs\\s+pf|vs\\s+pick2|vs\\s+pf|vs100|vs)\\s+(.+?)\\s+con\\s+(\\d+(?:\\.\\d+)?)$/i);
-      if(m){emitir();var v=m[1].toLowerCase().replace(/\\s+/g,'');if(v==='pick2vspf'||v==='p2vspf')rowVS('tabla-pick2vspf','pick2vspf',m[2].split(/\\s+(?:y|vs)\\s+/i)[0],m[2].split(/\\s+(?:y|vs)\\s+/i).slice(1).join(' '),m[3]);else if(v==='vspick2')rowVS('tabla-vspick2','vspick2',m[2].split(/\\s+(?:y|vs)\\s+/i)[0],m[2].split(/\\s+(?:y|vs)\\s+/i).slice(1).join(' '),m[3]);else if(v==='vspf')rowVS('tabla-vspf','vspf',m[2].split(/\\s+(?:y|vs)\\s+/i)[0],m[2].split(/\\s+(?:y|vs)\\s+/i).slice(1).join(' '),m[3]);else if(v==='vs')rowVS('tabla-vs','vs',m[2].split(/\\s+vs\\s+/i)[0],m[2].split(/\\s+vs\\s+/i).slice(1).join(' '),m[3]);else rowSingle('tabla-vs100','vs100',m[2],m[3]);continue;}
-      m=line.match(/^(?:pos(?:icion)?\\s*)?(\\d)\\s+(.+?)\\s+con\\s+(\\d+(?:\\.\\d+)?)$/i);
+      m=line.match(/^(pick2\s+vs\s+pf|p2\s+vs\s+pf|vs\s+pick2|vs\s+pf|vs100|vs)\s+(.+?)\s+con\s+(\d+(?:\.\d+)?)$/i);
+      if(m){emitir();var v=m[1].toLowerCase().replace(/\s+/g,'');if(v==='pick2vspf'||v==='p2vspf')rowVS('tabla-pick2vspf','pick2vspf',m[2].split(/\s+(?:y|vs)\s+/i)[0],m[2].split(/\s+(?:y|vs)\s+/i).slice(1).join(' '),m[3]);else if(v==='vspick2')rowVS('tabla-vspick2','vspick2',m[2].split(/\s+(?:y|vs)\s+/i)[0],m[2].split(/\s+(?:y|vs)\s+/i).slice(1).join(' '),m[3]);else if(v==='vspf')rowVS('tabla-vspf','vspf',m[2].split(/\s+(?:y|vs)\s+/i)[0],m[2].split(/\s+(?:y|vs)\s+/i).slice(1).join(' '),m[3]);else if(v==='vs')rowVS('tabla-vs','vs',m[2].split(/\s+vs\s+/i)[0],m[2].split(/\s+vs\s+/i).slice(1).join(' '),m[3]);else rowSingle('tabla-vs100','vs100',m[2],m[3]);continue;}
+      m=line.match(/^(?:pos(?:icion)?\s*)?(\d)\s+(.+?)\s+con\s+(\d+(?:\.\d+)?)$/i);
       if(m&&/^pos/i.test(line)){emitir();var npos=nums(m[2]);if(npos.length)filas.push({posicion:m[1],num:npos.join(' '),monto:m[3],tabla:'tabla-posiciones'});continue;}
-      m=line.match(/^tripleta\\s+(.+?)\\s+con\\s+(\\d+(?:\\.\\d+)?)$/i);
+      m=line.match(/^tripleta\s+(.+?)\s+con\s+(\d+(?:\.\d+)?)$/i);
       if(m){emitir();var nt=nums(m[1]);if(nt.length===3)rowSingle('tabla-tripleta','tripleta',m[1],m[2]);continue;}
       // VS family with both groups separated by "vs", e.g. 12 34 vs 56 78 con 5
-      m=line.match(/^(.+?)\\s+(vs|vspf|vspick2|pick2vspf)\\s+(.+?)\\s+con\\s+(\\d+(?:\\.\\d+)?)$/i);
+      m=line.match(/^(.+?)\s+(vs|vspf|vspick2|pick2vspf)\s+(.+?)\s+con\s+(\d+(?:\.\d+)?)$/i);
       if(m){emitir();var vv=m[2].toLowerCase(),tb=vv==='vs'?'tabla-vs':vv==='vspf'?'tabla-vspf':vv==='vspick2'?'tabla-vspick2':'tabla-pick2vspf';rowVS(tb,vv,m[1],m[3],m[4]);continue;}
       // Traditional instructions / trailing amount.
       parts=splitInstr(line);
