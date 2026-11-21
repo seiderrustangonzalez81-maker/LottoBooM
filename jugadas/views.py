@@ -1600,16 +1600,31 @@ def _guardar_apuesta_impl(request):
             _sids_early = json.loads(_sstr) if _sstr else []
         except Exception:
             pass
-        _georgia_late = False
+        # Georgia nocturno: fecha/ventana oficial por hora de Cuba.
+        # Identificar por nombre, sin depender de un PK ni de una variante horaria del nombre.
         _now_cuba = timezone.now().astimezone(ZoneInfo('America/Havana'))
-        if _now_cuba.hour == 0 and _now_cuba.minute < 25 and _sids_early:
-            for _sid in _sids_early:
-                if Sorteo.objects.filter(id=int(_sid), nombre='Georgia 11:34 PM').exists():
-                    _georgia_late = True
-                    if fecha_apuesta == hoy:
-                        fecha_apuesta = hoy - timedelta(days=1)
-                    break
-        if fecha_apuesta < hoy and not _es_admin_f and not _georgia_late:
+        _georgia_ids = []
+        try:
+            _selected_ids = [int(x) for x in (_sids_early or []) if str(x).isdigit()]
+            _georgia_ids = list(Sorteo.objects.filter(id__in=_selected_ids, nombre__icontains='Georgia').values_list('id', flat=True))
+        except (TypeError, ValueError):
+            _georgia_ids = []
+        _georgia_selected = bool(_georgia_ids)
+        _georgia_closed_window = (_now_cuba.hour == 0 and _now_cuba.minute >= 27) or (_now_cuba.hour == 1 and _now_cuba.minute <= 0)
+        _georgia_expected_date = hoy
+        if not (_now_cuba.hour == 0 and _now_cuba.minute <= 26):
+            if not _georgia_closed_window:
+                _georgia_expected_date = hoy + timedelta(days=1)
+
+        if _georgia_selected and not _es_admin_f:
+            if _georgia_closed_window:
+                return JsonResponse({'success': False, 'message': 'Georgia está cerrado entre las 00:27 y la 01:00 hora Cuba. La apuesta no se trasladará automáticamente al siguiente sorteo.'}, status=400)
+            if len(set(_selected_ids) - set(_georgia_ids)) > 0 and _georgia_expected_date != fecha_apuesta:
+                return JsonResponse({'success': False, 'message': 'Georgia y otros sorteos tienen fechas efectivas distintas en este horario. Envíalos por separado para no cambiar la fecha de los demás sorteos.'}, status=400)
+            if fecha_apuesta != _georgia_expected_date:
+                return JsonResponse({'success': False, 'message': f'La fecha efectiva de Georgia para este horario es {_georgia_expected_date.isoformat()}. Actualiza la fecha y vuelve a procesar.'}, status=400)
+
+        if fecha_apuesta < hoy and not _es_admin_f:
             return JsonResponse({'success': False, 'message': 'Los clientes y comerciales solo pueden apostar desde hoy en adelante.'}, status=400)
         if fecha_apuesta > limite_futuro:
             return JsonResponse({'success': False, 'message': 'La fecha de la apuesta no puede ser superior a 6 meses en el futuro.'}, status=400)
