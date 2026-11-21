@@ -8157,7 +8157,7 @@ function _procActualizarEstado(msg, tipo){
   }
 
   function _procDetectarInstruccionPos(texto){
-    var m=String(texto||'').match(/\s+(con|candado|kandado|canado|candad|parle|parlet|parl|palet|parler|parley|fijo|corrido)\s/i);
+    var m=String(texto||'').match(/\s+(con|candado|kandado|canado|candad|parle|parlet|parl|palet|parler|parley|fijo|corrido)(?=\s|$)/i);
     if(m)return m.index+1;
     var em=String(texto||'').match(/\s+([\uD83D\uDD10\uD83D\uDD12\uD83D\uDD13])/);
     if(em)return em.index+1;
