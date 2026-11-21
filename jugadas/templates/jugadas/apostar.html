@@ -5690,6 +5690,28 @@ $('btnPwdOk').addEventListener('click', ()=>{
   });
 });
 
+function _validarTripletasApuesta(){
+  var errores=[];
+  if(!window.ApostarTripleta||!window.ApostarTripleta.validateRow){
+    return [{sorteo:'—',mensaje:'No está disponible el validador de Tripleta.'}];
+  }
+  ordenSorteos.forEach(function(sid){
+    var s=sorteosActivos[String(sid)];if(!s)return;
+    Object.keys(s.tablasActivas||{}).forEach(function(tk){
+      var st=s.tablasActivas[tk],def=TABLE_DEFS[tk];
+      if(!st||!def||!(st.forms||[]).includes('tripleta'))return;
+      (st.rows||[]).forEach(function(row,idx){
+        var raw=String(row.num||'').trim(),m=row.montos&&row.montos.tripleta;
+        if(!raw&&!(parseFloat(m)>0))return;
+        var nums=numerosEnFila(row,def.numDigits,undefined).numeros;
+        var err=window.ApostarTripleta.validateRow(raw,nums,m);
+        if(err)errores.push({sorteo:s.nombre||sid,mensaje:'Tripleta · fila '+(idx+1)+': '+err});
+      });
+    });
+  });
+  return errores;
+}
+
 function enviarApuesta(dryRun){
   if (typeof dryRun === 'undefined') dryRun = false;
 
@@ -5707,6 +5729,12 @@ function enviarApuesta(dryRun){
   } catch(_eG){ console.warn('[GUARD_ENVIAR]', _eG); }
   // ═══ FIN GUARD_ENVIAR_APUESTA_V1 ═══
 
+  var _erroresTripleta=_validarTripletasApuesta();
+  if(_erroresTripleta.length){
+    _erroresTripleta.slice(0,5).forEach(function(e){toast('❌ '+e.sorteo+': '+e.mensaje,'danger');});
+    if(_erroresTripleta.length>5)toast('Y '+(_erroresTripleta.length-5)+' error(es) de Tripleta adicionales.','warning');
+    return;
+  }
   const items = recolectarItems();
   if (!items.length){ toast('No hay jugadas para guardar.', 'warning'); return; }
 
