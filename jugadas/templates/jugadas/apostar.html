@@ -3568,6 +3568,7 @@ function _descartarTodoPorMatriz(){
   if (chk) chk.checked = false;
   actualizarCountSorteos();
   recalcGlobal();
+  if (typeof _procActualizarUI === 'function') setTimeout(_procActualizarUI, 0);
 }
 
 function agregarPanelSorteo(sid, nombre, minutosRestantes, segundosRestantes){
