@@ -8141,7 +8141,7 @@ function _procActualizarEstado(msg, tipo){
       if(m&&/^pos/i.test(line)){emitir();var npos=nums(m[2]);if(npos.length)filas.push({posicion:m[1],num:npos.join(' '),monto:m[3],tabla:'tabla-posiciones'});continue;}
       m=line.match(/^tripleta\s+(.+?)\s+con\s+(\d+(?:\.\d+)?)$/i);
       if(m){emitir();var nt=nums(m[1]);if(nt.length===3)rowSingle('tabla-tripleta','tripleta',m[1],m[2]);continue;}
-      m=line.match(/^(.+?)\\s+pick2\\s+vspf\\s+(.+?)\\s+con\\s+(\\d+(?:\\.\\d+)?)$/i);\n      if(m){emitir();rowVS('tabla-pick2vspf','pick2vspf',m[1],m[2],m[3]);continue;}\n      // VS family with both groups separated by "vs", e.g. 12 34 vs 56 78 con 5
+      m=line.match(/^(.+?)\s+pick2\s+vspf\s+(.+?)\s+con\s+(\d+(?:\.\d+)?)$/i);\n      if(m){emitir();rowVS('tabla-pick2vspf','pick2vspf',m[1],m[2],m[3]);continue;}\n      // VS family with both groups separated by "vs", e.g. 12 34 vs 56 78 con 5
       m=line.match(/^(.+?)\s+(vs|vspf|vspick2|pick2vspf)\s+(.+?)\s+con\s+(\d+(?:\.\d+)?)$/i);
       if(m){emitir();var vv=m[2].toLowerCase(),tb=vv==='vs'?'tabla-vs':vv==='vspf'?'tabla-vspf':vv==='vspick2'?'tabla-vspick2':'tabla-pick2vspf';rowVS(tb,vv,m[1],m[3],m[4]);continue;}
       // Traditional instructions / trailing amount.
