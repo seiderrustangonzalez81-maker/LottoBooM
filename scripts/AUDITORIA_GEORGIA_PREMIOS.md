@@ -142,3 +142,10 @@ Pendiente de completar antes de cerrar:
 - Render fija actualmente Python 3.11.0; CI de auditoría y scraper también usan Python 3.11.
 - Django 5.1 no es compatible con Python 3.14; Django 5.2.8+ sí lo soporta. La ruta recomendada para una actualización estable será probar primero Django 5.2 LTS en 3.11 y 3.14, unificar/clarificar requirements, ejecutar checks/tests y luego cambiar Render. No se modifica aún el runtime de producción.
 - Antes del upgrade deben verificarse versiones de paquetes con extensiones nativas y todas las dependencias indirectas, además de migraciones y despliegue.
+
+
+## Validación de números restringidos y relación con gestor
+
+- La consulta de números restringidos también era fail-open: ante una excepción se omitía la verificación y el POST continuaba. Se cambió a HTTP 503 con rechazo explícito cuando no puede comprobarse.
+- La comprobación de relación con gestor tenía un `except: pass` alrededor de la consulta de Postpago. Se eliminó ese fail-open silencioso; una consulta fallida ya no se interpreta como ausencia de relación y el error se propaga para detener el flujo.
+- Requiere prueba práctica con fallo de base de datos y pruebas de roles/relaciones (Fondo, Postpago y Subordinación).
