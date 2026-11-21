@@ -54,6 +54,19 @@
     if(pending)err(lines.length,'El último grupo de números quedó sin monto.');
     if(explicitPairs)err(lines.length,'Hay parlets explícitos sin monto; añade “cada parle X” o monto individual.');
     var rows=[];try{rows=parseText(normalized)||[];}catch(e){err(1,'No se pudo interpretar: '+(e.message||e));}
+    // FAIL-CLOSED: every content line must map to a row, be a pure number group
+    // awaiting its instruction, or be a valid continuation. Existing line errors
+    // are not duplicated. No partial parser output can pass validation.
+    for(var cov=0;cov<lines.length;cov++){
+      var ln=String(lines[cov]||'').trim(),raw=String(rawLines[cov]||'').trim();
+      if(ignore(ln)||errors.some(function(e){return Number(e.line)===cov+1;}))continue;
+      var standalone=[];try{standalone=parseText(ln)||[];}catch(_){}
+      var pureGroup=nums(ln);
+      var continuation=/^(?:con|candado|parlet|parle|parl|palet|fijo|corrido|cada\\s+parlet)\\b/i.test(ln)||/^[🔒🔐🔓]/.test(ln)||suffixOnly(ln);
+      if(!standalone.length&&!pureGroup.ok&&!continuation){
+        err(cov+1,'Esta línea no genera ninguna fila de apuesta y no puede procesarse parcialmente.',(raw.match(/\\b\\d+(?:\\.\\d+)?\\s*[a-z]+\\b/i)||[])[0]||null);
+      }
+    }
     if(hasContent&&!rows.length&&!errors.length)err(1,'No se generaron jugadas.');
     return {ok:errors.length===0,normalized:normalized,rows:rows,errors:errors};
   }
