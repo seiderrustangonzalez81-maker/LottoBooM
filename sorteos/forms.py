@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 import json
+import re
+from datetime import datetime
 from django import forms
 from .models import Sorteo
 
@@ -81,11 +83,36 @@ class SorteoForm(forms.ModelForm):
         if not data:
             return {}
         if isinstance(data, dict):
-            return data
-        try:
-            return json.loads(data)
-        except json.JSONDecodeError:
-            raise forms.ValidationError('El formato JSON de horarios no es válido.')
+            horarios = data
+        else:
+            try:
+                horarios = json.loads(data)
+            except (json.JSONDecodeError, TypeError):
+                raise forms.ValidationError('El formato JSON de horarios no es válido.')
 
+        if not isinstance(horarios, dict):
+            raise forms.ValidationError('Los horarios deben ser un objeto JSON por temporada.')
+
+        dias_validos = {
+            'lunes', 'martes', 'miercoles', 'miércoles', 'jueves',
+            'viernes', 'sabado', 'sábado', 'domingo',
+        }
+        for temporada, dias in horarios.items():
+            if not isinstance(temporada, str) or not temporada.strip():
+                raise forms.ValidationError('Cada temporada debe tener un nombre válido.')
+            if not isinstance(dias, dict):
+                raise forms.ValidationError(f'La temporada "{temporada}" debe contener un objeto de días.')
+            for dia, hora in dias.items():
+                if str(dia).lower() not in dias_validos:
+                    raise forms.ValidationError(f'Día no reconocido en "{temporada}": {dia}.')
+                if hora in (None, ''):
+                    continue
+                if not isinstance(hora, str) or len(hora) != 5 or hora[2] != ':' or not hora[:2].isdigit() or not hora[3:].isdigit():
+                    raise forms.ValidationError(f'La hora de {dia} en "{temporada}" debe usar HH:MM o estar vacía.')
+                try:
+                    datetime.strptime(hora, '%H:%M')
+                except ValueError:
+                    raise forms.ValidationError(f'La hora de {dia} en "{temporada}" no es válida.')
+        return horarios
     def clean_formas_juego(self):
         return list(self.cleaned_data.get('formas_juego', []))

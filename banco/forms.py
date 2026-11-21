@@ -1,15 +1,8 @@
-from django import forms
-from .models import Resultado
+"""Compatibility import for the shared results form.
 
-class ResultadoForm(forms.ModelForm):
-    class Meta:
-        model = Resultado
-        fields = ['sorteo', 'fecha', 'hora', 'numeros', 'activo']
-        widgets = {
-            'fecha': forms.DateInput(attrs={'type': 'date'}),
-            'hora': forms.TimeInput(attrs={'type': 'time'}),
-            'numeros': forms.Textarea(attrs={'rows': 5, 'placeholder': 'Ej: {"pick2": "12", "pick3": "123"}'}),
-        }
-        help_texts = {
-            'numeros': 'Ingresa los números ganadores en formato JSON. Ej: {"pick2": "12", "pick3": "123"}',
-        }
+The Banco app no longer owns a Resultado model. The current model and form live in
+resultados; this module keeps the legacy import path working without stale fields.
+"""
+from resultados.forms import ResultadoForm
+
+__all__ = ["ResultadoForm"]

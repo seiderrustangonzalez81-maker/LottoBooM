@@ -1701,7 +1701,7 @@
     "model": "sorteos.sorteo",
     "pk": 42,
     "fields": {
-      "nombre": "Loteka 1:30 PM",
+      "nombre": "Loteka 7:50 PM",
       "activo": true,
       "minutos_cierre": 10,
       "horarios": {

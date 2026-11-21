@@ -36,7 +36,8 @@ document.addEventListener('DOMContentLoaded', function() {
 }
 .proc-mirror .ln{ display:block; }
 .proc-mirror .ln-ok{ color:#15803d; background:rgba(22,163,74,.10); border-radius:4px; }
-.proc-mirror .ln-err{ color:#b91c1c; background:rgba(220,38,38,.10); border-radius:4px; }
+.proc-mirror .ln-err{ color:#b91c1c; background:rgba(220,38,38,.10); border-radius:4px; } 
+.proc-mirror .proc-token-err{color:#fff;background:#dc2626;font-weight:900;border-radius:3px;padding:0 2px;}
 
 {% endblock %}
 {% block page_subtitle %}Registra jugadas para tus clientes{% endblock %}
@@ -2286,6 +2287,7 @@ D 8 1 5 con 50f y 20c" style="width:100%;padding:10px;border:1.5px solid #fdba74
 </div>
             <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:8px;flex-wrap:wrap;">
               <small id="procEstado" style="font-size:.7rem;font-weight:700;color:#78350f;">Edita el texto y se procesará solo</small>
+              <div id="procErrores" role="alert" style="display:none;width:100%;margin-top:8px;padding:8px 10px;background:#fee2e2;border:1px solid #fca5a5;border-radius:8px;color:#991b1b;font-size:.78rem;"></div>
               <button type="button" id="btnProcAhora" style="padding:6px 14px;background:linear-gradient(135deg,#ea580c,#c2410c);color:#fff;border:2px solid #7c2d12;border-radius:10px;font-weight:800;font-size:.78rem;cursor:pointer;font-family:inherit;box-shadow:2px 2px 0 #7c2d12;">
                 <i class="fas fa-bolt"></i> Procesar
               </button>
@@ -2755,6 +2757,9 @@ D 8 1 5 con 50f y 20c" style="width:100%;padding:10px;border:1.5px solid #fdba74
 {% endblock %}
 
 {% block extra_js %}
+<script src="{% static 'js/apostar_text_validator.js' %}?v=20261121a"></script>
+<script src="{% static 'js/apostar_tripleta.js' %}?v=20261121a"></script>
+<script src="{% static 'js/apostar_table_validation.js' %}?v=20261121a"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function(){
 'use strict';
@@ -3564,6 +3569,7 @@ function _descartarTodoPorMatriz(){
   if (chk) chk.checked = false;
   actualizarCountSorteos();
   recalcGlobal();
+  if (typeof _procActualizarUI === 'function') setTimeout(_procActualizarUI, 0);
 }
 
 function agregarPanelSorteo(sid, nombre, minutosRestantes, segundosRestantes){
@@ -3632,6 +3638,7 @@ function quitarPanelSorteo(sid){
   actualizarCountSorteos();
   recalcGlobal();
 }
+  if (typeof _procActualizarUI === 'function') setTimeout(_procActualizarUI, 0);
 
 function renderPanelSorteo(sid){
   const s = sorteosActivos[sid];
@@ -3769,6 +3776,7 @@ function cargarConfigSorteo(sid){
       renderTabsSorteo(sid);
       renderMiniResumenSorteo(sid);
       recalcGlobal();
+      if (typeof _procActualizarUI === 'function') setTimeout(_procActualizarUI, 0);
       if (modoReplicar){
         sincronizarMatrizASlaves();
         Object.keys(sorteosActivos).forEach(function(s){ aplicarModoEsclavo(s); });
@@ -4665,6 +4673,33 @@ function newRow(forms, kind){
   return { num:'', montos };
 }
 
+function _procCrearFilaDestino(fila, st, kind, tkTabla){
+  var row = newRow(st.forms || [], kind),def=(typeof TABLE_DEFS!=='undefined'&&tkTabla)?TABLE_DEFS[tkTabla]:null;
+  if (kind === 'posiciones'){
+    row.posicion = String(fila.posicion || '1');
+    row.num = String(fila.num || '');
+    row.monto = fila.monto == null ? '' : String(fila.monto);
+    return row;
+  }
+  if (kind === 'vs_groups'){
+    row.numA = String(fila.numA || '');
+    row.numB = String(fila.numB || '');
+    row.monto = fila.monto == null ? '' : String(fila.monto);
+    return row;
+  }
+  row.num = String(fila.num || '');
+  Object.keys(fila.montos || {}).forEach(function(form){
+    if(!row.montos)return;
+    var target=form;
+    if(!Object.prototype.hasOwnProperty.call(row.montos,target)&&def&&def.aliases){
+      var canonical=resolverForma(form,def);
+      target=Object.keys(row.montos).filter(function(k){return resolverForma(k,def)===canonical;})[0]||form;
+    }
+    if(Object.prototype.hasOwnProperty.call(row.montos,target))row.montos[target]=fila.montos[form];
+  });
+  return row;
+}
+
 function numerosEnFila(row, numDigits, maxNums){
   const num = (row.num || '').trim();
   if (!num) return { numeros: [], paresExplicitos: [] };
@@ -4891,6 +4926,11 @@ function recolectarItemsDeSorteo(sid){
               items.push({ tipo:'vs100', numero: num + 'x' + vs, monto: m, sorteo_id:sid });
             }
           }
+        } else if (f === 'tripleta') {
+          // Una fila de Tripleta representa una combinación (3 números) y un solo monto.
+          var _tripItems = (window.ApostarTripleta && window.ApostarTripleta.itemForRow)
+            ? window.ApostarTripleta.itemForRow(numeros, m, sid) : [];
+          _tripItems.forEach(function(it){ items.push(it); });
         } else {
           numeros.forEach(n => items.push({ tipo: f, numero: n, monto: m, sorteo_id:sid }));
         }
@@ -5682,6 +5722,73 @@ $('btnPwdOk').addEventListener('click', ()=>{
   });
 });
 
+function _validarFilasApuesta(){
+  var errores=[];
+  if(!window.ApostarTableValidator||!window.ApostarTableValidator.validateRows)
+    return [{sorteo:'—',mensaje:'No está disponible el validador de filas.'}];
+  ordenSorteos.forEach(function(sid){
+    var s=sorteosActivos[String(sid)];if(!s)return;
+    Object.keys(s.tablasActivas||{}).forEach(function(tk){
+      var st=s.tablasActivas[tk],def=TABLE_DEFS[tk];if(!st||!def)return;
+      var rowErrors=window.ApostarTableValidator.validateRows(st.rows||[],def,st.forms||[],{
+        expandToken:expandirToken,numerosEnFila:numerosEnFila,contarParletsDeFila:contarParletsDeFila
+      });
+      rowErrors.forEach(function(e){errores.push({sorteo:s.nombre||sid,mensaje:tk+' · fila '+e.row+': '+e.message});});
+    });
+  });
+  return errores;
+}
+
+function _validarTripletasApuesta(){
+  var errores=[];
+  if(!window.ApostarTripleta||!window.ApostarTripleta.validateRow){
+    return [{sorteo:'—',mensaje:'No está disponible el validador de Tripleta.'}];
+  }
+  ordenSorteos.forEach(function(sid){
+    var s=sorteosActivos[String(sid)];if(!s)return;
+    Object.keys(s.tablasActivas||{}).forEach(function(tk){
+      var st=s.tablasActivas[tk],def=TABLE_DEFS[tk];
+      if(!st||!def||!(st.forms||[]).includes('tripleta'))return;
+      (st.rows||[]).forEach(function(row,idx){
+        var raw=String(row.num||'').trim(),m=row.montos&&row.montos.tripleta;
+        if(!raw&&!(parseFloat(m)>0))return;
+        var nums=numerosEnFila(row,def.numDigits,undefined).numeros;
+        var err=window.ApostarTripleta.validateRow(raw,nums,m);
+        if(err)errores.push({sorteo:s.nombre||sid,mensaje:'Tripleta · fila '+(idx+1)+': '+err});
+      });
+    });
+  });
+  return errores;
+}
+
+function _validarCandadoApuesta(){
+  var errores=[];
+  ordenSorteos.forEach(function(sid){
+    var s=sorteosActivos[String(sid)];if(!s)return;
+    Object.keys(s.tablasActivas||{}).forEach(function(tk){
+      var st=s.tablasActivas[tk],def=TABLE_DEFS[tk];
+      if(!st||!def||!(st.forms||[]).includes('candado'))return;
+      (st.rows||[]).forEach(function(row,idx){
+        var montoCand=parseFloat(row.montos&&row.montos.candado)||0;
+        if(montoCand<=0)return;
+        if(!(st.forms||[]).includes('parlet')){
+          errores.push({sorteo:s.nombre||sid,mensaje:'Candado · fila '+(idx+1)+': habilita Parlet también; Candado solo no genera items ni suma al total.'});return;
+        }
+        var montoPar=parseFloat(row.montos&&row.montos.parlet)||0;
+        var nPlays=contarParletsDeFila(row,def.numDigits,def.maxNums);
+        if(nPlays<1||montoPar<=0){
+          errores.push({sorteo:s.nombre||sid,mensaje:'Candado · fila '+(idx+1)+': no hay combinaciones Parlet válidas para respaldar el monto.'});return;
+        }
+        var esperado=Math.round(montoPar*nPlays*100)/100;
+        if(Math.abs(montoCand-esperado)>0.01){
+          errores.push({sorteo:s.nombre||sid,mensaje:'Candado · fila '+(idx+1)+': monto espejo no coincide con Parlet × combinaciones. Revisa la fila.'});
+        }
+      });
+    });
+  });
+  return errores;
+}
+
 function enviarApuesta(dryRun){
   if (typeof dryRun === 'undefined') dryRun = false;
 
@@ -5699,6 +5806,15 @@ function enviarApuesta(dryRun){
   } catch(_eG){ console.warn('[GUARD_ENVIAR]', _eG); }
   // ═══ FIN GUARD_ENVIAR_APUESTA_V1 ═══
 
+  var _erroresFilas=_validarFilasApuesta();
+  var _erroresTripleta=_validarTripletasApuesta();
+  var _erroresCandado=_validarCandadoApuesta();
+  var _erroresEspeciales=_erroresFilas.concat(_erroresTripleta,_erroresCandado);
+  if(_erroresEspeciales.length){
+    _erroresEspeciales.slice(0,5).forEach(function(e){toast('❌ '+e.sorteo+': '+e.mensaje,'danger');});
+    if(_erroresEspeciales.length>5)toast('Y '+(_erroresEspeciales.length-5)+' error(es) adicionales.','warning');
+    return;
+  }
   const items = recolectarItems();
   if (!items.length){ toast('No hay jugadas para guardar.', 'warning'); return; }
 
@@ -7738,9 +7854,11 @@ function _procNormalizarTexto(texto){
   // 6. fijo → con (SIEMPRE)
   t = t.replace(/\bfijo\b/gi, ' con ');
   
-  // 7. Separar palabras pegadas a números
+  // 7. Separar palabras pegadas a números, preservando pares NNxNN.
+  t = t.replace(/(\d{2})[xX*](\d{2})/g, '$1\uE000$2');
   t = t.replace(/(\d+)([a-zA-Z]+)(\d+)/g, '$1 $2 $3');
   t = t.replace(/(\d+)([a-zA-Z]+)/g, '$1 $2');
+  t = t.replace(/\uE000/g, 'x');
   
   // 8. Limpieza final de espacios (SIEMPRE AL FINAL)
   t = t.replace(/[ \t]+/g, ' ');
@@ -7989,187 +8107,113 @@ function _procActualizarEstado(msg, tipo){
   }
 
   function _procParsearTexto(texto){
-    var lineas = String(texto || '').split(/\r?\n/).map(function(l){ return l.trim(); });
-    lineas = lineas.filter(function(l){
-      if (!l) return false;
-      if (/^\[/.test(l)) return false;
-      if (/^tarieta|^tarjeta|^saldo/i.test(l)) return false;
-      return true;
-    });
-
-    var filas = [];
-    var grupoPendiente = null;
-    var parletsExplicitos = [];
-
-    function _emitirGrupo(){
-      if (!grupoPendiente) return;
-      var m = grupoPendiente.montos;
-      var nums = grupoPendiente.nums;
-      var numStr = nums.join(' ');
-
-      var _todos3 = nums.length > 0 && nums.every(function(n){ return /^\d{3}$/.test(n); });
-      if (_todos3 && (m.fijo || m.corridos || m.parlet)){
-        filas.push({
-          num: numStr,
-          montos: { pick3: m.fijo || m.corridos || m.parlet || '' },
-          tabla: 'tabla-pick3'
-        });
-        grupoPendiente = null;
-        return;
+    var lineas=String(texto||'').split(/\r?\n/).map(function(l){return l.trim();}).filter(function(l){return l&&!/^\[/.test(l)&&!/^tarjeta|^tarieta|^saldo/i.test(l);});
+    var filas=[],pendiente=null,pares=[];
+    function emitir(){
+      if(!pendiente)return;
+      var m=pendiente.montos||{},n=pendiente.nums||[],ns=n.join(' ');
+      if(n.length&& (m.fijo||m.corridos||m.parlet||m.candado)){
+        var todos3=n.every(function(x){return /^\d{3}$/.test(x);});
+        var parletMonto=m.parlet||'';
+        if(m.candado&&!parletMonto&&n.length>=2){var combos=n.length*(n.length-1)/2;if(combos>0)parletMonto=(Number(m.candado)/combos).toFixed(2);}
+        if(todos3&&!m.candado){filas.push({num:ns,montos:{pick3:m.fijo||m.corridos||m.parlet||''},tabla:'tabla-pick3'});}
+        else filas.push({num:ns,montos:{fijo:m.fijo||'',corridos:m.corridos||'',parlet:parletMonto,candado:m.candado||''},tabla:'tabla-tradicional'});
       }
-
-      if (nums.length > 0 && (m.fijo || m.corridos || m.parlet || m.candado)){
-        var parletFinal = m.parlet;
-        if (m.candado && !m.parlet) {
-          var pp = _candadoAPorParlet(m.candado, nums.length);
-          if (pp) parletFinal = pp;
-        }
-        filas.push({
-          num: numStr,
-          montos: {
-            fijo: m.fijo || '',
-            corridos: m.corridos || '',
-            parlet: parletFinal || '',
-            candado: m.candado || ''
-          },
-          tabla: 'tabla-tradicional'
-        });
-      }
-
-      grupoPendiente = null;
+      pendiente=null;
     }
-
-    function _candadoAPorParlet(total, n){
-      if (n < 2) return null;
-      var combos = n * (n - 1) / 2;
-      if (combos <= 0) return null;
-      return (parseFloat(total) / combos).toFixed(2);
+    function amount(s){var m=_procParsearMontos(s);return m.fijo||m.corridos||m.parlet||m.candado||((s.match(/\bcon\s+(\d+(?:\.\d+)?)/i)||[])[1]||'');}
+    function nums(s){return _procExpandirNumeros(s);}
+    function splitInstr(line){var ix=_procDetectarInstruccionPos(line);return ix>0?[line.slice(0,ix).trim(),line.slice(ix).trim()]:[line,''];}
+    function rowSingle(tabla,form,group,monto){if(!group||!monto)return;var n=(form==='pick4'||form==='pick5')?String(group).trim().split(/\s+/):nums(group);var d=form==='pick3'?3:form==='pick4'?4:form==='pick5'?5:form==='vs100'||form==='tripleta'||form==='parlet'?2:null;if(d&&n.some(function(x){return String(x).length!==d||!/^[0-9]+$/.test(String(x));}))return;if(form==='tripleta'&&n.length!==3)return;filas.push({num:n.join(' '),montos:{[form]:monto},tabla:tabla});}
+    function rowVS(tabla,form,left,right,monto){var a=nums(left),b=nums(right);if(a.length&&b.length&&monto&&a.every(function(x){return /^\d{2}$/.test(x);})&&b.every(function(x){return /^\d{2}$/.test(x);}))filas.push({numA:a.join(' '),numB:b.join(' '),monto:monto,tabla:tabla});}
+    for(var i=0;i<lineas.length;i++){
+      var line=lineas[i],m,parts;
+      if(/^(?:\d+(?:\.\d+)?\s*[fc]\b)(?:\s+\d+(?:\.\d+)?\s*[fc]\b)*$/i.test(line)&&pendiente){pendiente.montos=_procParsearMontos(line);emitir();continue;}
+      // Explicit pairs and "each pair" continuation
+      m=line.match(/^((?:\d{2}[x*]\d{2}\s*)+)\s+con\s+(\d+(?:\.\d+)?)$/i);
+      if(m){emitir();m[1].trim().split(/\s+/).forEach(function(pair){filas.push({num:pair.toLowerCase().replace('*','x'),montos:{fijo:'',corridos:'',parlet:m[2]},tabla:'tabla-tradicional'});});continue;}
+      m=line.match(/^([0-9]{2})\s*[x*]\s*([0-9]{2})(?:\s*(?:-|con)?\s*(\d+(?:\.\d+)?))?$/i);
+      if(m){emitir();filas.push({num:m[1]+'x'+m[2],montos:{fijo:'',corridos:'',parlet:m[3]||''},tabla:'tabla-tradicional'});pares.push(filas.length-1);continue;}
+      if(/^cada\s+parlet/i.test(line)){m=line.match(/(\d+(?:\.\d+)?)/);if(m)pares.forEach(function(ix){filas[ix].montos.parlet=m[1];});continue;}
+      // Modality syntax is explicit and wins over traditional parsing.
+      m=line.match(/^(?:solo\s+)?(?:parlet|parle|parl|palet)\s+(.+?)\s+(?:con|parlet)\s+(\d+(?:\.\d+)?)$/i);
+      if(m){emitir();rowSingle('tabla-solo-parlet','parlet',m[1],m[2]);continue;}
+      m=line.match(/^(.+?)\s+(pick[345])\s+con\s+(\d+(?:\.\d+)?)$/i);
+      if(m){emitir();var fs=m[2].toLowerCase(),ds=fs==='pick3'?3:fs==='pick4'?4:5,nsf=m[1].trim().split(/\s+/);if(nsf.length&&nsf.every(function(x){return x.length===ds&&/^[0-9]+$/.test(x);}))rowSingle('tabla-'+fs,fs,m[1],m[3]);continue;}
+      m=line.match(/^(.+?)\s+vs100\s+con\s+(\d+(?:\.\d+)?)$/i);
+      if(m){emitir();rowSingle('tabla-vs100','vs100',m[1],m[2]);continue;}
+      m=line.match(/^(.+?)\s+tripleta\s+con\s+(\d+(?:\.\d+)?)$/i);
+      if(m){emitir();rowSingle('tabla-tripleta','tripleta',m[1],m[2]);continue;}
+      m=line.match(/^(.+?)\s+solo\s+parlet\s+con\s+(\d+(?:\.\d+)?)$/i);
+      if(m){emitir();rowSingle('tabla-solo-parlet','parlet',m[1],m[2]);continue;}
+      m=line.match(/^(.+?)\s+centenas?\s+corridas?\s+con\s+(\d+(?:\.\d+)?)$/i);
+      if(m){emitir();var nsc=nums(m[1]);if(nsc.length&&nsc.every(function(x){return x.length===3;}))filas.push({num:nsc.join(' '),montos:{'centenas corridas':m[2]},tabla:'tabla-centenas'});continue;}
+      m=line.match(/^(pick2|pf)\s+(.+?)\s+con\s+(\d+(?:\.\d+)?)$/i);
+      if(m){emitir();var ff=m[1].toLowerCase(),nn=nums(m[2]);if(nn.length&&nn.every(function(x){return x.length===2;}))filas.push({num:nn.join(' '),montos:{[ff]:m[3]},tabla:'tabla-tradicional'});continue;}
+      m=line.match(/^(.+?)\s+(pick2|pf)\s+con\s+(\d+(?:\.\d+)?)$/i);
+      if(m){emitir();var ff2=m[2].toLowerCase(),nn2=nums(m[1]);if(nn2.length&&nn2.every(function(x){return x.length===2;}))filas.push({num:nn2.join(' '),montos:{[ff2]:m[3]},tabla:'tabla-tradicional'});continue;}
+      m=line.match(/^(pick[345])\s+(.+?)\s+con\s+(\d+(?:\.\d+)?)$/i);
+      if(m){emitir();var f=m[1].toLowerCase(),d=f==='pick3'?3:f==='pick4'?4:5;var ns=m[2].trim().split(/\s+/);if(ns.length&&ns.every(function(x){return x.length===d&&/^[0-9]+$/.test(x);}))rowSingle('tabla-'+f,f,m[2],m[3]);continue;}
+      m=line.match(/^(?:centenas?\s+corridas?)\s+(.+?)\s+con\s+(\d+(?:\.\d+)?)$/i);
+      if(m){emitir();var nsC=nums(m[1]);if(nsC.length&&nsC.every(function(x){return x.length===3;}))filas.push({num:nsC.join(' '),montos:{'centenas corridas':m[2]},tabla:'tabla-centenas'});continue;}
+      m=line.match(/^(pick2\s+vs\s+pf|p2\s+vs\s+pf|vs\s+pick2|vs\s+pf|vs100|vs)\s+(.+?)\s+con\s+(\d+(?:\.\d+)?)$/i);
+      if(m){emitir();var v=m[1].toLowerCase().replace(/\s+/g,'');if(v==='pick2vspf'||v==='p2vspf')rowVS('tabla-pick2vspf','pick2vspf',m[2].split(/\s+(?:y|vs)\s+/i)[0],m[2].split(/\s+(?:y|vs)\s+/i).slice(1).join(' '),m[3]);else if(v==='vspick2')rowVS('tabla-vspick2','vspick2',m[2].split(/\s+(?:y|vs)\s+/i)[0],m[2].split(/\s+(?:y|vs)\s+/i).slice(1).join(' '),m[3]);else if(v==='vspf')rowVS('tabla-vspf','vspf',m[2].split(/\s+(?:y|vs)\s+/i)[0],m[2].split(/\s+(?:y|vs)\s+/i).slice(1).join(' '),m[3]);else if(v==='vs')rowVS('tabla-vs','vs',m[2].split(/\s+vs\s+/i)[0],m[2].split(/\s+vs\s+/i).slice(1).join(' '),m[3]);else rowSingle('tabla-vs100','vs100',m[2],m[3]);continue;}
+      m=line.match(/^(?:pos(?:icion)?\s*)?(\d)\s+(.+?)\s+con\s+(\d+(?:\.\d+)?)$/i);
+      if(m&&/^pos/i.test(line)){emitir();var npos=nums(m[2]);if(npos.length&&npos.every(function(x){return /^\d{2}$/.test(x);}))filas.push({posicion:m[1],num:npos.join(' '),monto:m[3],tabla:'tabla-posiciones'});continue;}
+      m=line.match(/^tripleta\s+(.+?)\s+con\s+(\d+(?:\.\d+)?)$/i);
+      if(m){emitir();var nt=nums(m[1]);if(nt.length===3)rowSingle('tabla-tripleta','tripleta',m[1],m[2]);continue;}
+      m=line.match(/^(.+?)\s+pick2\s+vspf\s+(.+?)\s+con\s+(\d+(?:\.\d+)?)$/i);
+      if(m){emitir();rowVS('tabla-pick2vspf','pick2vspf',m[1],m[2],m[3]);continue;}
+      // VS family with both groups separated by "vs", e.g. 12 34 vs 56 78 con 5
+      m=line.match(/^(.+?)\s+(vs|vspf|vspick2|pick2vspf)\s+(.+?)\s+con\s+(\d+(?:\.\d+)?)$/i);
+      if(m){emitir();var vv=m[2].toLowerCase(),tb=vv==='vs'?'tabla-vs':vv==='vspf'?'tabla-vspf':vv==='vspick2'?'tabla-vspick2':'tabla-pick2vspf';rowVS(tb,vv,m[1],m[3],m[4]);continue;}
+      // Traditional instructions / trailing amount.
+      parts=splitInstr(line);
+      if(parts[1]){
+        var ntr=nums(parts[0]),mm=_procParsearMontos(parts[1]);
+        if(ntr.length){emitir();pendiente={nums:ntr,montos:mm};emitir();continue;}
+      }
+      if(/^(?:con|fijo|corrido|candado|parlet|parle|parl|palet|🔒)/i.test(line)&&pendiente){pendiente.montos=_procParsearMontos(line);emitir();continue;}
+      var nplain=nums(line);if(nplain.length){emitir();pendiente={nums:nplain,montos:{fijo:'',corridos:'',parlet:'',candado:''}};continue;}
     }
-
-    function _aplicarInstruccion(grupo, instr){
-      if (!grupo || !instr) return;
-      var m = _procParsearMontos(instr);
-      if (m.fijo) grupo.montos.fijo = m.fijo;
-      if (m.corridos) grupo.montos.corridos = m.corridos;
-      if (m.parlet) grupo.montos.parlet = m.parlet;
-      if (m.candado){
-        var pp = _candadoAPorParlet(m.candado, grupo.nums.length);
-        if (pp) {
-          grupo.montos.parlet = pp;
-          grupo.montos.candado = m.candado;  // FIX_CANDADO_V1
-        }
-      }
-    }
-
-    function _detectarInstruccionPos(linea){
-      // Busca el indice donde comienza la instruccion (con/candado/parle/emoji/fijo/corrido)
-      var m = linea.match(/\s+(con|candado|kandado|canado|candad|parle|parlet|parl|palet|parler|parley|fijo|corrido)\s/i);
-      if (m) return m.index + 1;
-      var m2 = linea.match(/\s+(candado|kandado|canado|candad|parle|parlet|parl|palet|parler|parley|fijo|corrido)(?=\s|$)/i);
-      if (m2) return m2.index + 1;
-      var mEmoji = linea.match(/\s+([\uD83D\uDD10\uD83D\uDD12\uD83D\uDD13])/);
-      if (mEmoji) return mEmoji.index + 1;
-      return -1;
-    }
-
-    var i = 0;
-    while (i < lineas.length){
-      var linea = lineas[i];
-
-      // CASO A: parlet explicito "NN*MM-N" o "NNxMM N"
-      var mPE = linea.match(/^\s*([0-9]{2})\s*[*xX]\s*([0-9]{2})\s*(?:[-\s]\s*([0-9]+(?:\.[0-9]+)?))?\s*$/);
-      if (mPE){
-        _emitirGrupo();
-        filas.push({ num: mPE[1] + 'x' + mPE[2], montos: { fijo:'', corridos:'', parlet: mPE[3] || '' } });
-        parletsExplicitos.push(filas.length - 1);
-        i++;
-        continue;
-      }
-
-      // CASO B: "cada parle X" aplica a TODOS los parlets explicitos anteriores
-      if (/^cada\s+parle/i.test(linea)){
-        var mCada = linea.match(/([0-9]+(?:\.[0-9]+)?)/);
-        if (mCada){
-          for (var pE = 0; pE < parletsExplicitos.length; pE++){
-            filas[parletsExplicitos[pE]].montos.parlet = mCada[1];
-          }
-        }
-        i++;
-        continue;
-      }
-
-      // CASO C: instruccion pura → aplica al grupo pendiente o al ultimo emitido
-      if (/^(con|candado|kandado|canado|candad|parle|parlet|parl|palet|parler|parley)\b/i.test(linea) ||
-          /^[\uD83D\uDD10\uD83D\uDD12\uD83D\uDD13]/.test(linea)){
-        var instrP = linea.replace(/^con\s+/i, '');
-        if (grupoPendiente){
-          _aplicarInstruccion(grupoPendiente, instrP);
-          _emitirGrupo();
-        } else if (filas.length > 0){
-          // FIX_CANDADO_ULTIMO_V1: aplicar al ultimo grupo emitido
-          var _mm = _procParsearMontos(instrP);
-          if (_mm.candado || _mm.parlet){
-            var _ultima = filas[filas.length - 1];
-            var _numsUlt = String(_ultima.num || '').split(/\s+/).filter(function(x){ return x; });
-            var _montosExtra = { fijo:'', corridos:'', parlet:'', candado:'' };
-            if (_mm.candado){
-              var _pp = _candadoAPorParlet(_mm.candado, _numsUlt.length);
-              if (_pp){ _montosExtra.parlet = _pp; _montosExtra.candado = _mm.candado; }
-            } else if (_mm.parlet){
-              _montosExtra.parlet = _mm.parlet;
-            }
-            filas.push({
-              num: _ultima.num,
-              montos: _montosExtra,
-              tabla: 'tabla-tradicional'
-            });
-          }
-        }
-        i++;
-        continue;
-      }
-
-      // CASO D: linea mixta (grupo + instruccion)
-      var posInstr = _detectarInstruccionPos(linea);
-      if (posInstr > 0){
-        var grupoStr = linea.slice(0, posInstr).trim();
-        var instrStr = linea.slice(posInstr).trim();
-        var numsD = _procExpandirNumeros(grupoStr);
-        if (numsD.length){
-          _emitirGrupo();
-          grupoPendiente = { nums: numsD, montos: { fijo:'', corridos:'', parlet:'' } };
-          _aplicarInstruccion(grupoPendiente, instrStr);
-          _emitirGrupo();
-          i++;
-          continue;
-        }
-      }
-
-      // CASO E: solo numeros → grupo pendiente
-      var numsE = _procExpandirNumeros(linea);
-      if (numsE.length){
-        _emitirGrupo();
-        grupoPendiente = { nums: numsE, montos: { fijo:'', corridos:'', parlet:'' } };
-        i++;
-        continue;
-      }
-
-      i++;
-    }
-    _emitirGrupo();
-    return _procAgruparFilas(filas);
+    emitir();return filas;
   }
 
+  function _procDetectarInstruccionPos(texto){
+    var m=String(texto||'').match(/\s+(con|candado|kandado|canado|candad|parle|parlet|parl|palet|parler|parley|fijo|corrido)(?=\s|$)/i);
+    if(m)return m.index+1;
+    var em=String(texto||'').match(/\s+([\uD83D\uDD10\uD83D\uDD12\uD83D\uDD13])/);
+    if(em)return em.index+1;
+    var suf=String(texto||'').match(/\s+((?:\d+(?:\.\d+)?\s*[fc]\b)(?:\s+\d+(?:\.\d+)?\s*[fc]\b)*)\s*$/i);
+    return suf?suf.index+1:-1;
+  }
+  function _procValidarTexto(texto){
+    if(!window.ApostarTextValidator||typeof window.ApostarTextValidator.validate!=='function')
+      return {ok:false,rows:[],errors:[{line:1,message:'No se cargó el módulo de validación.'}]};
+    return window.ApostarTextValidator.validate(texto,{
+      normalize:_procNormalizarTexto,
+      parseAmounts:_procParsearMontos,
+      detectInstruction:_procDetectarInstruccionPos,
+      parseText:_procParsearTexto
+    });
+  }
   function _procProcesarTexto(){
     var ta = document.getElementById('procesarText');
     if (!ta) return;
     var texto = ta.value || '';
     if (!texto.trim()) return;
+    var _validacion=_procValidarTexto(texto);
+    _procRenderErrores(_validacion);
+    if(!_validacion.ok){_procActualizarEstado('❌ Corrige '+_validacion.errors.length+' error(es) antes de procesar.','error');return;}
     var _scrollTop = ta.scrollTop;
     var _selStart = ta.selectionStart;
     var _selEnd = ta.selectionEnd;
-    var textoNorm = _procNormalizarTexto(texto);
-    var filas = _procParsearTexto(textoNorm);
+    var filas = Array.isArray(_validacion.rows) ? _validacion.rows : [];
+    if (!filas.length) {
+      _procRenderErrores({errors:[{line:'—',message:'El texto pasó la revisión, pero no produjo filas. No se modificó ninguna tabla.'}]});
+      _procActualizarEstado('❌ No se generaron filas; revisa el formato del texto.','error');
+      return;
+    }
     if (!filas.length){
       if (typeof toast === 'function') toast('No se interpreto ninguna linea valida', 'warning');
       return;
@@ -8210,41 +8254,61 @@ function _procActualizarEstado(msg, tipo){
       _filasPorTabla[t].push(f);
     });
 
-    // PARSER_V1_REPLICAR: aplicar la misma jugada a TODOS los sorteos seleccionados
-    ordenSorteos.forEach(function(sidRaw){
-      var sid = String(sidRaw);
-      var s = sorteosActivos[sid];
-      if (!s) return;
-      if (!s.cargado) return;
-
-      var _aplicadoEsteSorteo = false;
-      var _primeraTablaAplicada = null;
-
-      Object.keys(_filasPorTabla).forEach(function(tkTabla){
-        var st = s.tablasActivas && s.tablasActivas[tkTabla];
-        if (!st) return;  // FIX_PICK3_ROUTE_V1: sorteo no tiene esa tabla → ignorar silencioso
-        var _kind = (TABLE_DEFS[tkTabla] && TABLE_DEFS[tkTabla].kind) || 'multi';
-        st.rows = _filasPorTabla[tkTabla].map(function(f){
-          var r = newRow(st.forms, _kind);
-          r.num = f.num;
-          Object.keys(f.montos).forEach(function(k){
-            if (k in r.montos) r.montos[k] = f.montos[k];
-          });
-          return r;
+    // PRECHECK compartido con la UI: si falta una pestaña/forma, no habilitar Procesar ni modificar tablas.
+    var _destino=_procValidarDestinos(filas);
+    var _preErrores=_destino.errors;
+    var _filasExistentes=_destino.filasExistentes;
+    if(_preErrores.length){
+      _procRenderErrores({errors:_preErrores});
+      _procActualizarEstado('❌ No se aplicó nada: '+_preErrores.length+' problema(s) de destino.','error');
+      return;
+    }
+    // Construir todas las filas destino en memoria antes de tocar ninguna tabla.
+    var _planAplicacion=[];
+    try{
+      ordenSorteos.forEach(function(sidRaw){
+        var sid=String(sidRaw),s=sorteosActivos[sid];
+        if(!s||!s.cargado)throw new Error('Sorteo '+sid+' no está cargado.');
+        var staged={sid:sid,tablas:{},primera:null};
+        Object.keys(_filasPorTabla).forEach(function(tkTabla){
+          var st=s.tablasActivas&&s.tablasActivas[tkTabla];
+          if(!st)throw new Error('Sorteo '+(s.nombre||sid)+': falta pestaña '+tkTabla+'.');
+          var kind=(TABLE_DEFS[tkTabla]&&TABLE_DEFS[tkTabla].kind)||'multi';
+          var mapped=_filasPorTabla[tkTabla].map(function(f){return _procCrearFilaDestino(f,st,kind,tkTabla);});
+          if(mapped.length!==_filasPorTabla[tkTabla].length)throw new Error('Mapeo incompleto para '+tkTabla+'.');
+          staged.tablas[tkTabla]=mapped;
+          if(!staged.primera)staged.primera=tkTabla;
         });
-        if (!_primeraTablaAplicada) _primeraTablaAplicada = tkTabla;
-        _aplicadoEsteSorteo = true;
+        _planAplicacion.push(staged);
       });
+    }catch(_stageErr){
+      _procRenderErrores({errors:[{line:'—',message:'No se aplicó ninguna tabla: fallo el pre-mapeo de filas. '+(_stageErr.message||_stageErr)}]});
+      _procActualizarEstado('❌ No se aplicó nada: el pre-mapeo falló.','error');
+      return;
+    }
+    if(!_planAplicacion.length){
+      _procActualizarEstado('❌ No se aplicó nada: no hay sorteos preparados.','error');
+      return;
+    }
 
-      if (!_aplicadoEsteSorteo) return;
+    if(_filasExistentes>0&&!window.confirm('El procesador reemplazará las filas actuales en las tablas destino ('+_filasExistentes+' tabla(s) con datos). ¿Continuar?')){
+      _procActualizarEstado('Procesamiento cancelado; las filas existentes se conservaron.','idle');
+      return;
+    }
 
-      s.tabActual = _primeraTablaAplicada || tk;
+    // Aplicar únicamente el plan completo previamente validado y mapeado.
+    _planAplicacion.forEach(function(plan){
+      var sid=plan.sid,s=sorteosActivos[sid];
+      Object.keys(plan.tablas).forEach(function(tkTabla){
+        s.tablasActivas[tkTabla].rows=plan.tablas[tkTabla];
+      });
+      s.tabActual=plan.primera||tk;
       if (typeof renderTabsSorteo === 'function') renderTabsSorteo(sid);
       if (typeof renderMiniResumenSorteo === 'function') renderMiniResumenSorteo(sid);
 
       var panel = document.querySelector('.sp-panel[data-sorteo-id="' + sid + '"]');
       if (panel){
-        if (String(sidRaw) === String(ordenSorteos[0])){
+        if (String(sid) === String(ordenSorteos[0])){
           panel.classList.remove('sp-esclavo-procesar');
         } else {
           panel.classList.add('sp-esclavo-procesar');
@@ -8256,14 +8320,100 @@ function _procActualizarEstado(msg, tipo){
     if (typeof recalcGlobal === 'function') recalcGlobal();
     try { ta.scrollTop = _scrollTop; ta.selectionStart = _selStart; ta.selectionEnd = _selEnd; } catch(_){}
     if (aplicados === 0){
-      _procActualizarEstado('\u26a0\ufe0f Ningun sorteo tiene tabla Tradicional', 'error');
-      if (typeof toast === 'function') toast('Ningun sorteo tiene tabla Tradicional', 'warning');
+      _procActualizarEstado('\u26a0\ufe0f Ningún sorteo recibió filas', 'error');
+      if (typeof toast === 'function') toast('Ningún sorteo recibió filas', 'warning');
     } else {
       _procActualizarEstado('\u2705 ' + filas.length + ' fila(s) \u2192 ' + aplicados + ' sorteo(s)', 'ok');
       if (typeof toast === 'function') toast('OK: ' + filas.length + ' fila(s) aplicadas a ' + aplicados + ' sorteo(s)', 'success');
     }
   }
 
+  function _procValidarDestinos(filas){
+    var errors=[],filasExistentes=0,porTabla={};
+    (filas||[]).forEach(function(f){
+      var tk=f.tabla||'tabla-tradicional';
+      if(!porTabla[tk])porTabla[tk]=[];
+      porTabla[tk].push(f);
+    });
+    if(!ordenSorteos.length)errors.push({line:'—',message:'Selecciona al menos un sorteo.'});
+    ordenSorteos.forEach(function(sidRaw){
+      var sid=String(sidRaw),s=sorteosActivos[sid];
+      if(!s){errors.push({line:'—',message:'Sorteo '+sid+': panel no encontrado.'});return;}
+      if(!s.cargado){errors.push({line:'—',message:'Sorteo '+(s.nombre||sid)+': configuración aún cargando.'});return;}
+      Object.keys(porTabla).forEach(function(tk){
+        var st=s.tablasActivas&&s.tablasActivas[tk];
+        if(!st){errors.push({line:'—',message:'Sorteo '+(s.nombre||sid)+': no tiene la pestaña '+tk+'.'});return;}
+        var forms=st.forms||[];
+        var def=(typeof TABLE_DEFS!=='undefined')?TABLE_DEFS[tk]:null;
+        var canonicalizeForm=function(form){return def&&typeof resolverForma==='function'?resolverForma(form,def):form;};
+        var canonicalForms=forms.map(canonicalizeForm);
+        if(def&&window.ApostarTableValidator&&typeof window.ApostarTableValidator.validateRows==='function'){
+          try{
+            var mappedRows=porTabla[tk].map(function(row){return _procCrearFilaDestino(row,st,def.kind,tk);});
+            var rowsForValidation=mappedRows.map(function(row){var copy=Object.assign({},row);if(copy.montos){var canonicalMontos={};Object.keys(copy.montos).forEach(function(form){var key=resolverForma(form,def);canonicalMontos[key]=(Number(canonicalMontos[key])||0)+(Number(copy.montos[form])||0);});copy.montos=canonicalMontos;}return copy;});
+            canonicalForms=canonicalForms.filter(function(form,index,list){return list.indexOf(form)===index;});
+            var tableErrors=window.ApostarTableValidator.validateRows(rowsForValidation,def,canonicalForms,{expandToken:expandirToken,numerosEnFila:numerosEnFila,contarParletsDeFila:contarParletsDeFila});
+            tableErrors.forEach(function(te){errors.push({line:'—',message:'Sorteo '+(s.nombre||sid)+', '+tk+', fila '+te.row+': '+te.message});});
+            if(def.kind==='multi'&&canonicalForms.indexOf('candado')>=0&&canonicalForms.indexOf('parlet')>=0){
+              porTabla[tk].forEach(function(row,ri){var cand=Number(row.montos&&row.montos.candado)||0,par=Number(row.montos&&row.montos.parlet)||0;if(cand<=0)return;var plays=contarParletsDeFila(row,def.numDigits,def.maxNums),expected=Math.round(par*plays*100)/100;if(plays<1||par<=0||Math.abs(cand-expected)>0.01)errors.push({line:'—',message:'Sorteo '+(s.nombre||sid)+', '+tk+', fila '+(ri+1)+': Candado debe coincidir con Parlet × combinaciones.'});});
+            }
+          }catch(validationError){errors.push({line:'—',message:'Sorteo '+(s.nombre||sid)+', '+tk+': fallo la validación de filas ('+(validationError.message||validationError)+').'});}
+        }
+        porTabla[tk].forEach(function(row){
+          Object.keys(row.montos||{}).forEach(function(form){
+            var monto=Number(row.montos[form])||0;
+            if(monto>0&&canonicalForms.indexOf(canonicalizeForm(form))<0)
+              errors.push({line:'—',message:'Sorteo '+(s.nombre||sid)+': habilita la forma "'+form+'" en la pestaña '+tk+'.'});
+          });
+          if(Number(row.monto)>0){
+            var formaFila=row.tipo||(forms.length===1?canonicalizeForm(forms[0]):null);
+            if(!formaFila||canonicalForms.indexOf(canonicalizeForm(formaFila))<0)
+              errors.push({line:'—',message:'Sorteo '+(s.nombre||sid)+': no se pudo verificar la forma de juego de la pestaña '+tk+'.'});
+          }
+        });
+        if(st.rows&&st.rows.some(function(r){
+          return !!(String(r.num||r.numA||r.numB||'').trim()||
+            Object.keys(r.montos||{}).some(function(k){return Number(r.montos[k])>0;})||
+            Number(r.monto)>0);
+        }))filasExistentes++;
+      });
+    });
+    return {errors:errors,filasExistentes:filasExistentes,tablas:Object.keys(porTabla)};
+  }
+
+  function _procRenderErrores(validacion){
+    var box=document.getElementById('procErrores');if(!box)return;
+    if(!validacion||!validacion.errors.length){box.innerHTML='';box.style.display='none';return;}
+    box.style.display='block';
+    box.innerHTML='<strong>Revisa el texto:</strong><ul style="margin:5px 0 0;padding-left:20px;">'+validacion.errors.map(function(e){
+      var msg=String(e.message).replace(/[&<>"]/g,function(ch){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch];});
+      var tok=e.token?'<code style="background:#dc2626;color:#fff;padding:1px 4px;border-radius:3px;font-weight:900;">'+String(e.token).replace(/[&<>"]/g,function(ch){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch];})+'</code>':'';
+      return '<li><strong>Línea '+e.line+':</strong> '+msg+(tok?' Token: '+tok:'')+'</li>';
+    }).join('')+'</ul>';
+  }
+  function _procActualizarUI(){
+    var ta=document.getElementById('procesarText'),btn=document.getElementById('btnProcAhora'),chk=document.getElementById('chkProcesar');
+    if(!ta||!btn)return;
+    var v=_procValidarTexto(ta.value||'');_procRenderErrores(v);
+    var modo=!!(chk&&chk.checked),haySorteos=typeof ordenSorteos!=='undefined'&&ordenSorteos.length>0;
+    var hayTexto=!!String(ta.value||'').trim(),hayFilas=!!(v.rows&&v.rows.length);
+    var destino={errors:[]};
+    if(v.ok&&hayFilas&&haySorteos)destino=_procValidarDestinos(v.rows);
+    var hayError=!v.ok||destino.errors.length>0;
+    btn.disabled=!modo||!hayTexto||!v.ok||!hayFilas||!haySorteos||destino.errors.length>0;
+    btn.style.opacity=btn.disabled?'.7':'1';btn.style.cursor=btn.disabled?'not-allowed':'pointer';
+    var colorBtn=hayError?'red':(btn.disabled?'idle':'green');
+    btn.style.background=hayError?'linear-gradient(135deg,#dc2626,#991b1b)':(btn.disabled?'linear-gradient(135deg,#f59e0b,#b45309)':'linear-gradient(135deg,#16a34a,#15803d)');
+    btn.style.borderColor=hayError?'#991b1b':(btn.disabled?'#92400e':'#166534');btn.style.boxShadow=hayError?'2px 2px 0 #991b1b':(btn.disabled?'2px 2px 0 #92400e':'2px 2px 0 #166534');
+    btn.innerHTML=hayError?'<i class="fas fa-exclamation-triangle"></i> Corregir Errores':(!hayTexto?'Pega texto':(!haySorteos?'Selecciona Sorteo':(!modo?'Activa Procesar':'<i class="fas fa-check"></i> Procesar')));
+    if(!String(ta.value||'').trim())_procActualizarEstado('Pega el texto para revisar automáticamente.','idle');
+    else if(!v.ok)_procActualizarEstado('❌ '+v.errors.length+' error(es); no se procesará nada.','error');
+    else if(destino.errors.length){_procRenderErrores({errors:destino.errors});_procActualizarEstado('❌ '+destino.errors.length+' problema(s) con pestañas/formas de los sorteos.','error');}
+    else if(!haySorteos)_procActualizarEstado('Texto válido. Selecciona al menos un sorteo.','idle');
+    else if(!modo)_procActualizarEstado('Texto y destinos válidos. Activa la casilla Procesar para habilitar el botón.','idle');
+    else {_procRenderErrores(v);_procActualizarEstado('✅ '+v.rows.length+' fila(s) válidas en sus pestañas destino. Listo para procesar.','ok');}
+    return v;
+  }
   (function _bindProcesarText(){
     function _procFeedback(estado){
       var ta = document.getElementById('procesarText');
@@ -8317,6 +8467,8 @@ function _procActualizarEstado(msg, tipo){
         btnAhora.dataset.bound = '1';
         btnAhora.addEventListener('click', function(){
           try {
+            var vClick=_procActualizarUI();
+            if(!vClick||!vClick.ok||btnAhora.disabled){_procActualizarEstado('❌ Corrige los errores antes de procesar.','error');return;}
             _procFeedback('procesando');
             _procActualizarEstado('\u26a1 Procesando...', 'proc');
             _procProcesarTexto();
@@ -8329,8 +8481,13 @@ function _procActualizarEstado(msg, tipo){
         });
       }
 
-      // FIX_PROCESAR_MANUAL_V1: solo el botón procesa, no el textarea
-      // (listeners de input/change/blur/keydown desactivados)
+      ta.addEventListener('input',_procActualizarUI);
+      ta.addEventListener('paste',function(){setTimeout(_procActualizarUI,0);});
+      var chkProcesar=document.getElementById('chkProcesar');
+      if(chkProcesar)chkProcesar.addEventListener('change',_procActualizarUI);
+      document.addEventListener('click',function(ev){if(ev.target.closest&&ev.target.closest('.sorteo-btn'))setTimeout(_procActualizarUI,300);},true);
+      _procActualizarUI();
+      // El texto se valida en vivo; el botón solo aplica cuando está correcto.
     }
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', bind);
@@ -8343,6 +8500,7 @@ function _procActualizarEstado(msg, tipo){
   window._procProcesarTexto = _procProcesarTexto;
   window._procNormalizarTexto = _procNormalizarTexto;
   window._procParsearTexto = _procParsearTexto;
+  window._procValidarTexto = _procValidarTexto;
   window._procExpandirNumeros = _procExpandirNumeros;
   window._procParsearMontos = _procParsearMontos;
   // FIX_PARSER_ESPERA_CARGA_V1: exponer variables para debug
@@ -9035,29 +9193,40 @@ window._BORRADOR_CTX = {
       });
     }
 
-    function lineaEsValida(linea){
-      var txt = String(linea || '').trim();
-      if (!txt) return true; // línea vacía no se pinta
-      try {
-        var filas = (typeof _procParsearTexto === 'function')
-          ? _procParsearTexto(txt)
-          : [];
-        if (!filas || !filas.length) return false;
-        return filas.some(function(f){
-          var n = String(f.num || '').trim();
-          var m = f.montos || {};
-          var tieneMonto = !!(m.fijo || m.corridos || m.parlet || m.candado || m.pick3 || m.pick4 || m.pick5);
-          return n.length > 0 && (tieneMonto || n.indexOf('x') !== -1);
-        });
-      } catch(e){ return false; }
+    function erroresPorLinea(){
+      try{
+        var v=(typeof window._procValidarTexto==='function')?window._procValidarTexto(ta.value||''):{errors:[]};
+        var set={};
+        (v.errors||[]).forEach(function(e){var n=parseInt(e.line,10);if(n>0)set[n]=true;});
+        return set;
+      }catch(e){return {1:true};}
     }
-
+    function lineaEsValida(linea,index,errores){
+      var txt=String(linea||'').trim();
+      if(!txt)return true;
+      if(/^\[/.test(txt)||/^(tarjeta|tarieta|saldo)\b/i.test(txt))return true;
+      return !errores[index+1];
+    }
     function render(){
       var lines = ta.value.split('\n');
-      var html = lines.map(function(l){
-        var ok = lineaEsValida(l);
-        var cls = (String(l).trim() === '') ? 'ln' : (ok ? 'ln ln-ok' : 'ln ln-err');
-        return '<span class="'+cls+'">'+escapeHtml(l || ' ')+'</span>';
+      var errores=erroresPorLinea();
+      var diag={};
+      try{
+        var vv=window._procValidarTexto?window._procValidarTexto(ta.value||''):{errors:[]};
+        (vv.errors||[]).forEach(function(e){var n=parseInt(e.line,10);if(n>0){diag[n]=diag[n]||[];diag[n].push(e);}});
+      }catch(_){}
+      var html = lines.map(function(l,idx){
+        var ok = lineaEsValida(l,idx,errores), cls = (String(l).trim()==='')?'ln':(ok?'ln ln-ok':'ln ln-err');
+        var safe=escapeHtml(l||' ');
+        var ds=diag[idx+1]||[];
+        ds.some(function(e){
+          if(!e.token)return false;
+          var token=String(e.token),pos=l.toLowerCase().indexOf(token.toLowerCase());
+          if(pos<0)return false;
+          safe=escapeHtml(l.slice(0,pos))+'<mark class="proc-token-err">'+escapeHtml(l.slice(pos,pos+token.length))+'</mark>'+escapeHtml(l.slice(pos+token.length));
+          return true;
+        });
+        return '<span class="'+cls+'">'+safe+'</span>';
       }).join('\n');
       mirror.innerHTML = html;
       mirror.scrollTop = ta.scrollTop;

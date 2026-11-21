@@ -5,7 +5,7 @@ import logging
 import traceback
 import os
 import threading
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 from datetime import datetime, timedelta, time
 from collections import defaultdict
 from zoneinfo import ZoneInfo
@@ -181,30 +181,142 @@ def _boleta_duplicada(cliente_id, forma_pago_id, fecha_sorteo, items):
 # ═══════════════════════════════════════════════════════════════
 # Helper · Consolidar tripletas (FIX_TRIPLETA_V1)
 # ═══════════════════════════════════════════════════════════════
+def _forma_aplicable_sorteo(tipo, formas_sorteo):
+    """Resuelve alias de formas que el frontend normaliza a una tabla."""
+    tipo = str(tipo or '').strip().lower()
+    formas = {str(f or '').strip().lower() for f in (formas_sorteo or [])}
+    aliases = {
+        'corridos': {'corridos', 'corrido1', 'corrido2'},
+        'centenas corridas': {'centenas corridas', 'centena corrida1', 'centena corrida2'},
+    }
+    return bool(aliases.get(tipo, {tipo}) & formas)
+
+
+def _validar_items_formas_sorteos(items, formas_por_sorteo):
+    """Rechaza items que el guardado normal omitiría por forma no habilitada."""
+    errores = []
+    ids_disponibles = {str(sid) for sid in formas_por_sorteo}
+    for idx, item in enumerate(items or [], start=1):
+        tipo = str(item.get('tipo') or '').strip().lower()
+        sid_item = item.get('sorteo_id')
+        if sid_item not in (None, ''):
+            sid = str(sid_item)
+            if sid not in ids_disponibles:
+                errores.append(f'Jugada #{idx}: sorteo {sid} no está entre los seleccionados.')
+                continue
+            targets = [sid]
+        else:
+            targets = list(ids_disponibles)
+        if not targets:
+            errores.append(f'Jugada #{idx}: no hay sorteos destino.')
+            continue
+        for sid in targets:
+            if not _forma_aplicable_sorteo(tipo, formas_por_sorteo[sid]):
+                errores.append(f'Jugada #{idx}: forma "{tipo}" no está habilitada en sorteo {sid}.')
+    return errores
+
+
+def _validar_items_payload(items, etiqueta='jugadas', validar_numero=True):
+    """Valida estructura y montos antes de entrar al flujo transaccional."""
+    errores = []
+    if not isinstance(items, list):
+        return [f'{etiqueta}: debe ser una lista de jugadas.']
+    for idx, item in enumerate(items, start=1):
+        if not isinstance(item, dict):
+            errores.append(f'{etiqueta} #{idx}: formato de item inválido.')
+            continue
+        tipo = str(item.get('tipo') or '').strip()
+        numero = str(item.get('numero') or '').strip()
+        if not tipo:
+            errores.append(f'{etiqueta} #{idx}: forma de juego vacía.')
+        elif len(tipo) > 50:
+            errores.append(f'{etiqueta} #{idx}: forma de juego demasiado larga.')
+        if not numero:
+            errores.append(f'{etiqueta} #{idx}: número vacío.')
+        elif len(numero) > 20:
+            errores.append(f'{etiqueta} #{idx}: número excede 20 caracteres.')
+        if validar_numero and numero and tipo:
+            tipo_lower = tipo.lower()
+            formas_2 = {'fijo', 'corridos', 'corrido', 'corrido1', 'corrido2', 'pick2', 'pf', 'par frontal', 'vs100', 'posicion'}
+            formas_3 = {'pick3', 'centenas corridas', 'centena corrida', 'centena corrida1', 'centena corrida2'}
+            formas_4 = {'pick4'}
+            formas_5 = {'pick5'}
+            formas_pares = {'parlet', 'candado', 'vs', 'vspf', 'vspick2', 'pick2vspf'}
+            if tipo_lower in formas_2 and not re.fullmatch(r'\d{2}', numero):
+                errores.append(f'{etiqueta} #{idx}: {tipo} requiere un número de dos dígitos.')
+            elif tipo_lower in formas_3 and not re.fullmatch(r'\d{3}', numero):
+                errores.append(f'{etiqueta} #{idx}: {tipo} requiere un número de tres dígitos.')
+            elif tipo_lower in formas_4 and not re.fullmatch(r'\d{4}', numero):
+                errores.append(f'{etiqueta} #{idx}: Pick 4 requiere cuatro dígitos.')
+            elif tipo_lower in formas_5 and not re.fullmatch(r'\d{5}', numero):
+                errores.append(f'{etiqueta} #{idx}: Pick 5 requiere cinco dígitos.')
+            elif tipo_lower in formas_pares and not re.fullmatch(r'\d{2}[xX]\d{2}', numero):
+                errores.append(f'{etiqueta} #{idx}: {tipo} requiere un par NNxNN.')
+            elif tipo_lower == 'tripleta' and (len(numero.split()) != 3 or not all(re.fullmatch(r'\d{2}', n) for n in numero.split())):
+                errores.append(f'{etiqueta} #{idx}: Tripleta requiere exactamente tres números de dos dígitos.')
+            elif tipo_lower == 'superparlet' and not re.fullmatch(r'(?:\d{2}[xX]\d{2})(?:\s+\d{2}[xX]\d{2})*', numero):
+                errores.append(f'{etiqueta} #{idx}: Superparlet requiere pares NNxNN separados por espacios.')
+            elif tipo_lower not in formas_2 | formas_3 | formas_4 | formas_5 | formas_pares | {'tripleta', 'superparlet'}:
+                errores.append(f'{etiqueta} #{idx}: forma de juego no reconocida: {tipo}.')
+        try:
+            monto = Decimal(str(item.get('monto', '')))
+            if not monto.is_finite():
+                raise InvalidOperation
+            if monto <= 0:
+                errores.append(f'{etiqueta} #{idx}: monto debe ser mayor que cero.')
+            elif monto > Decimal('99999999.99'):
+                errores.append(f'{etiqueta} #{idx}: monto supera el máximo permitido.')
+            elif monto != monto.quantize(Decimal('0.01')):
+                errores.append(f'{etiqueta} #{idx}: monto debe tener como máximo dos decimales.')
+        except (InvalidOperation, ValueError, TypeError):
+            errores.append(f'{etiqueta} #{idx}: monto inválido.')
+        sorteo_id = item.get('sorteo_id')
+        if sorteo_id not in (None, '') and not str(sorteo_id).isdigit():
+            errores.append(f'{etiqueta} #{idx}: ID de sorteo inválido.')
+        if tipo.lower() == 'posicion':
+            posicion = item.get('posicion')
+            if str(posicion) not in ('1', '2', '3'):
+                errores.append(f'{etiqueta} #{idx}: posición debe ser 1, 2 o 3.')
+    return errores
+
+
 def _consolidar_tripletas(items):
-    """Agrupa items tripleta con mismo (sorteo_id, monto) en uno solo."""
+    """Conserva filas agrupadas; convierte items legacy (un número por item) en tripletas completas."""
     if not items:
         return items
     otros = []
-    tripletas_por_key = {}
+    legacy_por_key = {}
     for it in items:
         tipo = (it.get('tipo') or '').strip().lower()
         if tipo != 'tripleta':
             otros.append(it)
             continue
+        numeros = str(it.get('numero', '') or '').split()
+        # Nuevo formato: una fila del frontend ya viene como "NN NN NN".
+        if len(numeros) == 3:
+            if not all(len(n) == 2 and n.isdigit() for n in numeros):
+                raise ValueError('Tripleta debe contener exactamente tres números de dos dígitos.')
+            otros.append(it)
+            continue
+        if len(numeros) > 3:
+            raise ValueError('Una jugada Tripleta no puede contener más de tres números.')
+        # Formato anterior: el frontend enviaba un item por cada número.
         key = (it.get('sorteo_id'), str(it.get('monto', 0)))
-        if key not in tripletas_por_key:
-            tripletas_por_key[key] = {
-                'tipo': it.get('tipo'),
-                'numero': it.get('numero', ''),
-                'monto': it.get('monto', 0),
-                'sorteo_id': it.get('sorteo_id'),
-            }
-        else:
-            nums_prev = tripletas_por_key[key]['numero']
-            nums_new = it.get('numero', '')
-            tripletas_por_key[key]['numero'] = (nums_prev + ' ' + nums_new).strip()
-    return otros + list(tripletas_por_key.values())
+        legacy_por_key.setdefault(key, []).extend(numeros)
+    for (sorteo_id, monto), numeros in legacy_por_key.items():
+        if len(numeros) % 3:
+            raise ValueError('Tripleta incompleta: los números deben agruparse de tres en tres.')
+        for i in range(0, len(numeros), 3):
+            grupo = numeros[i:i + 3]
+            if not all(len(n) == 2 and n.isdigit() for n in grupo):
+                raise ValueError('Tripleta debe contener números de dos dígitos.')
+            otros.append({
+                'tipo': 'tripleta',
+                'numero': ' '.join(grupo),
+                'monto': monto,
+                'sorteo_id': sorteo_id,
+            })
+    return otros
 
 
 # ─── Rangos de teléfonos offline ─────────────────────────────
@@ -1086,7 +1198,6 @@ def superparlet(request):
 @login_required
 def apostar(request):
     user = request.user
-    _intentar_actualizar_loteria() # <--- AGREGA ESTA LÍNEA AQUÍ
     # ═══════════════════════════════════════════════════════════════
     # BLOQUEO PARA AUDITORES: no pueden apostar, solo supervisar
     # ═══════════════════════════════════════════════════════════════
@@ -1105,6 +1216,9 @@ def apostar(request):
 
     if request.method != 'GET':
         return JsonResponse({'error': 'Método no permitido en esta URL'}, status=405)
+
+    # La actualización en background solo se dispara en un GET permitido, no en POST ni auditor.
+    _intentar_actualizar_loteria()
 
     # FIX_APOSTAR_PRESELECT: params para preseleccion de cliente y aviso de recarga
     cliente_preseleccionado_id = request.GET.get('cliente_id', '').strip()
@@ -1515,9 +1629,24 @@ def _guardar_apuesta_impl(request):
             logger.error(f"JSON decode error: {e}")
             return JsonResponse({'success': False, 'message': f'Error en formato de datos: {str(e)}'}, status=400)
 
-        # FIX_TRIPLETA_V1
-        items_normales = _consolidar_tripletas(items_normales)
-        items_super = _consolidar_tripletas(items_super)
+        # Validación del payload antes de cualquier creación de boletas/jugadas.
+        errores_payload = _validar_items_payload(items_normales, 'Jugadas', validar_numero=False)
+        errores_payload += _validar_items_payload(items_super, 'Superparlet', validar_numero=False)
+        if not isinstance(sorteos_ids, list) or not isinstance(super_sorteos_ids, list):
+            return JsonResponse({'success': False, 'message': 'La selección de sorteos debe ser una lista.'}, status=400)
+        if errores_payload:
+            return JsonResponse({'success': False, 'message': 'Payload de apuestas inválido.', 'errores': errores_payload[:20]}, status=400)
+
+        # FIX_TRIPLETA_V1: consolidation may reject incomplete groups; no DB writes yet.
+        try:
+            items_normales = _consolidar_tripletas(items_normales)
+            items_super = _consolidar_tripletas(items_super)
+        except (ValueError, TypeError) as e:
+            return JsonResponse({'success': False, 'message': f'Jugada inválida: {e}'}, status=400)
+        errores_payload = _validar_items_payload(items_normales, 'Jugadas')
+        errores_payload += _validar_items_payload(items_super, 'Superparlet')
+        if errores_payload:
+            return JsonResponse({'success': False, 'message': 'Payload de apuestas inválido.', 'errores': errores_payload[:20]}, status=400)
 
         if not all(str(sid).isdigit() for sid in sorteos_ids):
             return JsonResponse({'success': False, 'message': 'IDs de sorteos inválidos'}, status=400)
@@ -1608,6 +1737,10 @@ def _guardar_apuesta_impl(request):
         sorteos_obj = Sorteo.objects.filter(id__in=sorteos_ids)
         if items_normales and len(sorteos_obj) != len(sorteos_ids):
             return JsonResponse({'success': False, 'message': 'Algunos sorteos no existen'}, status=404)
+        formas_por_sorteo = {str(s.id): (s.formas_juego or []) for s in sorteos_obj}
+        errores_formas = _validar_items_formas_sorteos(items_normales, formas_por_sorteo)
+        if errores_formas:
+            return JsonResponse({'success': False, 'message': 'Hay formas de juego no habilitadas.', 'errores': errores_formas[:20]}, status=400)
 
         super_sorteos_obj = Sorteo.objects.filter(id__in=super_sorteos_ids)
         if items_super and len(super_sorteos_obj) != 2:
@@ -1890,7 +2023,7 @@ def _guardar_apuesta_impl(request):
 
                 for sorteo in sorteos_iter:
                     formas_sorteo = [f.lower() for f in (sorteo.formas_juego or [])]
-                    if item.get('tipo', '').lower() not in formas_sorteo:
+                    if not _forma_aplicable_sorteo(item.get('tipo', ''), formas_sorteo):
                         continue
 
                     estado_sorteo = calcular_estado_sorteo(sorteo, timezone.now(), fecha_apuesta)
