@@ -70,7 +70,12 @@ function uiHarness(text,drawIds,checked){
   const wrapperEnd=template.indexOf('function _procProcesarTexto(){',wrapperStart);
   assert.ok(wrapperStart>=0&&wrapperEnd>wrapperStart,'validation wrapper must be present');
   const source=template.slice(helperStart,helperEnd)+template.slice(wrapperStart,wrapperEnd)+template.slice(uiStart,uiEnd)+';this.update=_procActualizarUI;';
-  const sandbox={document:doc,window:{ApostarTextValidator:{validate:validate}},ordenSorteos:drawIds||[],_procActualizarEstado:function(){},};
+  const ids=drawIds||[];
+  const sorteos={};
+  ids.forEach(id=>{
+    sorteos[String(id)]={nombre:'Test '+id,cargado:true,tablasActivas:{'tabla-tradicional':{forms:['fijo','corridos','parlet','candado'],rows:[]},'tabla-pick3':{forms:['pick3'],rows:[]}}};
+  });
+  const sandbox={document:doc,window:{ApostarTextValidator:{validate:validate}},ordenSorteos:ids,sorteosActivos:sorteos,_procActualizarEstado:function(){},};
   vm.runInNewContext(source,sandbox);
   const updateResult=sandbox.update();
   return {button,checkbox,errorBox,textarea,updateResult};
@@ -152,3 +157,17 @@ test('rejects mixed 2- and 3-digit groups',()=>{const r=run('12 123 con 5');asse
 test('accepts bracket headers and card metadata',()=>{const r=run('[Cliente X]\nTarjeta 123\n12 34 con 5');assert.equal(r.ok,true);});
 test('supports amount suffixes on inline groups (25f)',()=>{const r=run('12 34 5f');assert.equal(r.ok,true);assert.equal(r.rows[0].montos.fijo,'5');});
 test('detects invalid amount text appended to group',()=>{const r=run('12 34 con 5 error');assert.equal(r.ok,false);assert.ok(r.errors.some(e=>/Texto no reconocido/.test(e.message)));});
+
+test('live processor disables when selected draw is missing the destination tab',()=>{
+  const h=uiHarness('pick3 123 con 5',[1],true);
+  delete h; // exercise the same UI harness with a draw exposing no Pick 3 tab
+  const textarea={value:'pick3 123 con 5',scrollTop:0},button={disabled:false,style:{}},checkbox={checked:true},errorBox={style:{},innerHTML:''};
+  const doc={getElementById:id=>({procesarText:textarea,btnProcAhora:button,chkProcesar:checkbox,procErrores:errorBox}[id]||null)};
+  const a=template.indexOf('function _procNormalizarTexto(texto){'),b=template.indexOf('function _procValidarTexto(texto){',a),u=template.indexOf('function _procValidarDestinos(filas){'),z=template.indexOf('  (function _bindProcesarText',u);
+  const w=template.indexOf('function _procValidarTexto(texto){'),x=template.indexOf('function _procProcesarTexto(){',w);
+  const sandbox={document:doc,window:{ApostarTextValidator:{validate}},ordenSorteos:[1],sorteosActivos:{'1':{nombre:'Test',cargado:true,tablasActivas:{'tabla-tradicional':{forms:['fijo'],rows:[]}}}},_procActualizarEstado(){}};
+  vm.runInNewContext(template.slice(a,b)+template.slice(w,x)+template.slice(u,z)+';this.update=_procActualizarUI;',sandbox);
+  sandbox.update();
+  assert.equal(button.disabled,true);
+  assert.match(errorBox.innerHTML,/no tiene la pestaña/);
+});
