@@ -280,6 +280,36 @@ def _validar_items_payload(items, etiqueta='jugadas', validar_numero=True):
     return errores
 
 
+def _validar_coincidencia_sorteos_tablas(sorteos_ids, tablas_crudas):
+    """Exige un estado crudo por cada sorteo seleccionado, sin IDs duplicados o inválidos."""
+    if not isinstance(sorteos_ids, list):
+        return ['La selección de sorteos debe ser una lista.']
+    seleccionados = []
+    for sid in sorteos_ids:
+        if isinstance(sid, bool) or not str(sid).isdigit():
+            return ['La selección contiene un ID de sorteo inválido.']
+        seleccionados.append(str(sid))
+    if len(seleccionados) != len(set(seleccionados)):
+        return ['La selección contiene sorteos duplicados.']
+    if not isinstance(tablas_crudas, list):
+        return ['Las tablas originales deben ser una lista.']
+    crudos = []
+    for draw in tablas_crudas:
+        if not isinstance(draw, dict) or isinstance(draw.get('sorteo_id'), bool) or not str(draw.get('sorteo_id') or '').isdigit():
+            return ['Las tablas originales contienen un ID de sorteo inválido.']
+        crudos.append(str(draw['sorteo_id']))
+    if len(crudos) != len(set(crudos)):
+        return ['Las tablas originales contienen sorteos duplicados.']
+    missing = sorted(set(seleccionados) - set(crudos), key=int)
+    extra = sorted(set(crudos) - set(seleccionados), key=int)
+    errores = []
+    if missing:
+        errores.append('Faltan tablas originales para sorteos seleccionados: ' + ', '.join(missing) + '.')
+    if extra:
+        errores.append('Las filas enviadas incluyen sorteos no seleccionados: ' + ', '.join(extra) + '.')
+    return errores
+
+
 def _validar_tablas_crudas_payload(tablas_payload):
     """Valida filas originales para que filas con números sin monto no puedan omitirse."""
     errores = []
@@ -1748,10 +1778,9 @@ def _guardar_apuesta_impl(request):
         errores_tablas = _validar_tablas_crudas_payload(tablas_crudas)
         if errores_tablas:
             return JsonResponse({'success': False, 'message': 'Filas de apuestas inválidas.', 'errores': errores_tablas[:30]}, status=400)
-        sorteos_raw_ids = {str(d.get('sorteo_id')) for d in tablas_crudas if isinstance(d, dict)}
-        sorteos_seleccionados = {str(sid) for sid in sorteos_ids if str(sid).isdigit()}
-        if sorteos_raw_ids - sorteos_seleccionados:
-            return JsonResponse({'success': False, 'message': 'Las filas enviadas incluyen sorteos que no están seleccionados.'}, status=400)
+        errores_coincidencia = _validar_coincidencia_sorteos_tablas(sorteos_ids, tablas_crudas)
+        if errores_coincidencia:
+            return JsonResponse({'success': False, 'message': 'Selección de sorteos y filas originales no coincide.', 'errores': errores_coincidencia}, status=400)
         item_draw_ids = {str(it.get('sorteo_id')) for it in items_normales if isinstance(it, dict) and str(it.get('sorteo_id') or '').isdigit()}
         if item_draw_ids - sorteos_raw_ids:
             return JsonResponse({'success': False, 'message': 'Faltan tablas originales para uno o más sorteos con jugadas.'}, status=400)
