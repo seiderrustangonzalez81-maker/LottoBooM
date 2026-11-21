@@ -127,3 +127,10 @@ Pendiente de completar antes de cerrar:
 - Se sustituyó por un helper explícito que exige que cada jugada normal tenga un ID de sorteo válido y que ese ID pertenezca a la selección enviada.
 - Se añadieron pruebas unitarias para ID presente/seleccionado, ausente, no seleccionado y booleano.
 - Este hallazgo confirma por qué la auditoría continúa con lectura del flujo real, además de pruebas previas. CI para el HEAD actual debe pasar antes de considerar la corrección verificada.
+
+
+## Seguridad del pool durante guardar apuesta
+
+- La validación server-side de disponibilidad de pool tenía un comportamiento fail-open: si el guard interno lanzaba excepción, permitía continuar con el guard omitido.
+- Cambiado a fail-closed: registra el error y responde HTTP 503 sin continuar con el guardado. Esto puede bloquear temporalmente el envío cuando el verificador falla, pero evita aceptar apuestas sin comprobar disponibilidad.
+- Pendiente: probar el escenario de error inducido y revisar concurrencia/locking del consumo de pool. La validación previa a la transacción todavía podría ser vulnerable a carreras entre solicitudes simultáneas; requiere diseño y pruebas de concurrencia antes de darla por cerrada.
