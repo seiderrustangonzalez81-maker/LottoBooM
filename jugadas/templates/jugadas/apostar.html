@@ -8132,7 +8132,7 @@ function _procActualizarEstado(msg, tipo){
       m=line.match(/^(.+?)\s+(pick2|pf)\s+con\s+(\d+(?:\.\d+)?)$/i);
       if(m){emitir();var ff2=m[2].toLowerCase(),nn2=nums(m[1]);if(nn2.length&&nn2.every(function(x){return x.length===2;}))filas.push({num:nn2.join(' '),montos:{[ff2]:m[3]},tabla:'tabla-tradicional'});continue;}
       m=line.match(/^(pick[345])\s+(.+?)\s+con\s+(\d+(?:\.\d+)?)$/i);
-      if(m){emitir();var f=m[1].toLowerCase(),d=f==='pick3'?3:f==='pick4'?4:5;var ns=m[2].trim().split(/\\s+/);if(ns.length&&ns.every(function(x){return new RegExp('^\\\\d{'+d+'}continue;}
+      if(m){emitir();var f=m[1].toLowerCase(),d=f==='pick3'?3:f==='pick4'?4:5;var ns=m[2].trim().split(/\s+/);if(ns.length&&ns.every(function(x){return new RegExp('^\\d{'+d+'}$').test(x);}))rowSingle('tabla-'+f,f,m[2],m[3]);
       m=line.match(/^(?:centenas?\s+corridas?)\s+(.+?)\s+con\s+(\d+(?:\.\d+)?)$/i);
       if(m){emitir();var nsC=nums(m[1]);if(nsC.length&&nsC.every(function(x){return x.length===3;}))filas.push({num:nsC.join(' '),montos:{'centenas corridas':m[2]},tabla:'tabla-centenas'});continue;}
       m=line.match(/^(pick2\s+vs\s+pf|p2\s+vs\s+pf|vs\s+pick2|vs\s+pf|vs100|vs)\s+(.+?)\s+con\s+(\d+(?:\.\d+)?)$/i);
