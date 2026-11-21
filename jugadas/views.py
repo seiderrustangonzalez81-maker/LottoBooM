@@ -280,6 +280,21 @@ def _validar_items_payload(items, etiqueta='jugadas', validar_numero=True):
     return errores
 
 
+def _validar_items_ids_sorteo(items, sorteos_seleccionados):
+    """Cada item normal debe referir a un sorteo seleccionado."""
+    if not isinstance(items, list):
+        return ['Jugadas: debe ser una lista.']
+    selected = {str(sid) for sid in sorteos_seleccionados}
+    errores = []
+    for index, item in enumerate(items, start=1):
+        if not isinstance(item, dict) or isinstance(item.get('sorteo_id'), bool) or not str(item.get('sorteo_id') or '').isdigit():
+            errores.append(f'Jugada #{index}: ID de sorteo inválido o ausente.')
+            continue
+        if str(item['sorteo_id']) not in selected:
+            errores.append(f'Jugada #{index}: pertenece a un sorteo no seleccionado.')
+    return errores
+
+
 def _validar_coincidencia_sorteos_tablas(sorteos_ids, tablas_crudas):
     """Exige un estado crudo por cada sorteo seleccionado, sin IDs duplicados o inválidos."""
     if not isinstance(sorteos_ids, list):
@@ -1784,14 +1799,9 @@ def _guardar_apuesta_impl(request):
         errores_coincidencia = _validar_coincidencia_sorteos_tablas(sorteos_ids, tablas_crudas)
         if errores_coincidencia:
             return JsonResponse({'success': False, 'message': 'Selección de sorteos y filas originales no coincide.', 'errores': errores_coincidencia}, status=400)
-        item_draw_ids = set()
-        for item in items_normales:
-            if not isinstance(item, dict) or isinstance(item.get('sorteo_id'), bool) or not str(item.get('sorteo_id') or '').isdigit():
-                return JsonResponse({'success': False, 'message': 'Cada jugada normal debe incluir un ID de sorteo válido.'}, status=400)
-            item_draw_ids.add(str(item['sorteo_id']))
-        selected_draw_ids = {str(sid) for sid in sorteos_ids}
-        if item_draw_ids - selected_draw_ids:
-            return JsonResponse({'success': False, 'message': 'Hay jugadas asignadas a sorteos no seleccionados.'}, status=400)
+        errores_ids_jugadas = _validar_items_ids_sorteo(items_normales, sorteos_ids)
+        if errores_ids_jugadas:
+            return JsonResponse({'success': False, 'message': 'IDs de sorteos en jugadas inválidos.', 'errores': errores_ids_jugadas[:20]}, status=400)
         errores_payload = _validar_items_payload(items_normales, 'Jugadas', validar_numero=False)
         errores_payload += _validar_items_payload(items_super, 'Superparlet', validar_numero=False)
         if errores_payload:
