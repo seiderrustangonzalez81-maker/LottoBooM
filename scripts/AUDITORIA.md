@@ -19,9 +19,7 @@ revisión, porque horarios y alias pueden ser ambiguos. `--strict` convierte war
 fallo de salida; CI inicialmente conserva warnings como reporte para evitar bloquear el
 scraper mientras se establece una línea base.
 
-La comprobación de base de datos viva, rutas Django y renderizado de templates es una fase
-dinámica aparte; este reporte lo declara explícitamente como omitido. No se debe interpretar
-un audit estático como validación de producción.
+La base de datos viva y el renderizado con datos reales quedan fuera. CI ejecuta aparte un smoke audit Django (checks del sistema, importación de modelos/forms/views/urls, carga de templates y resolución del URL root) con entorno aislado y sin conexión a DB. No equivale a pruebas de render de vistas con datos ni valida producción.
 
 
 ## Correcciones seguras aplicadas en la rama de revisión
