@@ -62,7 +62,7 @@
       if(ignore(ln)||errors.some(function(e){return Number(e.line)===cov+1;}))continue;
       var standalone=[];try{standalone=parseText(ln)||[];}catch(_){}
       var pureGroup=nums(ln);
-      var continuation=/^(?:con|candado|parlet|parle|parl|palet|fijo|corrido|cada\s+parlet)\\b/i.test(ln)||/^[🔒🔐🔓]/.test(ln)||suffixOnly(ln);
+      var continuation=/^(?:con|candado|parlet|parle|parl|palet|fijo|corrido|cada\s+parlet)\b/i.test(ln)||/^[🔒🔐🔓]/.test(ln)||suffixOnly(ln);
       if(!standalone.length&&!pureGroup.ok&&!continuation){
         err(cov+1,'Esta línea no genera ninguna fila de apuesta y no puede procesarse parcialmente.',(raw.match(/\b\d+(?:\.\d+)?\s*[a-z]+\b/i)||[])[0]||null);
       }
