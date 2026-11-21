@@ -181,6 +181,41 @@ def _boleta_duplicada(cliente_id, forma_pago_id, fecha_sorteo, items):
 # ═══════════════════════════════════════════════════════════════
 # Helper · Consolidar tripletas (FIX_TRIPLETA_V1)
 # ═══════════════════════════════════════════════════════════════
+def _forma_aplicable_sorteo(tipo, formas_sorteo):
+    """Resuelve alias de formas que el frontend normaliza a una tabla."""
+    tipo = str(tipo or '').strip().lower()
+    formas = {str(f or '').strip().lower() for f in (formas_sorteo or [])}
+    aliases = {
+        'corridos': {'corridos', 'corrido1', 'corrido2'},
+        'centenas corridas': {'centenas corridas', 'centena corrida1', 'centena corrida2'},
+    }
+    return bool(aliases.get(tipo, {tipo}) & formas)
+
+
+def _validar_items_formas_sorteos(items, formas_por_sorteo):
+    """Rechaza items que el guardado normal omitiría por forma no habilitada."""
+    errores = []
+    ids_disponibles = {str(sid) for sid in formas_por_sorteo}
+    for idx, item in enumerate(items or [], start=1):
+        tipo = str(item.get('tipo') or '').strip().lower()
+        sid_item = item.get('sorteo_id')
+        if sid_item not in (None, ''):
+            sid = str(sid_item)
+            if sid not in ids_disponibles:
+                errores.append(f'Jugada #{idx}: sorteo {sid} no está entre los seleccionados.')
+                continue
+            targets = [sid]
+        else:
+            targets = list(ids_disponibles)
+        if not targets:
+            errores.append(f'Jugada #{idx}: no hay sorteos destino.')
+            continue
+        for sid in targets:
+            if not _forma_aplicable_sorteo(tipo, formas_por_sorteo[sid]):
+                errores.append(f'Jugada #{idx}: forma "{tipo}" no está habilitada en sorteo {sid}.')
+    return errores
+
+
 def _validar_items_payload(items, etiqueta='jugadas'):
     """Valida estructura y montos antes de entrar al flujo transaccional."""
     errores = []
@@ -1677,6 +1712,10 @@ def _guardar_apuesta_impl(request):
         sorteos_obj = Sorteo.objects.filter(id__in=sorteos_ids)
         if items_normales and len(sorteos_obj) != len(sorteos_ids):
             return JsonResponse({'success': False, 'message': 'Algunos sorteos no existen'}, status=404)
+        formas_por_sorteo = {str(s.id): (s.formas_juego or []) for s in sorteos_obj}
+        errores_formas = _validar_items_formas_sorteos(items_normales, formas_por_sorteo)
+        if errores_formas:
+            return JsonResponse({'success': False, 'message': 'Hay formas de juego no habilitadas.', 'errores': errores_formas[:20]}, status=400)
 
         super_sorteos_obj = Sorteo.objects.filter(id__in=super_sorteos_ids)
         if items_super and len(super_sorteos_obj) != 2:
@@ -1959,7 +1998,7 @@ def _guardar_apuesta_impl(request):
 
                 for sorteo in sorteos_iter:
                     formas_sorteo = [f.lower() for f in (sorteo.formas_juego or [])]
-                    if item.get('tipo', '').lower() not in formas_sorteo:
+                    if not _forma_aplicable_sorteo(item.get('tipo', ''), formas_sorteo):
                         continue
 
                     estado_sorteo = calcular_estado_sorteo(sorteo, timezone.now(), fecha_apuesta)
