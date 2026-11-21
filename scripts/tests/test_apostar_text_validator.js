@@ -80,10 +80,10 @@ const tableValidator=require('../../static/js/apostar_table_validation.js');
 function tableRowHarness(){
   function expandToken(t,d){return [String(t)];}
   function numbersInRow(row,d,max){
-    const nums=[],pairs=[];
+    const nums=[],pairs=[],counts={};
     String(row.num||'').trim().split(/\s+/).filter(Boolean).forEach(t=>{
       const m=t.match(/^(\d{2})[xX](\d{2})$/);if(m){pairs.push(m[1]+'x'+m[2]);return;}
-      nums.push(...expandToken(t,d));
+      expandToken(t,d).forEach(n=>{counts[n]=(counts[n]||0);if(counts[n]<2){nums.push(n);counts[n]++;}});
     });
     return {numeros:max?nums.slice(0,max):nums,paresExplicitos:pairs};
   }
