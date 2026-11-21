@@ -8111,7 +8111,7 @@ function _procActualizarEstado(msg, tipo){
       // CASO C: instruccion pura → aplica al grupo pendiente o al ultimo emitido
       if (/^(con|candado|kandado|canado|candad|parle|parlet|parl|palet|parler|parley)\b/i.test(linea) ||
           /^[\uD83D\uDD10\uD83D\uDD12\uD83D\uDD13]/.test(linea)){
-        var instrP = linea.replace(/^con\s+/i, '');
+        var instrP = linea; // conserva "con": el parser de montos necesita el prefijo
         if (grupoPendiente){
           _aplicarInstruccion(grupoPendiente, instrP);
           _emitirGrupo();
