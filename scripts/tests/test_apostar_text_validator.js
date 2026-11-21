@@ -186,6 +186,7 @@ test('routes traditional text to the Tradicional tab',()=>{
 test('accepts group on previous line with amount instruction',()=>{const r=run('12 34\ncon 5 y 2');assert.equal(r.ok,true);});
 test('rejects a final number group without amount',()=>{const r=run('12 34');assert.equal(r.ok,false);assert.ok(r.errors.some(e=>/último grupo/.test(e.message)));});
 test('rejects unknown tokens instead of silently dropping them',()=>{const r=run('12 34 blabla con 5');assert.equal(r.ok,false);assert.ok(r.errors.some(e=>/Token no reconocido/.test(e.message)));});
+test('rejects text amounts with more than two decimals and trailing garbage',()=>{const amount=run('12 34 con 5.123');assert.equal(amount.ok,false);assert.ok(amount.errors.some(e=>/dos decimales/.test(e.message)));const garbage=run('pick4 1234 con 5 extra');assert.equal(garbage.ok,false);});
 test('rejects zero amount',()=>{const r=run('12 34 con 0');assert.equal(r.ok,false);assert.ok(r.errors.some(e=>/mayores que cero/.test(e.message)));});
 test('routes Pick4 explicit text into Pick4 and validates digit length',()=>{const r=run('pick4 1234 con 5');assert.equal(r.ok,true,JSON.stringify(r.errors));assert.equal(r.rows[0].tabla,'tabla-pick4');assert.equal(r.rows[0].montos.pick4,'5');const bad=run('pick4 123 con 5');assert.equal(bad.ok,false);});
 test('supports VS PF abbreviation expansions and preserves Pick4/Pick5 full tokens',()=>{
