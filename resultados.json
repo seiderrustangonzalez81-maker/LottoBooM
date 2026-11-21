@@ -640,5 +640,15 @@
     ],
     "fecha": "2026-11-21",
     "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "El Quinielon Dia",
+    "numeros": [
+      "24",
+      "27",
+      "07"
+    ],
+    "fecha": "2026-11-21",
+    "fuente": "enloteria"
   }
 ]
