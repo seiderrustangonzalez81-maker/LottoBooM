@@ -2757,6 +2757,7 @@ D 8 1 5 con 50f y 20c" style="width:100%;padding:10px;border:1.5px solid #fdba74
 
 {% block extra_js %}
 <script src="{% static 'js/apostar_text_validator.js' %}?v=20261121a"></script>
+<script src="{% static 'js/apostar_tripleta.js' %}?v=20261121a"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function(){
 'use strict';
@@ -4893,6 +4894,11 @@ function recolectarItemsDeSorteo(sid){
               items.push({ tipo:'vs100', numero: num + 'x' + vs, monto: m, sorteo_id:sid });
             }
           }
+        } else if (f === 'tripleta') {
+          // Una fila de Tripleta representa una combinación (3 números) y un solo monto.
+          var _tripItems = (window.ApostarTripleta && window.ApostarTripleta.itemForRow)
+            ? window.ApostarTripleta.itemForRow(numeros, m, sid) : [];
+          _tripItems.forEach(function(it){ items.push(it); });
         } else {
           numeros.forEach(n => items.push({ tipo: f, numero: n, monto: m, sorteo_id:sid }));
         }
