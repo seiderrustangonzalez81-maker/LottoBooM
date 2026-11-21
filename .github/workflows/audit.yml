@@ -19,7 +19,17 @@ jobs:
           python-version: "3.11"
       - name: Ejecutar auditoría estática de alineación
         run: python scripts/auditar_sorteos.py --json audit-report.json
-      - name: Pruebas unitarias del auditor
+      - name: Instalar dependencias Django para smoke audit
+        run: pip install -r requirements.txt
+      - name: Smoke audit dinámico Django (sin DB de producción)
+        env:
+          DEBUG: "true"
+          SECRET_KEY: "ci-only-not-a-production-secret"
+        run: python scripts/auditar_django_runtime.py
+      - name: Pruebas unitarias de auditoría
+        env:
+          DEBUG: "true"
+          SECRET_KEY: "ci-only-not-a-production-secret"
         run: python -m unittest discover -s scripts/tests -v
       - name: Publicar reporte como artefacto
         if: always()
