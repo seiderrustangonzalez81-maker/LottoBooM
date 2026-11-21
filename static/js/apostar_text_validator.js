@@ -8,7 +8,7 @@
     var parseText=helpers.parseText||function(){return [];};
     var detectInstruction=helpers.detectInstruction||function(){return -1;};
     var normalized=normalize(text), lines=normalized.split(/\r?\n/), errors=[], pending=false, explicitPairs=0, hasContent=false;
-    function err(line,message){errors.push({line:line,message:message});}
+    function err(line,message,token){errors.push({line:line,message:message,token:token||null});}
     function ignore(line){return !line||/^\[/.test(line)||/^(tarjeta|tarieta|saldo)\b/i.test(line);}
     function suffixOnly(line){return /^(?:\d+(?:\.\d+)?\s*[fc]\b)(?:\s+\d+(?:\.\d+)?\s*[fc]\b)*$/i.test(line);}
     function nums(group){
@@ -20,11 +20,11 @@
         if(t==='T'||t==='D'){pendingLetter=t;pendingUsed=false;continue;}
         if(/^[TD]\d$/.test(t)||t==='PA'||t==='PAREJAS'||t==='PICK3'||/^\d{2}V$/.test(t)){pendingLetter=null;continue;}
         if(/^\d+$/.test(t)){
-          if(t.length>4)return {ok:false,message:'Número demasiado largo: '+t+'. Pick 4/5 aún no está admitido.'};
-          if(t.length===1&&!pendingLetter)return {ok:false,message:'Dígito aislado '+t+'. Usa T/D o escribe el número completo.'};
+          if(t.length>4)return {ok:false,message:'Número demasiado largo: '+t+'. Pick 4/5 aún no está admitido.',token:t};
+          if(t.length===1&&!pendingLetter)return {ok:false,message:'Dígito aislado '+t+'. Usa T/D o escribe el número completo.',token:t};
           lengths.push(t.length);if(t.length===1)pendingUsed=true;else{pendingLetter=null;pendingUsed=false;}continue;
         }
-        return {ok:false,message:'Token no reconocido: '+t+'.'};
+        return {ok:false,message:'Token no reconocido: '+t+'.',token:t};
       }
       if(pendingLetter&&!pendingUsed)return {ok:false,message:'La letra T/D quedó sin dígito.'};
       if(lengths.indexOf(2)>=0&&lengths.indexOf(3)>=0)return {ok:false,message:'No mezcles números de 2 y 3 dígitos en el mismo grupo.'};
@@ -48,8 +48,8 @@
       if(suffixOnly(line)){var suf=instruction(line);if(!suf.ok)err(i+1,suf.message);else if(pending)pending=false;else err(i+1,'Monto sin grupo de números asociado.');continue;}
       if(/^(con|candado|parlet|parle|parl|palet|parler|parley)\b/i.test(line)||/^[🔒🔐🔓]/.test(line)){var only=instruction(line);if(!only.ok)err(i+1,only.message);else if(pending)pending=false;else if(explicitPairs&&(only.montos.parlet||only.montos.candado))explicitPairs=0;else err(i+1,'Instrucción sin números anteriores.');continue;}
       var pos=detectInstruction(line);
-      if(pos>0){var n=nums(line.slice(0,pos).trim()),m=instruction(line.slice(pos).trim());if(!n.ok)err(i+1,n.message);else if(!m.ok)err(i+1,m.message);else if(pending)err(i+1,'Hay un grupo anterior sin monto asociado.');continue;}
-      var pure=nums(line);if(pure.ok){if(pending)err(i+1,'El grupo anterior no tiene monto asociado.');pending=true;}else err(i+1,pure.message);
+      if(pos>0){var n=nums(line.slice(0,pos).trim()),m=instruction(line.slice(pos).trim());if(!n.ok)err(i+1,n.message,n.token);else if(!m.ok)err(i+1,m.message);else if(pending)err(i+1,'Hay un grupo anterior sin monto asociado.');continue;}
+      var pure=nums(line);if(pure.ok){if(pending)err(i+1,'El grupo anterior no tiene monto asociado.');pending=true;}else err(i+1,pure.message,pure.token);
     }
     if(pending)err(lines.length,'El último grupo de números quedó sin monto.');
     if(explicitPairs)err(lines.length,'Hay parlets explícitos sin monto; añade “cada parle X” o monto individual.');
