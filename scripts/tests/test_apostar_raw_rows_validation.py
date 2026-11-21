@@ -55,6 +55,12 @@ class RawBettingRowsValidationTests(unittest.TestCase):
         ))
         self.assertTrue(any("forma de juego no permitida" in e for e in errors), errors)
 
+    def test_duplicate_forms_are_rejected(self):
+        errors = _validar_tablas_crudas_payload(payload(
+            "tabla-tradicional","multi",["fijo","fijo"],[{"num":"12","montos":{"fijo":"1"}}]
+        ))
+        self.assertTrue(any("formas de juego duplicadas" in e for e in errors), errors)
+
     def test_rejects_wrong_table_kind_and_bad_shape(self):
         errors=_validar_tablas_crudas_payload(payload(
             "tabla-vs","single",["vs"],[{"num":"12","montos":{"vs":"1"}}]
