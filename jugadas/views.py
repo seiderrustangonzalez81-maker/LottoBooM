@@ -1579,6 +1579,7 @@ def _guardar_apuesta_impl(request):
         CUBA_TZ = ZoneInfo('America/Havana')
         ahora_cuba = timezone.now().astimezone(CUBA_TZ)
         hoy = ahora_cuba.date()
+        _now_cuba = ahora_cuba
         _es_admin_f = request.user.is_superuser or request.user.roles.filter(tipo__in=['banco', 'superadmin'], activo=True).exists()
         _sids_early = []
         try:
@@ -1610,13 +1611,14 @@ def _guardar_apuesta_impl(request):
             if not _georgia_closed_window:
                 _georgia_expected_date = hoy + timedelta(days=1)
 
-        if _georgia_selected and not _es_admin_f:
-            if _georgia_closed_window:
-                return JsonResponse({'success': False, 'message': 'Georgia está cerrado entre las 00:27 y la 01:00 hora Cuba. La apuesta no se trasladará automáticamente al siguiente sorteo.'}, status=400)
+        if _georgia_selected:
             if len(set(_selected_ids) - set(_georgia_ids)) > 0 and _georgia_expected_date != hoy:
                 return JsonResponse({'success': False, 'message': 'Georgia y otros sorteos tienen fechas efectivas distintas en este horario. Envíalos por separado para no cambiar la fecha de los demás sorteos.'}, status=400)
-            if fecha_apuesta != _georgia_expected_date:
-                return JsonResponse({'success': False, 'message': f'La fecha efectiva de Georgia para este horario es {_georgia_expected_date.isoformat()}. Actualiza la fecha y vuelve a procesar.'}, status=400)
+            if not _es_admin_f:
+                if _georgia_closed_window:
+                    return JsonResponse({'success': False, 'message': 'Georgia está cerrado entre las 00:27 y la 01:00 hora Cuba. La apuesta no se trasladará automáticamente al siguiente sorteo.'}, status=400)
+                if fecha_apuesta != _georgia_expected_date:
+                    return JsonResponse({'success': False, 'message': f'La fecha efectiva de Georgia para este horario es {_georgia_expected_date.isoformat()}. Actualiza la fecha y vuelve a procesar.'}, status=400)
 
         if fecha_apuesta < hoy and not _es_admin_f:
             return JsonResponse({'success': False, 'message': 'Los clientes y comerciales solo pueden apostar desde hoy en adelante.'}, status=400)
