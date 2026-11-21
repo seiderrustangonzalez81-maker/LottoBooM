@@ -76,3 +76,22 @@ Se inició implementación en esta rama:
 - Se agregó este documento con la regla y los casos de límite.
 
 **Pendiente de verificación:** todavía no se ejecutaron pruebas locales ni pruebas de integración del endpoint. El código actual sigue usando una fecha global de POST en partes de la creación/validación de jugadas; por eso la regla mixta está protegida mediante rechazo, no implementada como fechas independientes en un mismo envío. Revisar también el horario efectivo Georgia en `sorteos/fixtures/sorteos.json` y `sorteos/utils.py`, porque las horas de fixture todavía no se han alineado con la conversión del resultado oficial a Cuba.
+
+## Revisión de continuidad y correcciones de borradores/filas (21 de noviembre de 2026)
+
+Hallazgos confirmados:
+- Había dos mecanismos de borrador simultáneos: un bloque inline en `apostar.html` y el módulo `static/js/borrador_apostar.js`. Se retiró el bloque inline; queda un único propietario del flujo.
+- El borrador externo guardaba con criterios demasiado permisivos (cliente o sorteo bastaban), y auto-aplicaba el contenido al entrar. Se corrigió para exigir cliente/gestor aplicable, forma de pago, sorteos y al menos un número, y mostrar opciones explícitas Continuar/Borrar.
+- La clave local está scoped por ID de usuario; no comparte borrador entre cuentas. El módulo conserva datos de cliente, cuenta gestora, forma de pago, fecha, orden, sorteos, pestañas y filas.
+- La restauración ahora dispara el evento change de la cuenta gestora seleccionada para sincronizar la carga de clientes.
+- La fila automática se activa por números, no por importe aislado. Un importe sin números no provoca crecimiento de filas.
+
+Pruebas añadidas:
+- `scripts/tests_js/borrador_apostar.test.cjs`: elegibilidad, requisitos, gestor, números en grupos VS y clave por usuario.
+- `scripts/tests_js/apostar_table_validation.test.cjs`: fila numérica sin importe, fila final vacía, posiciones, VS, importe sin números y fila válida con importe positivo.
+
+Pendiente de completar antes de cerrar:
+- Confirmar CI en el commit más reciente.
+- Probar restauración real de cliente/gestor/FP/sorteos/tablas con navegador (incluida carga asíncrona).
+- Validar en backend la representación de filas originales; actualmente el POST de apuesta transmite items ya recolectados y el servidor no recibe el estado crudo de las filas. El backend valida items/importe, pero aún no puede verificar por sí solo una fila de interfaz omitida sin número o sin importe.
+- Completar pruebas de auto-fila por todas las tablas y de render/restore para asegurar que no hay duplicados.
