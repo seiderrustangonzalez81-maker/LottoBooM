@@ -7,7 +7,7 @@ os.environ.setdefault("SECRET_KEY", "ci-only-not-a-production-secret")
 import django
 django.setup()
 
-from jugadas.views import _validar_tablas_crudas_payload
+from jugadas.views import _validar_tablas_crudas_payload, _validar_coincidencia_sorteos_tablas
 
 
 def payload(table, kind, forms, rows, sid="54"):
@@ -61,6 +61,29 @@ class RawBettingRowsValidationTests(unittest.TestCase):
         ))
         self.assertTrue(any("tipo de tabla no coincide" in e for e in errors), errors)
         self.assertTrue(_validar_tablas_crudas_payload("not-a-list"))
+
+
+class DrawTablesPayloadAlignmentTests(unittest.TestCase):
+    def test_exact_draw_match_passes(self):
+        raw = [{"sorteo_id":"54","tablas":{}},{"sorteo_id":"12","tablas":{}}]
+        self.assertEqual(_validar_coincidencia_sorteos_tablas([54,12], raw), [])
+
+    def test_missing_draw_tables_are_rejected(self):
+        errors = _validar_coincidencia_sorteos_tablas([54,12], [{"sorteo_id":"54","tablas":{}}])
+        self.assertTrue(any("Faltan tablas originales" in e for e in errors), errors)
+
+    def test_extra_draw_tables_are_rejected(self):
+        errors = _validar_coincidencia_sorteos_tablas([54], [{"sorteo_id":"54","tablas":{}},{"sorteo_id":"12","tablas":{}}])
+        self.assertTrue(any("no seleccionados" in e for e in errors), errors)
+
+    def test_duplicate_selected_draw_is_rejected(self):
+        self.assertTrue(_validar_coincidencia_sorteos_tablas([54, "54"], [{"sorteo_id":"54","tablas":{}}]))
+
+    def test_duplicate_raw_draw_is_rejected(self):
+        self.assertTrue(_validar_coincidencia_sorteos_tablas([54], [{"sorteo_id":"54","tablas":{}},{"sorteo_id":"54","tablas":{}}]))
+
+    def test_invalid_draw_id_is_rejected(self):
+        self.assertTrue(_validar_coincidencia_sorteos_tablas(["54x"], [{"sorteo_id":"54","tablas":{}}]))
 
 
 if __name__ == "__main__":
