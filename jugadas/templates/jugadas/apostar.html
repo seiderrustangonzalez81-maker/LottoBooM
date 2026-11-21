@@ -9118,27 +9118,25 @@ window._BORRADOR_CTX = {
       });
     }
 
-    function lineaEsValida(linea){
-      var txt = String(linea || '').trim();
-      if (!txt) return true; // línea vacía no se pinta
-      try {
-        var filas = (typeof _procParsearTexto === 'function')
-          ? _procParsearTexto(txt)
-          : [];
-        if (!filas || !filas.length) return false;
-        return filas.some(function(f){
-          var n = String(f.num || '').trim();
-          var m = f.montos || {};
-          var tieneMonto = !!(m.fijo || m.corridos || m.parlet || m.candado || m.pick3 || m.pick4 || m.pick5);
-          return n.length > 0 && (tieneMonto || n.indexOf('x') !== -1);
-        });
-      } catch(e){ return false; }
+    function erroresPorLinea(){
+      try{
+        var v=(typeof window._procValidarTexto==='function')?window._procValidarTexto(ta.value||''):{errors:[]};
+        var set={};
+        (v.errors||[]).forEach(function(e){var n=parseInt(e.line,10);if(n>0)set[n]=true;});
+        return set;
+      }catch(e){return {1:true};}
     }
-
+    function lineaEsValida(linea,index,errores){
+      var txt=String(linea||'').trim();
+      if(!txt)return true;
+      if(/^\[/.test(txt)||/^(tarjeta|tarieta|saldo)\b/i.test(txt))return true;
+      return !errores[index+1];
+    }
     function render(){
       var lines = ta.value.split('\n');
-      var html = lines.map(function(l){
-        var ok = lineaEsValida(l);
+      var errores=erroresPorLinea();
+      var html = lines.map(function(l,idx){
+        var ok = lineaEsValida(l,idx,errores);
         var cls = (String(l).trim() === '') ? 'ln' : (ok ? 'ln ln-ok' : 'ln ln-err');
         return '<span class="'+cls+'">'+escapeHtml(l || ' ')+'</span>';
       }).join('\n');
