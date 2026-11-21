@@ -8121,7 +8121,7 @@ function _procActualizarEstado(msg, tipo){
     for(var i=0;i<lineas.length;i++){
       var line=lineas[i],m,parts;
       // Explicit pairs and "each pair" continuation
-      m=line.match(/^([0-9]{2})\s*[x*]\s*([0-9]{2})(?:\s*(?:-|con)?\s*(\d+(?:\.\d+)?))?$/i);
+      m=line.match(/^((?:\d{2}[x*]\d{2}\s*)+)\s+con\s+(\d+(?:\.\d+)?)$/i);\n      if(m){emitir();m[1].trim().split(/\s+/).forEach(function(pair){filas.push({num:pair.toLowerCase().replace('*','x'),montos:{fijo:'',corridos:'',parlet:m[2]},tabla:'tabla-tradicional'});});continue;}\n      m=line.match(/^([0-9]{2})\s*[x*]\s*([0-9]{2})(?:\s*(?:-|con)?\s*(\d+(?:\.\d+)?))?$/i);
       if(m){emitir();filas.push({num:m[1]+'x'+m[2],montos:{fijo:'',corridos:'',parlet:m[3]||''},tabla:'tabla-tradicional'});pares.push(filas.length-1);continue;}
       if(/^cada\s+parlet/i.test(line)){m=line.match(/(\d+(?:\.\d+)?)/);if(m)pares.forEach(function(ix){filas[ix].montos.parlet=m[1];});continue;}
       // Modality syntax is explicit and wins over traditional parsing.
