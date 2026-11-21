@@ -223,3 +223,23 @@ test('live processor disables when selected draw is missing the destination tab'
   assert.equal(button.disabled,true);
   assert.match(errorBox.innerHTML,/no tiene la pestaña/);
 });
+
+test('user invalid block produces three line errors and preserves token 5p',()=>{
+  const r=run('T7 con 25\\n123 456 con 20\\n12 con 5p\\nhola mundo\\n34 56 con');
+  assert.equal(r.ok,false);
+  assert.equal(r.errors.length,3);
+  assert.ok(r.errors.some(e=>e.line===3&&e.token==='5p'));
+  assert.ok(r.errors.some(e=>e.line===4&&/Token no reconocido/.test(e.message)));
+  assert.ok(r.errors.some(e=>e.line===5&&/monto|instrucción/i.test(e.message)));
+});
+
+test('valid first line cannot make an unparseable later line pass',()=>{
+  const r=validate('12 34 con 5\\ntexto no reconocido',{
+    normalize:x=>String(x||''),
+    parseAmounts:x=>{const m=String(x||'').match(/con\\s+(\\d+)/i);return m?{fijo:m[1]}:{};},
+    detectInstruction:x=>{const m=String(x||'').match(/\\s+con\\s+/i);return m?m.index+1:-1;},
+    parseText:x=>String(x||'').split(/\\r?\\n/).filter(l=>/12 34 con 5/.test(l)).map(()=>({num:'12 34',montos:{fijo:'5'},tabla:'tabla-tradicional'}))
+  });
+  assert.equal(r.ok,false);
+  assert.ok(r.errors.some(e=>e.line===2));
+});
