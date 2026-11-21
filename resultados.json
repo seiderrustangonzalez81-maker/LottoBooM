@@ -555,10 +555,50 @@
     "fuente": "lotteryusa",
     "pick2": "",
     "pick3": "143",
-    "pick4": "",
+    "pick4": "3537",
     "pick5": "",
     "fijo": "43",
-    "corrido_1": "",
-    "corrido_2": ""
+    "corrido_1": "35",
+    "corrido_2": "37"
+  },
+  {
+    "sorteo_nombre": "Haiti Bolet 5:30 PM",
+    "numeros": [
+      "45",
+      "64",
+      "04"
+    ],
+    "fecha": "2026-11-20",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Haiti Bolet 6:30 PM",
+    "numeros": [
+      "02",
+      "58",
+      "42"
+    ],
+    "fecha": "2026-11-20",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Haiti Bolet 7:30 PM",
+    "numeros": [
+      "60",
+      "14",
+      "01"
+    ],
+    "fecha": "2026-11-20",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Loteka",
+    "numeros": [
+      "87",
+      "37",
+      "34"
+    ],
+    "fecha": "2026-11-20",
+    "fuente": "enloteria"
   }
 ]
