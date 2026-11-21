@@ -181,6 +181,47 @@ def _boleta_duplicada(cliente_id, forma_pago_id, fecha_sorteo, items):
 # ═══════════════════════════════════════════════════════════════
 # Helper · Consolidar tripletas (FIX_TRIPLETA_V1)
 # ═══════════════════════════════════════════════════════════════
+def _validar_items_payload(items, etiqueta='jugadas'):
+    """Valida estructura y montos antes de entrar al flujo transaccional."""
+    errores = []
+    if not isinstance(items, list):
+        return [f'{etiqueta}: debe ser una lista de jugadas.']
+    for idx, item in enumerate(items, start=1):
+        if not isinstance(item, dict):
+            errores.append(f'{etiqueta} #{idx}: formato de item inválido.')
+            continue
+        tipo = str(item.get('tipo') or '').strip()
+        numero = str(item.get('numero') or '').strip()
+        if not tipo:
+            errores.append(f'{etiqueta} #{idx}: forma de juego vacía.')
+        elif len(tipo) > 50:
+            errores.append(f'{etiqueta} #{idx}: forma de juego demasiado larga.')
+        if not numero:
+            errores.append(f'{etiqueta} #{idx}: número vacío.')
+        elif len(numero) > 20:
+            errores.append(f'{etiqueta} #{idx}: número excede 20 caracteres.')
+        try:
+            monto = Decimal(str(item.get('monto', '')))
+            if not monto.is_finite():
+                raise InvalidOperation
+            if monto <= 0:
+                errores.append(f'{etiqueta} #{idx}: monto debe ser mayor que cero.')
+            elif monto > Decimal('99999999.99'):
+                errores.append(f'{etiqueta} #{idx}: monto supera el máximo permitido.')
+            elif monto != monto.quantize(Decimal('0.01')):
+                errores.append(f'{etiqueta} #{idx}: monto debe tener como máximo dos decimales.')
+        except (InvalidOperation, ValueError, TypeError):
+            errores.append(f'{etiqueta} #{idx}: monto inválido.')
+        sorteo_id = item.get('sorteo_id')
+        if sorteo_id not in (None, '') and not str(sorteo_id).isdigit():
+            errores.append(f'{etiqueta} #{idx}: ID de sorteo inválido.')
+        if tipo.lower() == 'posicion':
+            posicion = item.get('posicion')
+            if str(posicion) not in ('1', '2', '3'):
+                errores.append(f'{etiqueta} #{idx}: posición debe ser 1, 2 o 3.')
+    return errores
+
+
 def _consolidar_tripletas(items):
     """Conserva filas agrupadas; convierte items legacy (un número por item) en tripletas completas."""
     if not items:
@@ -1528,9 +1569,24 @@ def _guardar_apuesta_impl(request):
             logger.error(f"JSON decode error: {e}")
             return JsonResponse({'success': False, 'message': f'Error en formato de datos: {str(e)}'}, status=400)
 
-        # FIX_TRIPLETA_V1
-        items_normales = _consolidar_tripletas(items_normales)
-        items_super = _consolidar_tripletas(items_super)
+        # Validación del payload antes de cualquier creación de boletas/jugadas.
+        errores_payload = _validar_items_payload(items_normales, 'Jugadas')
+        errores_payload += _validar_items_payload(items_super, 'Superparlet')
+        if not isinstance(sorteos_ids, list) or not isinstance(super_sorteos_ids, list):
+            return JsonResponse({'success': False, 'message': 'La selección de sorteos debe ser una lista.'}, status=400)
+        if errores_payload:
+            return JsonResponse({'success': False, 'message': 'Payload de apuestas inválido.', 'errores': errores_payload[:20]}, status=400)
+
+        # FIX_TRIPLETA_V1: consolidation may reject incomplete groups; no DB writes yet.
+        try:
+            items_normales = _consolidar_tripletas(items_normales)
+            items_super = _consolidar_tripletas(items_super)
+        except (ValueError, TypeError) as e:
+            return JsonResponse({'success': False, 'message': f'Jugada inválida: {e}'}, status=400)
+        errores_payload = _validar_items_payload(items_normales, 'Jugadas')
+        errores_payload += _validar_items_payload(items_super, 'Superparlet')
+        if errores_payload:
+            return JsonResponse({'success': False, 'message': 'Payload de apuestas inválido.', 'errores': errores_payload[:20]}, status=400)
 
         if not all(str(sid).isdigit() for sid in sorteos_ids):
             return JsonResponse({'success': False, 'message': 'IDs de sorteos inválidos'}, status=400)
