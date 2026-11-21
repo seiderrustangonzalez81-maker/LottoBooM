@@ -8131,6 +8131,16 @@ function _procActualizarEstado(msg, tipo){
       // Modality syntax is explicit and wins over traditional parsing.
       m=line.match(/^(?:solo\s+)?(?:parlet|parle|parl|palet)\s+(.+?)\s+(?:con|parlet)\s+(\d+(?:\.\d+)?)$/i);
       if(m){emitir();rowSingle('tabla-solo-parlet','parlet',m[1],m[2]);continue;}
+      m=line.match(/^(.+?)\s+(pick[345])\s+con\s+(\d+(?:\.\d+)?)$/i);
+      if(m){emitir();var fs=m[2].toLowerCase(),ds=fs==='pick3'?3:fs==='pick4'?4:5,nsf=m[1].trim().split(/\s+/);if(nsf.length&&nsf.every(function(x){return x.length===ds&&/^[0-9]+$/.test(x);}))rowSingle('tabla-'+fs,fs,m[1],m[3]);continue;}
+      m=line.match(/^(.+?)\s+vs100\s+con\s+(\d+(?:\.\d+)?)$/i);
+      if(m){emitir();rowSingle('tabla-vs100','vs100',m[1],m[2]);continue;}
+      m=line.match(/^(.+?)\s+tripleta\s+con\s+(\d+(?:\.\d+)?)$/i);
+      if(m){emitir();rowSingle('tabla-tripleta','tripleta',m[1],m[2]);continue;}
+      m=line.match(/^(.+?)\s+solo\s+parlet\s+con\s+(\d+(?:\.\d+)?)$/i);
+      if(m){emitir();rowSingle('tabla-solo-parlet','parlet',m[1],m[2]);continue;}
+      m=line.match(/^(.+?)\s+centenas?\s+corridas?\s+con\s+(\d+(?:\.\d+)?)$/i);
+      if(m){emitir();var nsc=nums(m[1]);if(nsc.length&&nsc.every(function(x){return x.length===3;}))filas.push({num:nsc.join(' '),montos:{'centenas corridas':m[2]},tabla:'tabla-centenas'});continue;}
       m=line.match(/^(pick2|pf)\s+(.+?)\s+con\s+(\d+(?:\.\d+)?)$/i);
       if(m){emitir();var ff=m[1].toLowerCase(),nn=nums(m[2]);if(nn.length&&nn.every(function(x){return x.length===2;}))filas.push({num:nn.join(' '),montos:{[ff]:m[3]},tabla:'tabla-tradicional'});continue;}
       m=line.match(/^(.+?)\s+(pick2|pf)\s+con\s+(\d+(?:\.\d+)?)$/i);
