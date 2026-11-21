@@ -786,5 +786,17 @@
     ],
     "fecha": "2026-11-21",
     "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Florida 1:35 PM",
+    "fecha": "2026-11-21",
+    "fuente": "lotteryusa",
+    "pick2": "39",
+    "pick3": "583",
+    "pick4": "6936",
+    "pick5": "",
+    "fijo": "83",
+    "corrido_1": "69",
+    "corrido_2": "36"
   }
 ]
