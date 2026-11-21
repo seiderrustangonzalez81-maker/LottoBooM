@@ -7,7 +7,7 @@ os.environ.setdefault("SECRET_KEY", "ci-only-not-a-production-secret")
 import django
 django.setup()
 
-from jugadas.views import _validar_tablas_crudas_payload, _validar_coincidencia_sorteos_tablas
+from jugadas.views import _validar_tablas_crudas_payload, _validar_coincidencia_sorteos_tablas, _validar_items_ids_sorteo
 
 
 def payload(table, kind, forms, rows, sid="54"):
@@ -67,6 +67,22 @@ class RawBettingRowsValidationTests(unittest.TestCase):
         ))
         self.assertTrue(any("tipo de tabla no coincide" in e for e in errors), errors)
         self.assertTrue(_validar_tablas_crudas_payload("not-a-list"))
+
+
+class ItemDrawIdValidationTests(unittest.TestCase):
+    def test_item_with_selected_draw_passes(self):
+        self.assertEqual(_validar_items_ids_sorteo([{"sorteo_id":54}], [54]), [])
+
+    def test_missing_draw_id_is_rejected(self):
+        errors = _validar_items_ids_sorteo([{"numero":"12"}], [54])
+        self.assertTrue(any("inválido o ausente" in e for e in errors), errors)
+
+    def test_unselected_draw_is_rejected(self):
+        errors = _validar_items_ids_sorteo([{"sorteo_id":12}], [54])
+        self.assertTrue(any("no seleccionado" in e for e in errors), errors)
+
+    def test_boolean_draw_id_is_rejected(self):
+        self.assertTrue(_validar_items_ids_sorteo([{"sorteo_id":True}], [1]))
 
 
 class DrawTablesPayloadAlignmentTests(unittest.TestCase):
