@@ -9,6 +9,7 @@
     var detectInstruction=helpers.detectInstruction||function(){return -1;};
     var rawLines=String(text||'').split(/\r?\n/), normalized=normalize(text), lines=normalized.split(/\r?\n/), errors=[], pending=false, explicitPairs=0, hasContent=false;
     function err(line,message,token){errors.push({line:line,message:message,token:token||null});}
+    function rawToken(raw){var s=String(raw||''),m=s.match(/\b\d+(?:\.\d+)?[a-z]+\b/i)||s.match(/\b\d+(?:\.\d+)?\s+[a-z]+\b/i);return m?m[0]:null;}
     function ignore(line){return !line||/^\[/.test(line)||/^(tarjeta|tarieta|saldo)\b/i.test(line);}
     function suffixOnly(line){return /^(?:\d+(?:\.\d+)?\s*[fc]\b)(?:\s+\d+(?:\.\d+)?\s*[fc]\b)*$/i.test(line);}
     function nums(group){
@@ -48,7 +49,7 @@
       if(suffixOnly(line)){var suf=instruction(line);if(!suf.ok)err(i+1,suf.message);else if(pending)pending=false;else err(i+1,'Monto sin grupo de números asociado.');continue;}
       if(/^(con|candado|parlet|parle|parl|palet|parler|parley)\b/i.test(line)||/^[🔒🔐🔓]/.test(line)){var only=instruction(line);if(!only.ok)err(i+1,only.message,(line.match(/\b\d+(?:\.\d+)?\s*[a-z]+\b/i)||[])[0]||null);else if(pending)pending=false;else if(explicitPairs&&(only.montos.parlet||only.montos.candado))explicitPairs=0;else err(i+1,'Instrucción sin números anteriores.');continue;}
       var pos=detectInstruction(line);
-      if(pos>0){var n=nums(line.slice(0,pos).trim()),m=instruction(line.slice(pos).trim());if(!n.ok)err(i+1,n.message,n.token);else if(!m.ok)err(i+1,m.message,(String(rawLines[i]||'').match(/\b\d+(?:\.\d+)?\s*[a-z]+\b/i)||[])[0]||null);else if(pending)err(i+1,'Hay un grupo anterior sin monto asociado.');continue;}
+      if(pos>0){var n=nums(line.slice(0,pos).trim()),m=instruction(line.slice(pos).trim());if(!n.ok)err(i+1,n.message,n.token);else if(!m.ok)err(i+1,m.message,rawToken(rawLines[i]));else if(pending)err(i+1,'Hay un grupo anterior sin monto asociado.');continue;}
       var pure=nums(line);if(pure.ok){if(pending)err(i+1,'El grupo anterior no tiene monto asociado.');pending=true;}else err(i+1,pure.message,pure.token);
     }
     if(pending)err(lines.length,'El último grupo de números quedó sin monto.');
@@ -64,7 +65,7 @@
       var pureGroup=nums(ln);
       var continuation=/^(?:con|candado|parlet|parle|parl|palet|fijo|corrido|cada\s+parlet)\b/i.test(ln)||/^[🔒🔐🔓]/.test(ln)||suffixOnly(ln);
       if(!standalone.length&&!pureGroup.ok&&!continuation){
-        err(cov+1,'Esta línea no genera ninguna fila de apuesta y no puede procesarse parcialmente.',(raw.match(/\b\d+(?:\.\d+)?\s*[a-z]+\b/i)||[])[0]||null);
+        err(cov+1,'Esta línea no genera ninguna fila de apuesta y no puede procesarse parcialmente.',rawToken(raw));
       }
     }
     if(hasContent&&!rows.length&&!errors.length)err(1,'No se generaron jugadas.');
