@@ -105,3 +105,6 @@ Pendiente de completar antes de cerrar:
 - La fila vacía final sigue siendo válida. La validación de importes se hace con Decimal, no con floats.
 
 **Pendiente:** CI del commit con estas pruebas, comprobación de correspondencia entre IDs de sorteos seleccionados y tablas enviadas, y revisar si los valores de números crudos necesitan validación de longitud/formato adicional en servidor. No sustituye la prueba práctica de navegador.
+
+- El servidor también compara IDs de sorteos presentes en `tabla_rows` contra los sorteos seleccionados, y exige que cada sorteo de items normales tenga estado de tabla cruda.
+- La ejecución CI #448 sobre el commit `d01883a3bbce0431d7087d850d530f5aceac7753` terminó SUCCESS; incluye las pruebas de validación de filas crudas. Los cambios posteriores de alineación y documentación tienen nueva ejecución en curso.
