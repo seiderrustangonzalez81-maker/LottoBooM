@@ -20,7 +20,7 @@
         if(t==='T'||t==='D'){pendingLetter=t;pendingUsed=false;continue;}
         if(/^[TD]\d$/.test(t)||t==='PA'||t==='PAREJAS'||t==='PICK3'||/^\d{2}V$/.test(t)){pendingLetter=null;continue;}
         if(/^\d+$/.test(t)){
-          if(t.length>4)return {ok:false,message:'Número demasiado largo: '+t+'. Pick 4/5 aún no está admitido.',token:t};
+          if(t.length>=4)return {ok:false,message:'Número de '+t.length+' dígitos no admitido sin una modalidad Pick '+t.length+' explícita; no se enviará a Tradicional.',token:t};
           if(t.length===1&&!pendingLetter)return {ok:false,message:'Dígito aislado '+t+'. Usa T/D o escribe el número completo.',token:t};
           lengths.push(t.length);if(t.length===1)pendingUsed=true;else{pendingLetter=null;pendingUsed=false;}continue;
         }
