@@ -444,9 +444,9 @@
   {
     "sorteo_nombre": "Real Noche",
     "numeros": [
-      "74",
-      "20",
-      "60"
+      "50",
+      "18",
+      "45"
     ],
     "fecha": "2026-11-20",
     "fuente": "enloteria"
@@ -901,6 +901,16 @@
       "16",
       "10",
       "02"
+    ],
+    "fecha": "2026-11-21",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Anguilla 8PM",
+    "numeros": [
+      "18",
+      "17",
+      "19"
     ],
     "fecha": "2026-11-21",
     "fuente": "enloteria"
