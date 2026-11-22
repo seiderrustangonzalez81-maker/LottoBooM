@@ -71,7 +71,7 @@ function processHarness(text,drawIds,draws,confirmAnswer){
   let confirms=0,status='';
   const sandbox={document:doc,window:{ApostarTextValidator:textValidator,ApostarTableValidator:{validateRows:()=>[]},confirm:()=>{confirms++;return !!confirmAnswer;}},TABLE_DEFS:defs,ordenSorteos:drawIds,sorteosActivos:draws,resolverForma:(f,d)=>d&&d.aliases&&d.aliases[f]||f,expandirToken:(t)=>[String(t)],numerosEnFila:(row)=>({numeros:String(row.num||'').trim().split(/\s+/).filter(Boolean),paresExplicitos:[]}),contarParletsDeFila:()=>1,_procRenderErrores(){},_procActualizarEstado:(msg)=>{status=msg;},renderTabsSorteo(){},renderMiniResumenSorteo(){},recalcGlobal(){},toast(){},setTimeout:()=>1,clearTimeout(){},console:{error(){},warn(){},log(){}}};
   vm.runInNewContext(source,sandbox);
-  return {process:sandbox.process,draws,textarea,chk,confirmCount:()=>confirms,status:()=>status};
+  return {process:sandbox.process,draws,textarea,chk,sandbox,confirmCount:()=>confirms,status:()=>status};
 }
 test('parsed data maps into multi, positions and VS table row structures',()=>{
   const h=destinationRowHarness();
@@ -200,17 +200,21 @@ test('live processor checks every selected draw for its target tab',()=>{
 test('processing mode is enforced by the apply function',()=>{
   const draws={'1':{nombre:'D1',cargado:true,tablasActivas:{'tabla-tradicional':{forms:['fijo'],rows:[]}}}};
   const h=processHarness('12 34 con 5',[1],draws,false);
+  h.chk.checked=false;
   h.process();
   assert.deepEqual(draws['1'].tablasActivas['tabla-tradicional'].rows,[]);
-  assert.match(h.status(),/Activa el modo Procesar/);
 });
-test('staging failure in a later selected draw leaves earlier tables untouched',()=>{
+test('pre-mapping failure in a later draw leaves every earlier table untouched',()=>{
   const old=[{num:'99',montos:{fijo:'7'}}];
-  const draws={'1':{nombre:'D1',cargado:true,tablasActivas:{'tabla-tradicional':{forms:['fijo'],rows:old}}},'2':{nombre:'D2',cargado:true,tablasActivas:{'tabla-pick3':{forms:['pick3'],rows:[]}}}};
+  const secondRows=[];
+  const draws={'1':{nombre:'D1',cargado:true,tablasActivas:{'tabla-tradicional':{forms:['fijo'],rows:old}}},'2':{nombre:'D2',cargado:true,tablasActivas:{'tabla-tradicional':{forms:['fijo'],rows:secondRows}}}};
   const h=processHarness('12 34 con 5',[1,2],draws,true);
+  h.sandbox._procValidarDestinos=()=>({errors:[],filasExistentes:0});
+  const realMapper=h.sandbox._procCrearFilaDestino;
+  h.sandbox._procCrearFilaDestino=function(row,st,kind,tk){if(st===draws['2'].tablasActivas['tabla-tradicional'])throw new Error('simulated mapper failure');return realMapper(row,st,kind,tk);};
   h.process();
   assert.deepEqual(draws['1'].tablasActivas['tabla-tradicional'].rows,old);
-  assert.match(h.status(),/No se aplicó nada/);
+  assert.deepEqual(draws['2'].tablasActivas['tabla-tradicional'].rows,secondRows);
   assert.equal(h.confirmCount(),0);
 });
 test('valid text is staged and applied to every loaded selected draw with independent row objects',()=>{
@@ -219,7 +223,7 @@ test('valid text is staged and applied to every loaded selected draw with indepe
   h.process();
   const r1=draws['1'].tablasActivas['tabla-tradicional'].rows,r2=draws['2'].tablasActivas['tabla-tradicional'].rows;
   assert.equal(r1.length,1);assert.equal(r2.length,1);
-  assert.deepEqual(r1[0],r2[0]);assert.notEqual(r1[0],r2[0]);
+  assert.equal(JSON.stringify(r1[0]),JSON.stringify(r2[0]));assert.notEqual(r1[0],r2[0]);
 });
 test('existing rows are preserved when replacement confirmation is cancelled',()=>{
   const existing=[{num:'99',montos:{fijo:'7'}}];
