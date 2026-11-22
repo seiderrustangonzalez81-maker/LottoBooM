@@ -988,5 +988,25 @@
     ],
     "fecha": "2026-11-21",
     "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Leidsa",
+    "numeros": [
+      "92",
+      "32",
+      "42"
+    ],
+    "fecha": "2026-11-21",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Anguilla 9PM",
+    "numeros": [
+      "55",
+      "46",
+      "16"
+    ],
+    "fecha": "2026-11-21",
+    "fuente": "enloteria"
   }
 ]
