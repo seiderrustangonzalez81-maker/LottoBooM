@@ -18,8 +18,15 @@
       var lengths=[],pendingLetter=null,pendingUsed=false;
       for(var i=0;i<tokens.length;i++){
         var t=tokens[i];
+        if(pendingLetter&&!/^\d$/.test(t)){
+          if(!pendingUsed)return {ok:false,message:'La letra T/D quedó sin dígito.'};
+          pendingLetter=null;pendingUsed=false;
+        }
         if(t==='T'||t==='D'){pendingLetter=t;pendingUsed=false;continue;}
-        if(/^[TD]\d$/.test(t)||t==='PA'||t==='PAREJAS'||t==='PICK3'||/^\d{2}V$/.test(t)){pendingLetter=null;continue;}
+        if(/^[TD]\d$/.test(t)){lengths.push(2);pendingLetter=null;pendingUsed=false;continue;}
+        if(t==='PA'||t==='PAREJAS'){lengths.push(2);pendingLetter=null;pendingUsed=false;continue;}
+        if(t==='PICK3'){pendingLetter=null;continue;}
+        if(/^\d{2}V$/.test(t)){lengths.push(2);pendingLetter=null;pendingUsed=false;continue;}
         if(/^\d+$/.test(t)){
           if(t.length>=4)return {ok:false,message:'Número de '+t.length+' dígitos no admitido sin una modalidad Pick '+t.length+' explícita; no se enviará a Tradicional.',token:t};
           if(t.length===1&&!pendingLetter)return {ok:false,message:'Dígito aislado '+t+'. Usa T/D o escribe el número completo.',token:t};
@@ -92,7 +99,67 @@
     if(hasContent&&!rows.length&&!errors.length)err(1,'No se generaron jugadas.');
     return {ok:errors.length===0,normalized:normalized,rows:rows,errors:errors};
   }
-  var api={validate:validate};
+  function validateGroup(text,digits,options){
+    options=options||{};
+    digits=Number(digits)||2;
+    var raw=String(text||'').trim();
+    var tokens=raw.replace(/[-;,_]/g,' ').replace(/\s+/g,' ').trim().split(' ').filter(Boolean);
+    var numbers=[],pairs=[],pendingLetter=null,pendingUsed=false;
+    function bad(token,message){return {ok:false,error:message||('Token no reconocido: '+token+'.'),token:token||null,numbers:[],pairs:[]};}
+    function expandLetter(letter,digit){
+      var out=[];
+      for(var i=0;i<=9;i++)out.push(letter==='T'?String(i)+digit:digit+String(i));
+      numbers=numbers.concat(out);
+    }
+    if(!tokens.length)return bad(null,'No se encontraron números.');
+    for(var i=0;i<tokens.length;i++){
+      var t=tokens[i].toUpperCase();
+      if(t==='T'||t==='D'){
+        if(pendingLetter&&!pendingUsed)return bad(pendingLetter,'La letra T/D quedó sin dígito.');
+        if(digits!==2)return bad(t,'T/D solo se admite en grupos de dos dígitos.');
+        pendingLetter=t;pendingUsed=false;continue;
+      }
+      var attached=t.match(/^([TD])(\d)$/);
+      if(attached){
+        if(pendingLetter&&!pendingUsed)return bad(pendingLetter,'La letra T/D quedó sin dígito.');
+        if(digits!==2)return bad(t,'T/D solo se admite en grupos de dos dígitos.');
+        pendingLetter=null;pendingUsed=false;expandLetter(attached[1],attached[2]);continue;
+      }
+      if(pendingLetter&&/^\d$/.test(t)){
+        expandLetter(pendingLetter,t);pendingUsed=true;continue;
+      }
+      if(pendingLetter&&!pendingUsed)return bad(pendingLetter,'La letra T/D quedó sin dígito.');
+      if(pendingLetter)pendingLetter=null;
+      var pair=t.match(/^(\d{2})[X*](\d{2})$/);
+      if(pair){
+        if(!options.allowPairs||digits!==2)return bad(t,'Par explícito no permitido en esta modalidad.');
+        pairs.push(pair[1]+'x'+pair[2]);continue;
+      }
+      if(t==='PA'||t==='PAREJAS'){
+        if(digits!==2)return bad(t,'PA/PAREJAS solo se admite en grupos de dos dígitos.');
+        for(var d=0;d<=9;d++)numbers.push(String(d).repeat(2));
+        continue;
+      }
+      var reverse=t.match(/^(\d{2})V$/);
+      if(reverse){
+        if(digits!==2)return bad(t,'La reversa solo se admite en grupos de dos dígitos.');
+        numbers.push(reverse[1]);
+        var rev=reverse[1].split('').reverse().join('');
+        if(rev!==reverse[1])numbers.push(rev);
+        continue;
+      }
+      if(/^\d+$/.test(t)){
+        if(t.length!==digits)return bad(t,'Se esperaba un número de '+digits+' dígitos; token '+t+' tiene '+t.length+'.');
+        numbers.push(t);continue;
+      }
+      return bad(t);
+    }
+    if(pendingLetter&&!pendingUsed)return bad(pendingLetter,'La letra T/D quedó sin dígito.');
+    if(!numbers.length&&!pairs.length)return bad(null,'No se encontraron números válidos.');
+    if(options.maxNums&&numbers.length>options.maxNums)return bad(null,'Máximo '+options.maxNums+' números.');
+    return {ok:true,error:null,token:null,numbers:numbers,pairs:pairs};
+  }
+  var api={validate:validate,validateGroup:validateGroup};
   root.ApostarTextValidator=api;
   if(typeof module!=='undefined'&&module.exports)module.exports=api;
 })(typeof window!=='undefined'?window:globalThis);

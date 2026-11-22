@@ -2,13 +2,14 @@ const test=require('node:test');
 const assert=require('node:assert/strict');
 const fs=require('node:fs');
 const vm=require('node:vm');
-const {validate}=require('../../static/js/apostar_text_validator.js');
+const textValidator=require('../../static/js/apostar_text_validator.js');
+const {validate}=textValidator;
 
 const template=fs.readFileSync('jugadas/templates/jugadas/apostar.html','utf8');
 const start=template.indexOf('function _procNormalizarTexto(texto){');
 const end=template.indexOf('function _procValidarTexto(texto){',start);
 assert.ok(start>=0&&end>start,'parser helpers must be present in apostar.html');
-const sandbox={};
+const sandbox={window:{ApostarTextValidator:textValidator}};
 vm.runInNewContext(template.slice(start,end)+';this.helpers={normalize:_procNormalizarTexto,parseAmounts:_procParsearMontos,detectInstruction:_procDetectarInstruccionPos,parseText:_procParsearTexto,expandNumbers:_procExpandirNumeros};',sandbox);
 const h=sandbox.helpers;
 function run(text){return validate(text,h);}
@@ -31,7 +32,7 @@ function extractFunction(name){
 }
 function tableHarness(){
   const source=['numerosEnFila','expandirToken','expandirGrupoVS','calcRowTotal','recolectarItemsDeSorteo'].map(extractFunction).join('\n');
-  const sandbox={TABLE_DEFS:{},sorteosActivos:{},window:{ApostarTripleta:tripleta}};
+  const sandbox={TABLE_DEFS:{},sorteosActivos:{},window:{ApostarTripleta:tripleta,ApostarTextValidator:textValidator}};
   vm.runInNewContext(source+';this.calc=calcRowTotal;this.collect=recolectarItemsDeSorteo;',sandbox);
   return sandbox;
 }
@@ -51,6 +52,26 @@ function destinationRowHarness(){
   const sandbox={};
   vm.runInNewContext(template.slice(start,end)+';this.create=_procCrearFilaDestino;',sandbox);
   return sandbox;
+}
+function processHarness(text,drawIds,draws,confirmAnswer){
+  const textarea={value:text||'',scrollTop:0,selectionStart:0,selectionEnd:0,style:{}};
+  const errorBox={style:{},innerHTML:''};
+  const chk={checked:true};
+  const doc={getElementById:id=>({procesarText:textarea,procErrores:errorBox,chkProcesar:chk}[id]||null),querySelector:()=>null};
+  const helperStart=template.indexOf('function _procNormalizarTexto(texto){');
+  const helperEnd=template.indexOf('function _procValidarTexto(texto){',helperStart);
+  const wrapperEnd=template.indexOf('function _procProcesarTexto(){',helperEnd);
+  const processEnd=template.indexOf('function _procValidarDestinos(filas){',wrapperEnd);
+  const destEnd=template.indexOf('function _procRenderErrores',processEnd);
+  const rowStart=template.indexOf('function newRow(forms, kind){');
+  const rowEnd=template.indexOf('function numerosEnFila(row, numDigits, maxNums){',rowStart);
+  assert.ok(helperStart>=0&&helperEnd>helperStart&&wrapperEnd>helperEnd&&processEnd>wrapperEnd&&destEnd>processEnd&&rowStart>=0&&rowEnd>rowStart);
+  const source=template.slice(helperStart,helperEnd)+template.slice(helperEnd,wrapperEnd)+template.slice(rowStart,rowEnd)+template.slice(wrapperEnd,processEnd)+template.slice(processEnd,destEnd)+';this.process=_procProcesarTexto;';
+  const defs={'tabla-tradicional':{kind:'multi',numDigits:2,forms:['pick2','pf','fijo','corridos','parlet','candado'],aliases:{}}};
+  let confirms=0,status='';
+  const sandbox={document:doc,window:{ApostarTextValidator:textValidator,ApostarTableValidator:{validateRows:()=>[]},confirm:()=>{confirms++;return !!confirmAnswer;}},TABLE_DEFS:defs,ordenSorteos:drawIds,sorteosActivos:draws,resolverForma:(f,d)=>d&&d.aliases&&d.aliases[f]||f,expandirToken:(t)=>[String(t)],numerosEnFila:(row)=>({numeros:String(row.num||'').trim().split(/\s+/).filter(Boolean),paresExplicitos:[]}),contarParletsDeFila:()=>1,_procRenderErrores(){},_procActualizarEstado:(msg)=>{status=msg;},renderTabsSorteo(){},renderMiniResumenSorteo(){},recalcGlobal(){},renderMiniResumenSorteo(){},toast(){},setTimeout:()=>1,clearTimeout(){},console:{error(){},warn(){},log(){}}};
+  vm.runInNewContext(source,sandbox);
+  return {process:sandbox.process,draws,textarea,chk,confirmCount:()=>confirms,status:()=>status};
 }
 test('parsed data maps into multi, positions and VS table row structures',()=>{
   const h=destinationRowHarness();
@@ -99,7 +120,7 @@ function uiHarness(text,drawIds,checked,overrides){
   ids.forEach(id=>{
     sorteos[String(id)]=(overrides&&overrides[id])||{nombre:'Test '+id,cargado:true,tablasActivas:{'tabla-tradicional':{forms:['fijo','corridos','parlet','candado'],rows:[]},'tabla-pick3':{forms:['pick3'],rows:[]}}};
   });
-  const sandbox={document:doc,window:{ApostarTextValidator:{validate:validate}},ordenSorteos:ids,sorteosActivos:sorteos,_procActualizarEstado:function(){},};
+  const sandbox={document:doc,window:{ApostarTextValidator:textValidator},ordenSorteos:ids,sorteosActivos:sorteos,_procActualizarEstado:function(){},};
   vm.runInNewContext(source,sandbox);
   const updateResult=sandbox.update();
   return {button,checkbox,errorBox,textarea,updateResult};
@@ -147,6 +168,66 @@ test('live processor button enables only for valid text, mode and selected draw'
   assert.equal(uiHarness('12 34 con 5 bad',[1],true).button.disabled,true);
   assert.equal(uiHarness('12 34 con 5',[],true).button.disabled,true);
   assert.equal(uiHarness('12 34 con 5',[1],false).button.disabled,true);
+});
+test('replicate and process checkboxes stay mutually exclusive',()=>{
+  const chkRep={checked:false,disabled:false,dataset:{},handlers:{},addEventListener(type,fn){this.handlers[type]=fn;}};
+  const chkProc={checked:false,disabled:false,dataset:{},handlers:{},addEventListener(type,fn){this.handlers[type]=fn;}};
+  const wrap={style:{display:'none'}};
+  const doc={readyState:'complete',getElementById:id=>({chkReplicar:chkRep,chkProcesar:chkProc,procesarTextWrap:wrap}[id]||null),addEventListener(){}};
+  let replicateMode=true;
+  const start=template.lastIndexOf('(function(){',template.indexOf('var chkProcesar = document.getElementById'));
+  const end=template.indexOf('})();',start)+4;
+  assert.ok(start>=0&&end>start);
+  vm.runInNewContext(template.slice(start,end),{document:doc,setTimeout(fn){fn();},activarModoReplicar(on){replicateMode=on;}});
+  chkProc.checked=true;chkProc.handlers.change.call(chkProc);
+  assert.equal(chkRep.checked,false);assert.equal(chkRep.disabled,true);assert.equal(wrap.style.display,'block');assert.equal(replicateMode,false);
+  chkProc.checked=false;chkProc.handlers.change.call(chkProc);
+  assert.equal(chkRep.disabled,false);assert.equal(wrap.style.display,'none');
+  chkRep.checked=true;chkRep.handlers.change.call(chkRep);
+  assert.equal(chkProc.checked,false);assert.equal(chkProc.disabled,true);assert.equal(wrap.style.display,'none');
+});
+test('live processor stays amber and disabled until process mode is active',()=>{
+  const h=uiHarness('12 34 con 5',[1],false);
+  assert.equal(h.button.disabled,true);
+  assert.match(h.button.style.background,/f59e0b/);
+  assert.match(h.button.innerHTML,/Activa Procesar/);
+});
+test('live processor checks every selected draw for its target tab',()=>{
+  const h=uiHarness('pick3 123 con 5',[1,2],true,{'2':{nombre:'Second',cargado:true,tablasActivas:{'tabla-tradicional':{forms:['fijo'],rows:[]}}}});
+  assert.equal(h.button.disabled,true);
+  assert.match(h.errorBox.innerHTML,/Second.*no tiene la pestaña/);
+});
+test('processing mode is enforced by the apply function',()=>{
+  const draws={'1':{nombre:'D1',cargado:true,tablasActivas:{'tabla-tradicional':{forms:['fijo'],rows:[]}}}};
+  const h=processHarness('12 34 con 5',[1],draws,false);
+  h.process();
+  assert.deepEqual(draws['1'].tablasActivas['tabla-tradicional'].rows,[]);
+  assert.match(h.status(),/Activa el modo Procesar/);
+});
+test('staging failure in a later selected draw leaves earlier tables untouched',()=>{
+  const old=[{num:'99',montos:{fijo:'7'}}];
+  const draws={'1':{nombre:'D1',cargado:true,tablasActivas:{'tabla-tradicional':{forms:['fijo'],rows:old}}},'2':{nombre:'D2',cargado:true,tablasActivas:{'tabla-pick3':{forms:['pick3'],rows:[]}}}};
+  const h=processHarness('12 34 con 5',[1,2],draws,true);
+  h.process();
+  assert.deepEqual(draws['1'].tablasActivas['tabla-tradicional'].rows,old);
+  assert.match(h.status(),/No se aplicó nada/);
+  assert.equal(h.confirmCount(),0);
+});
+test('valid text is staged and applied to every loaded selected draw with independent row objects',()=>{
+  const draws={'1':{nombre:'D1',cargado:true,tablasActivas:{'tabla-tradicional':{forms:['fijo'],rows:[]}}},'2':{nombre:'D2',cargado:true,tablasActivas:{'tabla-tradicional':{forms:['fijo'],rows:[]}}}};
+  const h=processHarness('12 34 con 5',[1,2],draws,true);
+  h.process();
+  const r1=draws['1'].tablasActivas['tabla-tradicional'].rows,r2=draws['2'].tablasActivas['tabla-tradicional'].rows;
+  assert.equal(r1.length,1);assert.equal(r2.length,1);
+  assert.deepEqual(r1[0],r2[0]);assert.notEqual(r1[0],r2[0]);
+});
+test('existing rows are preserved when replacement confirmation is cancelled',()=>{
+  const existing=[{num:'99',montos:{fijo:'7'}}];
+  const draws={'1':{nombre:'D1',cargado:true,tablasActivas:{'tabla-tradicional':{forms:['fijo'],rows:existing}}}};
+  const h=processHarness('12 34 con 5',[1],draws,false);
+  h.process();
+  assert.deepEqual(draws['1'].tablasActivas['tabla-tradicional'].rows,existing);
+  assert.equal(h.confirmCount(),1);
 });
 test('live UI renders line diagnostics for invalid pasted text',()=>{
   const h=uiHarness('12 34 bad con 5',[1],true);
@@ -266,7 +347,7 @@ test('live processor disables when selected draw is missing the destination tab'
   const doc={getElementById:id=>({procesarText:textarea,btnProcAhora:button,chkProcesar:checkbox,procErrores:errorBox}[id]||null)};
   const a=template.indexOf('function _procNormalizarTexto(texto){'),b=template.indexOf('function _procValidarTexto(texto){',a),u=template.indexOf('function _procValidarDestinos(filas){'),z=template.indexOf('  (function _bindProcesarText',u);
   const w=template.indexOf('function _procValidarTexto(texto){'),x=template.indexOf('function _procProcesarTexto(){',w);
-  const sandbox={document:doc,window:{ApostarTextValidator:{validate}},ordenSorteos:[1],sorteosActivos:{'1':{nombre:'Test',cargado:true,tablasActivas:{'tabla-tradicional':{forms:['fijo'],rows:[]}}}},_procActualizarEstado(){}};
+  const sandbox={document:doc,window:{ApostarTextValidator:textValidator},ordenSorteos:[1],sorteosActivos:{'1':{nombre:'Test',cargado:true,tablasActivas:{'tabla-tradicional':{forms:['fijo'],rows:[]}}}},_procActualizarEstado(){}};
   vm.runInNewContext(template.slice(a,b)+template.slice(w,x)+template.slice(u,z)+';this.update=_procActualizarUI;',sandbox);
   sandbox.update();
   assert.equal(button.disabled,true);
@@ -291,6 +372,52 @@ test('valid first line cannot make an unparseable later line pass',()=>{
   });
   assert.equal(r.ok,false);
   assert.ok(r.errors.some(e=>e.line===2));
+});
+test('strict group validation refuses unrecognized, wrong-width and ambiguous tokens',()=>{
+  assert.equal(textValidator.validateGroup('12 xyz 34',2,{}).ok,false);
+  assert.equal(textValidator.validateGroup('1234 56',2,{}).ok,false);
+  assert.equal(textValidator.validateGroup('123 xyz 456',3,{}).ok,false);
+  assert.equal(textValidator.validateGroup('1234 5678',4,{}).ok,true);
+  assert.equal(textValidator.validateGroup('12x34',2,{allowPairs:true}).ok,true);
+  assert.equal(textValidator.validateGroup('12x3',2,{allowPairs:true}).ok,false);
+});
+test('explicit modality parsers reject partial token drops for every destination family',()=>{
+  const cases=[
+    'pick2 12 xyz 34 con 5','pf 12 xyz 34 con 5',
+    'pick3 123 xyz 456 con 5','pick4 1234 xyz 5678 con 5','pick5 12345 xyz 67890 con 5',
+    'centenas corridas 123 xyz 456 con 5','12 xyz vs 34 con 5','12 xyz vspf 34 con 5',
+    '12 xyz vspick2 34 con 5','12 34 pick2vspf 56 xyz con 5',
+    'vs100 12 xyz 34 con 5','pos 2 12 xyz 34 con 5',
+    'tripleta 12 xyz 34 56 con 5','solo parlet 12 xyz 34 con 5',
+    '12 34 pick2 con 5','12 34 pf con 5','123 456 pick3 con 5',
+    '1234 5678 pick4 con 5','12345 67890 pick5 con 5',
+    '123 456 centenas corridas con 5','12 34 vs100 con 5','12 34 56 tripleta con 5'
+  ];
+  cases.forEach(text=>{const r=run(text);assert.equal(r.ok,false,text+' should fail closed: '+JSON.stringify(r.errors));});
+});
+test('Pick3 text with multiple amounts is rejected instead of dropping one',()=>{
+  assert.equal(run('123 456 con 5 y 2').ok,false);
+  assert.equal(run('123 456\n5f 10c').ok,false);
+});
+test('cada parlet only applies to explicit pairs missing their own amount',()=>{
+  const r=run('12x34 con 5\n13x14\ncada parlet 2');
+  assert.equal(r.ok,true,JSON.stringify(r.errors));
+  assert.equal(r.rows.length,2);
+  assert.equal(r.rows[0].montos.parlet,'5');
+  assert.equal(r.rows[1].montos.parlet,'2');
+});
+test('VS permits unequal group counts but rejects incompatible digit widths',()=>{
+  const valid=run('12 34 vs 56 con 5');
+  assert.equal(valid.ok,true,JSON.stringify(valid.errors));
+  assert.equal(valid.rows[0].numA.split(' ').length,2);
+  assert.equal(valid.rows[0].numB.split(' ').length,1);
+  const bad=run('12 34 vs 123 con 5');
+  assert.equal(bad.ok,false);
+});
+test('traditional reverse shorthand 12V remains valid after normalization',()=>{
+  const r=run('12V con 5');
+  assert.equal(r.ok,true,JSON.stringify(r.errors));
+  assert.equal(r.rows[0].num,'12 21');
 });
 test('rejects four-digit tokens from being misrouted to traditional',()=>{
   const r=run('1234 con 5');
