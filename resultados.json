@@ -1008,5 +1008,15 @@
     ],
     "fecha": "2026-11-21",
     "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Nacional Noche",
+    "numeros": [
+      "78",
+      "97",
+      "46"
+    ],
+    "fecha": "2026-11-21",
+    "fuente": "enloteria"
   }
 ]
