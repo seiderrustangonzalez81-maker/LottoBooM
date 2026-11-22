@@ -650,5 +650,15 @@
     ],
     "fecha": "2026-11-22",
     "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "La Suerte",
+    "numeros": [
+      "09",
+      "12",
+      "05"
+    ],
+    "fecha": "2026-11-22",
+    "fuente": "enloteria"
   }
 ]
