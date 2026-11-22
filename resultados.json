@@ -782,10 +782,10 @@
     "fecha": "2026-11-22",
     "fuente": "lotteryusa",
     "pick2": "",
-    "pick3": "",
+    "pick3": "224",
     "pick4": "1420",
     "pick5": "",
-    "fijo": "",
+    "fijo": "24",
     "corrido_1": "14",
     "corrido_2": "20"
   }
