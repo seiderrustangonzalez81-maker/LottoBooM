@@ -788,5 +788,25 @@
     "fijo": "24",
     "corrido_1": "14",
     "corrido_2": "20"
+  },
+  {
+    "sorteo_nombre": "Leidsa",
+    "numeros": [
+      "01",
+      "54",
+      "78"
+    ],
+    "fecha": "2026-11-22",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Anguilla 4PM",
+    "numeros": [
+      "83",
+      "77",
+      "18"
+    ],
+    "fecha": "2026-11-22",
+    "fuente": "enloteria"
   }
 ]
