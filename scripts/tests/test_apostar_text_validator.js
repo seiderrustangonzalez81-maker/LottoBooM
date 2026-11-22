@@ -69,7 +69,7 @@ function processHarness(text,drawIds,draws,confirmAnswer){
   const source=template.slice(helperStart,helperEnd)+template.slice(helperEnd,wrapperEnd)+template.slice(rowStart,rowEnd)+template.slice(wrapperEnd,processEnd)+template.slice(processEnd,destEnd)+';this.process=_procProcesarTexto;';
   const defs={'tabla-tradicional':{kind:'multi',numDigits:2,forms:['pick2','pf','fijo','corridos','parlet','candado'],aliases:{}}};
   let confirms=0,status='';
-  const sandbox={document:doc,window:{ApostarTextValidator:textValidator,ApostarTableValidator:{validateRows:()=>[]},confirm:()=>{confirms++;return !!confirmAnswer;}},TABLE_DEFS:defs,ordenSorteos:drawIds,sorteosActivos:draws,resolverForma:(f,d)=>d&&d.aliases&&d.aliases[f]||f,expandirToken:(t)=>[String(t)],numerosEnFila:(row)=>({numeros:String(row.num||'').trim().split(/\s+/).filter(Boolean),paresExplicitos:[]}),contarParletsDeFila:()=>1,_procRenderErrores(){},_procActualizarEstado:(msg)=>{status=msg;},renderTabsSorteo(){},renderMiniResumenSorteo(){},recalcGlobal(){},renderMiniResumenSorteo(){},toast(){},setTimeout:()=>1,clearTimeout(){},console:{error(){},warn(){},log(){}}};
+  const sandbox={document:doc,window:{ApostarTextValidator:textValidator,ApostarTableValidator:{validateRows:()=>[]},confirm:()=>{confirms++;return !!confirmAnswer;}},TABLE_DEFS:defs,ordenSorteos:drawIds,sorteosActivos:draws,resolverForma:(f,d)=>d&&d.aliases&&d.aliases[f]||f,expandirToken:(t)=>[String(t)],numerosEnFila:(row)=>({numeros:String(row.num||'').trim().split(/\s+/).filter(Boolean),paresExplicitos:[]}),contarParletsDeFila:()=>1,_procRenderErrores(){},_procActualizarEstado:(msg)=>{status=msg;},renderTabsSorteo(){},renderMiniResumenSorteo(){},recalcGlobal(){},toast(){},setTimeout:()=>1,clearTimeout(){},console:{error(){},warn(){},log(){}}};
   vm.runInNewContext(source,sandbox);
   return {process:sandbox.process,draws,textarea,chk,confirmCount:()=>confirms,status:()=>status};
 }
@@ -175,7 +175,7 @@ test('replicate and process checkboxes stay mutually exclusive',()=>{
   const wrap={style:{display:'none'}};
   const doc={readyState:'complete',getElementById:id=>({chkReplicar:chkRep,chkProcesar:chkProc,procesarTextWrap:wrap}[id]||null),addEventListener(){}};
   let replicateMode=true;
-  const start=template.lastIndexOf('(function(){',template.indexOf('var chkProcesar = document.getElementById'));
+  const start=template.indexOf('(function initProcesar(){');
   const end=template.indexOf('})();',start)+4;
   assert.ok(start>=0&&end>start);
   vm.runInNewContext(template.slice(start,end),{document:doc,setTimeout(fn){fn();},activarModoReplicar(on){replicateMode=on;}});
@@ -389,9 +389,9 @@ test('explicit modality parsers reject partial token drops for every destination
     '12 xyz vspick2 34 con 5','12 34 pick2vspf 56 xyz con 5',
     'vs100 12 xyz 34 con 5','pos 2 12 xyz 34 con 5',
     'tripleta 12 xyz 34 56 con 5','solo parlet 12 xyz 34 con 5',
-    '12 34 pick2 con 5','12 34 pf con 5','123 456 pick3 con 5',
-    '1234 5678 pick4 con 5','12345 67890 pick5 con 5',
-    '123 456 centenas corridas con 5','12 34 vs100 con 5','12 34 56 tripleta con 5'
+    '12 xyz 34 pick2 con 5','12 xyz 34 pf con 5','123 xyz 456 pick3 con 5',
+    '1234 xyz 5678 pick4 con 5','12345 xyz 67890 pick5 con 5',
+    '123 xyz 456 centenas corridas con 5','12 xyz 34 vs100 con 5','12 xyz 34 56 tripleta con 5'
   ];
   cases.forEach(text=>{const r=run(text);assert.equal(r.ok,false,text+' should fail closed: '+JSON.stringify(r.errors));});
 });

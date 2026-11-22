@@ -8160,6 +8160,7 @@ function _procActualizarEstado(msg, tipo){
     }
     function amount(s){var m=_procParsearMontos(s);return m.fijo||m.corridos||m.parlet||m.candado||((s.match(/\bcon\s+(\d+(?:\.\d+)?)/i)||[])[1]||'');}
     function nums(s){return _procExpandirNumeros(s);}
+     function splitInstr(line){var ix=_procDetectarInstruccionPos(line);return ix>0?[line.slice(0,ix).trim(),line.slice(ix).trim()]:[line,''];}
      function strictNums(group,digits){var api=window.ApostarTextValidator;if(!api||typeof api.validateGroup!=='function')return [];var result=api.validateGroup(group,digits,{allowPairs:false});return result&&result.ok?result.numbers:[];}
      function rowSingle(tabla,form,group,monto){if(!group||!monto)return;var d=form==='pick3'?3:form==='pick4'?4:form==='pick5'?5:form==='centenas corridas'?3:2;var n=strictNums(group,d);if(!n.length||n.some(function(x){return String(x).length!==d||!/^[0-9]+$/.test(String(x));}))return;if(form==='tripleta'&&n.length!==3)return;filas.push({num:n.join(' '),montos:{[form]:monto},tabla:tabla});}
      function rowVS(tabla,form,left,right,monto){var a=strictNums(left,2),b=strictNums(right,2);if(a.length&&b.length&&monto&&a.every(function(x){return /^\d{2}$/.test(x);})&&b.every(function(x){return /^\d{2}$/.test(x);}))filas.push({numA:a.join(' '),numB:b.join(' '),monto:monto,tabla:tabla});}
@@ -8172,7 +8173,7 @@ function _procActualizarEstado(msg, tipo){
       m=line.match(/^([0-9]{2})\s*[x*]\s*([0-9]{2})(?:\s*(?:-|con)?\s*(\d+(?:\.\d+)?))?$/i);
       if(m){emitir();filas.push({num:m[1]+'x'+m[2],montos:{fijo:'',corridos:'',parlet:m[3]||''},tabla:'tabla-tradicional'});if(!m[3])pares.push(filas.length-1);continue;}
       if(/^cada\s+parlet/i.test(line)){m=line.match(/(\d+(?:\.\d+)?)/);if(m)pares.forEach(function(ix){filas[ix].montos.parlet=m[1];});pares=[];continue;}
-      // Modality syntax is explicit and wins over traditional parsing.// Modality syntax is explicit and wins over traditional parsing.
+      // Modality syntax is explicit and wins over traditional parsing.
       m=line.match(/^(?:solo\s+)?(?:parlet|parle|parl|palet)\s+(.+?)\s+(?:con|parlet)\s+(\d+(?:\.\d+)?)$/i);
       if(m){emitir();rowSingle('tabla-solo-parlet','parlet',m[1],m[2]);continue;}
       m=line.match(/^(.+?)\s+(pick[345])\s+con\s+(\d+(?:\.\d+)?)$/i);
