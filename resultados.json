@@ -660,5 +660,25 @@
     ],
     "fecha": "2026-11-22",
     "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Haiti Bolet 11:30 AM",
+    "numeros": [
+      "88",
+      "77",
+      "24"
+    ],
+    "fecha": "2026-11-22",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "King Lottery Día",
+    "numeros": [
+      "95",
+      "09",
+      "32"
+    ],
+    "fecha": "2026-11-22",
+    "fuente": "enloteria"
   }
 ]
