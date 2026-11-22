@@ -828,5 +828,15 @@
     ],
     "fecha": "2026-11-22",
     "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Anguilla 7PM",
+    "numeros": [
+      "21",
+      "66",
+      "31"
+    ],
+    "fecha": "2026-11-22",
+    "fuente": "enloteria"
   }
 ]
