@@ -766,5 +766,15 @@
     ],
     "fecha": "2026-11-22",
     "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Anguilla 3PM",
+    "numeros": [
+      "92",
+      "79",
+      "93"
+    ],
+    "fecha": "2026-11-22",
+    "fuente": "enloteria"
   }
 ]
