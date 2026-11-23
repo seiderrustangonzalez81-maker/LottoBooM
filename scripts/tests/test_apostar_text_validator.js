@@ -66,7 +66,7 @@ function processHarness(text,drawIds,draws,confirmAnswer){
   const rowStart=template.indexOf('function newRow(forms, kind){');
   const rowEnd=template.indexOf('function numerosEnFila(row, numDigits, maxNums){',rowStart);
   assert.ok(helperStart>=0&&helperEnd>helperStart&&wrapperEnd>helperEnd&&processEnd>wrapperEnd&&destEnd>processEnd&&rowStart>=0&&rowEnd>rowStart);
-  const source=template.slice(helperStart,helperEnd)+template.slice(helperEnd,wrapperEnd)+template.slice(rowStart,rowEnd)+template.slice(wrapperEnd,processEnd)+template.slice(processEnd,destEnd)+';this.process=_procProcesarTexto;';
+  const source=template.slice(helperStart,helperEnd)+template.slice(helperEnd,wrapperEnd)+template.slice(rowStart,rowEnd)+template.slice(wrapperEnd,processEnd)+template.slice(processEnd,destEnd)+';function _procActualizarUI(){};this.process=_procProcesarTexto;';
   const defs={'tabla-tradicional':{kind:'multi',numDigits:2,forms:['pick2','pf','fijo','corridos','parlet','candado'],aliases:{}}};
   let confirms=0,status='';
   const sandbox={document:doc,window:{ApostarTextValidator:textValidator,ApostarTableValidator:{validateRows:()=>[]},confirm:()=>{confirms++;return !!confirmAnswer;}},TABLE_DEFS:defs,ordenSorteos:drawIds,sorteosActivos:draws,resolverForma:(f,d)=>d&&d.aliases&&d.aliases[f]||f,expandirToken:(t)=>[String(t)],numerosEnFila:(row)=>({numeros:String(row.num||'').trim().split(/\s+/).filter(Boolean),paresExplicitos:[]}),contarParletsDeFila:()=>1,_procRenderErrores(){},_procActualizarEstado:(msg)=>{status=msg;},renderTabsSorteo(){},renderMiniResumenSorteo(){},recalcGlobal(){},toast(){},setTimeout:()=>1,clearTimeout(){},console:{error(){},warn(){},log(){}}};
