@@ -3898,8 +3898,6 @@ def api_duplicar_boleta(request, boleta_id):
     if not jugadas_originales:
         return JsonResponse({'success': False, 'error': 'La boleta no tiene jugadas para duplicar'}, status=400)
 
-    puede_override_cierre = es_superadmin or es_banco
-
     lineas_ok = []
     advertencias = []
     consumo_memoria = defaultdict(Decimal)
@@ -3911,10 +3909,18 @@ def api_duplicar_boleta(request, boleta_id):
         monto = j.monto
 
         estado_sorteo = calcular_estado_sorteo(sorteo, timezone.now(), fecha_apuesta)
-        esta_abierto = getattr(estado_sorteo, 'estado_actual', 'cerrado') == 'abierto'
+        estado_actual = getattr(estado_sorteo, 'estado_actual', 'no_programado')
 
-        if not esta_abierto and not puede_override_cierre:
-            advertencias.append(f'Sorteo "{sorteo.nombre}" cerrado — línea {numero} omitida.')
+        if not _puede_apostar_segun_estado_sorteo(estado_actual, user):
+            if estado_actual == 'salido':
+                _motivo = 'ya salió; línea omitida (no se permiten apuestas tardías).'
+            elif estado_actual == 'no_programado':
+                _motivo = 'no está programado para esa fecha; línea omitida.'
+            elif estado_actual == 'cerrado':
+                _motivo = 'está cerrado; línea omitida (solo banco/superadmin pueden apostar antes de la salida).'
+            else:
+                _motivo = f'no tiene estado válido ({estado_actual}); línea omitida.'
+            advertencias.append(f'Sorteo "{sorteo.nombre}" {_motivo}')
             continue
 
         pool_total = get_pool_gestor(destinatario, sorteo, forma_juego, forma_pago)
