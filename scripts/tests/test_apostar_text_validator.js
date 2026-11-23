@@ -535,3 +535,21 @@ test('retry after draw loading releases processing lock when destination validat
   assert.equal(h.sandbox.window._procEnEsperaCarga,false);
   assert.deepEqual(draws['1'].tablasActivas['tabla-tradicional'].rows,[]);
 });
+
+
+test('text processing replaces only the destination table and preserves unrelated tabs',()=>{
+  const oldTrad=[{num:'99',montos:{fijo:'7'}}],oldPick3=[{num:'123',montos:{pick3:'8'}}];
+  const draws={'1':{nombre:'D1',cargado:true,tablasActivas:{
+    'tabla-tradicional':{forms:['fijo'],rows:oldTrad},
+    'tabla-pick3':{forms:['pick3'],rows:oldPick3}
+  }}};
+  const h=processHarness('12 34 con 5',[1],draws,true);
+  h.sandbox.TABLE_DEFS['tabla-pick3']={kind:'single',numDigits:3,forms:['pick3'],aliases:{}};
+  h.process();
+  const trad=draws['1'].tablasActivas['tabla-tradicional'].rows;
+  assert.equal(trad.length,1);
+  assert.equal(trad[0].num,'12 34');
+  assert.equal(trad[0].montos.fijo,'5');
+  assert.deepEqual(draws['1'].tablasActivas['tabla-pick3'].rows,oldPick3);
+  assert.equal(h.confirmCount(),1);
+});
