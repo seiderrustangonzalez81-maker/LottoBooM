@@ -572,5 +572,15 @@
     ],
     "fecha": "2026-11-23",
     "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Haiti Bolet 9:30 AM",
+    "numeros": [
+      "02",
+      "53",
+      "82"
+    ],
+    "fecha": "2026-11-23",
+    "fuente": "enloteria"
   }
 ]
