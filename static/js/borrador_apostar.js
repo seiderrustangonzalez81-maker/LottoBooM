@@ -40,15 +40,27 @@
     }
     var sa = getSA();
     if (sa) {
-      Object.keys(sa).forEach(function(sid){
+      var drawKeys = Object.keys(sa);
+      drawKeys.forEach(function(sid){
         var s = sa[sid]; if (!s) return;
-        snap.orden.push(sid);
         snap.sorteos[sid] = {
           nombre: s.nombre || '',
           cerrado: !!s.cerrado,
           tabActual: s.tabActual || null,
           tablasActivas: safeParse(JSON.stringify(s.tablasActivas || {}))
         };
+      });
+      // Preserve the real selected order (first draw is the replicate master).
+      var selectedOrder = (typeof ordenSorteos !== 'undefined' && Array.isArray(ordenSorteos))
+        ? ordenSorteos.map(String) : [];
+      var seenOrder = {};
+      snap.orden = selectedOrder.filter(function(sid){
+        if (!Object.prototype.hasOwnProperty.call(snap.sorteos, sid) || seenOrder[sid]) return false;
+        seenOrder[sid] = true;
+        return true;
+      });
+      drawKeys.forEach(function(sid){
+        if (!seenOrder[sid]) { seenOrder[sid] = true; snap.orden.push(sid); }
       });
     }
     return snap;
@@ -105,25 +117,43 @@
   }
 
   function reabrir(snap){
-    var sids = Object.keys(snap.sorteos||{});
+    var available = Object.keys(snap.sorteos||{}), sids = [], seen = {};
+    (Array.isArray(snap.orden) ? snap.orden : []).forEach(function(raw){
+      var sid = String(raw);
+      if (available.indexOf(sid) >= 0 && !seen[sid]) { seen[sid] = true; sids.push(sid); }
+    });
+    available.forEach(function(sid){ if (!seen[sid]) { seen[sid] = true; sids.push(sid); } });
     if (!sids.length) { _aplicando = false; return; }
     sids.forEach(function(sid){
       var btn = document.querySelector('.sorteo-btn[data-id="'+sid+'"]');
       if (!btn) return;
       if (!btn.classList.contains('active')) { try { btn.click(); } catch(e){} }
     });
-    setTimeout(function(){
+    // Wait for every draw configuration before restoring rows. A late config fetch
+    // initializes empty tables and would otherwise overwrite the saved draft.
+    wait(function(){
+      var sa = getSA();
+      return sids.every(function(sid){ return sa && sa[sid] && sa[sid].cargado; });
+    }, 10000, function(){
+      var sa = getSA();
+      var pending = sids.filter(function(sid){ return !sa || !sa[sid] || !sa[sid].cargado; });
+      if (pending.length) {
+        _aplicando = false;
+        showBanner(snap, true);
+        return; // Keep the local draft intact; never restore into unloaded tables.
+      }
       sids.forEach(function(sid){
-        var sa = getSA(); if (!sa || !sa[sid]) return;
         var g = snap.sorteos[sid];
         if (g.tablasActivas) sa[sid].tablasActivas = safeParse(JSON.stringify(g.tablasActivas));
         if (g.tabActual)     sa[sid].tabActual     = g.tabActual;
         try {
           if (typeof window.renderTabsSorteo === 'function') window.renderTabsSorteo(sid);
+          if (typeof window.renderMiniResumenSorteo === 'function') window.renderMiniResumenSorteo(sid);
         } catch(e){}
       });
       _aplicando = false;
-    }, 900);
+      try { if (typeof window.recalcGlobal === 'function') window.recalcGlobal(); } catch(e){}
+    });
   }
 
   function applySnapshot(snap){
@@ -152,15 +182,19 @@
     if (inpF && snap.fecha) inpF.value = snap.fecha;
   }
 
-  function showBanner(snap){
+  function showBanner(snap, restoreFailed){
     if (!isEligible(snap) || document.getElementById('borradorBanner')) return;
     var el = document.createElement('div');
     el.id = 'borradorBanner';
     el.style.cssText = 'position:fixed;top:10px;right:10px;z-index:9999;max-width:340px;background:linear-gradient(145deg,#fef3c7,#fde68a);color:#78350f;padding:14px 16px;border-radius:10px;border:2px solid #f59e0b;box-shadow:0 4px 14px rgba(0,0,0,.25);font-family:inherit;font-size:.85rem;';
+    var message = restoreFailed
+      ? 'No terminó de cargar la configuración de todos los sorteos. El borrador se conserva; inténtalo cuando estén listos.'
+      : '¿Deseas continuar o borrar el borrador?';
+    var action = restoreFailed ? 'Reintentar' : 'Continuar';
     el.innerHTML = '📝 <strong>Tienes una apuesta sin guardar</strong><br>'
-      + '<span style="font-size:.78rem;display:block;margin-top:6px;">¿Deseas continuar o borrar el borrador?</span>'
+      + '<span style="font-size:.78rem;display:block;margin-top:6px;">'+message+'</span>'
       + '<div style="margin-top:10px;display:flex;gap:8px;">'
-      + '<button type="button" id="borrCont" style="flex:1;padding:8px 10px;background:#2563eb;color:#fff;border:none;border-radius:6px;font-weight:800;cursor:pointer;font-size:.8rem;">Continuar</button>'
+      + '<button type="button" id="borrCont" style="flex:1;padding:8px 10px;background:#2563eb;color:#fff;border:none;border-radius:6px;font-weight:800;cursor:pointer;font-size:.8rem;">'+action+'</button>'
       + '<button type="button" id="borrBorr" style="flex:1;padding:8px 10px;background:#dc2626;color:#fff;border:none;border-radius:6px;font-weight:800;cursor:pointer;font-size:.8rem;">Borrar</button>'
       + '</div>';
     document.body.appendChild(el);
