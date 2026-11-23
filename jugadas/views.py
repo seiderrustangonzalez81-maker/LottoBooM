@@ -2191,7 +2191,7 @@ def _guardar_apuesta_impl(request):
             for item in items_normales + items_super:
                 nombre_tipo = item.get('tipo', '').strip()
                 if not nombre_tipo:
-                    return JsonResponse({'success': False, 'message': 'Tipo de juego vacío'}, status=400)
+                    raise ValueError('Tipo de juego vacío; se cancela la operación para preservar la boleta original.')
                 if nombre_tipo not in tipo_a_forma:
                     # Buscar con case-insensitive para evitar crear duplicados 'Fijo'/'fijo'
                     forma = FormaJuego.objects.filter(nombre__iexact=nombre_tipo).first()
@@ -2204,8 +2204,8 @@ def _guardar_apuesta_impl(request):
                 _tipo_key = (item.get('tipo') or '').strip()
                 forma_juego = tipo_a_forma.get(_tipo_key) or tipo_a_forma.get(item.get('tipo'))
                 if not forma_juego:
-                    logger.warning(f'[DEBUG_APUESTA] item SKIP: forma_juego no encontrada para tipo={item.get("tipo")!r} (strip={_tipo_key!r}, keys_disponibles={list(tipo_a_forma.keys())})')
-                    continue
+                    logger.error(f'[APUESTA] Forma de juego no encontrada para tipo={item.get("tipo")!r}; se cancela el procesamiento.')
+                    raise ValueError(f'Forma de juego no encontrada: {item.get("tipo")!r}. No se guardó la apuesta.')
                 numero = item.get('numero', '').strip()
                 if not numero:
                     continue
@@ -2458,6 +2458,10 @@ def _guardar_apuesta_impl(request):
                     consumo_memoria[key_mem] += monto_final
 
             if not jugadas_creadas:
+                # En edición, devolver dentro de atomic() confirmaría el borrado de las
+                # jugadas originales. Lanzar excepción fuerza rollback de toda la operación.
+                if es_solo_editar:
+                    raise ValueError('No se reconstruyó ninguna jugada. La edición se revirtió y la boleta original se preservó.')
                 # Determinar la causa principal
                 hay_duplicados = any('ya existe' in adv for adv in advertencias)
                 if hay_duplicados:
