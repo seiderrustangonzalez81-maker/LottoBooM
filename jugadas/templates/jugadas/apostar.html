@@ -8463,8 +8463,8 @@ function _procActualizarEstado(msg, tipo){
     var uiValido=modo&&hayTexto&&v.ok&&hayFilas&&haySorteos&&destino.errors.length===0&&!yaProcesado&&!window._procProcesando;
     window._procUiValido=uiValido;
     window._procUiErrores=(v.errors||[]).concat(destino.errors||[]);
-    // No usar disabled nativo: permite mostrar el motivo al pulsar un botón bloqueado.
-    btn.disabled=false;
+    // Bloqueo nativo: rojo/ámbar nunca se puede activar; solo verde permite procesar.
+    btn.disabled=!uiValido;
     if(typeof btn.setAttribute==='function')btn.setAttribute('aria-disabled',uiValido?'false':'true');else btn.ariaDisabled=uiValido?'false':'true';
     btn.style.opacity=uiValido?'1':'.82';btn.style.cursor=uiValido?'pointer':'not-allowed';
     btn.style.background=hayError?'linear-gradient(135deg,#dc2626,#991b1b)':(uiValido?'linear-gradient(135deg,#16a34a,#15803d)':'linear-gradient(135deg,#f59e0b,#b45309)');
