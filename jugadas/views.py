@@ -2410,12 +2410,8 @@ def _guardar_apuesta_impl(request):
 
                     monto_final = monto
                     if monto > disponible:
-                        if es_solo_editar:
-                            raise ValueError(f'Monto de Superparlet excede el pool para {numero}. Edición revertida; boleta original preservada.')
-                        advertencias.append(
-                            f'El número {numero} en Superparlet solo admitía ${disponible:.2f}. Se ajustó a ${disponible:.2f}.'
-                        )
-                        monto_final = disponible
+                        raise ValueError(f'Monto de Superparlet excede el pool para {numero} (disponible $' + f'{disponible:.2f}' + '). Se cancela la operación completa; no se guardó ninguna jugada.')
+
                     if jugada_id and modo_edicion not in ('duplicar', 'editar_boleta'):
                         try:
                             jugada = Jugada.objects.get(id=jugada_id)
