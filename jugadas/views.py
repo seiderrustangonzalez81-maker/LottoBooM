@@ -98,7 +98,7 @@ def _obtener_sorteos_cuba_estricto(incluir_cerrados=False):
         s.hora_salida = hora_salida
         s.hora_cierre = dt_cierre
         s.hora_salida_str = hora_salida.strftime('%I:%M %p').lstrip('0')
-        s.sorteos_segundos_restantes = max(0, int((dt_cierre if estado == 'abierto' else dt_salida - ahora_cuba).total_seconds()))
+        s.sorteos_segundos_restantes = max(0, int(((dt_cierre if estado == 'abierto' else dt_salida) - ahora_cuba).total_seconds()))
         sorteos_validos.append(s)
 
     return sorteos_validos
