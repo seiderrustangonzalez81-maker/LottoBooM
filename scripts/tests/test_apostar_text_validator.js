@@ -110,17 +110,22 @@ function uiHarness(text,drawIds,checked,overrides){
   const destStart=template.indexOf('function _procValidarDestinos(filas){');
   const uiStart=template.indexOf('function _procRenderErrores');
   const uiEnd=template.indexOf('  (function _bindProcesarText',uiStart);
+  const rowStart=template.indexOf('function newRow(forms, kind){');
+  const rowEnd=template.indexOf('function numerosEnFila(row, numDigits, maxNums){',rowStart);
   assert.ok(uiStart>=0&&uiEnd>uiStart,'live UI helpers must be present');
+  assert.ok(rowStart>=0&&rowEnd>rowStart,'destination row mapper must be present');
   const wrapperStart=template.indexOf('function _procValidarTexto(texto){');
   const wrapperEnd=template.indexOf('function _procProcesarTexto(){',wrapperStart);
   assert.ok(wrapperStart>=0&&wrapperEnd>wrapperStart,'validation wrapper must be present');
-  const source=template.slice(helperStart,helperEnd)+template.slice(wrapperStart,wrapperEnd)+template.slice(destStart,uiStart)+template.slice(uiStart,uiEnd)+';this.update=_procActualizarUI;';
+  const source=template.slice(helperStart,helperEnd)+template.slice(wrapperStart,wrapperEnd)+template.slice(rowStart,rowEnd)+template.slice(destStart,uiStart)+template.slice(uiStart,uiEnd)+';this.update=_procActualizarUI;';
   const ids=drawIds||[];
   const sorteos={};
   ids.forEach(id=>{
     sorteos[String(id)]=(overrides&&overrides[id])||{nombre:'Test '+id,cargado:true,tablasActivas:{'tabla-tradicional':{forms:['fijo','corridos','parlet','candado'],rows:[]},'tabla-pick3':{forms:['pick3'],rows:[]}}};
   });
-  const sandbox={document:doc,window:{ApostarTextValidator:textValidator},ordenSorteos:ids,sorteosActivos:sorteos,_procActualizarEstado:function(){},};
+  const helpers=tableRowHarness();
+  const defs={'tabla-tradicional':{kind:'multi',numDigits:2,forms:['pick2','pf','fijo','corridos','parlet','candado'],aliases:{corrido1:'corridos',corrido2:'corridos'}},'tabla-pick3':{kind:'single',numDigits:3,forms:['pick3']}};
+  const sandbox={document:doc,window:{ApostarTextValidator:textValidator,ApostarTableValidator:tableValidator},TABLE_DEFS:defs,ordenSorteos:ids,sorteosActivos:sorteos,resolverForma:(f,d)=>d&&d.aliases&&d.aliases[f]||f,expandirToken:helpers.expandToken,numerosEnFila:helpers.numerosEnFila,contarParletsDeFila:helpers.contarParletsDeFila,_procActualizarEstado:function(){},};
   vm.runInNewContext(source,sandbox);
   const updateResult=sandbox.update();
   return {button,checkbox,errorBox,textarea,updateResult};
