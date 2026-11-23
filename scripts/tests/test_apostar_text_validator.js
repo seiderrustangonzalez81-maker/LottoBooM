@@ -466,3 +466,14 @@ test('complete valid multi-tab wager parses with all target modalities present',
   console.log('[VALID MULTI-TAB SAMPLE] '+JSON.stringify({lineCount:input.split(/\r?\n/).length,rowCount:result.rows.length,tables}));
   ['tabla-tradicional','tabla-pick3','tabla-pick4','tabla-pick5','tabla-vs','tabla-vspf','tabla-vspick2','tabla-pick2vspf','tabla-vs100','tabla-posiciones','tabla-tripleta','tabla-centenas'].forEach(tab=>assert.ok(tables[tab]>0,'Missing destination '+tab));
 });
+
+
+test('blank lines and CR-only separators preserve physical line numbers for diagnostics',()=>{
+  const input='\n12 34 con 5\n\ntexto no reconocido\n';
+  const r=run(input);
+  assert.equal(r.ok,false);
+  assert.ok(r.errors.some(e=>e.line===4&&/Token no reconocido/.test(e.message)),JSON.stringify(r.errors));
+  const crOnly=run('12 34 con 5\rtexto no reconocido');
+  assert.equal(crOnly.ok,false);
+  assert.ok(crOnly.errors.some(e=>e.line===2&&/Token no reconocido/.test(e.message)),JSON.stringify(crOnly.errors));
+});
