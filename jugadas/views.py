@@ -2100,6 +2100,16 @@ def _guardar_apuesta_impl(request):
                 _excluir_jugada_ids = []
                 if es_edicion_pura and jugada_id and str(jugada_id).isdigit():
                     _excluir_jugada_ids.append(int(jugada_id))
+                # En edición de boleta, el pool ya está consumido por sus jugadas
+                # originales. Excluirlas durante la prevalidación para evaluar el
+                # nuevo contenido contra el disponible real tras reemplazarlas.
+                if es_solo_editar and boleta_origen_id and str(boleta_origen_id).isdigit():
+                    _ids_originales_boleta = Boleta.objects.filter(
+                        id=int(boleta_origen_id), usuario=cliente
+                    ).values_list('jugadas__id', flat=True)
+                    _excluir_jugada_ids.extend(
+                        int(_id) for _id in _ids_originales_boleta if _id is not None
+                    )
                 _errores_pool = _validar_pool_items(
                     gestor=destinatario,
                     fecha=fecha_apuesta,
