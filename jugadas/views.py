@@ -3923,6 +3923,32 @@ def api_duplicar_boleta(request, boleta_id):
             advertencias.append(f'Sorteo "{sorteo.nombre}" {_motivo}')
             continue
 
+        # Revalidar forma habilitada para el sorteo destino (no asumir que la
+        # configuración sigue igual desde que se creó la boleta original).
+        if not _forma_aplicable_sorteo(forma_juego.nombre, sorteo.formas_juego or []):
+            advertencias.append(
+                f'Forma {forma_juego.nombre} no habilitada para {sorteo.nombre}; línea {numero} omitida.'
+            )
+            continue
+
+        # Revalidar restricciones al duplicar; si no se puede consultar, falla cerrado.
+        _partes_numero = [p.strip() for p in str(numero).split('x') if p.strip()] if 'x' in str(numero).lower() else [str(numero).strip()]
+        try:
+            _restringidos = list(NumeroRestringido.objects.filter(
+                sorteo=sorteo, valor__in=_partes_numero
+            ).values_list('valor', flat=True))
+        except Exception:
+            logger.exception('No se pudo comprobar números restringidos durante duplicación; se rechaza.')
+            return JsonResponse({
+                'success': False,
+                'error': 'No se pudo verificar la lista de números restringidos. No se duplicó la boleta.',
+            }, status=503)
+        if _restringidos:
+            advertencias.append(
+                f'Números restringidos {_restringidos} para {sorteo.nombre}; línea {numero} omitida.'
+            )
+            continue
+
         pool_total = get_pool_gestor(destinatario, sorteo, forma_juego, forma_pago)
         if pool_total <= 0:
             advertencias.append(f'Sin pool para {sorteo.nombre} - {forma_juego.nombre}.')
