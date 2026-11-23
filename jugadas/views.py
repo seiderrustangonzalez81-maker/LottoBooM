@@ -1849,16 +1849,33 @@ def _guardar_apuesta_impl(request):
                     dia_chk = {0: 'lunes', 1: 'martes', 2: 'miercoles', 3: 'jueves', 4: 'viernes', 5: 'sabado', 6: 'domingo'}[fecha_apuesta.weekday()]
 
                     hs_chk = _sorteo_chk.hora_salida
-                    if _sorteo_chk.horarios and temp_chk in _sorteo_chk.horarios and dia_chk in _sorteo_chk.horarios[temp_chk]:
-                        hh, mm = _sorteo_chk.horarios[temp_chk][dia_chk].split(':')
-                        hs_chk = time(int(hh), int(mm))
+                    if _sorteo_chk.horarios:
+                        horario_dia_chk = (_sorteo_chk.horarios.get(temp_chk) or {}).get(dia_chk)
+                        if not horario_dia_chk:
+                            _cerrados.append(_sorteo_chk.nombre + ' (no programado)')
+                            continue
+                        try:
+                            hh, mm = horario_dia_chk.split(':')
+                            hs_chk = time(int(hh), int(mm))
+                        except (ValueError, TypeError):
+                            _cerrados.append(_sorteo_chk.nombre + ' (horario inválido)')
+                            continue
+
+                    if not hs_chk:
+                        _cerrados.append(_sorteo_chk.nombre + ' (sin horario)')
+                        continue
 
                     dt_sal = datetime.combine(fecha_apuesta, hs_chk).replace(tzinfo=CUBA_TZ)
 
                     if hs_chk.hour < 6:
                         dt_sal += timedelta(days=1)
 
-                    dt_cie = dt_sal - timedelta(minutes=(_sorteo_chk.minutos_cierre or 60))
+                    minutos_cierre_chk = (
+                        _sorteo_chk.minutos_cierre
+                        if _sorteo_chk.minutos_cierre is not None
+                        else 10
+                    )
+                    dt_cie = dt_sal - timedelta(minutes=minutos_cierre_chk)
 
                     if ahora_cuba >= dt_cie:
                         _cerrados.append(_sorteo_chk.nombre)
@@ -1868,10 +1885,14 @@ def _guardar_apuesta_impl(request):
                         'success': False,
                         'sorteo_cerrado': True,
                         'sorteos_cerrados': _cerrados,
-                        'message': '⛔ Operación rechazada. El sorteo ya cerró en Cuba: ' + ', '.join(_cerrados),
+                        'message': '⛔ Operación rechazada. El sorteo ya cerró o no está programado en Cuba: ' + ', '.join(_cerrados),
                     }, status=400)
             except Exception as e:
-                logger.error(f"Error validando cierre estricto: {e}")
+                logger.exception('Error validando cierre estricto; se rechaza la apuesta por seguridad.')
+                return JsonResponse({
+                    'success': False,
+                    'message': 'No se pudo verificar el horario/cierre de los sorteos. La apuesta no se guardó; inténtalo de nuevo.',
+                }, status=503)
         # ═══ FIN VALIDACIÓN ESTRICTA ═══
 
         usuario = request.user
