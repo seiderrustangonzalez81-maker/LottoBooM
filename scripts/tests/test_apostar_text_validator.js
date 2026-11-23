@@ -101,7 +101,7 @@ test('table row totals match collected item sums across forms',()=>{
 
 function uiHarness(text,drawIds,checked,overrides){
   const textarea={value:text||'',scrollTop:0};
-  const button={disabled:false,style:{}};
+  const button={disabled:false,style:{},attributes:{},setAttribute(name,value){this.attributes[name]=String(value);},getAttribute(name){return this.attributes[name]??null;}};
   const checkbox={checked:!!checked};
   const errorBox={style:{},innerHTML:''};
   const doc={getElementById:(id)=>({procesarText:textarea,btnProcAhora:button,chkProcesar:checkbox,procErrores:errorBox}[id]||null)};
@@ -163,11 +163,9 @@ test('validates tripleta row count, VS groups, positions and Pick4 digits',()=>{
   assert.equal(validateRows([{num:'1234',montos:{pick4:'1'}}],{kind:'single',numDigits:4,forms:['pick4']},['pick4']).length,0);
   assert.ok(validateRows([{num:'123',montos:{pick4:'1'}}],{kind:'single',numDigits:4,forms:['pick4']},['pick4']).length>0);
 });
-test('live processor button enables only for valid text, mode and selected draw',()=>{
-  const valid=uiHarness('12 34 con 5',[1],true);assert.equal(valid.updateResult.ok,true,JSON.stringify(valid.updateResult));assert.equal(valid.button.disabled,false,JSON.stringify({validation:valid.updateResult,checkbox:valid.checkbox}));
-  assert.equal(uiHarness('12 34 con 5 bad',[1],true).button.disabled,true);
-  assert.equal(uiHarness('12 34 con 5',[],true).button.disabled,true);
-  assert.equal(uiHarness('12 34 con 5',[1],false).button.disabled,true);
+test('live processor uses aria-disabled while remaining tappable for feedback',()=>{
+  const valid=uiHarness('12 34 con 5',[1],true);assert.equal(valid.updateResult.ok,true,JSON.stringify(valid.updateResult));assert.equal(valid.button.disabled,false);assert.equal(valid.button.getAttribute('aria-disabled'),'false');
+  for(const h of [uiHarness('12 34 con 5 bad',[1],true),uiHarness('12 34 con 5',[],true),uiHarness('12 34 con 5',[1],false)]){assert.equal(h.button.disabled,false);assert.equal(h.button.getAttribute('aria-disabled'),'true');}
 });
 test('replicate and process checkboxes stay mutually exclusive',()=>{
   const chkRep={checked:false,disabled:false,dataset:{},handlers:{},addEventListener(type,fn){this.handlers[type]=fn;}};
@@ -186,15 +184,15 @@ test('replicate and process checkboxes stay mutually exclusive',()=>{
   chkRep.checked=true;chkRep.handlers.change.call(chkRep);
   assert.equal(chkProc.checked,false);assert.equal(chkProc.disabled,true);assert.equal(wrap.style.display,'none');
 });
-test('live processor stays amber and disabled until process mode is active',()=>{
+test('live processor stays amber and aria-disabled until process mode is active',()=>{
   const h=uiHarness('12 34 con 5',[1],false);
-  assert.equal(h.button.disabled,true);
+  assert.equal(h.button.disabled,false);assert.equal(h.button.getAttribute('aria-disabled'),'true');
   assert.match(h.button.style.background,/f59e0b/);
   assert.match(h.button.innerHTML,/Activa Procesar/);
 });
-test('live processor checks every selected draw for its target tab',()=>{
+test('live processor marks error when any selected draw lacks its target tab',()=>{
   const h=uiHarness('pick3 123 con 5',[1,2],true,{'2':{nombre:'Second',cargado:true,tablasActivas:{'tabla-tradicional':{forms:['fijo'],rows:[]}}}});
-  assert.equal(h.button.disabled,true);
+  assert.equal(h.button.disabled,false);assert.equal(h.button.getAttribute('aria-disabled'),'true');
   assert.match(h.errorBox.innerHTML,/Second.*no tiene la pestaña/);
 });
 test('processing mode is enforced by the apply function',()=>{
@@ -329,32 +327,32 @@ test('supports standalone fixed/corridos suffixes after a number group',()=>{con
 test('supports amount suffixes on inline groups (25f)',()=>{const r=run('12 34 5f');assert.equal(r.ok,true);assert.equal(r.rows[0].montos.fijo,'5');});
 test('detects invalid amount text appended to group',()=>{const r=run('12 34 con 5 error');assert.equal(r.ok,false);assert.ok(r.errors.some(e=>/Texto no reconocido/.test(e.message)));});
 
-test('live processor stays disabled when pasted text is empty',()=>{
+test('live processor stays aria-disabled when pasted text is empty',()=>{
   const h=uiHarness('',[1],true);
   assert.equal(h.updateResult.ok,true);
-  assert.equal(h.button.disabled,true);
+  assert.equal(h.button.disabled,false);assert.equal(h.button.getAttribute('aria-disabled'),'true');
 });
 
-test('live processor disables when a destination form is not enabled',()=>{
+test('live processor marks aria-disabled when destination form is not enabled',()=>{
   const h=uiHarness('12 34 con 5',[1],true,{'1':{nombre:'Test',cargado:true,tablasActivas:{'tabla-tradicional':{forms:['corridos'],rows:[]}}}});
-  assert.equal(h.button.disabled,true);
+  assert.equal(h.button.disabled,false);assert.equal(h.button.getAttribute('aria-disabled'),'true');
   assert.match(h.errorBox.innerHTML,/habilita la forma/);
 });
-test('live processor disables while draw configuration is loading',()=>{
+test('live processor marks aria-disabled while draw configuration is loading',()=>{
   const h=uiHarness('12 34 con 5',[1],true,{'1':{nombre:'Test',cargado:false,tablasActivas:{}}});
-  assert.equal(h.button.disabled,true);
+  assert.equal(h.button.disabled,false);assert.equal(h.button.getAttribute('aria-disabled'),'true');
   assert.match(h.errorBox.innerHTML,/configuración aún cargando/);
 });
 
-test('live processor disables when selected draw is missing the destination tab',()=>{
-  const textarea={value:'pick3 123 con 5',scrollTop:0},button={disabled:false,style:{}},checkbox={checked:true},errorBox={style:{},innerHTML:''};
+test('live processor marks aria-disabled when selected draw is missing destination tab',()=>{
+  const textarea={value:'pick3 123 con 5',scrollTop:0},button={disabled:false,style:{},attributes:{},setAttribute(name,value){this.attributes[name]=String(value);},getAttribute(name){return this.attributes[name]??null;}},checkbox={checked:true},errorBox={style:{},innerHTML:''};
   const doc={getElementById:id=>({procesarText:textarea,btnProcAhora:button,chkProcesar:checkbox,procErrores:errorBox}[id]||null)};
   const a=template.indexOf('function _procNormalizarTexto(texto){'),b=template.indexOf('function _procValidarTexto(texto){',a),u=template.indexOf('function _procValidarDestinos(filas){'),z=template.indexOf('  (function _bindProcesarText',u);
   const w=template.indexOf('function _procValidarTexto(texto){'),x=template.indexOf('function _procProcesarTexto(){',w);
   const sandbox={document:doc,window:{ApostarTextValidator:textValidator},ordenSorteos:[1],sorteosActivos:{'1':{nombre:'Test',cargado:true,tablasActivas:{'tabla-tradicional':{forms:['fijo'],rows:[]}}}},_procActualizarEstado(){}};
   vm.runInNewContext(template.slice(a,b)+template.slice(w,x)+template.slice(u,z)+';this.update=_procActualizarUI;',sandbox);
   sandbox.update();
-  assert.equal(button.disabled,true);
+  assert.equal(button.disabled,false);assert.equal(button.getAttribute('aria-disabled'),'true');
   assert.match(errorBox.innerHTML,/no tiene la pestaña/);
 });
 
