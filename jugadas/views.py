@@ -3932,7 +3932,8 @@ def api_duplicar_boleta(request, boleta_id):
             continue
 
         # Revalidar restricciones al duplicar; si no se puede consultar, falla cerrado.
-        _partes_numero = [p.strip() for p in str(numero).split('x') if p.strip()] if 'x' in str(numero).lower() else [str(numero).strip()]
+        _numero_norm_restr = str(numero).strip().lower()
+        _partes_numero = [p.strip() for p in _numero_norm_restr.split('x') if p.strip()] if 'x' in _numero_norm_restr else [_numero_norm_restr]
         try:
             _restringidos = list(NumeroRestringido.objects.filter(
                 sorteo=sorteo, valor__in=_partes_numero
