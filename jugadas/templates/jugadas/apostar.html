@@ -8464,7 +8464,7 @@ function _procActualizarEstado(msg, tipo){
     window._procUiErrores=(v.errors||[]).concat(destino.errors||[]);
     // No usar disabled nativo: permite mostrar el motivo al pulsar un botón bloqueado.
     btn.disabled=false;
-    btn.setAttribute('aria-disabled',uiValido?'false':'true');
+    if(typeof btn.setAttribute==='function')btn.setAttribute('aria-disabled',uiValido?'false':'true');else btn.ariaDisabled=uiValido?'false':'true';
     btn.style.opacity=uiValido?'1':'.82';btn.style.cursor=uiValido?'pointer':'not-allowed';
     btn.style.background=hayError?'linear-gradient(135deg,#dc2626,#991b1b)':(uiValido?'linear-gradient(135deg,#16a34a,#15803d)':'linear-gradient(135deg,#f59e0b,#b45309)');
     btn.style.borderColor=hayError?'#991b1b':(uiValido?'#166534':'#92400e');
