@@ -7,7 +7,7 @@ os.environ.setdefault("SECRET_KEY", "ci-only-not-a-production-secret")
 import django
 django.setup()
 
-from jugadas.views import _validar_tablas_crudas_payload, _validar_coincidencia_sorteos_tablas, _validar_items_ids_sorteo
+from jugadas.views import _validar_tablas_crudas_payload, _validar_coincidencia_sorteos_tablas, _validar_items_ids_sorteo, _puede_apostar_segun_estado_sorteo
 
 
 def payload(table, kind, forms, rows, sid="54"):
@@ -110,3 +110,22 @@ class DrawTablesPayloadAlignmentTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+class DrawStatePermissionTests(unittest.TestCase):
+    def _user(self, superuser=False, roles=()):
+        from types import SimpleNamespace
+        role_qs = SimpleNamespace(filter=lambda **kwargs: SimpleNamespace(exists=lambda: kwargs.get('tipo') in roles and kwargs.get('activo') is True))
+        return SimpleNamespace(is_superuser=superuser, roles=role_qs)
+
+    def test_open_draw_allowed_for_user(self):
+        self.assertTrue(_puede_apostar_segun_estado_sorteo('abierto', self._user()))
+
+    def test_closed_draw_allowed_only_bank_or_superadmin(self):
+        self.assertFalse(_puede_apostar_segun_estado_sorteo('cerrado', self._user(roles=('comercial',))))
+        self.assertTrue(_puede_apostar_segun_estado_sorteo('cerrado', self._user(roles=('banco',))))
+        self.assertTrue(_puede_apostar_segun_estado_sorteo('cerrado', self._user(roles=('superadmin',))))
+        self.assertTrue(_puede_apostar_segun_estado_sorteo('cerrado', self._user(superuser=True)))
+
+    def test_already_drawn_and_unprogrammed_draws_block_everyone(self):
+        for state in ('salido', 'no_programado', 'unknown'):
+            self.assertFalse(_puede_apostar_segun_estado_sorteo(state, self._user(superuser=True)))
