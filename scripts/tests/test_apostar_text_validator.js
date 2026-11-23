@@ -456,3 +456,13 @@ test('three-digit wager auto-routes to Pick3 and is accepted only when that dest
   assert.equal(missing.button.getAttribute('aria-disabled'),'true');
   assert.match(missing.errorBox.innerHTML,/no tiene la pestaña tabla-pick3/);
 });
+
+
+test('complete valid multi-tab wager parses with all target modalities present',()=>{
+  const input="T7 con 25\nD8 con 50\n12 34 56 con 10f\n12 con 10f 20c\n07 70 con 20c\n12x34 56x78 con 10\n13 14 15 candado 30\n123 456 con 20\npick4 1234 5678 con 30\npick5 12345 67890 con 40\n12 34 vs 56 78 con 10\nT7 vspf D3 con 20\n12 vspick2 34 con 10\n12 34 pick2vspf 56 con 10\n12 34 vs100 con 5\npos 2 12 34 56 con 20\n12 34 56 tripleta con 10\n123 456 centenas corridas con 20\n40V con 15f\nPA con 15";
+  const result=run(input);
+  assert.equal(result.ok,true,JSON.stringify(result.errors));
+  const tables=result.rows.reduce((acc,row)=>{acc[row.tabla]=(acc[row.tabla]||0)+1;return acc;},{});
+  console.log('[VALID MULTI-TAB SAMPLE] '+JSON.stringify({lineCount:input.split(/\\r?\\n/).length,rowCount:result.rows.length,tables}));
+  ['tabla-tradicional','tabla-pick3','tabla-pick4','tabla-pick5','tabla-vs','tabla-vspf','tabla-vspick2','tabla-pick2vspf','tabla-vs100','tabla-posiciones','tabla-tripleta','tabla-centenas'].forEach(tab=>assert.ok(tables[tab]>0,'Missing destination '+tab));
+});
