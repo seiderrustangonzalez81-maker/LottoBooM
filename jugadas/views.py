@@ -2088,7 +2088,11 @@ def _guardar_apuesta_impl(request):
                             'advertencias': ['Duplicado con: ' + _refs],
                         }, status=400)
             except Exception as _e:
-                logger.warning('[dup check pre] ERROR: ' + str(_e))
+                logger.exception('[dup check pre] No se pudo comprobar duplicados; se rechaza la apuesta por seguridad.')
+                return JsonResponse({
+                    'success': False,
+                    'message': 'No se pudo verificar si la boleta está duplicada. No se guardó la apuesta; inténtalo de nuevo.',
+                }, status=503)
 
         # ═══ GUARD_POOL_BACKEND_V1 ═══
         try:
@@ -2346,19 +2350,19 @@ def _guardar_apuesta_impl(request):
                     permitido_todos = True
                     for _sorteo_chk in super_sorteos_list:
                         _estado_chk = calcular_estado_sorteo(_sorteo_chk, timezone.now(), fecha_apuesta)
-                        _abierto_chk = getattr(_estado_chk, 'estado_actual', 'cerrado') == 'abierto'
-                        if not _abierto_chk:
-                            _permitido = False
-                            if es_superadmin_:
-                                _permitido = True
-                            elif es_banco_:
-                                _permitido = True
-                            if not _permitido:
-                                advertencias.append(
-                                    f'SuperParlet cancelado: el sorteo "{_sorteo_chk.nombre}" no está abierto. Ambos sorteos deben estar abiertos para apostar.'
-                                )
-                                permitido_todos = False
-                                break
+                        _estado_actual_chk = getattr(_estado_chk, 'estado_actual', 'no_programado')
+                        if not _puede_apostar_segun_estado_sorteo(_estado_actual_chk, usuario):
+                            if _estado_actual_chk == 'salido':
+                                _motivo_chk = 'ya salió; no se permiten apuestas tardías'
+                            elif _estado_actual_chk == 'no_programado':
+                                _motivo_chk = 'no está programado para esa fecha'
+                            else:
+                                _motivo_chk = 'está cerrado; solo banco/superadmin pueden apostar antes de la salida'
+                            advertencias.append(
+                                f'SuperParlet cancelado: el sorteo "{_sorteo_chk.nombre}" {_motivo_chk}. Ambos sorteos deben permitir apuestas.'
+                            )
+                            permitido_todos = False
+                            break
                     if not permitido_todos:
                         continue
                     pool_total = get_pool_gestor(destinatario, sorteo_principal, forma_juego, forma_pago)
