@@ -602,5 +602,15 @@
     ],
     "fecha": "2026-11-23",
     "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "El Quinielon Dia",
+    "numeros": [
+      "88",
+      "80",
+      "24"
+    ],
+    "fecha": "2026-11-23",
+    "fuente": "enloteria"
   }
 ]
