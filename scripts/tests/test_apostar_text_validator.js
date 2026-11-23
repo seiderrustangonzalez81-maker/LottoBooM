@@ -442,3 +442,11 @@ test('stress audit: user-provided 24-line mixed-modality wager reports each line
   assert.equal(result.ok,lineStatuses.every(line=>line.status==='VALID'));
   assert.equal(result.errors.length,lineStatuses.filter(line=>line.status==='ERROR').length);
 });
+
+
+test('live destination precheck rejects three-digit traditional tokens without explicit Pick3 routing',()=>{
+  const h=uiHarness('123 456 con 20',[1],true);
+  assert.equal(h.button.disabled,false);
+  assert.equal(h.button.getAttribute('aria-disabled'),'true');
+  assert.match(h.errorBox.innerHTML,/números inválidos|Se esperaba un número de 2 dígitos|token 123/i);
+});
