@@ -2208,10 +2208,14 @@ def _guardar_apuesta_impl(request):
                     raise ValueError(f'Forma de juego no encontrada: {item.get("tipo")!r}. No se guardó la apuesta.')
                 numero = item.get('numero', '').strip()
                 if not numero:
+                    if es_solo_editar:
+                        raise ValueError('Una línea editada llegó sin número. Se revirtió la edición y se preservó la boleta original.')
                     continue
                 try:
                     monto = Decimal(str(item.get('monto', 0)))
                 except Exception:
+                    if es_solo_editar:
+                        raise ValueError('Importe inválido durante la edición. Se revirtió y se preservó la boleta original.')
                     continue
 
                 sorteo_item_id = item.get('sorteo_id')
@@ -2223,12 +2227,16 @@ def _guardar_apuesta_impl(request):
                 for sorteo in sorteos_iter:
                     formas_sorteo = [f.lower() for f in (sorteo.formas_juego or [])]
                     if not _forma_aplicable_sorteo(item.get('tipo', ''), formas_sorteo):
+                        if es_solo_editar:
+                            raise ValueError(f'La forma {item.get("tipo")} no aplica al sorteo {sorteo.nombre}. Edición revertida.')
                         continue
 
                     estado_sorteo = calcular_estado_sorteo(sorteo, timezone.now(), fecha_apuesta)
                     estado_actual = getattr(estado_sorteo, 'estado_actual', 'no_programado')
 
                     if not _puede_apostar_segun_estado_sorteo(estado_actual, usuario):
+                        if es_solo_editar:
+                            raise ValueError(f'El sorteo {sorteo.nombre} no admite esta línea. Edición revertida; boleta original preservada.')
                         if estado_actual == 'salido':
                             advertencias.append(f'El sorteo "{sorteo.nombre}" ya salió; no se permiten apuestas tardías.')
                         else:
@@ -2239,6 +2247,8 @@ def _guardar_apuesta_impl(request):
 
                     pool_total = get_pool_gestor(destinatario, sorteo, forma_juego, forma_pago)
                     if pool_total <= 0:
+                        if es_solo_editar:
+                            raise ValueError(f'Sin pool para {sorteo.nombre} / {forma_juego.nombre}. Edición revertida; boleta original preservada.')
                         advertencias.append(f'Sin pool configurado para {sorteo.nombre} - {forma_juego.nombre} - {forma_pago.nombre}.')
                         continue
 
@@ -2253,6 +2263,8 @@ def _guardar_apuesta_impl(request):
                     disponible = pool_total - consumido
 
                     if disponible <= 0:
+                        if es_solo_editar:
+                            raise ValueError(f'Pool agotado para {numero} en {sorteo.nombre}. Edición revertida; boleta original preservada.')
                         advertencias.append(f'El número {numero} en {sorteo.nombre} - {forma_juego.nombre} está agotado para el gestor.')
                         continue
 
