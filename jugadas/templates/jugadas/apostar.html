@@ -7897,11 +7897,12 @@ function _procNormalizarTexto(texto){
   t = t.replace(/(\d+)([a-zA-Z]+)/g, '$1 $2');
   t = t.replace(/\uE000/g, 'x');
   t = t.replace(/\uE001/g, 'V');
-  // 8. Limpieza final de espacios (SIEMPRE AL FINAL)
+  // 8. Limpieza final de espacios (preserva líneas físicas para diagnóstico).
+  t = t.replace(/\r\n?/g, '\n');
   t = t.replace(/[ \t]+/g, ' ');
   t = t.replace(/[ \t]+\n/g, '\n');
-  t = t.replace(/\n+/g, '\n');
-  return t.trim();
+  t = t.replace(/^[ \t]+|[ \t]+$/gm, '');
+  return t;
 }
 
 function _procActualizarEstado(msg, tipo){
