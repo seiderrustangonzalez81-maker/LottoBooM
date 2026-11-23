@@ -846,5 +846,15 @@
     ],
     "fecha": "2026-11-23",
     "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Anguilla 6PM",
+    "numeros": [
+      "87",
+      "93",
+      "61"
+    ],
+    "fecha": "2026-11-23",
+    "fuente": "enloteria"
   }
 ]
