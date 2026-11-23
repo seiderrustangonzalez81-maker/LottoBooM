@@ -215,7 +215,15 @@
     document.addEventListener('click', function(ev){
       var t = ev.target;
       while (t && t !== document.body){
-        if (t.classList && (t.classList.contains('fp-chip') || t.classList.contains('sorteo-btn'))) {
+        var structural = t.classList && (
+          t.classList.contains('del') || t.classList.contains('add-row') ||
+          t.classList.contains('tab-btn') || t.classList.contains('tab') ||
+          t.classList.contains('fp-chip') || t.classList.contains('sorteo-btn')
+        );
+        var tabSelector = t.matches && t.matches('[data-tab],[data-sorteo-tab]');
+        if (structural || tabSelector || t.id === 'btnProcAhora') {
+          // Structural edits, tab changes and text processing change the
+          // persisted table snapshot without emitting input/change events.
           setTimeout(scheduleSave, 250); return;
         }
         t = t.parentElement;
