@@ -2050,8 +2050,7 @@ def _guardar_apuesta_impl(request):
         modo_operacion = request.POST.get('modo_operacion', '')
 
         es_solo_editar = (es_edicion_boleta and modo_operacion == 'editar')
-        es_banco_o_admin_edit = usuario.is_superuser or usuario.roles.filter(tipo__in=['superadmin', 'banco'], activo=True).exists()
-        if es_edicion_boleta and modo_operacion == 'editar' and not es_banco_o_admin_edit:
+        if es_edicion_boleta and modo_operacion == 'editar':
             try:
                 orig_b = Boleta.objects.get(id=int(boleta_origen_id))
                 suma_orig = sum((j.monto for j in orig_b.jugadas.exclude(estado='cancelada')), Decimal('0.00'))
