@@ -508,5 +508,27 @@
     "fijo": "13",
     "corrido_1": "15",
     "corrido_2": "28"
+  },
+  {
+    "sorteo_nombre": "New Jersey Noche",
+    "numeros": [
+      "14",
+      "13",
+      "55"
+    ],
+    "fecha": "2026-11-22",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "New Jersey 10:57 PM",
+    "fecha": "2026-11-22",
+    "fuente": "lotteryusa",
+    "pick2": "",
+    "pick3": "014",
+    "pick4": "1355",
+    "pick5": "",
+    "fijo": "14",
+    "corrido_1": "13",
+    "corrido_2": "55"
   }
 ]
