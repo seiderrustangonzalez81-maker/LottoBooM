@@ -972,5 +972,15 @@
     ],
     "fecha": "2026-11-22",
     "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "La Suerte 6PM",
+    "numeros": [
+      "04",
+      "69",
+      "71"
+    ],
+    "fecha": "2026-11-22",
+    "fuente": "enloteria"
   }
 ]
