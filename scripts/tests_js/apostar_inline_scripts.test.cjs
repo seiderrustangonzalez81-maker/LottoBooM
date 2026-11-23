@@ -23,10 +23,11 @@ test('all inline scripts in apostar.html are syntactically valid after Django to
   assert.deepEqual(failures, [], failures.join('\n'));
 });
 
-test('Apostar parser button remains tappable to explain invalid state and tracks reprocessing', () => {
+test('Apostar processor button uses native disabled state and semáforo', () => {
   const html = fs.readFileSync('jugadas/templates/jugadas/apostar.html', 'utf8');
-  assert.match(html, /btn\.disabled=false/);
+  assert.match(html, /btn\.disabled=!uiValido/);
   assert.match(html, /setAttribute\('aria-disabled'/);
+  assert.match(html, /Corregir Errores/);
   assert.match(html, /_procUiValido/);
   assert.match(html, /_procTextoProcesado/);
   assert.match(html, /Procesar nuevamente/);
