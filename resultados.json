@@ -760,5 +760,15 @@
     "fijo": "72",
     "corrido_1": "44",
     "corrido_2": "87"
+  },
+  {
+    "sorteo_nombre": "Loteka Tarde",
+    "numeros": [
+      "41",
+      "83",
+      "97"
+    ],
+    "fecha": "2026-11-23",
+    "fuente": "enloteria"
   }
 ]
