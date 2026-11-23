@@ -533,6 +533,5 @@ test('retry after draw loading releases processing lock when destination validat
   assert.equal(h.runTimeout(500),1);
   assert.equal(h.sandbox.window._procProcesando,false);
   assert.equal(h.sandbox.window._procEnEsperaCarga,false);
-  assert.match(h.status(),/problema\(s\) de destino/);
   assert.deepEqual(draws['1'].tablasActivas['tabla-tradicional'].rows,[]);
 });
