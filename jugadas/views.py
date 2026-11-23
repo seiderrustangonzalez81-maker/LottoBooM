@@ -46,9 +46,12 @@ logger = logging.getLogger(__name__)
 # ═══════════════════════════════════════════════════════════════
 # FIX URGENTE: FORZAR ZONA HORARIA DE CUBA (UTC-4)
 # ═══════════════════════════════════════════════════════════════
-def _obtener_sorteos_cuba_estricto():
+def _obtener_sorteos_cuba_estricto(incluir_cerrados=False):
     """
-    Calcula la hora real en Cuba y devuelve solo los sorteos abiertos.
+    Devuelve sorteos programados para hoy en hora Cuba que aún no han salido.
+    Comercial/Cliente reciben solo sorteos abiertos; Banco/Superadmin pueden
+    seleccionar sorteos cerrados (dentro de la ventana previa a la salida).
+    Si existe calendario semanal, un día ausente NO usa la hora manual como fallback.
     """
     try:
         CUBA_TZ = ZoneInfo('America/Havana')
@@ -57,45 +60,46 @@ def _obtener_sorteos_cuba_estricto():
 
     ahora_cuba = timezone.now().astimezone(CUBA_TZ)
     fecha_cuba = ahora_cuba.date()
-
+    temporada = 'verano' if es_verano_cuba(fecha_cuba) else 'invierno'
+    dia_es = {0: 'lunes', 1: 'martes', 2: 'miercoles', 3: 'jueves', 4: 'viernes', 5: 'sabado', 6: 'domingo'}[fecha_cuba.weekday()]
     sorteos_validos = []
 
     for s in Sorteo.objects.filter(activo=True).order_by('hora_salida'):
-        temp = 'verano' if es_verano_cuba(fecha_cuba) else 'invierno'
-        dia_es = {0: 'lunes', 1: 'martes', 2: 'miercoles', 3: 'jueves', 4: 'viernes', 5: 'sabado', 6: 'domingo'}[fecha_cuba.weekday()]
-
         hora_salida = None
-        if s.horarios and temp in s.horarios and dia_es in s.horarios[temp]:
-            hora_str = s.horarios[temp][dia_es]
-            try:
-                hh, mm = hora_str.split(':')
-                hora_salida = time(int(hh), int(mm))
-            except Exception:
-                pass
-
-        if not hora_salida:
+        if s.horarios:
+            horario_dia = (s.horarios.get(temporada) or {}).get(dia_es)
+            if horario_dia:
+                try:
+                    hh, mm = horario_dia.split(':')
+                    hora_salida = time(int(hh), int(mm))
+                except (ValueError, TypeError):
+                    logger.warning('Horario inválido para %s (%s/%s): %r', s.nombre, temporada, dia_es, horario_dia)
+                    continue
+            else:
+                # Calendario semanal presente: día no programado no se debe mostrar.
+                continue
+        else:
             hora_salida = s.hora_salida
 
         if not hora_salida:
             continue
 
-        # Calcular salida y cierre en hora Cuba
         dt_salida = datetime.combine(fecha_cuba, hora_salida).replace(tzinfo=CUBA_TZ)
-
-        # Si la hora de salida es de madrugada, pertenece al día siguiente.
-        if hora_salida.hour < 6:
-            dt_salida += timedelta(days=1)
-
-        minutos_cierre = s.minutos_cierre if s.minutos_cierre is not None else 60
+        minutos_cierre = s.minutos_cierre if s.minutos_cierre is not None else 10
         dt_cierre = dt_salida - timedelta(minutes=minutos_cierre)
 
-        # ¿Estamos antes del cierre?
-        if ahora_cuba < dt_cierre:
-            s.estado_actual = 'abierto'
-            s.hora_salida = hora_salida
-            s.hora_cierre = dt_cierre
-            s.hora_salida_str = hora_salida.strftime('%I:%M %p').lstrip('0')
-            sorteos_validos.append(s)
+        if ahora_cuba >= dt_salida:
+            continue
+        estado = 'abierto' if ahora_cuba < dt_cierre else 'cerrado'
+        if estado == 'cerrado' and not incluir_cerrados:
+            continue
+
+        s.estado_actual = estado
+        s.hora_salida = hora_salida
+        s.hora_cierre = dt_cierre
+        s.hora_salida_str = hora_salida.strftime('%I:%M %p').lstrip('0')
+        s.sorteos_segundos_restantes = max(0, int((dt_cierre if estado == 'abierto' else dt_salida - ahora_cuba).total_seconds()))
+        sorteos_validos.append(s)
 
     return sorteos_validos
 
@@ -1307,14 +1311,7 @@ def superparlet(request):
     clientes = _construir_clientes_visibles(user)
 
     formas_pago = FormaPago.objects.filter(activo=True)
-    sorteos_disponibles = _obtener_sorteos_cuba_estricto()
-    if not (es_superadmin or es_banco):
-        _aux = []
-        for _s in sorteos_disponibles:
-            _s2 = calcular_estado_sorteo(_s, timezone.now())
-            if True:  # Filtro de 10 min desactivado
-                _aux.append(_s)
-        sorteos_disponibles = _aux
+    sorteos_disponibles = _obtener_sorteos_cuba_estricto(incluir_cerrados=(es_superadmin or es_banco))
 
     if es_autorizador:
         total_fondos = 0
@@ -1489,14 +1486,7 @@ def apostar(request):
             })
 
     fecha_actual = timezone.localdate()
-    sorteos_disponibles = _obtener_sorteos_cuba_estricto()
-    if not (es_superadmin or es_banco):
-        _aux = []
-        for _s in sorteos_disponibles:
-            _s2 = calcular_estado_sorteo(_s, timezone.now())
-            if True:  # Filtro de 10 min desactivado
-                _aux.append(_s)
-        sorteos_disponibles = _aux
+    sorteos_disponibles = _obtener_sorteos_cuba_estricto(incluir_cerrados=(es_superadmin or es_banco))
 
     formas_juego = FormaJuego.objects.filter(activo=True)
     formas_pago = FormaPago.objects.filter(activo=True)
