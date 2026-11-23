@@ -436,7 +436,7 @@ test('rejects four-digit tokens from being misrouted to traditional',()=>{
 test('stress audit: user-provided 24-line mixed-modality wager reports each line without silent loss',()=>{
   const input="T7 con 25\nD8 con 50\n12 34 56 con 10f\n12 con 10f 20c\n07 70 con 20c\n12x34 56x78 con 10p\n13 14 15 candado 30\n123 456 con 20\n1234 5678 con 30\n12345 con 40\n12 34 vs 56 78 con 10\nT7 vspf D3 con 20\n12 vspick2 34 con 10\n12 34 pick2vspf 56 con 10\n12 34 vs100 con 5\npos 2 12 34 56 con 20\n12 34 56 tripleta con 10\n123 456 centenas con 20\n40V con 15f\nPA con 15\n12 con 5p\n34 56 con\nhola mundo\n8 9 10 con 100f";
   const result=run(input);
-  const lineStatuses=input.split(/\\r?\\n/).map((line,index)=>({line:index+1,text:line,status:result.errors.some(e=>e.line===index+1)?'ERROR':'VALID',errors:result.errors.filter(e=>e.line===index+1).map(e=>e.message)}));
+  const lineStatuses=input.split(/\r?\n/).map((line,index)=>({line:index+1,text:line,status:result.errors.some(e=>e.line===index+1)?'ERROR':'VALID',errors:result.errors.filter(e=>e.line===index+1).map(e=>e.message)}));
   console.log('[STRESS 24 LINES] '+JSON.stringify({ok:result.ok,errorCount:result.errors.length,rowCount:result.rows.length,rowsByTable:result.rows.reduce((acc,row)=>{acc[row.tabla]=(acc[row.tabla]||0)+1;return acc;},{}),lines:lineStatuses}));
   assert.equal(lineStatuses.length,24);
   assert.equal(result.ok,lineStatuses.every(line=>line.status==='VALID'));
