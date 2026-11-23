@@ -69,9 +69,13 @@ function processHarness(text,drawIds,draws,confirmAnswer){
   const source=template.slice(helperStart,helperEnd)+template.slice(helperEnd,wrapperEnd)+template.slice(rowStart,rowEnd)+template.slice(wrapperEnd,processEnd)+template.slice(processEnd,destEnd)+';function _procActualizarUI(){};this.process=_procProcesarTexto;';
   const defs={'tabla-tradicional':{kind:'multi',numDigits:2,forms:['pick2','pf','fijo','corridos','parlet','candado'],aliases:{}}};
   let confirms=0,status='';
-  const sandbox={document:doc,window:{ApostarTextValidator:textValidator,ApostarTableValidator:{validateRows:()=>[]},confirm:()=>{confirms++;return !!confirmAnswer;}},TABLE_DEFS:defs,ordenSorteos:drawIds,sorteosActivos:draws,resolverForma:(f,d)=>d&&d.aliases&&d.aliases[f]||f,expandirToken:(t)=>[String(t)],numerosEnFila:(row)=>({numeros:String(row.num||'').trim().split(/\s+/).filter(Boolean),paresExplicitos:[]}),contarParletsDeFila:()=>1,_procRenderErrores(){},_procActualizarEstado:(msg)=>{status=msg;},renderTabsSorteo(){},renderMiniResumenSorteo(){},recalcGlobal(){},toast(){},setTimeout:()=>1,clearTimeout(){},console:{error(){},warn(){},log(){}}};
+  const timers=new Map();let nextTimer=0;
+  const setTimeoutMock=(fn,ms)=>{const id=++nextTimer;timers.set(id,{fn,ms});return id;};
+  const clearTimeoutMock=id=>timers.delete(id);
+  function runTimeout(ms){const matches=Array.from(timers.entries()).filter(([,t])=>t.ms===ms);matches.forEach(([id,t])=>{timers.delete(id);t.fn();});return matches.length;}
+  const sandbox={document:doc,window:{ApostarTextValidator:textValidator,ApostarTableValidator:{validateRows:()=>[]},confirm:()=>{confirms++;return !!confirmAnswer;}},TABLE_DEFS:defs,ordenSorteos:drawIds,sorteosActivos:draws,resolverForma:(f,d)=>d&&d.aliases&&d.aliases[f]||f,expandirToken:(t)=>[String(t)],numerosEnFila:(row)=>({numeros:String(row.num||'').trim().split(/\s+/).filter(Boolean),paresExplicitos:[]}),contarParletsDeFila:()=>1,_procRenderErrores(){},_procActualizarEstado:(msg)=>{status=msg;},renderTabsSorteo(){},renderMiniResumenSorteo(){},recalcGlobal(){},toast(){},setTimeout:setTimeoutMock,clearTimeout:clearTimeoutMock,console:{error(){},warn(){},log(){}}};
   vm.runInNewContext(source,sandbox);
-  return {process:sandbox.process,draws,textarea,chk,sandbox,confirmCount:()=>confirms,status:()=>status};
+  return {process:sandbox.process,draws,textarea,chk,sandbox,confirmCount:()=>confirms,status:()=>status,runTimeout};
 }
 test('parsed data maps into multi, positions and VS table row structures',()=>{
   const h=destinationRowHarness();
@@ -515,4 +519,19 @@ test('render failure during commit rolls back every selected draw',()=>{
   assert.equal(h.confirmCount(),1);
   assert.match(h.status(),/filas restauradas/);
   assert.notEqual(h.sandbox.window._procProcesadoAntes,true);
+});
+
+
+test('retry after draw loading releases processing lock when destination validation fails',()=>{
+  const draws={'1':{nombre:'D1',cargado:false,tablasActivas:{'tabla-tradicional':{forms:['fijo'],rows:[]}}}};
+  const h=processHarness('pick3 123 con 5',[1],draws,true);
+  h.process();
+  assert.equal(h.sandbox.window._procProcesando,true);
+  assert.equal(h.sandbox.window._procEnEsperaCarga,true);
+  draws['1'].cargado=true;
+  assert.equal(h.runTimeout(500),1);
+  assert.equal(h.sandbox.window._procProcesando,false);
+  assert.equal(h.sandbox.window._procEnEsperaCarga,false);
+  assert.match(h.status(),/problema\(s\) de destino/);
+  assert.deepEqual(draws['1'].tablasActivas['tabla-tradicional'].rows,[]);
 });
