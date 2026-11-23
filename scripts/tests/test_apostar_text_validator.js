@@ -517,7 +517,8 @@ test('render failure during commit rolls back every selected draw',()=>{
   assert.deepEqual(draws['1'].tablasActivas['tabla-tradicional'].rows,old1);
   assert.deepEqual(draws['2'].tablasActivas['tabla-tradicional'].rows,old2);
   assert.equal(h.confirmCount(),1);
-  assert.match(h.status(),/filas restauradas/);
+  assert.equal(h.sandbox.window._procProcesando,false);
+  assert.equal(h.sandbox.window._procEnEsperaCarga,false);
   assert.notEqual(h.sandbox.window._procProcesadoAntes,true);
 });
 
