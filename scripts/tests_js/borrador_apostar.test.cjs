@@ -93,6 +93,7 @@ test('snapshot preserves the selected draw order for replicate master',()=>{
 test('draft rows are restored only after all selected draws finish loading',()=>{
   const {api,window,document,elements,runTimeout,tickIntervals,scheduleTimeout}=boot('17');
   const snap=eligibleSnap();
+  snap.v=2; // applySnapshot accepts only persisted draft schema versions.
   snap.orden=['54'];
   snap.sorteos['54'].tabActual='tabla-tradicional';
   snap.sorteos['54'].tablasActivas={'tabla-tradicional':{forms:['fijo'],rows:[{num:'12 34',montos:{fijo:'5'}}]}};
