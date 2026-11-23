@@ -502,3 +502,17 @@ test('blank lines and CR-only separators preserve physical line numbers for diag
   assert.equal(crOnly.ok,false);
   assert.ok(crOnly.errors.some(e=>e.line===2&&/Token no reconocido/.test(e.message)),JSON.stringify(crOnly.errors));
 });
+
+
+test('render failure during commit rolls back every selected draw',()=>{
+  const old1=[{num:'99',montos:{fijo:'7'}}],old2=[{num:'88',montos:{fijo:'6'}}];
+  const draws={'1':{nombre:'D1',cargado:true,tablasActivas:{'tabla-tradicional':{forms:['fijo'],rows:old1}}},'2':{nombre:'D2',cargado:true,tablasActivas:{'tabla-tradicional':{forms:['fijo'],rows:old2}}}};
+  const h=processHarness('12 34 con 5',[1,2],draws,true);
+  h.sandbox.renderTabsSorteo=function(sid){if(String(sid)==='2')throw new Error('simulated render failure');};
+  h.process();
+  assert.deepEqual(draws['1'].tablasActivas['tabla-tradicional'].rows,old1);
+  assert.deepEqual(draws['2'].tablasActivas['tabla-tradicional'].rows,old2);
+  assert.equal(h.confirmCount(),1);
+  assert.match(h.status(),/filas restauradas/);
+  assert.notEqual(h.sandbox.window._procProcesadoAntes,true);
+});
