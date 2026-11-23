@@ -22,3 +22,19 @@ test('all inline scripts in apostar.html are syntactically valid after Django to
   });
   assert.deepEqual(failures, [], failures.join('\n'));
 });
+
+test('Apostar parser button remains tappable to explain invalid state and tracks reprocessing', () => {
+  const html = fs.readFileSync('jugadas/templates/jugadas/apostar.html', 'utf8');
+  assert.match(html, /btn\.disabled=false/);
+  assert.match(html, /setAttribute\('aria-disabled'/);
+  assert.match(html, /_procUiValido/);
+  assert.match(html, /_procTextoProcesado/);
+  assert.match(html, /Procesar nuevamente/);
+  assert.match(html, /Corrige los errores antes de procesar|No se procesó/);
+});
+
+test('Apostar destination validation fails closed when the table validator is missing', () => {
+  const html = fs.readFileSync('jugadas/templates/jugadas/apostar.html', 'utf8');
+  assert.match(html, /no está cargado el validador de filas; procesamiento bloqueado por seguridad/);
+  assert.match(html, /no existe definición de tabla; validación imposible/);
+});
