@@ -8281,6 +8281,9 @@ function _procActualizarEstado(msg, tipo){
         window._procProcesando=true;
         window._procRetryT = setTimeout(function(){
           window._procEnEsperaCarga=false;
+          // Release the wait-lock before retrying; validation/destination errors
+          // after load must not leave the button stuck in "Procesando".
+          window._procProcesando=false;
           try { _procProcesarTexto(); } catch(e){ window._procProcesando=false; console.error('[procesar retry]', e); }
         }, 500);
         return;
