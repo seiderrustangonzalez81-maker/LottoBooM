@@ -2346,7 +2346,10 @@ def _guardar_apuesta_impl(request):
 
             super_sorteos_list = list(super_sorteos_obj)
             if items_super and len(super_sorteos_list) != 2:
-                advertencias.append('Superparlet requiere exactamente 2 sorteos.')
+                raise ValueError(
+                    'Superparlet requiere exactamente 2 sorteos seleccionados. '
+                    'Se cancela la operación completa para evitar guardar una apuesta parcial.'
+                )
             elif items_super:
                 sorteo_principal = super_sorteos_list[0]
                 sorteo_ids_meta = [s.id for s in super_sorteos_list]
