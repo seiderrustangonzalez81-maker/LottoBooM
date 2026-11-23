@@ -2364,15 +2364,11 @@ def _guardar_apuesta_impl(request):
 
                     numero = item.get('numero', '').strip()
                     if not numero:
-                        if es_solo_editar:
-                            raise ValueError('Superparlet editado sin número. Edición revertida; boleta original preservada.')
-                        continue
+                        raise ValueError('Línea de Superparlet sin número. Se cancela la operación completa; no se guardó ninguna jugada.')
                     try:
                         monto = Decimal(str(item.get('monto', 0)))
                     except Exception:
-                        if es_solo_editar:
-                            raise ValueError('Importe inválido en Superparlet. Edición revertida; boleta original preservada.')
-                        continue
+                        raise ValueError('Importe inválido en Superparlet. Se cancela la operación completa; no se guardó ninguna jugada.')
 
                     # FIX_SUPER_AMBOS_ABIERTOS_V1: verificar AMBOS sorteos, no solo el principal
                     es_superadmin_ = usuario.is_superuser or usuario.roles.filter(tipo='superadmin', activo=True).exists()
@@ -2394,15 +2390,10 @@ def _guardar_apuesta_impl(request):
                             permitido_todos = False
                             break
                     if not permitido_todos:
-                        if es_solo_editar:
-                            raise ValueError('Superparlet no puede procesarse en ambos sorteos. Edición revertida; boleta original preservada.')
-                        continue
+                        raise ValueError('Superparlet no puede procesarse en ambos sorteos. Se cancela la operación completa; no se guardó ninguna jugada.')
                     pool_total = get_pool_gestor(destinatario, sorteo_principal, forma_juego, forma_pago)
                     if pool_total <= 0:
-                        if es_solo_editar:
-                            raise ValueError('Superparlet sin pool disponible. Edición revertida; boleta original preservada.')
-                        advertencias.append(f'Sin pool configurado para Superparlet - {forma_pago.nombre}.')
-                        continue
+                        raise ValueError(f'Sin pool configurado para Superparlet - {forma_pago.nombre}. Se cancela la operación completa; no se guardó ninguna jugada.')
 
                     key_mem = (sorteo_principal.id, forma_juego.id, getattr(forma_pago, 'id', 0), numero)  # FIX_FORMA_PAGO_NONE_V1
                     consumido_db = Jugada.objects.filter(
@@ -2415,10 +2406,7 @@ def _guardar_apuesta_impl(request):
                     disponible = pool_total - consumido
 
                     if disponible <= 0:
-                        if es_solo_editar:
-                            raise ValueError(f'Superparlet agotado para {numero}. Edición revertida; boleta original preservada.')
-                        advertencias.append(f'El número {numero} en Superparlet está agotado.')
-                        continue
+                        raise ValueError(f'Superparlet agotado para {numero}. Se cancela la operación completa; no se guardó ninguna jugada.')
 
                     monto_final = monto
                     if monto > disponible:
