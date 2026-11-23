@@ -2350,10 +2350,14 @@ def _guardar_apuesta_impl(request):
 
                     numero = item.get('numero', '').strip()
                     if not numero:
+                        if es_solo_editar:
+                            raise ValueError('Superparlet editado sin número. Edición revertida; boleta original preservada.')
                         continue
                     try:
                         monto = Decimal(str(item.get('monto', 0)))
                     except Exception:
+                        if es_solo_editar:
+                            raise ValueError('Importe inválido en Superparlet. Edición revertida; boleta original preservada.')
                         continue
 
                     # FIX_SUPER_AMBOS_ABIERTOS_V1: verificar AMBOS sorteos, no solo el principal
@@ -2376,9 +2380,13 @@ def _guardar_apuesta_impl(request):
                             permitido_todos = False
                             break
                     if not permitido_todos:
+                        if es_solo_editar:
+                            raise ValueError('Superparlet no puede procesarse en ambos sorteos. Edición revertida; boleta original preservada.')
                         continue
                     pool_total = get_pool_gestor(destinatario, sorteo_principal, forma_juego, forma_pago)
                     if pool_total <= 0:
+                        if es_solo_editar:
+                            raise ValueError('Superparlet sin pool disponible. Edición revertida; boleta original preservada.')
                         advertencias.append(f'Sin pool configurado para Superparlet - {forma_pago.nombre}.')
                         continue
 
@@ -2393,11 +2401,15 @@ def _guardar_apuesta_impl(request):
                     disponible = pool_total - consumido
 
                     if disponible <= 0:
+                        if es_solo_editar:
+                            raise ValueError(f'Superparlet agotado para {numero}. Edición revertida; boleta original preservada.')
                         advertencias.append(f'El número {numero} en Superparlet está agotado.')
                         continue
 
                     monto_final = monto
                     if monto > disponible:
+                        if es_solo_editar:
+                            raise ValueError(f'Monto de Superparlet excede el pool para {numero}. Edición revertida; boleta original preservada.')
                         advertencias.append(
                             f'El número {numero} en Superparlet solo admitía ${disponible:.2f}. Se ajustó a ${disponible:.2f}.'
                         )
