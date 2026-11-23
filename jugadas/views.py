@@ -220,6 +220,15 @@ def _validar_items_formas_sorteos(items, formas_por_sorteo):
     return errores
 
 
+def _puede_apostar_segun_estado_sorteo(estado, usuario):
+    """Abierto: cualquiera permitido por la vista; cerrado: Banco/Superadmin; salido: nadie."""
+    if estado == 'abierto':
+        return True
+    if estado == 'cerrado':
+        return usuario.is_superuser or usuario.roles.filter(tipo='superadmin', activo=True).exists() or usuario.roles.filter(tipo='banco', activo=True).exists()
+    return False
+
+
 def _validar_items_payload(items, etiqueta='jugadas', validar_numero=True):
     """Valida estructura y montos antes de entrar al flujo transaccional."""
     errores = []
@@ -2192,20 +2201,16 @@ def _guardar_apuesta_impl(request):
                         continue
 
                     estado_sorteo = calcular_estado_sorteo(sorteo, timezone.now(), fecha_apuesta)
-                    esta_abierto = getattr(estado_sorteo, 'estado_actual', 'cerrado') == 'abierto'
+                    estado_actual = getattr(estado_sorteo, 'estado_actual', 'no_programado')
 
-                    if not esta_abierto:
-                        es_superadmin_ = usuario.is_superuser or usuario.roles.filter(tipo='superadmin', activo=True).exists()
-                        es_banco_ = usuario.roles.filter(tipo='banco', activo=True).exists()
-                        # FIX_VENTANA_BANCO_V2 (2026-10-14):
-                        # - superadmin y banco: pueden cargar fuera de tiempo sin limite.
-                        # - resto: bloqueado.
-                        permitido = es_superadmin_ or es_banco_
-                        if not permitido:
+                    if not _puede_apostar_segun_estado_sorteo(estado_actual, usuario):
+                        if estado_actual == 'salido':
+                            advertencias.append(f'El sorteo "{sorteo.nombre}" ya salió; no se permiten apuestas tardías.')
+                        else:
                             advertencias.append(
-                                f'El sorteo "{sorteo.nombre}" está cerrado. Solo banco y superadmin pueden cargar jugadas fuera de tiempo.'
+                                f'El sorteo "{sorteo.nombre}" está cerrado. Solo banco y superadmin pueden apostar antes de la salida.'
                             )
-                            continue
+                        continue
 
                     pool_total = get_pool_gestor(destinatario, sorteo, forma_juego, forma_pago)
                     if pool_total <= 0:
