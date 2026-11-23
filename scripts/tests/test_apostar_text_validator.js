@@ -463,6 +463,6 @@ test('complete valid multi-tab wager parses with all target modalities present',
   const result=run(input);
   assert.equal(result.ok,true,JSON.stringify(result.errors));
   const tables=result.rows.reduce((acc,row)=>{acc[row.tabla]=(acc[row.tabla]||0)+1;return acc;},{});
-  console.log('[VALID MULTI-TAB SAMPLE] '+JSON.stringify({lineCount:input.split(/\\r?\\n/).length,rowCount:result.rows.length,tables}));
+  console.log('[VALID MULTI-TAB SAMPLE] '+JSON.stringify({lineCount:input.split(/\r?\n/).length,rowCount:result.rows.length,tables}));
   ['tabla-tradicional','tabla-pick3','tabla-pick4','tabla-pick5','tabla-vs','tabla-vspf','tabla-vspick2','tabla-pick2vspf','tabla-vs100','tabla-posiciones','tabla-tripleta','tabla-centenas'].forEach(tab=>assert.ok(tables[tab]>0,'Missing destination '+tab));
 });
