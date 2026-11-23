@@ -8366,6 +8366,8 @@ function _procActualizarEstado(msg, tipo){
       _procActualizarEstado('\u26a0\ufe0f Ningún sorteo recibió filas', 'error');
       if (typeof toast === 'function') toast('Ningún sorteo recibió filas', 'warning');
     } else {
+      window._procTextoProcesado=String(texto||'');
+      window._procProcesadoAntes=true;
       _procActualizarEstado('\u2705 ' + filas.length + ' fila(s) \u2192 ' + aplicados + ' sorteo(s)', 'ok');
       if (typeof toast === 'function') toast('OK: ' + filas.length + ' fila(s) aplicadas a ' + aplicados + ' sorteo(s)', 'success');
     }
@@ -8390,7 +8392,11 @@ function _procActualizarEstado(msg, tipo){
         var def=(typeof TABLE_DEFS!=='undefined')?TABLE_DEFS[tk]:null;
         var canonicalizeForm=function(form){return def&&typeof resolverForma==='function'?resolverForma(form,def):form;};
         var canonicalForms=forms.map(canonicalizeForm);
-        if(def&&window.ApostarTableValidator&&typeof window.ApostarTableValidator.validateRows==='function'){
+        if(!def){
+          errors.push({line:'—',message:'Sorteo '+(s.nombre||sid)+', '+tk+': no existe definición de tabla; validación imposible.'});
+        }else if(!window.ApostarTableValidator||typeof window.ApostarTableValidator.validateRows!=='function'){
+          errors.push({line:'—',message:'Sorteo '+(s.nombre||sid)+', '+tk+': no está cargado el validador de filas; procesamiento bloqueado por seguridad.'});
+        }else{
           try{
             var mappedRows=porTabla[tk].map(function(row){return _procCrearFilaDestino(row,st,def.kind,tk);});
             var rowsForValidation=mappedRows.map(function(row){var copy=Object.assign({},row);if(copy.montos){var canonicalMontos={};Object.keys(copy.montos).forEach(function(form){var key=resolverForma(form,def);canonicalMontos[key]=(Number(canonicalMontos[key])||0)+(Number(copy.montos[form])||0);});copy.montos=canonicalMontos;}return copy;});
@@ -8437,23 +8443,30 @@ function _procActualizarEstado(msg, tipo){
   function _procActualizarUI(){
     var ta=document.getElementById('procesarText'),btn=document.getElementById('btnProcAhora'),chk=document.getElementById('chkProcesar');
     if(!ta||!btn)return;
-    var v=_procValidarTexto(ta.value||'');_procRenderErrores(v);
+    var texto=String(ta.value||''),v=_procValidarTexto(texto);_procRenderErrores(v);
     var modo=!!(chk&&chk.checked),haySorteos=typeof ordenSorteos!=='undefined'&&ordenSorteos.length>0;
-    var hayTexto=!!String(ta.value||'').trim(),hayFilas=!!(v.rows&&v.rows.length);
+    var hayTexto=!!texto.trim(),hayFilas=!!(v.rows&&v.rows.length);
     var destino={errors:[]};
     if(v.ok&&hayFilas&&haySorteos)destino=_procValidarDestinos(v.rows);
     var hayError=!v.ok||destino.errors.length>0;
-    btn.disabled=!modo||!hayTexto||!v.ok||!hayFilas||!haySorteos||destino.errors.length>0;
-    btn.style.opacity=btn.disabled?'.7':'1';btn.style.cursor=btn.disabled?'not-allowed':'pointer';
-    var colorBtn=hayError?'red':(btn.disabled?'idle':'green');
-    btn.style.background=hayError?'linear-gradient(135deg,#dc2626,#991b1b)':(btn.disabled?'linear-gradient(135deg,#f59e0b,#b45309)':'linear-gradient(135deg,#16a34a,#15803d)');
-    btn.style.borderColor=hayError?'#991b1b':(btn.disabled?'#92400e':'#166534');btn.style.boxShadow=hayError?'2px 2px 0 #991b1b':(btn.disabled?'2px 2px 0 #92400e':'2px 2px 0 #166534');
-    btn.innerHTML=hayError?'<i class="fas fa-exclamation-triangle"></i> Corregir Errores':(!hayTexto?'Pega texto':(!haySorteos?'Selecciona Sorteo':(!modo?'Activa Procesar':'<i class="fas fa-check"></i> Procesar')));
-    if(!String(ta.value||'').trim())_procActualizarEstado('Pega el texto para revisar automáticamente.','idle');
+    var yaProcesado=hayTexto&&window._procTextoProcesado===texto;
+    var uiValido=modo&&hayTexto&&v.ok&&hayFilas&&haySorteos&&destino.errors.length===0&&!yaProcesado&&!window._procProcesando;
+    window._procUiValido=uiValido;
+    window._procUiErrores=(v.errors||[]).concat(destino.errors||[]);
+    // No usar disabled nativo: permite mostrar el motivo al pulsar un botón bloqueado.
+    btn.disabled=false;
+    btn.setAttribute('aria-disabled',uiValido?'false':'true');
+    btn.style.opacity=uiValido?'1':'.82';btn.style.cursor=uiValido?'pointer':'not-allowed';
+    btn.style.background=hayError?'linear-gradient(135deg,#dc2626,#991b1b)':(uiValido?'linear-gradient(135deg,#16a34a,#15803d)':'linear-gradient(135deg,#f59e0b,#b45309)');
+    btn.style.borderColor=hayError?'#991b1b':(uiValido?'#166534':'#92400e');
+    btn.style.boxShadow=hayError?'2px 2px 0 #991b1b':(uiValido?'2px 2px 0 #166534':'2px 2px 0 #92400e');
+    btn.innerHTML=hayError?'<i class="fas fa-exclamation-triangle"></i> Corregir Errores':(!hayTexto?'Pega texto':(!haySorteos?'Selecciona Sorteo':(!modo?'Activa Procesar':(yaProcesado?'Procesado ✓':(window._procProcesadoAntes?'Procesar nuevamente':'<i class="fas fa-check"></i> Procesar')))));
+    if(!hayTexto)_procActualizarEstado('Pega el texto para revisar automáticamente.','idle');
     else if(!v.ok)_procActualizarEstado('❌ '+v.errors.length+' error(es); no se procesará nada.','error');
     else if(destino.errors.length){_procRenderErrores({errors:destino.errors});_procActualizarEstado('❌ '+destino.errors.length+' problema(s) con pestañas/formas de los sorteos.','error');}
     else if(!haySorteos)_procActualizarEstado('Texto válido. Selecciona al menos un sorteo.','idle');
     else if(!modo)_procActualizarEstado('Texto y destinos válidos. Activa la casilla Procesar para habilitar el botón.','idle');
+    else if(yaProcesado)_procActualizarEstado('✅ Este texto ya fue procesado. Modifica el texto para volver a procesarlo.','ok');
     else {_procRenderErrores(v);_procActualizarEstado('✅ '+v.rows.length+' fila(s) válidas en sus pestañas destino. Listo para procesar.','ok');}
     return v;
   }
@@ -8511,12 +8524,23 @@ function _procActualizarEstado(msg, tipo){
         btnAhora.addEventListener('click', function(){
           try {
             var vClick=_procActualizarUI();
-            if(!vClick||!vClick.ok||btnAhora.disabled){_procActualizarEstado('❌ Corrige los errores antes de procesar.','error');return;}
+            if(window._procProcesando){_procActualizarEstado('⏳ Ya hay un procesamiento en curso; espera a que termine.','proc');return;}
+            if(!vClick||!vClick.ok||!window._procUiValido){
+              var reasons=window._procUiErrores||[];
+              var reasonText=reasons.length?reasons.map(function(e){return 'Línea '+(e.line||'—')+': '+e.message;}).join(' | '):'Activa Procesar, selecciona sorteos y revisa que haya texto válido.';
+              _procActualizarEstado('❌ No se procesó. '+reasonText,'error');
+              if(typeof toast==='function')toast('No se procesó: corrige errores o activa Procesar.','warning');
+              return;
+            }
+            window._procProcesando=true;
+            _procActualizarUI();
             _procFeedback('procesando');
             _procActualizarEstado('\u26a1 Procesando...', 'proc');
             _procProcesarTexto();
-            _procFeedback('ok');
+            window._procProcesando=false;
+            _procActualizarUI();
           } catch(e){
+            window._procProcesando=false;
             console.error('[procesar]', e);
             _procFeedback('error');
             _procActualizarEstado('\u274c Error: ' + (e && e.message ? e.message : 'desconocido'), 'error');
