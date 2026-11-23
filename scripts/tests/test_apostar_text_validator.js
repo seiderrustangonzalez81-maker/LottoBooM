@@ -444,9 +444,15 @@ test('stress audit: user-provided 24-line mixed-modality wager reports each line
 });
 
 
-test('live destination precheck rejects three-digit traditional tokens without explicit Pick3 routing',()=>{
-  const h=uiHarness('123 456 con 20',[1],true);
-  assert.equal(h.button.disabled,false);
-  assert.equal(h.button.getAttribute('aria-disabled'),'true');
-  assert.match(h.errorBox.innerHTML,/números inválidos|Se esperaba un número de 2 dígitos|token 123/i);
+test('three-digit wager auto-routes to Pick3 and is accepted only when that destination is loaded',()=>{
+  const parsed=run('123 456 con 20');
+  assert.equal(parsed.ok,true,JSON.stringify(parsed.errors));
+  assert.equal(parsed.rows.length,1);
+  assert.equal(parsed.rows[0].tabla,'tabla-pick3');
+  assert.equal(parsed.rows[0].montos.pick3,'20');
+  const loaded=uiHarness('123 456 con 20',[1],true);
+  assert.equal(loaded.button.getAttribute('aria-disabled'),'false');
+  const missing=uiHarness('123 456 con 20',[1],true,{'1':{nombre:'Test',cargado:true,tablasActivas:{'tabla-tradicional':{forms:['fijo'],rows:[]}}}});
+  assert.equal(missing.button.getAttribute('aria-disabled'),'true');
+  assert.match(missing.errorBox.innerHTML,/no tiene la pestaña tabla-pick3/);
 });
