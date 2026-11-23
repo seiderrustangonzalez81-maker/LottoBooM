@@ -8,6 +8,7 @@ const source = fs.readFileSync(path.join(__dirname,'../../static/js/borrador_apo
 
 function boot(userId){
   const store = new Map();
+  const listeners = [];
   const elements = {
     selCliente:{value:'client-1',options:[],addEventListener(){}},
     selGestorCuenta:{value:'manager-1',options:[],addEventListener(){}},
@@ -19,7 +20,7 @@ function boot(userId){
     getElementById:id=>elements[id]||null,
     querySelector:()=>({dataset:{id:'fp-1'},textContent:'Pago seleccionado'}),
     querySelectorAll:()=>[],
-    addEventListener(){},
+    addEventListener(type,fn,options){listeners.push({type,fn,options});},
     createElement:()=>({style:{},remove(){}})
   };
   const window = {
@@ -38,7 +39,7 @@ function boot(userId){
   function tickIntervals(){Array.from(intervals.values()).forEach(t=>t.fn());}
   const context={window,document,localStorage,URLSearchParams,Date,JSON,console,setTimeout:setTimeoutMock,clearTimeout:clearTimeoutMock,setInterval:setIntervalMock,clearInterval:clearIntervalMock,Event:function(){},location:window.location};
   vm.runInNewContext(source,context);
-  return {api:window._borradorDraftApi,store,window,document,elements,context,runTimeout,tickIntervals,scheduleTimeout:setTimeoutMock};
+  return {api:window._borradorDraftApi,store,window,document,elements,context,runTimeout,tickIntervals,scheduleTimeout:setTimeoutMock,listeners};
 }
 
 function eligibleSnap(){
@@ -123,4 +124,41 @@ test('draft rows are restored only after all selected draws finish loading',()=>
   assert.equal(draw.tabActual,'tabla-tradicional');
   assert.equal(draw.tablasActivas['tabla-tradicional'].rows[0].num,'12 34');
   assert.equal(draw.tablasActivas['tabla-tradicional'].rows[0].montos.fijo,'5');
+});
+
+
+test('row deletion click persists the updated table snapshot',()=>{
+  const {api,store,window,context,document,listeners,runTimeout}=boot('17');
+  const draw={nombre:'Draw 54',tabActual:'tabla-tradicional',tablasActivas:{'tabla-tradicional':{forms:['fijo'],rows:[{num:'12',montos:{fijo:'2'}},{num:'34',montos:{fijo:'3'}}]}}};
+  window.sorteosActivos={'54':draw};
+  context.ordenSorteos=['54'];
+  const chip={dataset:{id:'fp-1'},textContent:'Pago seleccionado'};
+  document.querySelector=selector=>selector==='.fp-chip.active'?chip:null;
+  const panel={classList:{contains:name=>name==='sp-panel'},parentElement:document.body};
+  const deleteButton={classList:{contains:name=>name==='del'},parentElement:panel};
+  const clickListener=listeners.find(l=>l.type==='click');
+  assert.ok(clickListener);
+  draw.tablasActivas['tabla-tradicional'].rows.splice(0,1); // Simulate the table's delete handler.
+  clickListener.fn({target:deleteButton});
+  assert.equal(runTimeout(250),1);
+  assert.equal(runTimeout(800),1);
+  const saved=api.read();
+  assert.ok(store.has(api.storageKey));
+  assert.equal(saved.sorteos['54'].tablasActivas['tabla-tradicional'].rows.length,1);
+  assert.equal(saved.sorteos['54'].tablasActivas['tabla-tradicional'].rows[0].num,'34');
+});
+
+test('text processor click schedules draft persistence after table mutation',()=>{
+  const {api,window,context,document,listeners,runTimeout}=boot('17');
+  const draw={nombre:'Draw 54',tabActual:'tabla-tradicional',tablasActivas:{'tabla-tradicional':{forms:['fijo'],rows:[{num:'12',montos:{fijo:'2'}}]}}};
+  window.sorteosActivos={'54':draw};
+  context.ordenSorteos=['54'];
+  document.querySelector=selector=>selector==='.fp-chip.active'?{dataset:{id:'fp-1'},textContent:'Pago'}:null;
+  const processor={id:'btnProcAhora',parentElement:document.body};
+  const clickListener=listeners.find(l=>l.type==='click');
+  draw.tablasActivas['tabla-tradicional'].rows[0].num='56'; // Simulate text processing replacing rows.
+  clickListener.fn({target:processor});
+  assert.equal(runTimeout(250),1);
+  assert.equal(runTimeout(800),1);
+  assert.equal(api.read().sorteos['54'].tablasActivas['tabla-tradicional'].rows[0].num,'56');
 });
