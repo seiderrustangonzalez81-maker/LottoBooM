@@ -2270,6 +2270,8 @@ def _guardar_apuesta_impl(request):
 
                     monto_final = monto
                     if monto > disponible:
+                        if es_solo_editar:
+                            raise ValueError(f'Monto excede el pool para {numero} en {sorteo.nombre}. Edición revertida; boleta original preservada.')
                         advertencias.append(
                             f'El número {numero} en {sorteo.nombre} - {forma_juego.nombre} solo admitía ${disponible:.2f}. Se ajustó a ${disponible:.2f}.'
                         )
