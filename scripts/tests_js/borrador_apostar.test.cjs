@@ -98,8 +98,8 @@ test('draft rows are restored only after all selected draws finish loading',()=>
   snap.sorteos['54'].tablasActivas={'tabla-tradicional':{forms:['fijo'],rows:[{num:'12 34',montos:{fijo:'5'}}]}};
   const draw={cargado:false,nombre:'Draw 54',tablasActivas:{},tabActual:null};
   window.sorteosActivos={'54':draw};
-  elements.selCliente.options=[{value:'client-1'}];
-  elements.selCliente.dispatchEvent=function(){};
+  const originalGetElement=document.getElementById;
+  document.getElementById=id=>id==='selCliente'?null:originalGetElement(id);
   const chip={dataset:{id:'fp-1'},textContent:'Pago seleccionado',click(){}};
   const button={classList:{contains:()=>false},click(){
     draw.cargado=false;
@@ -114,10 +114,7 @@ test('draft rows are restored only after all selected draws finish loading',()=>
   window.renderTabsSorteo=function(){};
   window.renderMiniResumenSorteo=function(){};
   window.recalcGlobal=function(){};
-  api.apply(snap);
-  tickIntervals(); // Client is available; schedules payment and draw selection.
-  runTimeout(1500);
-  runTimeout(2500); // Select the draw; its configuration takes 1.2s in this test.
+  api.apply(snap); // Skip client-option loading; test only the draw-config race.
   runTimeout(900);  // The old fixed-delay restoration would run before loading.
   runTimeout(1200); // Simulate configuration finishing and initializing blank rows.
   tickIntervals(); // The new loader-wait callback restores the snapshot now.
