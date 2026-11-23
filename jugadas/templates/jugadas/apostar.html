@@ -8276,13 +8276,19 @@ function _procActualizarEstado(msg, tipo){
         window._procReintentos++;
         _procActualizarEstado('\u23f3 Esperando carga de sorteos... (' + window._procReintentos + '/30)', 'proc');
         clearTimeout(window._procRetryT);
+        window._procEnEsperaCarga=true;
+        window._procProcesando=true;
         window._procRetryT = setTimeout(function(){
-          try { _procProcesarTexto(); } catch(e){ console.error('[procesar retry]', e); }
+          window._procEnEsperaCarga=false;
+          try { _procProcesarTexto(); } catch(e){ window._procProcesando=false; console.error('[procesar retry]', e); }
         }, 500);
         return;
       } else {
+        window._procProcesando=false;
+        window._procEnEsperaCarga=false;
         _procActualizarEstado('\u274c Los sorteos tardaron demasiado en cargar', 'error');
         window._procReintentos = 0;
+        _procActualizarUI();
         return;
       }
     } else if (_matriz && _matriz.cargado){
@@ -8368,7 +8374,10 @@ function _procActualizarEstado(msg, tipo){
     } else {
       window._procTextoProcesado=String(texto||'');
       window._procProcesadoAntes=true;
+      window._procProcesando=false;
+      window._procEnEsperaCarga=false;
       _procActualizarEstado('\u2705 ' + filas.length + ' fila(s) \u2192 ' + aplicados + ' sorteo(s)', 'ok');
+      _procActualizarUI();
       if (typeof toast === 'function') toast('OK: ' + filas.length + ' fila(s) aplicadas a ' + aplicados + ' sorteo(s)', 'success');
     }
   }
@@ -8537,7 +8546,7 @@ function _procActualizarEstado(msg, tipo){
             _procFeedback('procesando');
             _procActualizarEstado('\u26a1 Procesando...', 'proc');
             _procProcesarTexto();
-            window._procProcesando=false;
+            if(!window._procEnEsperaCarga)window._procProcesando=false;
             _procActualizarUI();
           } catch(e){
             window._procProcesando=false;
