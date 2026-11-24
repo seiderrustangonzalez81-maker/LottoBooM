@@ -41,7 +41,7 @@ MAPEO_NOMBRES = {
     "New Jersey 12:50 PM": "New Jersey 12:50 PM", "New Jersey 10:57 PM": "New Jersey 10:50 PM",
     "Georgia 12:30 PM": "Georgia 12:30 PM",
     "Georgia 6:59 PM": "Georgia 7 PM",                    # ⬅️ BUG B CORREGIDO (Evening)
-    "Georgia 11:34 PM": "Georgia 12:34 AM",               # ⬅️ BUG A CORREGIDO (Night)
+    "Georgia 11:34 PM": "Georgia 11:40 PM",               # ⬅️ BUG A CORREGIDO (Night)
     "Tennessee 10:20 AM": "Tennessee 10:20 AM", "Tennessee 1:20 PM": "Tennessee 1:20 PM", "Tennessee 6:30 PM": "Tennessee 7:20 PM",
 
     # USA - Enloteria (Fallback para Fijo y Corridos)
