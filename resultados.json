@@ -538,5 +538,15 @@
     "fijo": "54",
     "corrido_1": "33",
     "corrido_2": "25"
+  },
+  {
+    "sorteo_nombre": "Anguilla 8AM",
+    "numeros": [
+      "49",
+      "77",
+      "96"
+    ],
+    "fecha": "2026-11-24",
+    "fuente": "enloteria"
   }
 ]
