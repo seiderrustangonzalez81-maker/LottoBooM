@@ -2226,10 +2226,30 @@ def _guardar_apuesta_impl(request):
                     # FIX_REENVIAR_Y_BANCO_EDIT_V1: Revertir premios antes de borrar
                     premios_ant = Premio.objects.filter(jugada__boleta=orig, estado='pagado', cobrado=True)
                     for p in premios_ant:
-                        f = Fondo.objects.filter(usuario=orig.usuario, forma_pago=p.jugada.forma_pago).first()
-                        if f:
-                            f.monto -= p.monto_premio
-                            f.save(update_fields=['monto'])
+                        fp_premio = p.jugada.forma_pago or orig.forma_pago
+                        if not fp_premio:
+                            raise ValueError('No se puede revertir un premio pagado sin forma de pago. Edición cancelada.')
+                        f = Fondo.objects.select_for_update().filter(
+                            usuario=orig.usuario, forma_pago=fp_premio,
+                            asignado_por=orig.destinatario, activo=True,
+                        ).first()
+                        if not f:
+                            raise ValueError('No se encontró el fondo del gestor para revertir un premio pagado. Edición cancelada.')
+                        saldo_antes_premio = f.monto
+                        f.monto -= p.monto_premio
+                        f.save(update_fields=['monto'])
+                        MovimientoFondo.objects.create(
+                            emisor=None, receptor=orig.usuario, forma_pago=fp_premio,
+                            monto=-p.monto_premio, tipo='ajuste', estado='confirmado',
+                            motivo=f'Reversión premio #{p.id} por edición boleta {orig.referencia}',
+                            saldo_antes=saldo_antes_premio, saldo_despues=f.monto,
+                            datos_transferencia={
+                                'premio_id': p.id, 'jugada_id': p.jugada_id,
+                                'boleta_id': orig.id, 'boleta_ref': str(orig.referencia),
+                                'tipo_operacion': 'reversion_premio_edicion',
+                            },
+                            nota='Premio pagado revertido por modificación de boleta.',
+                        )
                         p.estado = 'anulado'
                         p.cobrado = False
                         p.save(update_fields=['estado', 'cobrado'])
