@@ -74,6 +74,14 @@ class DrawSelectorCalendarTests(unittest.TestCase):
         self.assertEqual([d.nombre for d in result], ["Open", "Closed"])
         self.assertEqual(closed_draw.estado_actual, "cerrado")
 
+    def test_close_is_exactly_ten_minutes_even_if_record_says_five(self):
+        draw_with_legacy_five = draw("Legacy five-minute draw", "11:15", close=5)
+        helper = build_helper(self.now, [draw_with_legacy_five])
+        result = helper(incluir_cerrados=False)
+        self.assertEqual(result, [])
+        self.assertEqual(draw_with_legacy_five.estado_actual, "cerrado")
+        self.assertEqual(draw_with_legacy_five.hora_cierre, datetime(2026, 11, 23, 11, 5, tzinfo=CUBA))
+
     def test_missing_day_in_weekly_schedule_does_not_fallback_to_manual_time(self):
         missing_day = draw("Unscheduled", None, manual="11:30")
         helper = build_helper(self.now, [missing_day])
