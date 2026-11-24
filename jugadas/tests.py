@@ -9,7 +9,7 @@ from django.db import transaction
 from unittest.mock import patch
 
 from jugadas.models import Jugada, FormaJuego, Boleta
-from jugadas.views import obtener_configuracion_sorteo
+from jugadas.views import obtener_configuracion_sorteo, _do_cancelar_boleta
 from sorteos.models import Sorteo
 from pagos.models import FormaPago
 from roles.models import Rol, Fondo, Bono, Subordinacion, LimiteApuesta, Notificacion, MovimientoFondo
@@ -337,6 +337,17 @@ class ApostarViewTest(TestCase):
         self.assertEqual(ticket_nueva.monto_total, Decimal('40.00'))
         self.assertEqual(ticket_nueva.metadata['boleta_origen_id'], ticket_id)
         self.assertEqual(fondo.monto, Decimal('420.00'))
+
+        # Cancelar la original editada devuelve su importe ACTUAL, no el histórico.
+        cancel_ok, detalle_cancel, mensaje_cancel = _do_cancelar_boleta(
+            ticket, self.user, 'Prueba de reembolso tras edición'
+        )
+        self.assertTrue(cancel_ok, mensaje_cancel)
+        ticket.refresh_from_db()
+        fondo.refresh_from_db()
+        self.assertEqual(ticket.estado, 'cancelada')
+        self.assertEqual(fondo.monto, Decimal('460.00'))
+        self.assertEqual(ticket_nueva.estado, 'activa')
 
     @patch('jugadas.views._puede_apostar_segun_estado_sorteo', return_value=True)
     @patch('jugadas.views.get_pool_gestor', return_value=Decimal('1000.00'))
