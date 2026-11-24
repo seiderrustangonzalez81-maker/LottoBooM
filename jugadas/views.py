@@ -2761,23 +2761,56 @@ def _guardar_apuesta_impl(request):
                 logger.warning(f'Reconciliacion tardia: {_e}')
 
             if boleta:
-
                 if es_solo_editar:
-
-                    # Modo editar: preservar metadata de pago original (no toca metadata['pago'])
-
+                    # El desglose ya fue conciliado durante la edición.
                     pass
-
                 else:
-
                     boleta.metadata['pago'] = {
-                    'fondo': str(monto_fondo_consumido),
-                    'bono': str(monto_bono_consumido),
-                    'postpago': str(monto_postpago_consumido),
-                    'total': str(total_apostado),
+                        'fondo': str(monto_fondo_consumido),
+                        'bono': str(monto_bono_consumido),
+                        'postpago': str(monto_postpago_consumido),
+                        'total': str(total_apostado),
+                    }
+                    boleta.save(update_fields=['metadata'])
+                    boleta.recalcular_totales()
+            elif _todas_boletas_nuevas:
+                # Cada boleta normal/superparlet conserva su parte del pago.
+                # Cancelar una de ellas no debe reembolsar el total de toda la operación.
+                _fuentes_totales = {
+                    'fondo': monto_fondo_consumido,
+                    'bono': monto_bono_consumido,
+                    'postpago': monto_postpago_consumido,
                 }
-                boleta.save(update_fields=['metadata'])
-                boleta.recalcular_totales()
+                _fuentes_asignadas = {'fondo': Decimal('0.00'), 'bono': Decimal('0.00'), 'postpago': Decimal('0.00')}
+                _boletas_con_totales = []
+                for _b_pago in _todas_boletas_nuevas:
+                    _total_b = sum((_j.monto for _j in _b_pago.jugadas.all()), Decimal('0.00'))
+                    _boletas_con_totales.append((_b_pago, _total_b))
+                for _idx_pago, (_b_pago, _total_b) in enumerate(_boletas_con_totales):
+                    if _idx_pago == len(_boletas_con_totales) - 1:
+                        _asignacion = {
+                            _key: _fuentes_totales[_key] - _fuentes_asignadas[_key]
+                            for _key in _fuentes_totales
+                        }
+                    else:
+                        _ratio_pago = _total_b / total_apostado if total_apostado else Decimal('0.00')
+                        _asignacion = {
+                            _key: (_fuentes_totales[_key] * _ratio_pago).quantize(Decimal('0.01'))
+                            for _key in _fuentes_totales
+                        }
+                        _residuo_ticket = _total_b - sum(_asignacion.values(), Decimal('0.00'))
+                        _asignacion['fondo'] += _residuo_ticket
+                    _fuentes_asignadas = {
+                        _key: _fuentes_asignadas[_key] + _asignacion[_key]
+                        for _key in _fuentes_totales
+                    }
+                    _b_pago.metadata['pago'] = {
+                        'fondo': str(_asignacion['fondo']),
+                        'bono': str(_asignacion['bono']),
+                        'postpago': str(_asignacion['postpago']),
+                        'total': str(_total_b),
+                    }
+                    _b_pago.save(update_fields=['metadata'])
 
         # ── Calcular saldos finales para el resumen ──
         fondo_final    = Decimal('0.00')
