@@ -948,6 +948,7 @@ body.ma-dark .ma-act-btn i {
                 <div class="ma-boleta-actions">
                   {% if b.perms.puede_editar %}<button type="button" class="ma-act-btn edit btn-editar"><i class="fas fa-pen"></i> Editar</button>{% endif %}
                   {% if b.perms.puede_reenviar %}<button type="button" class="ma-act-btn reenviar btn-reenviar"><i class="fas fa-paper-plane"></i> Reenviar</button>{% endif %}
+                  {% if not b.perms.puede_editar and not b.perms.puede_reenviar %}<span class="small text-muted" title="Superparlet requiere su editor dedicado">Editar/Reenviar no disponible</span>{% endif %}
                   <button type="button" class="ma-act-btn share-wa btn-wa"><i class="fab fa-whatsapp"></i> WhatsApp</button>
                   {% if b.perms.puede_eliminar and b.estado_general != 'cancelada' %}
                     <button type="button" class="ma-act-btn cancel btn-cancelar"><i class="fas fa-trash"></i> Eliminar</button>
