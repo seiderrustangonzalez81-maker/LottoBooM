@@ -424,10 +424,7 @@ class ApostarViewTest(TestCase):
         self.assertTrue(response.json().get('success'), response.json())
         ticket = Boleta.objects.get(usuario=self.user)
         self.assertEqual(ticket.jugadas.count(), 4)
-        self.assertEqual(
-            ticket.jugadas.aggregate(total=__import__('django.db.models', fromlist=['Sum']).Sum('monto'))['total'],
-            Decimal('20.00'),
-        )
+        self.assertEqual(sum(ticket.jugadas.values_list('monto', flat=True), Decimal('0.00')), Decimal('20.00'))
         self.assertEqual(ticket.monto_total, Decimal('20.00'))
         fondo = Fondo.objects.get(usuario=self.user, forma_pago=self.forma_pago, asignado_por=self.comercial)
         self.assertEqual(fondo.monto, Decimal('480.00'))
