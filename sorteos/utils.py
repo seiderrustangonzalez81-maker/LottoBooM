@@ -25,7 +25,8 @@ MAPA_DIAS = {
 
 def _ahora_local():
     """Ahora, aware, en hora Cuba (America/Havana)."""
-    return timezone.localtime(timezone.now())
+    ahora_utc = timezone.now()
+    return ahora_utc.astimezone(_tz_cuba(ahora_utc.date()))
 
 
 def _fecha_local(fecha=None):
@@ -231,7 +232,8 @@ def get_proximo_datetime_sorteo(sorteo, ahora=None):
     Busca desde hoy hasta +7 días. None si no hay programación en la semana.
     """
     if ahora is None:
-        ahora = timezone.localtime(timezone.now())
+        ahora_utc = timezone.now()
+        ahora = ahora_utc.astimezone(_tz_cuba(ahora_utc.date()))
 
     hoy = ahora.date()
     for offset in range(0, 8):
@@ -239,10 +241,7 @@ def get_proximo_datetime_sorteo(sorteo, ahora=None):
         hora = obtener_hora_desde_horarios(sorteo, fecha)
         if not hora:
             continue
-        dt = timezone.make_aware(
-            datetime.combine(fecha, hora),
-            timezone.get_current_timezone(),
-        )
+        dt = datetime.combine(fecha, hora).replace(tzinfo=_tz_cuba(fecha))
         if dt > ahora:
             return dt, (offset == 0)
     return None, None
