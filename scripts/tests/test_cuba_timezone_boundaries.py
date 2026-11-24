@@ -76,6 +76,19 @@ class CubaTimezoneBoundaryIntegrationTests(unittest.TestCase):
         self.assertEqual(next_draw.time(), time(10, 0))
         self.assertEqual(next_draw.utcoffset(), timedelta(hours=-5))
 
+
+    def test_georgia_previous_cycle_window_survives_instant_aware_change(self):
+        draw = SimpleNamespace(
+            nombre="Georgia 11:34 PM",
+            horarios={"verano": {"lunes": "23:34"}},
+            hora_salida=None,
+        )
+        now_utc = datetime(2026, 11, 24, 4, 10, tzinfo=timezone.utc)
+        result = calcular_estado_sorteo(draw, now_utc, date(2026, 11, 24))
+        self.assertEqual(result.hora_salida, time(23, 34))
+        self.assertEqual(result.hora_cierre.date(), date(2026, 11, 23))
+        self.assertEqual(result.hora_cierre.utcoffset(), timedelta(hours=-4))
+
     def test_scraper_and_django_share_identical_override_boundaries(self):
         path = ROOT / "scraper.py"
         tree = ast.parse(path.read_text(encoding="utf-8"))
