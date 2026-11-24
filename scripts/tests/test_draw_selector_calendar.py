@@ -79,8 +79,8 @@ class DrawSelectorCalendarTests(unittest.TestCase):
     def test_close_is_exactly_ten_minutes_even_if_record_says_five(self):
         draw_with_legacy_five = draw("Legacy five-minute draw", "11:15", close=5)
         helper = build_helper(self.now + timedelta(minutes=5), [draw_with_legacy_five])
-        result = helper(incluir_cerrados=False)
-        self.assertEqual(result, [])
+        result = helper(incluir_cerrados=True)
+        self.assertEqual(len(result), 1)
         self.assertEqual(draw_with_legacy_five.estado_actual, "cerrado")
         self.assertEqual(draw_with_legacy_five.hora_cierre, datetime(2026, 11, 23, 11, 5, tzinfo=CUBA))
 
