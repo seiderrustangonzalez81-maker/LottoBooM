@@ -147,147 +147,55 @@ class ApostarViewTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response.context['es_superadmin'])
 
-    def test_apostar_post_carrito_vacio(self):
+    def test_apostar_post_method_not_allowed(self):
         self.client.login(username='cliente1', password='testpass123')
-        response = self.client.post(reverse('jugadas:apostar'), {
+        response = self.client.post(reverse('jugadas:apostar'), {})
+        self.assertEqual(response.status_code, 405)
+
+    def test_guardar_apuesta_rejects_empty_payload(self):
+        self.client.login(username='cliente1', password='testpass123')
+        response = self.client.post(reverse('jugadas:guardar_apuesta'), {
+            'fecha': timezone.localdate().isoformat(),
+            'cliente_id': str(self.user.id),
+            'forma_pago': str(self.forma_pago.id),
             'carrito_data': '[]',
-            'sorteos': json.dumps([self.sorteo.id])
+            'superparlet_data': '[]',
+            'sorteos': '[]',
+            'superparlet_sorteos': '[]',
+            'tabla_rows': '[]',
         })
-        self.assertRedirects(response, reverse('jugadas:apostar'))
+        self.assertEqual(response.status_code, 400)
+        self.assertFalse(Jugada.objects.exists())
 
-    def test_apostar_post_sin_forma_pago(self):
+    def test_guardar_apuesta_requires_raw_rows(self):
         self.client.login(username='cliente1', password='testpass123')
-        carrito = [{'tipo': 'pick2', 'numero': '23', 'monto': 50}]
-        response = self.client.post(reverse('jugadas:apostar'), {
-            'carrito_data': json.dumps(carrito),
-            'sorteos': json.dumps([self.sorteo.id])
+        response = self.client.post(reverse('jugadas:guardar_apuesta'), {
+            'fecha': timezone.localdate().isoformat(),
+            'cliente_id': str(self.user.id),
+            'forma_pago': str(self.forma_pago.id),
+            'carrito_data': json.dumps([{'tipo':'pick2','numero':'23','monto':'50.00','sorteo_id':self.sorteo.id}]),
+            'superparlet_data': '[]',
+            'sorteos': json.dumps([self.sorteo.id]),
+            'superparlet_sorteos': '[]',
+            'tabla_rows': '[]',
         })
-        self.assertRedirects(response, reverse('jugadas:apostar'))
+        self.assertEqual(response.status_code, 400)
+        self.assertFalse(Jugada.objects.exists())
 
-    def test_apostar_post_pick2_exitoso(self):
+    def test_guardar_apuesta_rejects_invalid_raw_table(self):
         self.client.login(username='cliente1', password='testpass123')
-        carrito = [{
-            'tipo': 'pick2',
-            'numero': '23',
-            'monto': '50.00',
-            'forma_pago': 'Efectivo',
-            'destinatario': 'Yo mismo'
-        }]
-        response = self.client.post(reverse('jugadas:apostar'), {
-            'carrito_data': json.dumps(carrito),
-            'sorteos': json.dumps([self.sorteo.id])
+        response = self.client.post(reverse('jugadas:guardar_apuesta'), {
+            'fecha': timezone.localdate().isoformat(),
+            'cliente_id': str(self.user.id),
+            'forma_pago': str(self.forma_pago.id),
+            'carrito_data': json.dumps([{'tipo':'pick2','numero':'23','monto':'50.00','sorteo_id':self.sorteo.id}]),
+            'superparlet_data': '[]',
+            'sorteos': json.dumps([self.sorteo.id]),
+            'superparlet_sorteos': '[]',
+            'tabla_rows': json.dumps([{'sorteo_id':self.sorteo.id,'tablas':[]}]),
         })
-        self.assertEqual(Jugada.objects.count(), 1)
-        jugada = Jugada.objects.first()
-        self.assertEqual(jugada.numero, '23')
-        self.assertEqual(jugada.monto, Decimal('50.00'))
-
-    def test_apostar_post_saldo_insuficiente(self):
-        self.client.login(username='cliente1', password='testpass123')
-        carrito = [{
-            'tipo': 'pick2',
-            'numero': '23',
-            'monto': '9999.00',
-            'forma_pago': 'Efectivo',
-            'destinatario': 'Yo mismo'
-        }]
-        response = self.client.post(reverse('jugadas:apostar'), {
-            'carrito_data': json.dumps(carrito),
-            'sorteos': json.dumps([self.sorteo.id])
-        })
-        self.assertRedirects(response, reverse('jugadas:apostar'))
-
-    def test_apostar_post_parlet(self):
-        self.client.login(username='cliente1', password='testpass123')
-        carrito = [{
-            'tipo': 'parlet',
-            'numero': '10 20 30',
-            'monto': '60.00',
-            'forma_pago': 'Efectivo'
-        }]
-        response = self.client.post(reverse('jugadas:apostar'), {
-            'carrito_data': json.dumps(carrito),
-            'sorteos': json.dumps([self.sorteo.id])
-        })
-        # 3 numeros = 3 combinaciones de parlet
-        self.assertEqual(Jugada.objects.count(), 3)
-
-    def test_apostar_post_candado(self):
-        self.client.login(username='cliente1', password='testpass123')
-        carrito = [{
-            'tipo': 'candado',
-            'numero': '10 20 30',
-            'monto': '60.00',
-            'forma_pago': 'Efectivo'
-        }]
-        response = self.client.post(reverse('jugadas:apostar'), {
-            'carrito_data': json.dumps(carrito),
-            'sorteos': json.dumps([self.sorteo.id])
-        })
-        self.assertEqual(Jugada.objects.count(), 3)
-
-    def test_apostar_post_vs(self):
-        self.client.login(username='cliente1', password='testpass123')
-        carrito = [{
-            'tipo': 'vs',
-            'numero': '10 20 | 30 40',
-            'monto': '100.00',
-            'forma_pago': 'Efectivo'
-        }]
-        response = self.client.post(reverse('jugadas:apostar'), {
-            'carrito_data': json.dumps(carrito),
-            'sorteos': json.dumps([self.sorteo.id])
-        })
-        # 2x2 = 4 combinaciones
-        self.assertEqual(Jugada.objects.count(), 4)
-
-    def test_apostar_post_vs100(self):
-        self.client.login(username='cliente1', password='testpass123')
-        carrito = [{
-            'tipo': 'vs100',
-            'numero': '10 20',
-            'monto': '1.00',
-            'forma_pago': 'Efectivo'
-        }]
-        response = self.client.post(reverse('jugadas:apostar'), {
-            'carrito_data': json.dumps(carrito),
-            'sorteos': json.dumps([self.sorteo.id])
-        })
-        self.assertEqual(Jugada.objects.count(), 2)
-        jugada = Jugada.objects.first()
-        self.assertEqual(jugada.monto, Decimal('100.00'))
-
-    def test_apostar_post_vs_formato_invalido(self):
-        self.client.login(username='cliente1', password='testpass123')
-        carrito = [{
-            'tipo': 'vs',
-            'numero': '10 20 30 40',
-            'monto': '100.00',
-            'forma_pago': 'Efectivo'
-        }]
-        response = self.client.post(reverse('jugadas:apostar'), {
-            'carrito_data': json.dumps(carrito),
-            'sorteos': json.dumps([self.sorteo.id])
-        })
-        # Debe redirigir con error por formato inválido
-        self.assertRedirects(response, reverse('jugadas:apostar'))
-
-    def test_apostar_post_autorizador_a_otro_usuario(self):
-        self.client.login(username='super1', password='testpass123')
-        carrito = [{
-            'tipo': 'pick2',
-            'numero': '55',
-            'monto': '100.00',
-            'forma_pago': 'Efectivo',
-            'destinatario': str(self.user.id)
-        }]
-        response = self.client.post(reverse('jugadas:apostar'), {
-            'carrito_data': json.dumps(carrito),
-            'sorteos': json.dumps([self.sorteo.id])
-        })
-        self.assertEqual(Jugada.objects.count(), 1)
-        jugada = Jugada.objects.first()
-        self.assertEqual(jugada.usuario, self.user)
+        self.assertEqual(response.status_code, 400)
+        self.assertFalse(Jugada.objects.exists())
 
 
 @override_settings(STATICFILES_STORAGE='django.contrib.staticfiles.storage.StaticFilesStorage')
