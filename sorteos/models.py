@@ -13,7 +13,7 @@ class Sorteo(models.Model):
     activo = models.BooleanField(default=True, verbose_name="Activo")
     horarios = models.JSONField(default=dict, blank=True, verbose_name="Horarios por temporada y día")
     hora_salida = models.TimeField(null=True, blank=True, verbose_name="Hora de salida (opcional)")
-    minutos_cierre = models.IntegerField(default=5, verbose_name="Minutos antes de la salida para cerrar apuestas")
+    minutos_cierre = models.IntegerField(default=10, verbose_name="Minutos antes de la salida para cerrar apuestas")
     origen = models.CharField(max_length=20, choices=ORIGEN_CHOICES, default='dominicano', verbose_name="Origen del sorteo")
 
     # ✅ NUEVO CAMPO: formas de juego admitidas (guardadas por clave corta, ej: "pick3", "fijo")
