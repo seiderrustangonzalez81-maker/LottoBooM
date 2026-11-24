@@ -6,6 +6,7 @@ from django.contrib.auth.models import User
 from django.urls import reverse
 from django.utils import timezone
 from django.db import transaction
+from unittest.mock import patch
 
 from jugadas.models import Jugada, FormaJuego
 from jugadas.views import obtener_configuracion_sorteo
@@ -21,6 +22,7 @@ class JugadasAuxiliaresTest(TestCase):
     def test_obtener_configuracion_sorteo_con_get_configuracion(self):
         class FakeSorteo:
             nombre = 'Test'
+            formas_juego = ['pick2']
             def get_configuracion(self):
                 return {'pick2': True}
         s = FakeSorteo()
@@ -103,13 +105,22 @@ class ApostarViewTest(TestCase):
         Rol.objects.create(usuario=self.superadmin, tipo='superadmin', activo=True)
 
         # Sorteo con cierre futuro
+        _dias = ['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado', 'domingo']
+        _horarios = {
+            'verano': {dia: '23:59' for dia in _dias},
+            'invierno': {dia: '23:59' for dia in _dias},
+        }
         self.sorteo = Sorteo.objects.create(
             nombre='La Primera',
             activo=True,
             hora_salida='23:59',
             minutos_cierre=0,
+            horarios=_horarios,
             formas_juego=['pick2', 'pick3', 'pick4', 'parlet', 'candado', 'vs', 'vs100']
         )
+        self._patch_actualizacion = patch('jugadas.views._intentar_actualizar_loteria')
+        self._patch_actualizacion.start()
+        self.addCleanup(self._patch_actualizacion.stop)
 
         # Formas de juego
         self.forma_tradicional = FormaJuego.objects.create(nombre='Tradicional', digitos_esperados=2, activo=True)
@@ -326,6 +337,8 @@ class JugadaProcesarApuestaTest(TestCase):
         self.jugada.refresh_from_db()
         self.assertEqual(self.jugada.estado, 'confirmada')
         self.assertEqual(self.jugada.saldo_despues, Decimal('400.00'))
+        movimiento = MovimientoFondo.objects.filter(tipo='apuesta').latest('id')
+        self.assertEqual(movimiento.receptor, self.user)
 
     def test_procesar_apuesta_autorizada_crea_deuda(self):
         Fondo.objects.create(usuario=self.user, forma_pago=self.forma_pago, monto=Decimal('50.00'), activo=True)
