@@ -1,7 +1,7 @@
 name: Auditoría del repositorio
 on:
   push:
-    branches: ["**"]
+    branches: ["main"]
   pull_request:
   schedule:
     - cron: "23 8 * * 1"
