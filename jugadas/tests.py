@@ -138,7 +138,7 @@ class ApostarViewTest(TestCase):
         self.client.login(username='cliente1', password='testpass123')
         response = self.client.get(reverse('jugadas:apostar'))
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'btnAbrirSorteos')
+        self.assertContains(response, 'listaSorteos')
 
     def test_apostar_get_comercial(self):
         self.client.login(username='comercial1', password='testpass123')
