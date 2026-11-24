@@ -270,7 +270,7 @@ class ApostarViewTest(TestCase):
         fondo.refresh_from_db()
         self.assertEqual(ticket.id, ticket_id)
         self.assertEqual(ticket.referencia, ref_original)
-        self.assertEqual(ticket.total_apostado, Decimal('75.00'))
+        self.assertEqual(ticket.monto_total, Decimal('75.00'))
         self.assertEqual(fondo.monto, Decimal('425.00'))
         self.assertEqual(ticket.metadata['pago']['total'], '75.00')
 
@@ -299,7 +299,7 @@ class ApostarViewTest(TestCase):
         self.assertTrue(response_edit2.json().get('success'), response_edit2.json())
         ticket.refresh_from_db()
         fondo.refresh_from_db()
-        self.assertEqual(ticket.total_apostado, Decimal('40.00'))
+        self.assertEqual(ticket.monto_total, Decimal('40.00'))
         self.assertEqual(fondo.monto, Decimal('460.00'))
         self.assertEqual(ticket.metadata['pago']['total'], '40.00')
         self.assertEqual(len(ticket.metadata['historial_ediciones']), 2)
