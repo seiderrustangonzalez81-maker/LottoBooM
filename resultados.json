@@ -950,5 +950,25 @@
     ],
     "fecha": "2026-11-23",
     "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Leidsa",
+    "numeros": [
+      "59",
+      "03",
+      "88"
+    ],
+    "fecha": "2026-11-23",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Nacional Noche",
+    "numeros": [
+      "74",
+      "38",
+      "14"
+    ],
+    "fecha": "2026-11-23",
+    "fuente": "enloteria"
   }
 ]
