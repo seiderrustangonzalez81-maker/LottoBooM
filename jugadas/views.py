@@ -6,7 +6,7 @@ import traceback
 import os
 import threading
 from decimal import Decimal, InvalidOperation
-from datetime import datetime, timedelta, time
+from datetime import datetime, timedelta, time, timezone as datetime_timezone
 from collections import defaultdict
 from zoneinfo import ZoneInfo
 
@@ -43,6 +43,13 @@ import threading
 from django.core.management import call_command
 logger = logging.getLogger(__name__)
 
+
+def _zona_horaria_cuba(fecha=None):
+    """Zona fija de Cuba según la regla estacional vigente del proyecto."""
+    if fecha is None:
+        fecha = timezone.now().date()
+    return datetime_timezone(timedelta(hours=-4 if es_verano_cuba(fecha) else -5))
+
 # ═══════════════════════════════════════════════════════════════
 # FIX URGENTE: FORZAR ZONA HORARIA DE CUBA (UTC-4)
 # ═══════════════════════════════════════════════════════════════
@@ -53,12 +60,9 @@ def _obtener_sorteos_cuba_estricto(incluir_cerrados=False):
     seleccionar sorteos cerrados (dentro de la ventana previa a la salida).
     Si existe calendario semanal, un día ausente NO usa la hora manual como fallback.
     """
-    try:
-        CUBA_TZ = ZoneInfo('America/Havana')
-    except Exception:
-        CUBA_TZ = pytz.timezone('America/Havana')
-
-    ahora_cuba = timezone.now().astimezone(CUBA_TZ)
+    ahora_utc = timezone.now()
+    CUBA_TZ = _zona_horaria_cuba(ahora_utc.date())
+    ahora_cuba = ahora_utc.astimezone(CUBA_TZ)
     fecha_cuba = ahora_cuba.date()
     temporada = 'verano' if es_verano_cuba(fecha_cuba) else 'invierno'
     dia_es = {0: 'lunes', 1: 'martes', 2: 'miercoles', 3: 'jueves', 4: 'viernes', 5: 'sabado', 6: 'domingo'}[fecha_cuba.weekday()]
@@ -1805,8 +1809,9 @@ def _guardar_apuesta_impl(request):
             return JsonResponse({'success': False, 'message': 'Formato de fecha inválido. Use YYYY-MM-DD.'}, status=400)
 
         # Zona horaria y regla especial Georgia: la fecha Georgia se calcula en Cuba.
-        CUBA_TZ = ZoneInfo('America/Havana')
-        ahora_cuba = timezone.now().astimezone(CUBA_TZ)
+        ahora_utc = timezone.now()
+        CUBA_TZ = _zona_horaria_cuba(ahora_utc.date())
+        ahora_cuba = ahora_utc.astimezone(CUBA_TZ)
         hoy = ahora_cuba.date()
         _now_cuba = ahora_cuba
         _es_admin_f = request.user.is_superuser or request.user.roles.filter(tipo__in=['banco', 'superadmin'], activo=True).exists()
@@ -1918,8 +1923,9 @@ def _guardar_apuesta_impl(request):
         )
         if not _es_banco_o_super:
             try:
-                CUBA_TZ = ZoneInfo('America/Havana')
-                ahora_cuba = timezone.now().astimezone(CUBA_TZ)
+                ahora_utc = timezone.now()
+                CUBA_TZ = _zona_horaria_cuba(ahora_utc.date())
+                ahora_cuba = ahora_utc.astimezone(CUBA_TZ)
 
                 _todos_ids = list(set(list(sorteos_ids) + list(super_sorteos_ids)))
                 _cerrados = []
@@ -3901,13 +3907,9 @@ def api_forma_pago_cliente(request):
 
 @login_required
 def api_sorteos_disponibles(request):
-    from zoneinfo import ZoneInfo
-    try:
-        CUBA_TZ = ZoneInfo('America/Havana')
-    except Exception:
-        CUBA_TZ = pytz.timezone(settings.TIME_ZONE)
-
-    ahora = timezone.now().astimezone(CUBA_TZ)
+    ahora_utc = timezone.now()
+    CUBA_TZ = _zona_horaria_cuba(ahora_utc.date())
+    ahora = ahora_utc.astimezone(CUBA_TZ)
     # FIX_FECHA_SORTEOS_V1 (2026-10-18): respetar la fecha enviada por el frontend
     _req_fecha = request.GET.get('fecha')
     if _req_fecha:
@@ -3934,7 +3936,7 @@ def api_sorteos_disponibles(request):
         return sorteo.hora_salida
 
     def _calcular_estado(sorteo, hora_salida):
-        minutos = sorteo.minutos_cierre if sorteo.minutos_cierre is not None else 60
+        minutos = 10  # Regla fija: cierre exactamente 10 minutos antes
         dt_salida = datetime.combine(hoy, hora_salida)
         if hasattr(CUBA_TZ, 'localize'):
             dt_salida = CUBA_TZ.localize(dt_salida)
