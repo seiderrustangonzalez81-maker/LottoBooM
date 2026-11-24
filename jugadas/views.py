@@ -2196,7 +2196,22 @@ def _guardar_apuesta_impl(request):
                 if not orig:
                     raise ValueError('Boleta original no encontrada')
                 if orig.estado != 'activa':
-                    raise ValueError(f'La boleta original está en estado {orig.estado}, no se puede editar')
+                    raise ValueError(f'La boleta original está en estado {orig.estado}, no se puede modificar')
+                if orig.usuario_id != cliente.id:
+                    raise ValueError('La boleta original no pertenece al cliente seleccionado.')
+                if orig.destinatario_id != destinatario.id:
+                    raise ValueError('No se permite cambiar el gestor de la boleta original.')
+                if modo_operacion not in ('editar', 'reenviar'):
+                    raise ValueError('Modo de operación inválido para boleta. Usa Editar o Reenviar explícitamente.')
+                _es_superadmin_perm = usuario.is_superuser or usuario.roles.filter(tipo='superadmin', activo=True).exists()
+                _es_banco_perm = usuario.roles.filter(tipo='banco', activo=True).exists()
+                _permisos_boleta = _calcular_permisos_boleta(
+                    usuario, orig, es_banco=_es_banco_perm, es_superadmin=_es_superadmin_perm
+                )
+                if es_solo_editar and not _permisos_boleta.get('puede_editar'):
+                    raise ValueError('No tienes permiso para editar esta boleta; puede estar cerrada o fuera de tu gestión.')
+                if modo_operacion == 'reenviar' and not _permisos_boleta.get('puede_reenviar'):
+                    raise ValueError('No tienes permiso para reenviar esta boleta.')
 
                 if es_solo_editar:
                     if orig.forma_pago_id != getattr(forma_pago, 'id', None):
