@@ -1482,6 +1482,9 @@ def apostar(request):
             )
 
             if _puede_preload:
+                if (b.metadata or {}).get('tipo') == 'superparlet' or b.jugadas.filter(forma_juego__nombre__iexact='superparlet').exists():
+                    from django.shortcuts import redirect
+                    return redirect('jugadas:mis_apuestas')
                 lineas = []
                 sorteo_ids_set = set()
                 for j in b.jugadas.exclude(estado='cancelada'):
