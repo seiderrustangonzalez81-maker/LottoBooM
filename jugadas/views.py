@@ -380,6 +380,36 @@ def _reconciliar_desglose_pago_edicion(pago_original, total_original, total_nuev
         raise ValueError('Desglose de pago no coincide con el total editado.')
     return values
 
+
+def _snapshot_jugadas_edicion(jugadas):
+    """Snapshot JSON-serializable de jugadas y premios antes de una edición."""
+    snapshots = []
+    for jugada in jugadas:
+        premios = [{
+            'id': premio.id,
+            'monto': str(premio.monto_premio),
+            'estado': premio.estado,
+            'cobrado': bool(premio.cobrado),
+            'fecha_pago': premio.fecha_pago.isoformat() if premio.fecha_pago else None,
+            'pagado_por_id': premio.pagado_por_id,
+            'comentario': premio.comentario,
+            'metadata': premio.metadata or {},
+        } for premio in jugada.premios.all()]
+        snapshots.append({
+            'jugada_id': jugada.id,
+            'numero': jugada.numero,
+            'forma': jugada.forma_juego.nombre if jugada.forma_juego else '',
+            'sorteo_id': jugada.sorteo_id,
+            'sorteo': jugada.sorteo.nombre if jugada.sorteo else '',
+            'fecha_sorteo': jugada.fecha_sorteo.isoformat() if jugada.fecha_sorteo else None,
+            'monto': str(jugada.monto),
+            'estado': jugada.estado,
+            'monto_premio': str(jugada.monto_premio),
+            'metadata': jugada.metadata or {},
+            'premios': premios,
+        })
+    return snapshots
+
 def _validar_tablas_crudas_payload(tablas_payload):
     """Valida filas originales para que filas con números sin monto no puedan omitirse."""
     errores = []
@@ -2226,31 +2256,9 @@ def _guardar_apuesta_impl(request):
                     # Archivar líneas y premios previos antes de reemplazarlos.
                     # Premio.jugada usa CASCADE: sin este snapshot la edición
                     # eliminaría el historial de premios al borrar las jugadas.
-                    _jugadas_antes = []
-                    for _j_old in orig.jugadas.select_related('forma_juego', 'sorteo', 'forma_pago').all():
-                        _premios_old = [{
-                            'id': _p.id,
-                            'monto': str(_p.monto_premio),
-                            'estado': _p.estado,
-                            'cobrado': bool(_p.cobrado),
-                            'fecha_pago': _p.fecha_pago.isoformat() if _p.fecha_pago else None,
-                            'pagado_por_id': _p.pagado_por_id,
-                            'comentario': _p.comentario,
-                            'metadata': _p.metadata or {},
-                        } for _p in _j_old.premios.all()]
-                        _jugadas_antes.append({
-                            'jugada_id': _j_old.id,
-                            'numero': _j_old.numero,
-                            'forma': _j_old.forma_juego.nombre if _j_old.forma_juego else '',
-                            'sorteo_id': _j_old.sorteo_id,
-                            'sorteo': _j_old.sorteo.nombre if _j_old.sorteo else '',
-                            'fecha_sorteo': _j_old.fecha_sorteo.isoformat() if _j_old.fecha_sorteo else None,
-                            'monto': str(_j_old.monto),
-                            'estado': _j_old.estado,
-                            'monto_premio': str(_j_old.monto_premio),
-                            'metadata': _j_old.metadata or {},
-                            'premios': _premios_old,
-                        })
+                    _jugadas_antes = _snapshot_jugadas_edicion(
+                        orig.jugadas.select_related('forma_juego', 'sorteo', 'forma_pago').all()
+                    )
                     _historial_edicion = {
                         'fecha': timezone.now().isoformat(),
                         'usuario': usuario.username,
