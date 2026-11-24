@@ -65,4 +65,57 @@ class CubaOverrideTests(unittest.TestCase):
         self.assertTrue(mod.es_verano_cuba(datetime(2027,11,7,0,59)))
         self.assertFalse(mod.es_verano_cuba(datetime(2027,11,7,1,0)))
 
+
+class ScraperCoverageTests(unittest.TestCase):
+    def test_source_aliases_count_as_configured_without_guessing_tennessee(self):
+        import ast, io, re, unicodedata
+        from contextlib import redirect_stdout
+        from zoneinfo import ZoneInfo
+
+        path = SCRIPT.parents[1] / "scraper.py"
+        tree = ast.parse(path.read_text(encoding="utf-8"))
+        assignments = {
+            "SORTEOS_ESPERADOS", "URLS_MULTI", "ZONAS_ESTADOS",
+            "ALIASES_NOMBRES_SORTEOS",
+        }
+        functions = {
+            "normalizar_nombre", "canonizar_nombre_sorteo", "informar_cobertura",
+        }
+        nodes = []
+        for node in tree.body:
+            if isinstance(node, ast.Assign) and any(
+                isinstance(target, ast.Name) and target.id in assignments
+                for target in node.targets
+            ):
+                nodes.append(node)
+            elif isinstance(node, ast.FunctionDef) and node.name in functions:
+                nodes.append(node)
+
+        namespace = {"re": re, "unicodedata": unicodedata, "ZoneInfo": ZoneInfo}
+        exec(compile(ast.Module(body=nodes, type_ignores=[]), str(path), "exec"), namespace)
+
+        output = io.StringIO()
+        with redirect_stdout(output):
+            namespace["informar_cobertura"]([])
+        report = output.getvalue()
+        self.assertIn(
+            "Sorteos USA esperados con configuración directa: 13/16",
+            report,
+        )
+        section = report.split("USA sin configuración directa:", 1)[-1]
+        missing = [
+            line.strip().removeprefix("- ")
+            for line in section.splitlines()
+            if line.strip().startswith("- ")
+        ]
+        self.assertEqual(
+            missing,
+            ["Texas 11 AM", "Texas 7 PM", "Tennessee 7:20 PM"],
+        )
+        self.assertEqual(
+            namespace["canonizar_nombre_sorteo"]("Tennessee 6:30 PM"),
+            "Tennessee 6:30 PM",
+        )
+
+
 if __name__=="__main__": unittest.main()
