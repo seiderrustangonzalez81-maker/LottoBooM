@@ -562,7 +562,7 @@ test('Georgia Cuba clock override uses exact UTC boundaries despite stale device
   const start=Date.UTC(2026,10,1,5,0,0);
   const end=Date.UTC(2027,10,7,5,0,0);
   const staleIntl={
-    DateTimeFormat:()=>({
+    DateTimeFormat:function(){return {
       formatToParts(date){
         const offset=date.getTime()<start?-4:-5;
         const local=new Date(date.getTime()+offset*3600000);
@@ -574,8 +574,8 @@ test('Georgia Cuba clock override uses exact UTC boundaries despite stale device
           {type:'minute',value:String(local.getUTCMinutes()).padStart(2,'0')},
           {type:'second',value:String(local.getUTCSeconds()).padStart(2,'0')}
         ];
-      }
-    })
+      }}
+    }
   };
   const sandbox={Date,Intl:staleIntl};
   vm.runInNewContext(template.slice(from,to)+';this.parts=fechaCubaParts;',sandbox);
