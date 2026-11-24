@@ -2127,6 +2127,25 @@ def _guardar_apuesta_impl(request):
 
         with transaction.atomic():
 
+            # Lock por sorteo para evitar sobreconsumo concurrente de pool.
+            _ids_lock = sorted(set(
+                [int(x) for x in sorteos_ids] + [int(x) for x in super_sorteos_ids]
+            ))
+            if _ids_lock:
+                list(Sorteo.objects.select_for_update().filter(id__in=_ids_lock).order_by('id'))
+
+            # Revalidar duplicados dentro de la transacción después de adquirir locks.
+            if not es_edicion_boleta and not es_edicion_pura and forma_pago and cliente:
+                _items_dup_tx = [
+                    {'sorteo_id': int(it.get('sorteo_id')), 'tipo': (it.get('tipo') or '').strip().lower(),
+                     'numero': it.get('numero') or '', 'monto': it.get('monto') or 0}
+                    for it in (items_normales + items_super) if it.get('sorteo_id')
+                ]
+                if _items_dup_tx:
+                    _dups_tx = _boleta_duplicada(cliente.id, forma_pago.id, fecha_apuesta, _items_dup_tx)
+                    if _dups_tx:
+                        raise ValueError('La boleta idéntica ya fue guardada durante el envío. No se creó otra.')
+
             # Asegurar que 'boleta' este siempre definida
             boleta = None
 
@@ -2503,7 +2522,7 @@ def _guardar_apuesta_impl(request):
 
                 monto_restante = total_apostado
 
-                fondo = Fondo.objects.filter(
+                fondo = Fondo.objects.select_for_update().filter(
                     usuario=cliente, forma_pago=forma_pago, asignado_por=destinatario, activo=True
                 ).first()
 
@@ -2512,7 +2531,7 @@ def _guardar_apuesta_impl(request):
                 if fondo and fondo.monto < monto_restante:
                     from django.utils import timezone as _tz_bf
                     from django.db.models import Q as _Q_bf, F as _F_bf
-                    _bonos_fusion = list(Bono.objects.filter(
+                    _bonos_fusion = list(Bono.objects.select_for_update().filter(
                         usuario=cliente,
                         asignado_por=destinatario,
                         estado='activo',
@@ -2574,7 +2593,7 @@ def _guardar_apuesta_impl(request):
                     # FIX_FIFO_BONOS_V2: filtro de vencidos + orden por vencimiento
                     from django.utils import timezone as _tz_fifo
                     from django.db.models import Q as _Q_fifo, F as _F_fifo
-                    bonos_activos = Bono.objects.filter(
+                    bonos_activos = Bono.objects.select_for_update().filter(
                         usuario=cliente,
                         asignado_por=destinatario,
                         estado='activo',
