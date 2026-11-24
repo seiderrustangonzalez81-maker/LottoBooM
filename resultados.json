@@ -888,5 +888,15 @@
     "fijo": "02",
     "corrido_1": "58",
     "corrido_2": "29"
+  },
+  {
+    "sorteo_nombre": "Loteka",
+    "numeros": [
+      "63",
+      "33",
+      "13"
+    ],
+    "fecha": "2026-11-23",
+    "fuente": "enloteria"
   }
 ]
