@@ -2763,6 +2763,9 @@ def _guardar_apuesta_impl(request):
                     'total': str(total_apostado),
                 }
                 boleta.save(update_fields=['metadata'])
+                # Editar borró y reconstruyó las jugadas; recalcular los totales
+                # de la misma boleta antes de salir de la transacción.
+                boleta.recalcular_totales()
 
             # FASE1_RECONCILIACION_V1_HOOK: si el resultado ya salió,
             # crear premios para jugadas ganadoras insertadas tardíamente.
