@@ -51,7 +51,7 @@ class JugadasModelTest(TestCase):
             numero='23',
             monto=Decimal('50.00'),
             estado='pendiente',
-            fecha_sorteo=self.sorteo.fecha
+            fecha_sorteo=timezone.localdate()
         )
 
     def test_str_jugada(self):
