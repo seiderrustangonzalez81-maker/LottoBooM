@@ -241,6 +241,71 @@ class ApostarViewTest(TestCase):
         fondo = Fondo.objects.get(usuario=self.user, forma_pago=self.forma_pago, asignado_por=self.comercial)
         self.assertEqual(fondo.monto, Decimal('450.00'))
 
+        # Editar aumento: misma boleta, diferencia descontada del Fondo.
+        ticket_id = ticket.id
+        ref_original = ticket.referencia
+        items_aumento = [{'tipo':'pick2','numero':'23','monto':'75.00','sorteo_id':self.sorteo.id}]
+        raw_aumento = [{
+            'sorteo_id':self.sorteo.id,
+            'tablas':{'tabla-tradicional':{'kind':'multi','forms':['pick2'],
+                'rows':[{'num':'23','montos':{'pick2':'75.00'}}]}}
+        }]
+        response_edit = self.client.post(reverse('jugadas:guardar_apuesta'), {
+            'fecha': timezone.localdate().isoformat(),
+            'cliente_id': str(self.user.id),
+            'destinatario_id': str(self.comercial.id),
+            'forma_pago': str(self.forma_pago.id),
+            'carrito_data': json.dumps(items_aumento),
+            'superparlet_data': '[]',
+            'sorteos': json.dumps([self.sorteo.id]),
+            'superparlet_sorteos': '[]',
+            'tabla_rows': json.dumps(raw_aumento),
+            'modo_edicion': 'editar_boleta',
+            'boleta_origen_id': str(ticket_id),
+            'modo_operacion': 'editar',
+        })
+        self.assertEqual(response_edit.status_code, 200, response_edit.content)
+        self.assertTrue(response_edit.json().get('success'), response_edit.json())
+        ticket.refresh_from_db()
+        fondo.refresh_from_db()
+        self.assertEqual(ticket.id, ticket_id)
+        self.assertEqual(ticket.referencia, ref_original)
+        self.assertEqual(ticket.total_apostado, Decimal('75.00'))
+        self.assertEqual(fondo.monto, Decimal('425.00'))
+        self.assertEqual(ticket.metadata['pago']['total'], '75.00')
+
+        # Editar reducción: devuelve diferencia al Fondo y conserva historial.
+        items_reduccion = [{'tipo':'pick2','numero':'23','monto':'40.00','sorteo_id':self.sorteo.id}]
+        raw_reduccion = [{
+            'sorteo_id':self.sorteo.id,
+            'tablas':{'tabla-tradicional':{'kind':'multi','forms':['pick2'],
+                'rows':[{'num':'23','montos':{'pick2':'40.00'}}]}}
+        }]
+        response_edit2 = self.client.post(reverse('jugadas:guardar_apuesta'), {
+            'fecha': timezone.localdate().isoformat(),
+            'cliente_id': str(self.user.id),
+            'destinatario_id': str(self.comercial.id),
+            'forma_pago': str(self.forma_pago.id),
+            'carrito_data': json.dumps(items_reduccion),
+            'superparlet_data': '[]',
+            'sorteos': json.dumps([self.sorteo.id]),
+            'superparlet_sorteos': '[]',
+            'tabla_rows': json.dumps(raw_reduccion),
+            'modo_edicion': 'editar_boleta',
+            'boleta_origen_id': str(ticket_id),
+            'modo_operacion': 'editar',
+        })
+        self.assertEqual(response_edit2.status_code, 200, response_edit2.content)
+        self.assertTrue(response_edit2.json().get('success'), response_edit2.json())
+        ticket.refresh_from_db()
+        fondo.refresh_from_db()
+        self.assertEqual(ticket.total_apostado, Decimal('40.00'))
+        self.assertEqual(fondo.monto, Decimal('460.00'))
+        self.assertEqual(ticket.metadata['pago']['total'], '40.00')
+        self.assertEqual(len(ticket.metadata['historial_ediciones']), 2)
+        self.assertEqual(ticket.metadata['historial_ediciones'][0]['total_nuevo'], '75.00')
+        self.assertEqual(ticket.metadata['historial_ediciones'][1]['total_nuevo'], '40.00')
+
     @patch('jugadas.views._puede_apostar_segun_estado_sorteo', return_value=True)
     @patch('jugadas.views.get_pool_gestor', return_value=Decimal('1000.00'))
     def test_guardar_apuesta_invalid_line_aborts_whole_payload(self, _pool, _draw_open):
