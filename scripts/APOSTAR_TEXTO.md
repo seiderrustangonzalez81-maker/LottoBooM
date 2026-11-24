@@ -12,7 +12,7 @@ El texto se revisa línea por línea. **Si una línea contiene un token desconoc
 | Pick2 | \`pick2 12 34 con 5\` o \`12 34 pick2 con 5\` |
 | PF | \`pf 12 34 con 5\` o \`12 34 pf con 5\` |
 | Parlet | \`12 34 parlet 2\` |
-| Candado | \`12 34 candado 4\` |
+| Candado (requiere Parlet) | `12 34 56 parlet 2 candado 6` (3 pares × $2) |
 | Pick3 | \`pick3 123 456 con 5\` o \`123 456 pick3 con 5\` |
 | Centenas Corridas | \`centenas corridas 123 456 con 5\` |
 | Pick4 | \`pick4 1234 5678 con 5\` |
@@ -26,7 +26,7 @@ El texto se revisa línea por línea. **Si una línea contiene un token desconoc
 | Tripleta | \`tripleta 12 34 56 con 5\` |
 | Solo Parlet | \`solo parlet 12 34 56 con 5\` |
 
-Los grupos VS pueden contener cantidades distintas de números: se multiplican las combinaciones de ambos grupos. Todos sus números, sin embargo, deben tener dos dígitos y ambos grupos deben estar presentes.
+Los grupos VS pueden contener cantidades distintas de números: se multiplican las combinaciones de ambos grupos. Todos sus números, sin embargo, deben tener dos dígitos y ambos grupos deben estar presentes. Candado requiere que Parlet esté habilitado en la misma tabla; su importe es un espejo de Parlet por número de combinaciones y no se suma por separado. Si no coincide, el semáforo bloquea Procesar.
 
 ## Abreviaturas y continuaciones
 
