@@ -109,12 +109,13 @@ def calcular_estado_sorteo(sorteo, ahora=None, fecha_consulta=None):
     if fecha_consulta is None:
         ahora_local = ahora_local_actual
         fecha_consulta = ahora_local.date()
-    elif fecha_consulta == ahora_local_actual.date():
-        # En la fecha actual se usa el offset del instante, incluso durante
-        # la hora exacta de transición de Cuba.
-        ahora_local = ahora_local_actual
     else:
-        ahora_local = ahora.astimezone(_tz_cuba(fecha_consulta))
+        if fecha_consulta == ahora_local_actual.date():
+            # En la fecha actual se usa el offset del instante, incluso durante
+            # la hora exacta de transición de Cuba.
+            ahora_local = ahora_local_actual
+        else:
+            ahora_local = ahora.astimezone(_tz_cuba(fecha_consulta))
         if (sorteo.nombre == 'Georgia 11:34 PM' and ahora_local.hour == 0 and ahora_local.minute < 25):
             fecha_consulta = fecha_consulta - timedelta(days=1)
 
