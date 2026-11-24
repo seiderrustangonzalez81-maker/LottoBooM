@@ -2231,15 +2231,11 @@ def _guardar_apuesta_impl(request):
                     estado_actual = getattr(estado_sorteo, 'estado_actual', 'no_programado')
 
                     if not _puede_apostar_segun_estado_sorteo(estado_actual, usuario):
-                        if es_solo_editar:
-                            raise ValueError(f'El sorteo {sorteo.nombre} no admite esta línea. Edición revertida; boleta original preservada.')
                         if estado_actual == 'salido':
-                            advertencias.append(f'El sorteo "{sorteo.nombre}" ya salió; no se permiten apuestas tardías.')
+                            motivo = f'El sorteo "{sorteo.nombre}" ya salió; no se permiten apuestas tardías.'
                         else:
-                            advertencias.append(
-                                f'El sorteo "{sorteo.nombre}" está cerrado. Solo banco y superadmin pueden apostar antes de la salida.'
-                            )
-                        continue
+                            motivo = f'El sorteo "{sorteo.nombre}" está cerrado o no programado para este usuario.'
+                        raise ValueError(motivo + ' Se canceló la boleta completa; no se guardó ninguna línea.')
 
                     pool_total = get_pool_gestor(destinatario, sorteo, forma_juego, forma_pago)
                     if pool_total <= 0:
