@@ -57,7 +57,7 @@ class SorteoForm(forms.ModelForm):
             'hora_salida': forms.TimeInput(attrs={'type': 'time', 'class': 'form-control'}),
             'nombre': forms.TextInput(attrs={'class': 'form-control'}),
             'origen': forms.Select(attrs={'class': 'form-select'}),
-            'minutos_cierre': forms.NumberInput(attrs={'class': 'form-control'}),
+            'minutos_cierre': forms.NumberInput(attrs={'class': 'form-control', 'readonly': 'readonly'}),
         }
         help_texts = {
             'horarios': 'Formato JSON: {"invierno": {"lunes": "08:00", ...}, "verano": {...}}',
@@ -77,6 +77,8 @@ class SorteoForm(forms.ModelForm):
                 except Exception:
                     self.initial['horarios'] = '{}'
             self.initial['formas_juego'] = self.instance.formas_juego or []
+        self.initial['minutos_cierre'] = 10
+        self.fields['minutos_cierre'].disabled = True
 
     def clean_horarios(self):
         data = self.cleaned_data.get('horarios')
