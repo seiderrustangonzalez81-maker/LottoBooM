@@ -2690,6 +2690,46 @@ def _guardar_apuesta_impl(request):
                     'fondo_despues': str(saldo_despues_edicion),
                     'usuario': usuario.username,
                 })
+                # Actualizar desglose de pago para que una futura cancelación
+                # reintegre exactamente el importe de la boleta ya editada.
+                _pago_edit = boleta.metadata.get('pago')
+                if not isinstance(_pago_edit, dict):
+                    _pago_edit = {}
+                _keys_pago = ('fondo', 'bono', 'postpago')
+                _valores_pago = {}
+                for _key_pago in _keys_pago:
+                    try:
+                        _valores_pago[_key_pago] = Decimal(str(_pago_edit.get(_key_pago, '0.00')))
+                    except (InvalidOperation, ValueError, TypeError):
+                        _valores_pago[_key_pago] = Decimal('0.00')
+                _suma_pago_edit = sum(_valores_pago.values(), Decimal('0.00'))
+                if _suma_pago_edit <= 0:
+                    _valores_pago = {
+                        'fondo': total_apostado,
+                        'bono': Decimal('0.00'),
+                        'postpago': Decimal('0.00'),
+                    }
+                elif diferencia_edicion > 0:
+                    # El incremento se cobró íntegramente del Fondo.
+                    _valores_pago['fondo'] += diferencia_edicion
+                elif diferencia_edicion < 0:
+                    # La reducción ya se devolvió al Fondo; el desglose restante
+                    # se escala para representar el importe que aún está apostado.
+                    _factor_pago = total_apostado / _suma_pago_edit
+                    for _key_pago in _keys_pago:
+                        _valores_pago[_key_pago] = (
+                            _valores_pago[_key_pago] * _factor_pago
+                        ).quantize(Decimal('0.01'))
+                    _ajuste_redondeo = total_apostado - sum(
+                        _valores_pago.values(), Decimal('0.00')
+                    )
+                    _valores_pago['fondo'] += _ajuste_redondeo
+                boleta.metadata['pago'] = {
+                    'fondo': str(_valores_pago['fondo']),
+                    'bono': str(_valores_pago['bono']),
+                    'postpago': str(_valores_pago['postpago']),
+                    'total': str(total_apostado),
+                }
                 boleta.save(update_fields=['metadata'])
 
             # FASE1_RECONCILIACION_V1_HOOK: si el resultado ya salió,
