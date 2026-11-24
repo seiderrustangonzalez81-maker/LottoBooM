@@ -2867,7 +2867,9 @@ def _guardar_apuesta_impl(request):
                 'monto': float(_j.monto),
             })
         _items_originales = len(items_normales) + len(items_super)
-        _descartadas = max(0, _items_originales - len(jugadas_creadas))
+        # En éxito no existen líneas descartadas: una línea inválida aborta todo.
+        # El conteo item→Jugada no es 1:1 (expansiones, tripletas y sorteos).
+        _descartadas = 0
 
         # FIX_CASCADE_V1: recomputar cuadres si hubo jugadas retroactivas
         try:
