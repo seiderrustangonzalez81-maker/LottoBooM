@@ -980,5 +980,25 @@
     ],
     "fecha": "2026-11-23",
     "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Anguilla 10PM",
+    "numeros": [
+      "06",
+      "12",
+      "19"
+    ],
+    "fecha": "2026-11-23",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "LoteDom Noche",
+    "numeros": [
+      "04",
+      "87",
+      "80"
+    ],
+    "fecha": "2026-11-23",
+    "fuente": "enloteria"
   }
 ]
