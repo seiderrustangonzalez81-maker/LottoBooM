@@ -35,6 +35,7 @@ def build_helper(now, draws):
         "datetime": datetime,
         "timedelta": timedelta,
         "datetime_timezone": datetime_timezone,
+        "_zona_horaria_cuba": lambda fecha: datetime_timezone(timedelta(hours=-5)),
         "Sorteo": SimpleNamespace(objects=DrawManager(draws)),
         "logger": Mock(),
     }
