@@ -156,6 +156,38 @@ class CubaTimezoneBoundaryIntegrationTests(unittest.TestCase):
         self.assertEqual(DIAS_SEMANA_ES[date(2026, 11, 23).weekday()], "Lunes")
         self.assertEqual(DIAS_SEMANA_ES[date(2026, 11, 29).weekday()], "Domingo")
 
+    def test_usa_draw_zones_use_iana_dst_and_source_mapping(self):
+        tree = ast.parse((ROOT / "scraper.py").read_text(encoding="utf-8"))
+        node = next(
+            item for item in tree.body
+            if isinstance(item, ast.Assign)
+            and any(isinstance(target, ast.Name) and target.id == "ZONAS_ESTADOS" for target in item.targets)
+        )
+        namespace = {"ZoneInfo": ZoneInfo}
+        exec(compile(ast.Module(body=[node], type_ignores=[]), "scraper.py", "exec"), namespace)
+        zones = namespace["ZONAS_ESTADOS"]
+
+        self.assertEqual(zones["Florida"].key, "America/New_York")
+        self.assertEqual(zones["New York"].key, "America/New_York")
+        self.assertEqual(zones["Texas"].key, "America/Chicago")
+        self.assertEqual(zones["Tennessee"].key, "America/Chicago")
+
+        eastern = zones["Florida"]
+        central = zones["Texas"]
+        self.assertEqual(datetime(2026, 1, 15, 12, tzinfo=eastern).utcoffset(), timedelta(hours=-5))
+        self.assertEqual(datetime(2026, 7, 15, 12, tzinfo=eastern).utcoffset(), timedelta(hours=-4))
+        self.assertEqual(datetime(2026, 1, 15, 12, tzinfo=central).utcoffset(), timedelta(hours=-6))
+        self.assertEqual(datetime(2026, 7, 15, 12, tzinfo=central).utcoffset(), timedelta(hours=-5))
+
+        self.assertEqual(datetime(2026, 3, 8, 1, 30, tzinfo=eastern).utcoffset(), timedelta(hours=-5))
+        self.assertEqual(datetime(2026, 3, 8, 3, 30, tzinfo=eastern).utcoffset(), timedelta(hours=-4))
+        self.assertEqual(datetime(2026, 11, 1, 1, 30, tzinfo=eastern, fold=0).utcoffset(), timedelta(hours=-4))
+        self.assertEqual(datetime(2026, 11, 1, 1, 30, tzinfo=eastern, fold=1).utcoffset(), timedelta(hours=-5))
+        self.assertEqual(datetime(2026, 3, 8, 1, 30, tzinfo=central).utcoffset(), timedelta(hours=-6))
+        self.assertEqual(datetime(2026, 3, 8, 3, 30, tzinfo=central).utcoffset(), timedelta(hours=-5))
+        self.assertEqual(datetime(2026, 11, 1, 1, 30, tzinfo=central, fold=0).utcoffset(), timedelta(hours=-5))
+        self.assertEqual(datetime(2026, 11, 1, 1, 30, tzinfo=central, fold=1).utcoffset(), timedelta(hours=-6))
+
 
 if __name__ == "__main__":
     unittest.main()
