@@ -376,7 +376,7 @@ class Jugada(models.Model):
 
         MovimientoFondo.objects.create(
             emisor=self.usuario,
-            receptor=self.destinatario or autorizado_por,
+            receptor=self.destinatario or autorizado_por or self.usuario,
             forma_pago=self.forma_pago,
             monto=self.monto,
             tipo='apuesta',
