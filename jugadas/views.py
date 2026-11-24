@@ -2787,6 +2787,16 @@ def _guardar_apuesta_impl(request):
                         'El desglose de cobro no coincide con el total apostado. '
                         'Se canceló la operación para proteger los saldos.'
                     )
+                _boletas_con_totales = [
+                    (_b_pago, sum((_j.monto for _j in _b_pago.jugadas.all()), Decimal('0.00')))
+                    for _b_pago in _todas_boletas_nuevas
+                ]
+                _suma_boletas = sum((_total_b for _b_pago, _total_b in _boletas_con_totales), Decimal('0.00'))
+                if _suma_boletas != total_apostado:
+                    raise ValueError(
+                        'Los totales individuales de boleta no coinciden con el cobro. '
+                        'Se canceló la operación completa.'
+                    )
                 _fuentes_restantes = dict(_fuentes_totales)
                 # Distribuir el cobro por ticket en el mismo orden de consumo:
                 # Fondo, bonos y finalmente postpago; no usar prorrateos que
