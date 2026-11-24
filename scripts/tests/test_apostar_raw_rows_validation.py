@@ -7,11 +7,47 @@ os.environ.setdefault("SECRET_KEY", "ci-only-not-a-production-secret")
 import django
 django.setup()
 
-from jugadas.views import _validar_tablas_crudas_payload, _validar_coincidencia_sorteos_tablas, _validar_items_ids_sorteo, _puede_apostar_segun_estado_sorteo, _reconciliar_desglose_pago_edicion
+from jugadas.views import _validar_tablas_crudas_payload, _validar_coincidencia_sorteos_tablas, _validar_items_ids_sorteo, _puede_apostar_segun_estado_sorteo, _reconciliar_desglose_pago_edicion, _validar_identidad_boleta_operacion
 
 
 def payload(table, kind, forms, rows, sid="54"):
     return [{"sorteo_id":sid,"tablas":{table:{"kind":kind,"forms":forms,"rows":rows}}}]
+
+
+class TicketIdentityOperationTests(unittest.TestCase):
+    def _objects(self):
+        from types import SimpleNamespace
+        return (
+            SimpleNamespace(id=11),
+            SimpleNamespace(id=11),
+            SimpleNamespace(id=22),
+            SimpleNamespace(usuario_id=11, destinatario_id=22),
+        )
+
+    def test_edit_requires_same_client_and_manager(self):
+        boleta, cliente, gestor, original = self._objects()
+        self.assertTrue(_validar_identidad_boleta_operacion(original, cliente, gestor, 'editar'))
+
+    def test_reenviar_requires_same_client_and_manager(self):
+        boleta, cliente, gestor, original = self._objects()
+        self.assertTrue(_validar_identidad_boleta_operacion(original, cliente, gestor, 'reenviar'))
+
+    def test_rejects_different_client(self):
+        from types import SimpleNamespace
+        _, cliente, gestor, original = self._objects()
+        with self.assertRaisesRegex(ValueError, 'no pertenece al cliente'):
+            _validar_identidad_boleta_operacion(original, SimpleNamespace(id=99), gestor, 'editar')
+
+    def test_rejects_different_manager(self):
+        from types import SimpleNamespace
+        _, cliente, gestor, original = self._objects()
+        with self.assertRaisesRegex(ValueError, 'cambiar el gestor'):
+            _validar_identidad_boleta_operacion(original, cliente, SimpleNamespace(id=99), 'reenviar')
+
+    def test_rejects_unspecified_operation_mode(self):
+        _, cliente, gestor, original = self._objects()
+        with self.assertRaisesRegex(ValueError, 'Modo de operación inválido'):
+            _validar_identidad_boleta_operacion(original, cliente, gestor, '')
 
 
 class PaymentEditReconciliationTests(unittest.TestCase):
