@@ -2223,6 +2223,44 @@ def _guardar_apuesta_impl(request):
                         (j.monto for j in orig.jugadas.exclude(estado='cancelada')),
                         Decimal('0.00')
                     )
+                    # Archivar líneas y premios previos antes de reemplazarlos.
+                    # Premio.jugada usa CASCADE: sin este snapshot la edición
+                    # eliminaría el historial de premios al borrar las jugadas.
+                    _jugadas_antes = []
+                    for _j_old in orig.jugadas.select_related('forma_juego', 'sorteo', 'forma_pago').all():
+                        _premios_old = [{
+                            'id': _p.id,
+                            'monto': str(_p.monto_premio),
+                            'estado': _p.estado,
+                            'cobrado': bool(_p.cobrado),
+                            'fecha_pago': _p.fecha_pago.isoformat() if _p.fecha_pago else None,
+                            'pagado_por_id': _p.pagado_por_id,
+                            'comentario': _p.comentario,
+                            'metadata': _p.metadata or {},
+                        } for _p in _j_old.premios.all()]
+                        _jugadas_antes.append({
+                            'jugada_id': _j_old.id,
+                            'numero': _j_old.numero,
+                            'forma': _j_old.forma_juego.nombre if _j_old.forma_juego else '',
+                            'sorteo_id': _j_old.sorteo_id,
+                            'sorteo': _j_old.sorteo.nombre if _j_old.sorteo else '',
+                            'fecha_sorteo': _j_old.fecha_sorteo.isoformat() if _j_old.fecha_sorteo else None,
+                            'monto': str(_j_old.monto),
+                            'estado': _j_old.estado,
+                            'monto_premio': str(_j_old.monto_premio),
+                            'metadata': _j_old.metadata or {},
+                            'premios': _premios_old,
+                        })
+                    _historial_edicion = {
+                        'fecha': timezone.now().isoformat(),
+                        'usuario': usuario.username,
+                        'total_anterior': str(total_original_edicion),
+                        'forma_pago_id_anterior': orig.forma_pago_id,
+                        'fecha_sorteo_anterior': orig.fecha_sorteo.isoformat() if orig.fecha_sorteo else None,
+                        'jugadas_antes': _jugadas_antes,
+                    }
+                    orig.metadata.setdefault('historial_ediciones', []).append(_historial_edicion)
+                    orig.save(update_fields=['metadata'])
                     # FIX_REENVIAR_Y_BANCO_EDIT_V1: Revertir premios antes de borrar
                     premios_ant = Premio.objects.filter(jugada__boleta=orig, estado='pagado', cobrado=True)
                     for p in premios_ant:
@@ -2782,6 +2820,21 @@ def _guardar_apuesta_impl(request):
                     'postpago': str(_valores_pago['postpago']),
                     'total': str(total_apostado),
                 }
+                if es_solo_editar:
+                    _historial_edicion = boleta.metadata.get('historial_ediciones', [])
+                    if _historial_edicion:
+                        _historial_edicion[-1]['total_nuevo'] = str(total_apostado)
+                        _historial_edicion[-1]['diferencia_fondo'] = str(diferencia_edicion)
+                        _historial_edicion[-1]['pago_nuevo'] = dict(boleta.metadata['pago'])
+                        _historial_edicion[-1]['jugadas_despues'] = [{
+                            'numero': _j_new.numero,
+                            'forma': _j_new.forma_juego.nombre if _j_new.forma_juego else '',
+                            'sorteo_id': _j_new.sorteo_id,
+                            'sorteo': _j_new.sorteo.nombre if _j_new.sorteo else '',
+                            'monto': str(_j_new.monto),
+                            'estado': _j_new.estado,
+                        } for _j_new in boleta.jugadas.select_related('forma_juego', 'sorteo').all()]
+                        boleta.metadata['historial_ediciones'] = _historial_edicion
                 boleta.save(update_fields=['metadata'])
                 # Editar borró y reconstruyó las jugadas; recalcular los totales
                 # de la misma boleta antes de salir de la transacción.
