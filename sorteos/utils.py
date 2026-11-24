@@ -23,6 +23,10 @@ MAPA_DIAS = {
     'sunday': 'domingo',
 }
 
+DIAS_SEMANA_ES = (
+    'lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado', 'domingo',
+)
+
 
 def _ahora_local():
     """Ahora, aware, en hora Cuba (America/Havana)."""
@@ -50,7 +54,7 @@ def obtener_hora_desde_horarios(sorteo, fecha=None):
         return None
 
     fecha = _fecha_local(fecha)
-    dia_es = MAPA_DIAS.get(fecha.strftime('%A').lower())
+    dia_es = DIAS_SEMANA_ES[fecha.weekday()]
     if not dia_es:
         return None
 
