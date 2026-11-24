@@ -68,10 +68,10 @@ def obtener_hora_desde_horarios(sorteo, fecha=None):
 
 
 def get_hora_salida(sorteo, fecha=None):
-    """Hora de salida efectiva. Prioridad: hora_salida manual > horarios[día][temp] > None."""
-    if sorteo.hora_salida:
-        return sorteo.hora_salida
-    return obtener_hora_desde_horarios(sorteo, fecha)
+    """La programación oficial semanal prevalece sobre la hora manual."""
+    if sorteo.horarios:
+        return obtener_hora_desde_horarios(sorteo, fecha)
+    return sorteo.hora_salida
 
 
 def get_hora_cierre(sorteo, fecha=None):
