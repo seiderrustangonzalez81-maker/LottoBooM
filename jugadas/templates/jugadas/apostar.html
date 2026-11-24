@@ -1,55 +1,11 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block page_title %}🎲 Apostar
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Georgia fecha efectiva: usa la hora calendario de Cuba, no el UTC del navegador.
-    const sorteoSelect = document.querySelector('select[name="sorteo"]') || document.getElementById('id_sorteo');
-    const fechaInput = document.querySelector('input[name="fecha_sorteo"]') || document.querySelector('input[name="fecha"]') || document.getElementById('id_fecha_sorteo');
+{% block page_title %}🎲 Apostar{% endblock %}
+{% block page_subtitle %}Registra jugadas para tus clientes{% endblock %}
 
-    function fechaCubaGeorgia() {
-        const parts = new Intl.DateTimeFormat('en-CA', {
-            timeZone: 'America/Havana', year: 'numeric', month: '2-digit', day: '2-digit',
-            hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23'
-        }).formatToParts(new Date()).reduce((acc, p) => {
-            if (p.type !== 'literal') acc[p.type] = p.value;
-            return acc;
-        }, {});
-        const hoy = parts.year + '-' + parts.month + '-' + parts.day;
-        const hora = Number(parts.hour), minuto = Number(parts.minute);
-        // 00:00–00:26: ciclo del día Cuba. 00:27–01:00: cerrado (fecha no se desplaza).
-        // Desde 01:01 hasta el final del día: próximo ciclo, fecha siguiente.
-        if (hora === 0 && minuto <= 26) return hoy;
-        if ((hora === 0 && minuto >= 27) || (hora === 1 && minuto <= 0)) return hoy;
-        const d = new Date(hoy + 'T12:00:00Z');
-        d.setUTCDate(d.getUTCDate() + 1);
-        return d.toISOString().slice(0, 10);
-    }
-
-    function esGeorgiaSeleccionada() {
-        if (!sorteoSelect) return false;
-        const option = sorteoSelect.options[sorteoSelect.selectedIndex];
-        return !!option && /georgia/i.test(option.text || option.label || '');
-    }
-
-    function sincronizarFechaGeorgia() {
-        if (!fechaInput || !esGeorgiaSeleccionada()) return;
-        const fecha = fechaCubaGeorgia();
-        fechaInput.value = fecha;
-        if (fechaInput._flatpickr) fechaInput._flatpickr.setDate(fecha, true);
-        fechaInput.dispatchEvent(new Event('change', {bubbles: true}));
-    }
-
-    if (sorteoSelect && fechaInput) {
-        sorteoSelect.addEventListener('change', sincronizarFechaGeorgia);
-        sincronizarFechaGeorgia();
-    }
-});
-</script>
-
-
-/* FIX_RESALTADO_LINEAS_V1 */
+{% block extra_css %}
+<style>
 .proc-mirror-wrap{ position:relative; width:100%; }
 .proc-mirror{
   position:absolute; inset:0; pointer-events:none;
@@ -63,11 +19,6 @@ document.addEventListener('DOMContentLoaded', function() {
 .proc-mirror .ln-err{ color:#b91c1c; background:rgba(220,38,38,.10); border-radius:4px; } 
 .proc-mirror .proc-token-err{color:#fff;background:#dc2626;font-weight:900;border-radius:3px;padding:0 2px;}
 
-{% endblock %}
-{% block page_subtitle %}Registra jugadas para tus clientes{% endblock %}
-
-{% block extra_css %}
-<style>
   :root{
     --v-50:#f0fdf4; --v-100:#dcfce7; --v-200:#bbf7d0; --v-300:#86efac;
     --v-400:#4ade80; --v-500:#22c55e; --v-600:#16a34a; --v-700:#15803d;
@@ -2781,6 +2732,51 @@ D 8 1 5 con 50f y 20c" style="width:100%;padding:10px;border:1.5px solid #fdba74
 {% endblock %}
 
 {% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Georgia fecha efectiva: usa la hora calendario de Cuba, no el UTC del navegador.
+    const sorteoSelect = document.querySelector('select[name="sorteo"]') || document.getElementById('id_sorteo');
+    const fechaInput = document.querySelector('input[name="fecha_sorteo"]') || document.querySelector('input[name="fecha"]') || document.getElementById('id_fecha_sorteo');
+
+    function fechaCubaGeorgia() {
+        const parts = new Intl.DateTimeFormat('en-CA', {
+            timeZone: 'America/Havana', year: 'numeric', month: '2-digit', day: '2-digit',
+            hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23'
+        }).formatToParts(new Date()).reduce((acc, p) => {
+            if (p.type !== 'literal') acc[p.type] = p.value;
+            return acc;
+        }, {});
+        const hoy = parts.year + '-' + parts.month + '-' + parts.day;
+        const hora = Number(parts.hour), minuto = Number(parts.minute);
+        // 00:00–00:26: ciclo del día Cuba. 00:27–01:00: cerrado (fecha no se desplaza).
+        // Desde 01:01 hasta el final del día: próximo ciclo, fecha siguiente.
+        if (hora === 0 && minuto <= 26) return hoy;
+        if ((hora === 0 && minuto >= 27) || (hora === 1 && minuto <= 0)) return hoy;
+        const d = new Date(hoy + 'T12:00:00Z');
+        d.setUTCDate(d.getUTCDate() + 1);
+        return d.toISOString().slice(0, 10);
+    }
+
+    function esGeorgiaSeleccionada() {
+        if (!sorteoSelect) return false;
+        const option = sorteoSelect.options[sorteoSelect.selectedIndex];
+        return !!option && /georgia/i.test(option.text || option.label || '');
+    }
+
+    function sincronizarFechaGeorgia() {
+        if (!fechaInput || !esGeorgiaSeleccionada()) return;
+        const fecha = fechaCubaGeorgia();
+        fechaInput.value = fecha;
+        if (fechaInput._flatpickr) fechaInput._flatpickr.setDate(fecha, true);
+        fechaInput.dispatchEvent(new Event('change', {bubbles: true}));
+    }
+
+    if (sorteoSelect && fechaInput) {
+        sorteoSelect.addEventListener('change', sincronizarFechaGeorgia);
+        sincronizarFechaGeorgia();
+    }
+});
+</script>
 <script src="{% static 'js/apostar_text_validator.js' %}?v=20261121a"></script>
 <script src="{% static 'js/apostar_tripleta.js' %}?v=20261121a"></script>
 <script src="{% static 'js/apostar_table_validation.js' %}?v=20261121a"></script>
