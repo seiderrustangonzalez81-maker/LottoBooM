@@ -39,7 +39,7 @@ URL_QUINIELON = "https://enloteria.com/resultados-el-quinielon-dia-hoy"
 ARCHIVO_JSON = "resultados.json"
 
 
-# Matriz maestra de los sorteos que la aplicación espera (51 nombres).
+# Matriz maestra de los sorteos que la aplicación espera (54 nombres).
 # Se usa para auditar cobertura: no bloquea la publicación de resultados parciales.
 SORTEOS_ESPERADOS = [
     "Anguila 8 AM", "Anguila 9 AM", "Haití 1", "Anguila 10 AM",
@@ -475,7 +475,10 @@ def informar_cobertura(resultados):
     # Auditoría separada: identifica los sorteos estadounidenses que sí están
     # configurados explícitamente en LotteryUSA. La lista de matriz no sustituye
     # esta configuración y así se evita asumir que un nombre ya se está scrapeando.
-    configurados = {normalizar_nombre(n).casefold() for n in URLS_MULTI}
+    configurados = {
+        normalizar_nombre(canonizar_nombre_sorteo(n)).casefold()
+        for n in URLS_MULTI
+    }
     usa_esperados = [n for n in SORTEOS_ESPERADOS if any(n.startswith(e) for e in ZONAS_ESTADOS)]
     sin_config = [n for n in usa_esperados if normalizar_nombre(n).casefold() not in configurados]
     print(f"Sorteos USA esperados con configuración directa: {len(usa_esperados)-len(sin_config)}/{len(usa_esperados)}")
