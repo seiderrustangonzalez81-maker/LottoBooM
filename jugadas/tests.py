@@ -242,6 +242,34 @@ class ApostarViewTest(TestCase):
         fondo = Fondo.objects.get(usuario=self.user, forma_pago=self.forma_pago, asignado_por=self.comercial)
         self.assertEqual(fondo.monto, Decimal('450.00'))
 
+        # Aumento sin fondos: rechaza y conserva íntegramente boleta/saldo.
+        items_sin_saldo = [{'tipo':'pick2','numero':'23','monto':'600.00','sorteo_id':self.sorteo.id}]
+        raw_sin_saldo = [{
+            'sorteo_id':self.sorteo.id,
+            'tablas':{'tabla-tradicional':{'kind':'multi','forms':['pick2'],
+                'rows':[{'num':'23','montos':{'pick2':'600.00'}}]}}
+        }]
+        response_insuficiente = self.client.post(reverse('jugadas:guardar_apuesta'), {
+            'fecha': timezone.localdate().isoformat(),
+            'cliente_id': str(self.user.id),
+            'destinatario_id': str(self.comercial.id),
+            'forma_pago': str(self.forma_pago.id),
+            'carrito_data': json.dumps(items_sin_saldo),
+            'superparlet_data': '[]',
+            'sorteos': json.dumps([self.sorteo.id]),
+            'superparlet_sorteos': '[]',
+            'tabla_rows': json.dumps(raw_sin_saldo),
+            'modo_edicion': 'editar_boleta',
+            'boleta_origen_id': str(ticket.id),
+            'modo_operacion': 'editar',
+        })
+        self.assertEqual(response_insuficiente.status_code, 400)
+        ticket.refresh_from_db()
+        fondo.refresh_from_db()
+        self.assertEqual(ticket.monto_total, Decimal('50.00'))
+        self.assertEqual(fondo.monto, Decimal('450.00'))
+        self.assertEqual(ticket.jugadas.count(), 1)
+
         # Editar aumento: misma boleta, diferencia descontada del Fondo.
         ticket_id = ticket.id
         ref_original = ticket.referencia
