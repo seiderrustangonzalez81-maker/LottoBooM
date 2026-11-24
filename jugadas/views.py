@@ -2702,7 +2702,21 @@ def _guardar_apuesta_impl(request):
                         _valores_pago[_key_pago] = Decimal(str(_pago_edit.get(_key_pago, '0.00')))
                     except (InvalidOperation, ValueError, TypeError):
                         _valores_pago[_key_pago] = Decimal('0.00')
+                for _key_pago in _keys_pago:
+                    if _valores_pago[_key_pago] < 0:
+                        _valores_pago[_key_pago] = Decimal('0.00')
                 _suma_pago_edit = sum(_valores_pago.values(), Decimal('0.00'))
+                if _suma_pago_edit > 0 and _suma_pago_edit != total_original_edicion:
+                    _factor_pago_orig = total_original_edicion / _suma_pago_edit
+                    for _key_pago in _keys_pago:
+                        _valores_pago[_key_pago] = (
+                            _valores_pago[_key_pago] * _factor_pago_orig
+                        ).quantize(Decimal('0.01'))
+                    _residuo_pago_orig = total_original_edicion - sum(
+                        _valores_pago.values(), Decimal('0.00')
+                    )
+                    _valores_pago['fondo'] += _residuo_pago_orig
+                    _suma_pago_edit = total_original_edicion
                 if _suma_pago_edit <= 0:
                     _valores_pago = {
                         'fondo': total_apostado,
