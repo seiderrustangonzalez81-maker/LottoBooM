@@ -1,6 +1,6 @@
 import ast
 import unittest
-from datetime import datetime, date, time, timedelta
+from datetime import datetime, date, time, timedelta, timezone as datetime_timezone
 from zoneinfo import ZoneInfo
 from pathlib import Path
 from types import SimpleNamespace
@@ -34,6 +34,7 @@ def build_helper(now, draws):
         "time": time,
         "datetime": datetime,
         "timedelta": timedelta,
+        "datetime_timezone": datetime_timezone,
         "Sorteo": SimpleNamespace(objects=DrawManager(draws)),
         "logger": Mock(),
     }
