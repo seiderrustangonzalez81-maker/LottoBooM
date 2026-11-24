@@ -72,7 +72,7 @@ def _hora_salida_hoy(sorteo, hoy):
 
 
 def _calcular_estado(sorteo, hora_salida, ahora):
-    minutos = sorteo.minutos_cierre if sorteo.minutos_cierre is not None else 60
+    minutos = 10  # Cierre único y obligatorio
     dt_salida = datetime.combine(ahora.date(), hora_salida, tzinfo=_tz_cuba(ahora.date()))
     dt_cierre = dt_salida - timedelta(minutes=minutos)
 
@@ -217,7 +217,7 @@ def api_sorteos_list(request):
             'nombre': s.nombre,
             'origen': s.origen,
             'activo': s.activo,
-            'minutos_cierre': s.minutos_cierre,
+            'minutos_cierre': 10,
             'formas_juego': s.formas_juego or [],
             'formas_juego_nombres': [fj.nombre for fj in _formas_de_sorteo(s)],
             'estado': info['estado'],
