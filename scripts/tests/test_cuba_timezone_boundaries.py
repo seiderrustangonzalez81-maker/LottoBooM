@@ -6,6 +6,7 @@ from datetime import date, datetime, time, timedelta, timezone
 from pathlib import Path
 from types import SimpleNamespace
 from zoneinfo import ZoneInfo
+import tzdata
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "LottoBooM.settings")
 os.environ.setdefault("DEBUG", "true")
@@ -155,6 +156,9 @@ class CubaTimezoneBoundaryIntegrationTests(unittest.TestCase):
         self.assertEqual(_temporada_actual(date(2027, 11, 7)), "Invierno")
         self.assertEqual(DIAS_SEMANA_ES[date(2026, 11, 23).weekday()], "Lunes")
         self.assertEqual(DIAS_SEMANA_ES[date(2026, 11, 29).weekday()], "Domingo")
+
+    def test_tzdata_release_is_iana_2026f_or_later(self):
+        self.assertGreaterEqual(tzdata.IANA_VERSION, "2026f")
 
     def test_usa_draw_zones_use_iana_dst_and_source_mapping(self):
         tree = ast.parse((ROOT / "scraper.py").read_text(encoding="utf-8"))
