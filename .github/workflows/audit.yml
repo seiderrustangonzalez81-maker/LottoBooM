@@ -26,6 +26,11 @@ jobs:
           DEBUG: "true"
           SECRET_KEY: "ci-only-not-a-production-secret"
         run: python scripts/auditar_django_runtime.py
+      - name: Suite Django de jugadas (SQLite de prueba)
+        env:
+          DEBUG: "true"
+          SECRET_KEY: "ci-only-not-a-production-secret"
+        run: python manage.py test jugadas --verbosity 2
       - name: Pruebas del parser de apuestas (Node.js)
         run: node --test scripts/tests/test_apostar_text_validator.js
       - name: Pruebas unitarias de auditoría
