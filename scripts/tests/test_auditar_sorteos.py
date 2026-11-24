@@ -49,7 +49,20 @@ class CubaOverrideTests(unittest.TestCase):
         self.assertFalse(mod.es_verano_cuba(date(2025,1,15)))
         self.assertTrue(mod.es_verano_cuba(date(2025,7,15)))
         self.assertTrue(mod.es_verano_cuba(date(2026,11,1)))
-        self.assertTrue(mod.es_verano_cuba(date(2027,11,7)))
+        self.assertFalse(mod.es_verano_cuba(date(2027,11,7)))
         self.assertFalse(mod.es_verano_cuba(date(2027,11,8)))
+
+    def test_override_uses_exact_utc_transition_instants(self):
+        import importlib.util
+        from datetime import datetime, timezone
+        path=SCRIPT.parents[1]/"LottoBooM"/"utils.py"
+        spec=importlib.util.spec_from_file_location("cuba_utils_exact",path)
+        mod=importlib.util.module_from_spec(spec); spec.loader.exec_module(mod)
+
+        self.assertTrue(mod.es_verano_cuba(datetime(2026,11,1,5,0,tzinfo=timezone.utc)))
+        self.assertTrue(mod.es_verano_cuba(datetime(2027,11,7,4,59,59,tzinfo=timezone.utc)))
+        self.assertFalse(mod.es_verano_cuba(datetime(2027,11,7,5,0,tzinfo=timezone.utc)))
+        self.assertTrue(mod.es_verano_cuba(datetime(2027,11,7,0,59)))
+        self.assertFalse(mod.es_verano_cuba(datetime(2027,11,7,1,0)))
 
 if __name__=="__main__": unittest.main()
