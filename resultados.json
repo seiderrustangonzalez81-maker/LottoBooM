@@ -680,5 +680,25 @@
     ],
     "fecha": "2026-11-24",
     "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Real",
+    "numeros": [
+      "18",
+      "83",
+      "31"
+    ],
+    "fecha": "2026-11-24",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Anguilla 1PM",
+    "numeros": [
+      "65",
+      "22",
+      "26"
+    ],
+    "fecha": "2026-11-24",
+    "fuente": "enloteria"
   }
 ]
