@@ -85,7 +85,7 @@ def _obtener_sorteos_cuba_estricto(incluir_cerrados=False):
             continue
 
         dt_salida = datetime.combine(fecha_cuba, hora_salida).replace(tzinfo=CUBA_TZ)
-        minutos_cierre = s.minutos_cierre if s.minutos_cierre is not None else 10
+        minutos_cierre = 10  # Cierre obligatorio: 10 minutos antes de la salida
         dt_cierre = dt_salida - timedelta(minutes=minutos_cierre)
 
         if ahora_cuba >= dt_salida:
@@ -1954,9 +1954,7 @@ def _guardar_apuesta_impl(request):
                         dt_sal += timedelta(days=1)
 
                     minutos_cierre_chk = (
-                        _sorteo_chk.minutos_cierre
-                        if _sorteo_chk.minutos_cierre is not None
-                        else 10
+                        10
                     )
                     dt_cie = dt_sal - timedelta(minutes=minutos_cierre_chk)
 
