@@ -19,9 +19,11 @@ CUBA_UTC4_DESDE_UTC = datetime(2026, 11, 1, 5, 0, tzinfo=timezone.utc)
 CUBA_UTC4_HASTA_UTC = datetime(2027, 11, 7, 5, 0, tzinfo=timezone.utc)  # límite exclusivo
 CUBA_UTC4 = timezone(timedelta(hours=-4), name="Cuba-UTC-4")
 
-# Hora local oficial usada para calcular la fecha de cada sorteo estadounidense.
-# Tennessee se usa Central (zona de Nashville); Florida se usa Eastern,
-# que es la zona con la que se publican los horarios de los sorteos.
+# Zonas IANA de publicación de la fuente, no offsets fijos ni zona del runner.
+# LotteryUSA publica Florida/NY/NJ/Georgia en Eastern y Tennessee en Central;
+# la lotería oficial de Tennessee muestra sus horarios en CT/ET. Si una fuente
+# futura identifica un sorteo del este de Tennessee en Eastern, debe añadirse
+# una regla explícita por sorteo/fuente, no cambiar el estado por defecto.
 ZONAS_ESTADOS = {
     "Florida": ZoneInfo("America/New_York"),
     "Texas": ZoneInfo("America/Chicago"),
