@@ -2147,7 +2147,7 @@ document.addEventListener('DOMContentLoaded', function() {
     {% if es_modo_reenviar %}
       <i class="fas fa-paper-plane"></i> <span id="editBannerText">Reenviando boleta <strong>{{ edit_boleta_data.referencia }}</strong> — la original se mantiene intacta. Puedes modificar números, montos, sorteos y forma de pago.</span>
     {% else %}
-      <i class="fas fa-edit"></i> <span id="editBannerText">Editando boleta <strong>{{ edit_boleta_data.referencia }}</strong> — al guardar se cancelará la original y se creará una nueva.</span>
+      <i class="fas fa-edit"></i> <span id="editBannerText">Editando boleta <strong>{{ edit_boleta_data.referencia }}</strong> — al guardar se reemplazarán sus jugadas y se ajustará el fondo por la diferencia.</span>
     {% endif %}
   </div>
   {% elif edit_mode %}
