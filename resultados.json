@@ -776,5 +776,29 @@
     ],
     "fecha": "2026-11-24",
     "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Texas 1:20 PM",
+    "fecha": "2026-11-24",
+    "fuente": "lotteryusa",
+    "pick2": "",
+    "pick3": "830",
+    "pick4": "",
+    "pick5": "",
+    "fijo": "30",
+    "corrido_1": "",
+    "corrido_2": ""
+  },
+  {
+    "sorteo_nombre": "Tennessee 1:20 PM",
+    "fecha": "2026-11-24",
+    "fuente": "lotteryusa",
+    "pick2": "",
+    "pick3": "238",
+    "pick4": "6975",
+    "pick5": "",
+    "fijo": "38",
+    "corrido_1": "69",
+    "corrido_2": "75"
   }
 ]
