@@ -200,6 +200,15 @@ test('live processor semáforo disables red/amber and enables green only when co
   assert.equal(missingTab.button.disabled,true);
   assert.match(missingTab.button.style.background,/#dc2626/);
   assert.match(missingTab.errorBox.innerHTML,/no tiene la pestaña tabla-pick3/);
+
+  const badCandado=uiHarness('13 14 15 parlet 10 candado 29',[1],true);
+  assert.equal(badCandado.button.disabled,true);
+  assert.match(badCandado.button.style.background,/#dc2626/);
+  assert.match(badCandado.errorBox.innerHTML,/Candado debe coincidir/);
+
+  const validCandado=uiHarness('13 14 15 parlet 10 candado 30',[1],true);
+  assert.equal(validCandado.button.disabled,false);
+  assert.match(validCandado.button.style.background,/#16a34a/);
 });
 test('replicate and process checkboxes stay mutually exclusive',()=>{
   const chkRep={checked:false,disabled:false,dataset:{},handlers:{},addEventListener(type,fn){this.handlers[type]=fn;}};
@@ -463,7 +472,7 @@ test('rejects four-digit tokens from being misrouted to traditional',()=>{
 
 
 test('stress audit: user-provided 24-line mixed-modality wager reports each line without silent loss',()=>{
-  const input="T7 con 25\nD8 con 50\n12 34 56 con 10f\n12 con 10f 20c\n07 70 con 20c\n12x34 56x78 con 10p\n13 14 15 candado 30\n123 456 con 20\n1234 5678 con 30\n12345 con 40\n12 34 vs 56 78 con 10\nT7 vspf D3 con 20\n12 vspick2 34 con 10\n12 34 pick2vspf 56 con 10\n12 34 vs100 con 5\npos 2 12 34 56 con 20\n12 34 56 tripleta con 10\n123 456 centenas con 20\n40V con 15f\nPA con 15\n12 con 5p\n34 56 con\nhola mundo\n8 9 10 con 100f";
+  const input="T7 con 25\nD8 con 50\n12 34 56 con 10f\n12 con 10f 20c\n07 70 con 20c\n12x34 56x78 con 10p\n13 14 15 parlet 10 candado 30\n123 456 con 20\n1234 5678 con 30\n12345 con 40\n12 34 vs 56 78 con 10\nT7 vspf D3 con 20\n12 vspick2 34 con 10\n12 34 pick2vspf 56 con 10\n12 34 vs100 con 5\npos 2 12 34 56 con 20\n12 34 56 tripleta con 10\n123 456 centenas con 20\n40V con 15f\nPA con 15\n12 con 5p\n34 56 con\nhola mundo\n8 9 10 con 100f";
   const result=run(input);
   const lineStatuses=input.split(/\r?\n/).map((line,index)=>({line:index+1,text:line,status:result.errors.some(e=>e.line===index+1)?'PARSER_ERROR':'PARSER_VALID',errors:result.errors.filter(e=>e.line===index+1).map(e=>e.message)}));
   console.log('[STRESS 24 LINES] '+JSON.stringify({ok:result.ok,errorCount:result.errors.length,rowCount:result.rows.length,rowsByTable:result.rows.reduce((acc,row)=>{acc[row.tabla]=(acc[row.tabla]||0)+1;return acc;},{}),lines:lineStatuses}));
@@ -488,7 +497,7 @@ test('three-digit wager auto-routes to Pick3 and is accepted only when that dest
 
 
 test('complete valid multi-tab wager parses with all target modalities present',()=>{
-  const input="T7 con 25\nD8 con 50\n12 34 56 con 10f\n12 con 10f 20c\n07 70 con 20c\n12x34 56x78 con 10\n13 14 15 candado 30\n123 456 con 20\npick4 1234 5678 con 30\npick5 12345 67890 con 40\n12 34 vs 56 78 con 10\nT7 vspf D3 con 20\n12 vspick2 34 con 10\n12 34 pick2vspf 56 con 10\n12 34 vs100 con 5\npos 2 12 34 56 con 20\n12 34 56 tripleta con 10\n123 456 centenas corridas con 20\n40V con 15f\nPA con 15";
+  const input="T7 con 25\nD8 con 50\n12 34 56 con 10f\n12 con 10f 20c\n07 70 con 20c\n12x34 56x78 con 10\n13 14 15 parlet 10 candado 30\n123 456 con 20\npick4 1234 5678 con 30\npick5 12345 67890 con 40\n12 34 vs 56 78 con 10\nT7 vspf D3 con 20\n12 vspick2 34 con 10\n12 34 pick2vspf 56 con 10\n12 34 vs100 con 5\npos 2 12 34 56 con 20\n12 34 56 tripleta con 10\n123 456 centenas corridas con 20\n40V con 15f\nPA con 15";
   const result=run(input);
   assert.equal(result.ok,true,JSON.stringify(result.errors));
   const tables=result.rows.reduce((acc,row)=>{acc[row.tabla]=(acc[row.tabla]||0)+1;return acc;},{});
