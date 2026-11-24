@@ -2854,9 +2854,18 @@ def _guardar_apuesta_impl(request):
             logger.warning(f'[resumen] calculo saldos finales: {_eS}')
 
         if boleta:
-            mensaje = f'✅ Boleta {boleta.referencia} guardada ({len(jugadas_creadas)} jugadas)'
+            if es_solo_editar:
+                if diferencia_edicion > 0:
+                    _mensaje_ajuste = 'Fondo descontado: ' + str(diferencia_edicion)
+                elif diferencia_edicion < 0:
+                    _mensaje_ajuste = 'Reintegrado al Fondo: ' + str(abs(diferencia_edicion))
+                else:
+                    _mensaje_ajuste = 'sin cambio en el Fondo'
+                mensaje = f'Boleta {boleta.referencia} editada ({len(jugadas_creadas)} jugadas); ' + _mensaje_ajuste
+            else:
+                mensaje = f'Boleta {boleta.referencia} guardada ({len(jugadas_creadas)} jugadas)'
         else:
-            mensaje = f'✅ Apuesta guardada ({len(jugadas_creadas)} jugadas)'
+            mensaje = f'Apuesta guardada ({len(jugadas_creadas)} jugadas)'
 
         # Serializar jugadas para el preview (usado en dry_run)
         preview_jugadas = []
@@ -2868,7 +2877,8 @@ def _guardar_apuesta_impl(request):
                 'monto': float(_j.monto),
             })
         _items_originales = len(items_normales) + len(items_super)
-        _descartadas = max(0, _items_originales - len(jugadas_creadas))
+        # Éxito es atómico; el conteo item→Jugada no es 1:1 (expansiones/tripletas).
+        _descartadas = 0
 
         # FIX_CASCADE_V1: recomputar cuadres si hubo jugadas retroactivas
         try:
@@ -2885,6 +2895,13 @@ def _guardar_apuesta_impl(request):
             'boleta_id': boleta.id if boleta else None,
             'boleta_referencia': boleta.referencia if boleta else None,
             'advertencias': advertencias,
+            'ajuste_edicion': ({
+                'total_anterior': float(total_original_edicion),
+                'total_nuevo': float(total_apostado),
+                'diferencia': float(diferencia_edicion),
+                'fondo_antes': float(saldo_antes_edicion) if saldo_antes_edicion is not None else None,
+                'fondo_despues': float(saldo_despues_edicion) if saldo_despues_edicion is not None else None,
+            } if es_solo_editar else None),
             'preview': {
                 'jugadas': preview_jugadas,
                 'total': float(total_apostado),
