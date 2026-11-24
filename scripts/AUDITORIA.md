@@ -75,3 +75,11 @@ No se corrigen horarios oficiales sin verificar ni se eliminan sorteos como Real
 
 La rama se comparó con `main` sin rebase/merge: estaba 399 commits ahead y 153 behind al snapshot. PR #2 sigue abierto en Draft y no mergeado. No se desplegó ni se usó DB de producción.  
 **Listo para prueba práctica controlada de Apostar, no para producción.** Pendiente: navegador móvil real, payload/endpoint en DB aislada y riesgos H/I/J indicados arriba. La preparación manual debe verificar cliente/gestor, forma de pago, un sorteo y varios, Replicar, cada modalidad, error rojo, prerequisito ámbar, verde, reemplazo cancelar/confirmar, borrar/restaurar borrador y totales antes de enviar solo al entorno de prueba.
+
+
+### Actualización de cobertura — Candado y semáforo (2026-11-24)
+
+- Se detectó que una muestra de prueba y la documentación presentaban Candado como si pudiera usarse solo, aunque la validación de filas exige Parlet activo y Candado = Parlet × número de combinaciones.
+- Se corrigió la muestra de estrés y el ejemplo documentado: `13 14 15 parlet 10 candado 30` (tres pares) y `12 34 56 parlet 2 candado 6`.
+- Se añadieron regresiones de UI en vivo: Candado desajustado mantiene el semáforo rojo/deshabilitado; el importe espejo correcto permite verde. La validación existente bloquea el envío y la prevalidación de destinos bloquea Procesar.
+- CI #720 del commit `fb9dadd`: SUCCESS (63 Node, 84 Python unittest, 24 JS, 35 Django). CI #721 del commit de documentación `a60e4d3`: SUCCESS.
