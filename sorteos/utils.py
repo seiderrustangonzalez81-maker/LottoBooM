@@ -79,7 +79,7 @@ def get_hora_cierre(sorteo, fecha=None):
     hora_salida = get_hora_salida(sorteo, fecha)
     if not hora_salida:
         return None
-    minutos = sorteo.minutos_cierre if sorteo.minutos_cierre is not None else 60
+    minutos = 10  # Regla operativa fija: cerrar exactamente 10 minutos antes
     salida_dt = datetime.combine(fecha, hora_salida).replace(tzinfo=_tz_cuba(fecha))
     return salida_dt - timedelta(minutes=minutos)
 
@@ -124,7 +124,7 @@ def calcular_estado_sorteo(sorteo, ahora=None, fecha_consulta=None):
         sorteo.hora_salida_str = '—'
         return sorteo
 
-    minutos_cierre = sorteo.minutos_cierre if sorteo.minutos_cierre is not None else 60
+    minutos_cierre = 10  # Regla operativa fija: cerrar exactamente 10 minutos antes
 
     dt_salida = datetime.combine(fecha_consulta, hora_salida).replace(tzinfo=_tz_cuba(fecha_consulta))
     dt_cierre = dt_salida - timedelta(minutes=minutos_cierre)
