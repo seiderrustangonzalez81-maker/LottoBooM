@@ -306,6 +306,38 @@ class ApostarViewTest(TestCase):
         self.assertEqual(ticket.metadata['historial_ediciones'][0]['total_nuevo'], '75.00')
         self.assertEqual(ticket.metadata['historial_ediciones'][1]['total_nuevo'], '40.00')
 
+        # Reenviar: crea boleta/cobro nuevos y no altera la original.
+        items_reenvio = [{'tipo':'pick2','numero':'23','monto':'40.00','sorteo_id':self.sorteo.id}]
+        raw_reenvio = [{
+            'sorteo_id':self.sorteo.id,
+            'tablas':{'tabla-tradicional':{'kind':'multi','forms':['pick2'],
+                'rows':[{'num':'23','montos':{'pick2':'40.00'}}]}}
+        }]
+        response_reenvio = self.client.post(reverse('jugadas:guardar_apuesta'), {
+            'fecha': timezone.localdate().isoformat(),
+            'cliente_id': str(self.user.id),
+            'destinatario_id': str(self.comercial.id),
+            'forma_pago': str(self.forma_pago.id),
+            'carrito_data': json.dumps(items_reenvio),
+            'superparlet_data': '[]',
+            'sorteos': json.dumps([self.sorteo.id]),
+            'superparlet_sorteos': '[]',
+            'tabla_rows': json.dumps(raw_reenvio),
+            'modo_edicion': 'editar_boleta',
+            'boleta_origen_id': str(ticket_id),
+            'modo_operacion': 'reenviar',
+        })
+        self.assertEqual(response_reenvio.status_code, 200, response_reenvio.content)
+        self.assertTrue(response_reenvio.json().get('success'), response_reenvio.json())
+        ticket.refresh_from_db()
+        fondo.refresh_from_db()
+        self.assertEqual(Boleta.objects.count(), 2)
+        self.assertEqual(ticket.monto_total, Decimal('40.00'))
+        ticket_nueva = Boleta.objects.exclude(id=ticket_id).get()
+        self.assertEqual(ticket_nueva.monto_total, Decimal('40.00'))
+        self.assertEqual(ticket_nueva.metadata['boleta_origen_id'], ticket_id)
+        self.assertEqual(fondo.monto, Decimal('420.00'))
+
     @patch('jugadas.views._puede_apostar_segun_estado_sorteo', return_value=True)
     @patch('jugadas.views.get_pool_gestor', return_value=Decimal('1000.00'))
     def test_guardar_apuesta_invalid_line_aborts_whole_payload(self, _pool, _draw_open):
