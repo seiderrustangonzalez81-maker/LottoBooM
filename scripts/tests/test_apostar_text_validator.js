@@ -553,3 +553,44 @@ test('text processing replaces only the destination table and preserves unrelate
   assert.deepEqual(draws['1'].tablasActivas['tabla-pick3'].rows,oldPick3);
   assert.equal(h.confirmCount(),1);
 });
+
+
+test('Georgia Cuba clock override uses exact UTC boundaries despite stale device tzdata',()=>{
+  const from=template.indexOf('function fechaCubaParts(');
+  const to=template.indexOf('function fechaCubaGeorgia()',from);
+  assert.ok(from>=0&&to>from,'Cuba clock helper must be present in Apostar');
+  const start=Date.UTC(2026,10,1,5,0,0);
+  const end=Date.UTC(2027,10,7,5,0,0);
+  const staleIntl={
+    DateTimeFormat:()=>({
+      formatToParts(date){
+        const offset=date.getTime()<start?-4:-5;
+        const local=new Date(date.getTime()+offset*3600000);
+        return [
+          {type:'year',value:String(local.getUTCFullYear()).padStart(4,'0')},
+          {type:'month',value:String(local.getUTCMonth()+1).padStart(2,'0')},
+          {type:'day',value:String(local.getUTCDate()).padStart(2,'0')},
+          {type:'hour',value:String(local.getUTCHours()).padStart(2,'0')},
+          {type:'minute',value:String(local.getUTCMinutes()).padStart(2,'0')},
+          {type:'second',value:String(local.getUTCSeconds()).padStart(2,'0')}
+        ];
+      }
+    })
+  };
+  const sandbox={Date,Intl:staleIntl};
+  vm.runInNewContext(template.slice(from,to)+';this.parts=fechaCubaParts;',sandbox);
+  const partsAt=iso=>sandbox.parts(new Date(iso));
+  const beforeStart=partsAt('2026-11-01T04:59:59Z');
+  assert.equal(beforeStart.hour,'00');
+  assert.equal(beforeStart.minute,'59');
+  const atStart=partsAt('2026-11-01T05:00:00Z');
+  assert.equal(atStart.hour,'01');
+  assert.equal(atStart.day,'01');
+  const beforeEnd=partsAt('2027-11-07T04:59:59Z');
+  assert.equal(beforeEnd.hour,'00');
+  assert.equal(beforeEnd.minute,'59');
+  const atEnd=partsAt('2027-11-07T05:00:00Z');
+  assert.equal(atEnd.hour,'00');
+  assert.equal(atEnd.minute,'00');
+  assert.equal(atEnd.day,'07');
+});
