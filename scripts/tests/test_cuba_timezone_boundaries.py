@@ -1,6 +1,7 @@
 import ast
 import os
 import unittest
+from unittest.mock import patch
 from datetime import date, datetime, time, timedelta, timezone
 from pathlib import Path
 from types import SimpleNamespace
@@ -14,7 +15,11 @@ django.setup()
 
 from LottoBooM.utils import CUBA_UTC4_START_UTC, CUBA_UTC4_END_UTC, es_verano_cuba
 from jugadas.views import _zona_horaria_cuba
-from sorteos.utils import _tz_cuba, calcular_estado_sorteo, get_proximo_datetime_sorteo
+from sorteos.utils import (
+    _tz_cuba, calcular_estado_sorteo, get_proximo_datetime_sorteo,
+    obtener_hora_desde_horarios,
+)
+from sorteos.views import DIAS_SEMANA_ES, _temporada_actual
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -120,6 +125,36 @@ class CubaTimezoneBoundaryIntegrationTests(unittest.TestCase):
                 namespace["obtener_hora_cuba"](instant).utcoffset(),
                 timedelta(hours=hours),
             )
+
+
+    def test_weekday_selection_is_locale_independent(self):
+        class WeekdayOnly:
+            def __init__(self, weekday):
+                self._weekday = weekday
+
+            def weekday(self):
+                return self._weekday
+
+            def strftime(self, *_args, **_kwargs):
+                raise AssertionError("No debe consultarse el nombre del día mediante locale")
+
+        days = ("lunes", "martes", "miercoles", "jueves", "viernes", "sabado", "domingo")
+        horarios = {"verano": {day: f"{8 + index:02d}:00" for index, day in enumerate(days)}}
+        draw = SimpleNamespace(horarios=horarios, hora_salida=None)
+
+        with patch("sorteos.utils._temporada", return_value="verano"):
+            for weekday in range(7):
+                with self.subTest(weekday=weekday):
+                    self.assertEqual(
+                        obtener_hora_desde_horarios(draw, WeekdayOnly(weekday)),
+                        time(8 + weekday, 0),
+                    )
+
+    def test_view_season_and_weekday_use_shared_cuba_calendar(self):
+        self.assertEqual(_temporada_actual(date(2026, 11, 24)), "Verano")
+        self.assertEqual(_temporada_actual(date(2027, 11, 7)), "Invierno")
+        self.assertEqual(DIAS_SEMANA_ES[date(2026, 11, 23).weekday()], "Lunes")
+        self.assertEqual(DIAS_SEMANA_ES[date(2026, 11, 29).weekday()], "Domingo")
 
 
 if __name__ == "__main__":
