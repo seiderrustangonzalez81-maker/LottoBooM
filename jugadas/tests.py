@@ -36,8 +36,7 @@ class JugadasModelTest(TestCase):
         self.destinatario = User.objects.create_user(username='comercial', password='testpass123')
         self.sorteo = Sorteo.objects.create(
             nombre='La Primera',
-            activo=True,
-            fecha=timezone.now().date()
+            activo=True
         )
         self.forma_juego = FormaJuego.objects.create(
             nombre='Tradicional',
@@ -107,8 +106,9 @@ class ApostarViewTest(TestCase):
         self.sorteo = Sorteo.objects.create(
             nombre='La Primera',
             activo=True,
-            fecha=timezone.now().date(),
-            hora_cierre='23:59'
+            hora_salida='23:59',
+            minutos_cierre=0,
+            formas_juego=['pick2', 'pick3', 'pick4', 'parlet', 'candado', 'vs', 'vs100']
         )
 
         # Formas de juego
@@ -368,14 +368,14 @@ class APIViewsTest(TestCase):
         response = self.client.get(reverse('jugadas:api_forma_pago_cliente'), {'cliente_id': self.user.id})
         self.assertEqual(response.status_code, 200)
         data = json.loads(response.content)
-        self.assertIn(self.forma_pago.id, data['formas_pago'])
+        self.assertIn(self.forma_pago.id, [fp['id'] for fp in data['formas_pago']])
 
     def test_api_forma_pago_cliente_sin_id(self):
         self.client.login(username='apiuser', password='testpass123')
         response = self.client.get(reverse('jugadas:api_forma_pago_cliente'))
         self.assertEqual(response.status_code, 200)
         data = json.loads(response.content)
-        self.assertIn(self.forma_pago.id, data['formas_pago'])
+        self.assertEqual(data['formas_pago'], [])
 
 
 @override_settings(STATICFILES_STORAGE='django.contrib.staticfiles.storage.StaticFilesStorage')
@@ -386,7 +386,7 @@ class JugadaProcesarApuestaTest(TestCase):
         self.user = User.objects.create_user(username='procesador', password='testpass123')
         self.autorizador = User.objects.create_user(username='autorizador', password='testpass123')
         Rol.objects.create(usuario=self.autorizador, tipo='banco', activo=True)
-        self.sorteo = Sorteo.objects.create(nombre='Test', activo=True, fecha=timezone.now().date())
+        self.sorteo = Sorteo.objects.create(nombre='Test', activo=True)
         self.forma_juego = FormaJuego.objects.create(nombre='Tradicional', digitos_esperados=2, activo=True)
         self.forma_pago = FormaPago.objects.create(nombre='Efectivo', activo=True)
         self.jugada = Jugada.objects.create(
