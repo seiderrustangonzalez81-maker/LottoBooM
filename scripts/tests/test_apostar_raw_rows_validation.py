@@ -7,11 +7,55 @@ os.environ.setdefault("SECRET_KEY", "ci-only-not-a-production-secret")
 import django
 django.setup()
 
-from jugadas.views import _validar_tablas_crudas_payload, _validar_coincidencia_sorteos_tablas, _validar_items_ids_sorteo, _puede_apostar_segun_estado_sorteo, _reconciliar_desglose_pago_edicion, _validar_identidad_boleta_operacion
+from jugadas.views import _validar_tablas_crudas_payload, _validar_coincidencia_sorteos_tablas, _validar_items_ids_sorteo, _puede_apostar_segun_estado_sorteo, _reconciliar_desglose_pago_edicion, _validar_identidad_boleta_operacion, _snapshot_jugadas_edicion
 
 
 def payload(table, kind, forms, rows, sid="54"):
     return [{"sorteo_id":sid,"tablas":{table:{"kind":kind,"forms":forms,"rows":rows}}}]
+
+
+class TicketEditHistorySnapshotTests(unittest.TestCase):
+    def test_snapshot_preserves_original_line_and_paid_prize_details(self):
+        from types import SimpleNamespace
+        from datetime import datetime, timezone
+        from decimal import Decimal
+        prize = SimpleNamespace(
+            id=71, monto_premio=Decimal('25.00'), estado='pagado', cobrado=True,
+            fecha_pago=datetime(2026, 11, 23, 10, 0, tzinfo=timezone.utc),
+            pagado_por_id=5, comentario='Pago realizado', metadata={'source':'manual'}
+        )
+        form = SimpleNamespace(nombre='pick2')
+        draw = SimpleNamespace(nombre='Florida')
+        line = SimpleNamespace(
+            id=42, numero='07', forma_juego=form, sorteo_id=9, sorteo=draw,
+            fecha_sorteo=datetime(2026, 11, 23).date(), monto=Decimal('2.50'),
+            estado='ganadora', monto_premio=Decimal('25.00'),
+            metadata={'original':{'posicion':'1'}},
+            premios=SimpleNamespace(all=lambda:[prize])
+        )
+        result = _snapshot_jugadas_edicion([line])
+        self.assertEqual(result[0]['jugada_id'], 42)
+        self.assertEqual(result[0]['numero'], '07')
+        self.assertEqual(result[0]['monto'], '2.50')
+        self.assertEqual(result[0]['premios'][0]['id'], 71)
+        self.assertEqual(result[0]['premios'][0]['estado'], 'pagado')
+        self.assertTrue(result[0]['premios'][0]['cobrado'])
+        self.assertEqual(result[0]['premios'][0]['pagado_por_id'], 5)
+        self.assertEqual(result[0]['premios'][0]['metadata'], {'source':'manual'})
+
+    def test_snapshot_handles_lines_without_prizes(self):
+        from types import SimpleNamespace
+        from decimal import Decimal
+        line = SimpleNamespace(
+            id=2, numero='19', forma_juego=None, sorteo_id=None, sorteo=None,
+            fecha_sorteo=None, monto=Decimal('1.00'), estado='confirmada',
+            monto_premio=Decimal('0.00'), metadata={},
+            premios=SimpleNamespace(all=lambda:[])
+        )
+        result = _snapshot_jugadas_edicion([line])
+        self.assertEqual(result[0]['premios'], [])
+        self.assertEqual(result[0]['forma'], '')
+        self.assertIsNone(result[0]['fecha_sorteo'])
 
 
 class TicketIdentityOperationTests(unittest.TestCase):
