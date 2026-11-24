@@ -2781,29 +2781,33 @@ def _guardar_apuesta_impl(request):
                     'bono': monto_bono_consumido,
                     'postpago': monto_postpago_consumido,
                 }
-                _fuentes_asignadas = {'fondo': Decimal('0.00'), 'bono': Decimal('0.00'), 'postpago': Decimal('0.00')}
-                _boletas_con_totales = []
-                for _b_pago in _todas_boletas_nuevas:
-                    _total_b = sum((_j.monto for _j in _b_pago.jugadas.all()), Decimal('0.00'))
-                    _boletas_con_totales.append((_b_pago, _total_b))
-                for _idx_pago, (_b_pago, _total_b) in enumerate(_boletas_con_totales):
-                    if _idx_pago == len(_boletas_con_totales) - 1:
-                        _asignacion = {
-                            _key: _fuentes_totales[_key] - _fuentes_asignadas[_key]
-                            for _key in _fuentes_totales
-                        }
-                    else:
-                        _ratio_pago = _total_b / total_apostado if total_apostado else Decimal('0.00')
-                        _asignacion = {
-                            _key: (_fuentes_totales[_key] * _ratio_pago).quantize(Decimal('0.01'))
-                            for _key in _fuentes_totales
-                        }
-                        _residuo_ticket = _total_b - sum(_asignacion.values(), Decimal('0.00'))
-                        _asignacion['fondo'] += _residuo_ticket
-                    _fuentes_asignadas = {
-                        _key: _fuentes_asignadas[_key] + _asignacion[_key]
-                        for _key in _fuentes_totales
+                _suma_fuentes = sum(_fuentes_totales.values(), Decimal('0.00'))
+                if _suma_fuentes != total_apostado:
+                    raise ValueError(
+                        'El desglose de cobro no coincide con el total apostado. '
+                        'Se canceló la operación para proteger los saldos.'
+                    )
+                _fuentes_restantes = dict(_fuentes_totales)
+                # Distribuir el cobro por ticket en el mismo orden de consumo:
+                # Fondo, bonos y finalmente postpago; no usar prorrateos que
+                # puedan crear diferencias por redondeo.
+                for _b_pago, _total_b in _boletas_con_totales:
+                    _asignacion = {
+                        'fondo': Decimal('0.00'),
+                        'bono': Decimal('0.00'),
+                        'postpago': Decimal('0.00'),
                     }
+                    _pendiente_ticket = _total_b
+                    for _key_pago in ('fondo', 'bono', 'postpago'):
+                        _tomar = min(_fuentes_restantes[_key_pago], _pendiente_ticket)
+                        _asignacion[_key_pago] = _tomar
+                        _fuentes_restantes[_key_pago] -= _tomar
+                        _pendiente_ticket -= _tomar
+                    if _pendiente_ticket != Decimal('0.00'):
+                        raise ValueError(
+                            'No se pudo distribuir el cobro entre las boletas. '
+                            'Se canceló la operación completa.'
+                        )
                     _b_pago.metadata['pago'] = {
                         'fondo': str(_asignacion['fondo']),
                         'bono': str(_asignacion['bono']),
@@ -2811,6 +2815,7 @@ def _guardar_apuesta_impl(request):
                         'total': str(_total_b),
                     }
                     _b_pago.save(update_fields=['metadata'])
+
 
         # ── Calcular saldos finales para el resumen ──
         fondo_final    = Decimal('0.00')
