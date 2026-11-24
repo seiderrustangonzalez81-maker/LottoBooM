@@ -6,6 +6,8 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import Mock
 
+from LottoBooM.utils import es_verano_cuba
+
 VIEWS = Path(__file__).resolve().parents[2] / "jugadas" / "views.py"
 TREE = ast.parse(VIEWS.read_text(encoding="utf-8"))
 NODE = next(n for n in TREE.body if isinstance(n, ast.FunctionDef) and n.name == "_obtener_sorteos_cuba_estricto")
@@ -36,6 +38,26 @@ def build_helper(now, draws):
         "timedelta": timedelta,
         "datetime_timezone": datetime_timezone,
         "_zona_horaria_cuba": lambda fecha: datetime_timezone(timedelta(hours=-5)),
+        "Sorteo": SimpleNamespace(objects=DrawManager(draws)),
+        "logger": Mock(),
+    }
+    exec(compile(ast.Module(body=[NODE], type_ignores=[]), str(VIEWS), "exec"), namespace)
+    return namespace[NODE.name]
+
+
+def build_helper_with_cuba_offsets(now, draws):
+    namespace = {
+        "ZoneInfo": ZoneInfo,
+        "pytz": __import__("pytz"),
+        "timezone": SimpleNamespace(now=lambda: now),
+        "es_verano_cuba": es_verano_cuba,
+        "time": time,
+        "datetime": datetime,
+        "timedelta": timedelta,
+        "datetime_timezone": datetime_timezone,
+        "_zona_horaria_cuba": lambda value: datetime_timezone(
+            timedelta(hours=-4 if es_verano_cuba(value) else -5)
+        ),
         "Sorteo": SimpleNamespace(objects=DrawManager(draws)),
         "logger": Mock(),
     }
@@ -88,6 +110,22 @@ class DrawSelectorCalendarTests(unittest.TestCase):
         missing_day = draw("Unscheduled", None, manual="11:30")
         helper = build_helper(self.now, [missing_day])
         self.assertEqual(helper(incluir_cerrados=True), [])
+
+    def test_transition_day_uses_current_offset_but_winter_offset_for_later_draw(self):
+        now_utc = datetime(2027, 11, 7, 4, 30, tzinfo=datetime_timezone.utc)
+        transition_draw = SimpleNamespace(
+            nombre="Transition Sunday",
+            activo=True,
+            horarios={"invierno": {"domingo": "10:00"}, "verano": {"domingo": "11:00"}},
+            hora_salida=None,
+            minutos_cierre=10,
+        )
+        helper = build_helper_with_cuba_offsets(now_utc, [transition_draw])
+        result = helper(incluir_cerrados=True)
+        self.assertEqual([d.nombre for d in result], ["Transition Sunday"])
+        self.assertEqual(transition_draw.hora_cierre.utcoffset(), timedelta(hours=-5))
+        self.assertEqual(transition_draw.hora_cierre.hour, 9)
+        self.assertEqual(transition_draw.hora_cierre.minute, 50)
 
     def test_default_close_window_is_ten_minutes(self):
         missing_close = draw("Default close", "11:20", close=None)
