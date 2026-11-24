@@ -338,6 +338,48 @@ def _validar_coincidencia_sorteos_tablas(sorteos_ids, tablas_crudas):
     return errores
 
 
+
+def _reconciliar_desglose_pago_edicion(pago_original, total_original, total_nuevo):
+    """Desglose vigente para cancelar/reembolsar una boleta editada."""
+    total_original = Decimal(str(total_original)).quantize(Decimal('0.01'))
+    total_nuevo = Decimal(str(total_nuevo)).quantize(Decimal('0.01'))
+    diferencia = total_nuevo - total_original
+    keys = ('fondo', 'bono', 'postpago')
+    values = {}
+    pago_original = pago_original if isinstance(pago_original, dict) else {}
+    for key in keys:
+        try:
+            value = Decimal(str(pago_original.get(key, '0.00')))
+            if not value.is_finite() or value < 0:
+                value = Decimal('0.00')
+        except (InvalidOperation, ValueError, TypeError):
+            value = Decimal('0.00')
+        values[key] = value.quantize(Decimal('0.01'))
+    paid_total = sum(values.values(), Decimal('0.00'))
+    if paid_total <= 0:
+        values = {'fondo': total_nuevo, 'bono': Decimal('0.00'), 'postpago': Decimal('0.00')}
+    else:
+        if paid_total != total_original:
+            factor_original = total_original / paid_total if total_original else Decimal('0.00')
+            for key in keys:
+                values[key] = (values[key] * factor_original).quantize(Decimal('0.01'))
+            values['fondo'] += total_original - sum(values.values(), Decimal('0.00'))
+        if diferencia > 0:
+            values['fondo'] += diferencia
+        elif diferencia < 0:
+            factor_nuevo = total_nuevo / total_original if total_original else Decimal('0.00')
+            for key in keys:
+                values[key] = (values[key] * factor_nuevo).quantize(Decimal('0.01'))
+            values['fondo'] += total_nuevo - sum(values.values(), Decimal('0.00'))
+    for key in keys:
+        values[key] = values[key].quantize(Decimal('0.01'))
+    values['fondo'] += total_nuevo - sum(values.values(), Decimal('0.00'))
+    if any(values[key] < 0 for key in keys):
+        raise ValueError('Desglose de pago de edición negativo; operación rechazada.')
+    if sum(values.values(), Decimal('0.00')) != total_nuevo:
+        raise ValueError('Desglose de pago no coincide con el total editado.')
+    return values
+
 def _validar_tablas_crudas_payload(tablas_payload):
     """Valida filas originales para que filas con números sin monto no puedan omitirse."""
     errores = []
@@ -2690,54 +2732,12 @@ def _guardar_apuesta_impl(request):
                     'fondo_despues': str(saldo_despues_edicion),
                     'usuario': usuario.username,
                 })
-                # Actualizar desglose de pago para que una futura cancelación
-                # reintegre exactamente el importe de la boleta ya editada.
-                _pago_edit = boleta.metadata.get('pago')
-                if not isinstance(_pago_edit, dict):
-                    _pago_edit = {}
-                _keys_pago = ('fondo', 'bono', 'postpago')
-                _valores_pago = {}
-                for _key_pago in _keys_pago:
-                    try:
-                        _valores_pago[_key_pago] = Decimal(str(_pago_edit.get(_key_pago, '0.00')))
-                    except (InvalidOperation, ValueError, TypeError):
-                        _valores_pago[_key_pago] = Decimal('0.00')
-                for _key_pago in _keys_pago:
-                    if _valores_pago[_key_pago] < 0:
-                        _valores_pago[_key_pago] = Decimal('0.00')
-                _suma_pago_edit = sum(_valores_pago.values(), Decimal('0.00'))
-                if _suma_pago_edit > 0 and _suma_pago_edit != total_original_edicion:
-                    _factor_pago_orig = total_original_edicion / _suma_pago_edit
-                    for _key_pago in _keys_pago:
-                        _valores_pago[_key_pago] = (
-                            _valores_pago[_key_pago] * _factor_pago_orig
-                        ).quantize(Decimal('0.01'))
-                    _residuo_pago_orig = total_original_edicion - sum(
-                        _valores_pago.values(), Decimal('0.00')
-                    )
-                    _valores_pago['fondo'] += _residuo_pago_orig
-                    _suma_pago_edit = total_original_edicion
-                if _suma_pago_edit <= 0:
-                    _valores_pago = {
-                        'fondo': total_apostado,
-                        'bono': Decimal('0.00'),
-                        'postpago': Decimal('0.00'),
-                    }
-                elif diferencia_edicion > 0:
-                    # El incremento se cobró íntegramente del Fondo.
-                    _valores_pago['fondo'] += diferencia_edicion
-                elif diferencia_edicion < 0:
-                    # La reducción ya se devolvió al Fondo; el desglose restante
-                    # se escala para representar el importe que aún está apostado.
-                    _factor_pago = total_apostado / _suma_pago_edit
-                    for _key_pago in _keys_pago:
-                        _valores_pago[_key_pago] = (
-                            _valores_pago[_key_pago] * _factor_pago
-                        ).quantize(Decimal('0.01'))
-                    _ajuste_redondeo = total_apostado - sum(
-                        _valores_pago.values(), Decimal('0.00')
-                    )
-                    _valores_pago['fondo'] += _ajuste_redondeo
+                # Conciliar fuentes para futuras cancelaciones/reembolsos.
+                _valores_pago = _reconciliar_desglose_pago_edicion(
+                    boleta.metadata.get('pago'),
+                    total_original_edicion,
+                    total_apostado,
+                )
                 boleta.metadata['pago'] = {
                     'fondo': str(_valores_pago['fondo']),
                     'bono': str(_valores_pago['bono']),
