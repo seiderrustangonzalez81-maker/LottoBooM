@@ -47,7 +47,7 @@ logger = logging.getLogger(__name__)
 def _zona_horaria_cuba(fecha=None):
     """Zona fija de Cuba según la regla estacional vigente del proyecto."""
     if fecha is None:
-        fecha = timezone.now().date()
+        fecha = timezone.now()
     return datetime_timezone(timedelta(hours=-4 if es_verano_cuba(fecha) else -5))
 
 # ═══════════════════════════════════════════════════════════════
@@ -61,7 +61,7 @@ def _obtener_sorteos_cuba_estricto(incluir_cerrados=False):
     Si existe calendario semanal, un día ausente NO usa la hora manual como fallback.
     """
     ahora_utc = timezone.now()
-    CUBA_TZ = _zona_horaria_cuba(ahora_utc.date())
+    CUBA_TZ = _zona_horaria_cuba(ahora_utc)
     ahora_cuba = ahora_utc.astimezone(CUBA_TZ)
     fecha_cuba = ahora_cuba.date()
     temporada = 'verano' if es_verano_cuba(fecha_cuba) else 'invierno'
@@ -88,7 +88,8 @@ def _obtener_sorteos_cuba_estricto(incluir_cerrados=False):
         if not hora_salida:
             continue
 
-        dt_salida = datetime.combine(fecha_cuba, hora_salida).replace(tzinfo=CUBA_TZ)
+        salida_local = datetime.combine(fecha_cuba, hora_salida)
+        dt_salida = salida_local.replace(tzinfo=_zona_horaria_cuba(salida_local))
         minutos_cierre = 10  # Cierre obligatorio: 10 minutos antes de la salida
         dt_cierre = dt_salida - timedelta(minutes=minutos_cierre)
 
@@ -1810,7 +1811,7 @@ def _guardar_apuesta_impl(request):
 
         # Zona horaria y regla especial Georgia: la fecha Georgia se calcula en Cuba.
         ahora_utc = timezone.now()
-        CUBA_TZ = _zona_horaria_cuba(ahora_utc.date())
+        CUBA_TZ = _zona_horaria_cuba(ahora_utc)
         ahora_cuba = ahora_utc.astimezone(CUBA_TZ)
         hoy = ahora_cuba.date()
         _now_cuba = ahora_cuba
@@ -1924,7 +1925,7 @@ def _guardar_apuesta_impl(request):
         if not _es_banco_o_super:
             try:
                 ahora_utc = timezone.now()
-                CUBA_TZ = _zona_horaria_cuba(ahora_utc.date())
+                CUBA_TZ = _zona_horaria_cuba(ahora_utc)
                 ahora_cuba = ahora_utc.astimezone(CUBA_TZ)
 
                 _todos_ids = list(set(list(sorteos_ids) + list(super_sorteos_ids)))
@@ -1954,7 +1955,8 @@ def _guardar_apuesta_impl(request):
                         _cerrados.append(_sorteo_chk.nombre + ' (sin horario)')
                         continue
 
-                    dt_sal = datetime.combine(fecha_apuesta, hs_chk).replace(tzinfo=CUBA_TZ)
+                    salida_local_chk = datetime.combine(fecha_apuesta, hs_chk)
+                    dt_sal = salida_local_chk.replace(tzinfo=_zona_horaria_cuba(salida_local_chk))
 
                     if hs_chk.hour < 6:
                         dt_sal += timedelta(days=1)
@@ -3908,7 +3910,7 @@ def api_forma_pago_cliente(request):
 @login_required
 def api_sorteos_disponibles(request):
     ahora_utc = timezone.now()
-    CUBA_TZ = _zona_horaria_cuba(ahora_utc.date())
+    CUBA_TZ = _zona_horaria_cuba(ahora_utc)
     ahora = ahora_utc.astimezone(CUBA_TZ)
     # FIX_FECHA_SORTEOS_V1 (2026-10-18): respetar la fecha enviada por el frontend
     _req_fecha = request.GET.get('fecha')
@@ -3937,11 +3939,8 @@ def api_sorteos_disponibles(request):
 
     def _calcular_estado(sorteo, hora_salida):
         minutos = 10  # Regla fija: cierre exactamente 10 minutos antes
-        dt_salida = datetime.combine(hoy, hora_salida)
-        if hasattr(CUBA_TZ, 'localize'):
-            dt_salida = CUBA_TZ.localize(dt_salida)
-        else:
-            dt_salida = dt_salida.replace(tzinfo=CUBA_TZ)
+        salida_local = datetime.combine(hoy, hora_salida)
+        dt_salida = salida_local.replace(tzinfo=_zona_horaria_cuba(salida_local))
         dt_cierre = dt_salida - timedelta(minutes=minutos)
 
         if ahora < dt_cierre:
