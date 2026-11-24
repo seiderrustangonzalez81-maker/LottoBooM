@@ -5945,6 +5945,15 @@ function enviarApuesta(dryRun){
       // FIX_CARTEL_VERDE_MOSTRAR_V1: mostrar cartel "Jugada guardada" (reemplaza toast+redirect)
       var _cartelVerde = document.getElementById('cartelJugadaGuardada');
       if (_cartelVerde) {
+        var _tituloVerde = _cartelVerde.querySelector('.titulo');
+        var _detalleVerde = document.getElementById('cartelVerdeDetalle');
+        if (d.ajuste_edicion) {
+          if (_tituloVerde) _tituloVerde.textContent = 'Boleta editada';
+          if (_detalleVerde) _detalleVerde.textContent = d.message || 'Boleta editada y fondo ajustado correctamente.';
+        } else {
+          if (_tituloVerde) _tituloVerde.textContent = 'Jugada guardada';
+          if (_detalleVerde) _detalleVerde.textContent = d.message || 'La apuesta fue guardada correctamente.';
+        }
         _cartelVerde.classList.add('activo');
         // Restaurar botón por si el usuario cierra el cartel sin redirigir
         var _bGo = document.getElementById('btnGo');
