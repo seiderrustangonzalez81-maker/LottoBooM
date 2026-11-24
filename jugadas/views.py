@@ -2265,6 +2265,7 @@ def _guardar_apuesta_impl(request):
                         'total_anterior': str(total_original_edicion),
                         'forma_pago_id_anterior': orig.forma_pago_id,
                         'fecha_sorteo_anterior': orig.fecha_sorteo.isoformat() if orig.fecha_sorteo else None,
+                        'pago_anterior': (orig.metadata or {}).get('pago', {}),
                         'jugadas_antes': _jugadas_antes,
                     }
                     orig.metadata.setdefault('historial_ediciones', []).append(_historial_edicion)
