@@ -8,7 +8,7 @@ from django.utils import timezone
 from django.db import transaction
 from unittest.mock import patch
 
-from jugadas.models import Jugada, FormaJuego
+from jugadas.models import Jugada, FormaJuego, Boleta
 from jugadas.views import obtener_configuracion_sorteo
 from sorteos.models import Sorteo
 from pagos.models import FormaPago
@@ -206,6 +206,77 @@ class ApostarViewTest(TestCase):
         })
         self.assertEqual(response.status_code, 400)
         self.assertFalse(Jugada.objects.exists())
+
+    @patch('jugadas.views._puede_apostar_segun_estado_sorteo', return_value=True)
+    @patch('jugadas.views.get_pool_gestor', return_value=Decimal('1000.00'))
+    def test_guardar_apuesta_valid_pick2_creates_ticket_and_charges_fund(self, _pool, _draw_open):
+        self.client.login(username='cliente1', password='testpass123')
+        items = [{'tipo':'pick2','numero':'23','monto':'50.00','sorteo_id':self.sorteo.id}]
+        raw_rows = [{
+            'sorteo_id':self.sorteo.id,
+            'tablas':{
+                'tabla-tradicional':{
+                    'kind':'multi','forms':['pick2'],
+                    'rows':[{'num':'23','montos':{'pick2':'50.00'}}]
+                }
+            }
+        }]
+        response = self.client.post(reverse('jugadas:guardar_apuesta'), {
+            'fecha': timezone.localdate().isoformat(),
+            'cliente_id': str(self.user.id),
+            'destinatario_id': str(self.comercial.id),
+            'forma_pago': str(self.forma_pago.id),
+            'carrito_data': json.dumps(items),
+            'superparlet_data': '[]',
+            'sorteos': json.dumps([self.sorteo.id]),
+            'superparlet_sorteos': '[]',
+            'tabla_rows': json.dumps(raw_rows),
+        })
+        self.assertEqual(response.status_code, 200, response.content)
+        self.assertTrue(response.json().get('success'), response.json())
+        self.assertEqual(Jugada.objects.count(), 1)
+        ticket = Boleta.objects.get(usuario=self.user)
+        self.assertEqual(ticket.total_apostado, Decimal('50.00'))
+        self.assertEqual(ticket.metadata['pago']['total'], '50.00')
+        fondo = Fondo.objects.get(usuario=self.user, forma_pago=self.forma_pago, asignado_por=self.comercial)
+        self.assertEqual(fondo.monto, Decimal('450.00'))
+
+    @patch('jugadas.views._puede_apostar_segun_estado_sorteo', return_value=True)
+    @patch('jugadas.views.get_pool_gestor', return_value=Decimal('1000.00'))
+    def test_guardar_apuesta_invalid_line_aborts_whole_payload(self, _pool, _draw_open):
+        self.client.login(username='cliente1', password='testpass123')
+        items = [
+            {'tipo':'pick2','numero':'23','monto':'50.00','sorteo_id':self.sorteo.id},
+            {'tipo':'pick2','numero':'x','monto':'10.00','sorteo_id':self.sorteo.id},
+        ]
+        raw_rows = [{
+            'sorteo_id':self.sorteo.id,
+            'tablas':{
+                'tabla-tradicional':{
+                    'kind':'multi','forms':['pick2'],
+                    'rows':[
+                        {'num':'23','montos':{'pick2':'50.00'}},
+                        {'num':'x','montos':{'pick2':'10.00'}}
+                    ]
+                }
+            }
+        }]
+        response = self.client.post(reverse('jugadas:guardar_apuesta'), {
+            'fecha': timezone.localdate().isoformat(),
+            'cliente_id': str(self.user.id),
+            'destinatario_id': str(self.comercial.id),
+            'forma_pago': str(self.forma_pago.id),
+            'carrito_data': json.dumps(items),
+            'superparlet_data': '[]',
+            'sorteos': json.dumps([self.sorteo.id]),
+            'superparlet_sorteos': '[]',
+            'tabla_rows': json.dumps(raw_rows),
+        })
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(Jugada.objects.count(), 0)
+        self.assertEqual(Boleta.objects.count(), 0)
+        fondo = Fondo.objects.get(usuario=self.user, forma_pago=self.forma_pago, asignado_por=self.comercial)
+        self.assertEqual(fondo.monto, Decimal('500.00'))
 
 
 @override_settings(STATICFILES_STORAGE='django.contrib.staticfiles.storage.StaticFilesStorage')
