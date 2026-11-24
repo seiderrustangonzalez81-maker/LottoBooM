@@ -866,5 +866,27 @@
     ],
     "fecha": "2026-11-23",
     "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Anguilla 8PM",
+    "numeros": [
+      "96",
+      "73",
+      "75"
+    ],
+    "fecha": "2026-11-23",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Georgia 6:59 PM",
+    "fecha": "2026-11-23",
+    "fuente": "lotteryusa",
+    "pick2": "",
+    "pick3": "502",
+    "pick4": "5829",
+    "pick5": "",
+    "fijo": "02",
+    "corrido_1": "58",
+    "corrido_2": "29"
   }
 ]
