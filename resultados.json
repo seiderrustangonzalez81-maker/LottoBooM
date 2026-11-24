@@ -898,5 +898,17 @@
     ],
     "fecha": "2026-11-23",
     "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Tennessee 6:30 PM",
+    "fecha": "2026-11-23",
+    "fuente": "lotteryusa",
+    "pick2": "",
+    "pick3": "173",
+    "pick4": "1330",
+    "pick5": "",
+    "fijo": "73",
+    "corrido_1": "13",
+    "corrido_2": "30"
   }
 ]
