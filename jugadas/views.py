@@ -1442,8 +1442,16 @@ def apostar(request):
             es_banco_x = user.roles.filter(tipo='banco', activo=True).exists()
             es_comercial_x = user.roles.filter(tipo='comercial', activo=True).exists()
             es_autorizador_x = es_superadmin_x or es_banco_x or es_comercial_x
+            _permisos_preload = _calcular_permisos_boleta(
+                user, b, es_banco=es_banco_x, es_superadmin=es_superadmin_x
+            )
+            _puede_preload = (
+                _permisos_preload.get('puede_editar') if es_modo_editar
+                else _permisos_preload.get('puede_reenviar') if es_modo_reenviar
+                else False
+            )
 
-            if b.usuario_id == user.id or b.destinatario_id == user.id or es_autorizador_x:
+            if _puede_preload:
                 lineas = []
                 sorteo_ids_set = set()
                 for j in b.jugadas.exclude(estado='cancelada'):
