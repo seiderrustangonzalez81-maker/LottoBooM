@@ -2236,6 +2236,8 @@ def _guardar_apuesta_impl(request):
                 if orig.estado != 'activa':
                     raise ValueError(f'La boleta original está en estado {orig.estado}, no se puede modificar')
                 _validar_identidad_boleta_operacion(orig, cliente, destinatario, modo_operacion)
+                if (orig.metadata or {}).get('tipo') == 'superparlet' or orig.jugadas.filter(forma_juego__nombre__iexact='superparlet').exists():
+                    raise ValueError('Editar/Reenviar Superparlet requiere su editor dedicado. No se modificó la boleta original.')
                 _es_superadmin_perm = usuario.is_superuser or usuario.roles.filter(tipo='superadmin', activo=True).exists()
                 _es_banco_perm = usuario.roles.filter(tipo='banco', activo=True).exists()
                 _permisos_boleta = _calcular_permisos_boleta(
@@ -3371,6 +3373,11 @@ def mis_apuestas(request):
             _b["perms"] = {"puede_editar": False, "puede_reenviar": False, "puede_eliminar": False}
         elif _b.get("boleta"):
             _b["perms"] = _calcular_permisos_boleta(user, _b["boleta"], es_banco=es_banco, es_superadmin=es_superadmin)
+            # Superparlet usa un editor distinto; no ofrecer acciones que Apostar
+            # no puede precargar/reconstruir todavía.
+            if _b.get("es_super"):
+                _b["perms"]["puede_editar"] = False
+                _b["perms"]["puede_reenviar"] = False
         else:
             _b["perms"] = {"puede_editar": False, "puede_reenviar": False, "puede_eliminar": False}
 
