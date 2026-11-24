@@ -7,11 +7,50 @@ os.environ.setdefault("SECRET_KEY", "ci-only-not-a-production-secret")
 import django
 django.setup()
 
-from jugadas.views import _validar_tablas_crudas_payload, _validar_coincidencia_sorteos_tablas, _validar_items_ids_sorteo, _puede_apostar_segun_estado_sorteo
+from jugadas.views import _validar_tablas_crudas_payload, _validar_coincidencia_sorteos_tablas, _validar_items_ids_sorteo, _puede_apostar_segun_estado_sorteo, _reconciliar_desglose_pago_edicion
 
 
 def payload(table, kind, forms, rows, sid="54"):
     return [{"sorteo_id":sid,"tablas":{table:{"kind":kind,"forms":forms,"rows":rows}}}]
+
+
+class PaymentEditReconciliationTests(unittest.TestCase):
+    def test_increase_charges_difference_to_fund(self):
+        from decimal import Decimal
+        result = _reconciliar_desglose_pago_edicion(
+            {'fondo':'3.00','bono':'7.00','postpago':'0.00'}, Decimal('10.00'), Decimal('12.00')
+        )
+        self.assertEqual(result, {'fondo':Decimal('5.00'),'bono':Decimal('7.00'),'postpago':Decimal('0.00')})
+        self.assertEqual(sum(result.values()), Decimal('12.00'))
+
+    def test_decrease_refund_is_reflected_in_current_ticket_breakdown(self):
+        from decimal import Decimal
+        result = _reconciliar_desglose_pago_edicion(
+            {'fondo':'3.00','bono':'7.00','postpago':'0.00'}, Decimal('10.00'), Decimal('6.00')
+        )
+        self.assertEqual(result, {'fondo':Decimal('1.80'),'bono':Decimal('4.20'),'postpago':Decimal('0.00')})
+        self.assertEqual(sum(result.values()), Decimal('6.00'))
+
+    def test_missing_payment_breakdown_defaults_to_fund(self):
+        from decimal import Decimal
+        result = _reconciliar_desglose_pago_edicion(None, Decimal('8.00'), Decimal('5.50'))
+        self.assertEqual(result, {'fondo':Decimal('5.50'),'bono':Decimal('0.00'),'postpago':Decimal('0.00')})
+
+    def test_legacy_inconsistent_breakdown_is_normalized(self):
+        from decimal import Decimal
+        result = _reconciliar_desglose_pago_edicion(
+            {'fondo':'3.00','bono':'6.00','postpago':'0.00'}, Decimal('10.00'), Decimal('11.00')
+        )
+        self.assertEqual(sum(result.values()), Decimal('11.00'))
+        self.assertEqual(result['fondo'], Decimal('4.33'))
+        self.assertEqual(result['bono'], Decimal('6.67'))
+
+    def test_negative_or_invalid_legacy_values_are_safely_handled(self):
+        from decimal import Decimal
+        result = _reconciliar_desglose_pago_edicion(
+            {'fondo':'-4','bono':'bad','postpago':'0'}, Decimal('4.00'), Decimal('3.00')
+        )
+        self.assertEqual(result, {'fondo':Decimal('3.00'),'bono':Decimal('0.00'),'postpago':Decimal('0.00')})
 
 
 class RawBettingRowsValidationTests(unittest.TestCase):
