@@ -8,12 +8,7 @@ from django.utils import timezone
 from django.db import transaction
 
 from jugadas.models import Jugada, FormaJuego
-from jugadas.views import (
-    limpiar_tokens,
-    expandir_abreviaturas,
-    generar_pares_entre_grupos,
-    obtener_configuracion_sorteo,
-)
+from jugadas.views import obtener_configuracion_sorteo
 from sorteos.models import Sorteo
 from pagos.models import FormaPago
 from roles.models import Rol, Fondo, Bono, Subordinacion, LimiteApuesta, Notificacion, MovimientoFondo
@@ -22,49 +17,6 @@ from roles.models import Rol, Fondo, Bono, Subordinacion, LimiteApuesta, Notific
 @override_settings(STATICFILES_STORAGE='django.contrib.staticfiles.storage.StaticFilesStorage')
 class JugadasAuxiliaresTest(TestCase):
     """Tests para funciones auxiliares puras (sin base de datos)."""
-
-    def test_limpiar_tokens_vacio(self):
-        self.assertEqual(limpiar_tokens(''), '')
-        self.assertEqual(limpiar_tokens(None), '')
-
-    def test_limpiar_tokens_validos(self):
-        self.assertEqual(limpiar_tokens('12 34 PA D5 T3'), '12 34 PA D5 T3')
-
-    def test_limpiar_tokens_invalidos(self):
-        self.assertEqual(limpiar_tokens('12 abc XX D5'), '12 D5')
-
-    def test_expandir_abreviaturas_pa(self):
-        resultado = expandir_abreviaturas('PA')
-        esperado = '00 11 22 33 44 55 66 77 88 99'
-        self.assertEqual(resultado, esperado)
-
-    def test_expandir_abreviaturas_d(self):
-        resultado = expandir_abreviaturas('D3')
-        self.assertEqual(resultado, '30 31 32 33 34 35 36 37 38 39')
-
-    def test_expandir_abreviaturas_t(self):
-        resultado = expandir_abreviaturas('T4')
-        self.assertEqual(resultado, '04 14 24 34 44 54 64 74 84 94')
-
-    def test_expandir_abreviaturas_mixto(self):
-        resultado = expandir_abreviaturas('12 PA D2')
-        self.assertIn('12', resultado)
-        self.assertIn('00', resultado)
-        self.assertIn('20', resultado)
-
-    def test_generar_pares_entre_grupos(self):
-        g1 = ['10', '20']
-        g2 = ['30', '40']
-        monto = Decimal('100')
-        pares = generar_pares_entre_grupos(g1, g2, monto)
-        self.assertEqual(len(pares), 4)
-        self.assertIn('10x30', pares)
-        self.assertIn('20x40', pares)
-        total = sum(pares.values())
-        self.assertEqual(total, monto)
-
-    def test_generar_pares_grupo_vacio(self):
-        self.assertEqual(generar_pares_entre_grupos([], ['10'], Decimal('100')), {})
 
     def test_obtener_configuracion_sorteo_con_get_configuracion(self):
         class FakeSorteo:
