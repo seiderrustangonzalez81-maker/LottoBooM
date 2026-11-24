@@ -24,8 +24,8 @@ class JugadasAuxiliaresTest(TestCase):
             nombre = 'Test'
             formas_juego = ['pick2']
         config = obtener_configuracion_sorteo(FakeSorteo())
-        self.assertTrue(config.get('pick2'))
-        self.assertFalse(config.get('pick3'))
+        self.assertTrue(config['config'].get('pick2'))
+        self.assertFalse(config['config'].get('pick3'))
 
 
 @override_settings(STATICFILES_STORAGE='django.contrib.staticfiles.storage.StaticFilesStorage')
@@ -236,7 +236,7 @@ class ApostarViewTest(TestCase):
         self.assertTrue(response.json().get('success'), response.json())
         self.assertEqual(Jugada.objects.count(), 1)
         ticket = Boleta.objects.get(usuario=self.user)
-        self.assertEqual(ticket.total_apostado, Decimal('50.00'))
+        self.assertEqual(ticket.monto_total, Decimal('50.00'))
         self.assertEqual(ticket.metadata['pago']['total'], '50.00')
         fondo = Fondo.objects.get(usuario=self.user, forma_pago=self.forma_pago, asignado_por=self.comercial)
         self.assertEqual(fondo.monto, Decimal('450.00'))
