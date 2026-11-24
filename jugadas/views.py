@@ -2856,7 +2856,17 @@ def _guardar_apuesta_impl(request):
         if boleta:
             if es_solo_editar:
                 if diferencia_edicion > 0:
-                    _mensaje_ajuste = 'Fondo descontado 
+                    _mensaje_ajuste = 'Fondo descontado: ' + str(diferencia_edicion)
+                elif diferencia_edicion < 0:
+                    _mensaje_ajuste = 'Reintegrado al Fondo: ' + str(abs(diferencia_edicion))
+                else:
+                    _mensaje_ajuste = 'sin cambio en el Fondo'
+                mensaje = f'Boleta {boleta.referencia} editada ({len(jugadas_creadas)} jugadas); ' + _mensaje_ajuste
+            else:
+                mensaje = f'Boleta {boleta.referencia} guardada ({len(jugadas_creadas)} jugadas)'
+        else:
+            mensaje = f'Apuesta guardada ({len(jugadas_creadas)} jugadas)'
+
         # Serializar jugadas para el preview (usado en dry_run)
         preview_jugadas = []
         for _j in jugadas_creadas:
