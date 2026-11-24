@@ -17,7 +17,7 @@ jobs:
       contents: write
 
     steps:
-      - name: Checkout main
+      - name: Checkout requested ref
         uses: actions/checkout@v4
         with:
           ref: ${{ github.ref }}
@@ -47,5 +47,5 @@ jobs:
             exit 0
           fi
           git commit -m "Update resultados"
-          git pull --rebase origin main
+          git pull --rebase origin "$GITHUB_REF_NAME"
           git push origin "HEAD:${GITHUB_REF_NAME}"
