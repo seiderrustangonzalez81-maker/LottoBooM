@@ -19,14 +19,13 @@ from roles.models import Rol, Fondo, Bono, Subordinacion, LimiteApuesta, Notific
 class JugadasAuxiliaresTest(TestCase):
     """Tests para funciones auxiliares puras (sin base de datos)."""
 
-    def test_obtener_configuracion_sorteo_con_get_configuracion(self):
+    def test_obtener_configuracion_sorteo_uses_form_catalog(self):
         class FakeSorteo:
             nombre = 'Test'
             formas_juego = ['pick2']
-            def get_configuracion(self):
-                return {'pick2': True}
-        s = FakeSorteo()
-        self.assertTrue(obtener_configuracion_sorteo(s).get('pick2'))
+        config = obtener_configuracion_sorteo(FakeSorteo())
+        self.assertTrue(config.get('pick2'))
+        self.assertFalse(config.get('pick3'))
 
 
 @override_settings(STATICFILES_STORAGE='django.contrib.staticfiles.storage.StaticFilesStorage')
@@ -139,7 +138,7 @@ class ApostarViewTest(TestCase):
         self.client.login(username='cliente1', password='testpass123')
         response = self.client.get(reverse('jugadas:apostar'))
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'La Primera')
+        self.assertContains(response, 'btnAbrirSorteos')
 
     def test_apostar_get_comercial(self):
         self.client.login(username='comercial1', password='testpass123')
