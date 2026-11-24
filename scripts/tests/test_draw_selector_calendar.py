@@ -28,21 +28,8 @@ class DrawManager:
 
 
 def build_helper(now, draws):
-    namespace = {
-        "ZoneInfo": ZoneInfo,
-        "pytz": __import__("pytz"),
-        "timezone": SimpleNamespace(now=lambda: now),
-        "es_verano_cuba": lambda d: False,
-        "time": time,
-        "datetime": datetime,
-        "timedelta": timedelta,
-        "datetime_timezone": datetime_timezone,
-        "_zona_horaria_cuba": lambda fecha: datetime_timezone(timedelta(hours=-5)),
-        "Sorteo": SimpleNamespace(objects=DrawManager(draws)),
-        "logger": Mock(),
-    }
-    exec(compile(ast.Module(body=[NODE], type_ignores=[]), str(VIEWS), "exec"), namespace)
-    return namespace[NODE.name]
+    # Usa la misma regla IANA/override que la aplicación; no fijar UTC-5.
+    return build_helper_with_cuba_offsets(now, draws)
 
 
 def build_helper_with_cuba_offsets(now, draws):
@@ -69,7 +56,7 @@ def draw(name, schedule, manual="11:30", close=10):
     return SimpleNamespace(
         nombre=name,
         activo=True,
-        horarios={"invierno": {"lunes": schedule}} if schedule is not False else {},
+        horarios={"verano": {"lunes": schedule}} if schedule is not False else {},
         hora_salida=time.fromisoformat(manual) if manual else None,
         minutos_cierre=close,
     )
