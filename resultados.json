@@ -412,9 +412,9 @@
   {
     "sorteo_nombre": "El Quemaito Mayor",
     "numeros": [
+      "18",
       "64",
-      "77",
-      "46"
+      "77"
     ],
     "fecha": "2026-11-23",
     "fuente": "enloteria"
@@ -602,9 +602,39 @@
   {
     "sorteo_nombre": "El Quinielon Dia",
     "numeros": [
+      "83",
       "95",
-      "88",
-      "80"
+      "88"
+    ],
+    "fecha": "2026-11-24",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Anguilla 12PM",
+    "numeros": [
+      "22",
+      "19",
+      "43"
+    ],
+    "fecha": "2026-11-24",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "La Primera",
+    "numeros": [
+      "98",
+      "21",
+      "09"
+    ],
+    "fecha": "2026-11-24",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "LoteDom",
+    "numeros": [
+      "55",
+      "29",
+      "34"
     ],
     "fecha": "2026-11-24",
     "fuente": "enloteria"
