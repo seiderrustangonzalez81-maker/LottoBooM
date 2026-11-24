@@ -31,10 +31,12 @@ jobs:
       - name: Install deps
         run: |
           python -m pip install --upgrade pip
-          python -m pip install beautifulsoup4 requests playwright tzdata
+          python -m pip install beautifulsoup4 requests playwright "tzdata>=2026.6"
           python -m playwright install --with-deps chromium
 
       - name: Run scraper
+        env:
+          PYTHONTZPATH: ""
         run: python scraper.py
 
       - name: Commit and push resultados.json
