@@ -207,9 +207,10 @@ class ApostarViewTest(TestCase):
         self.assertEqual(response.status_code, 400)
         self.assertFalse(Jugada.objects.exists())
 
+    @patch('jugadas.models.Jugada.puede_modificar', return_value=True)
     @patch('jugadas.views._puede_apostar_segun_estado_sorteo', return_value=True)
     @patch('jugadas.views.get_pool_gestor', return_value=Decimal('1000.00'))
-    def test_guardar_apuesta_valid_pick2_creates_ticket_and_charges_fund(self, _pool, _draw_open):
+    def test_guardar_apuesta_valid_pick2_creates_ticket_and_charges_fund(self, _pool, _draw_open, _can_modify):
         self.client.login(username='cliente1', password='testpass123')
         items = [{'tipo':'pick2','numero':'23','monto':'50.00','sorteo_id':self.sorteo.id}]
         raw_rows = [{
