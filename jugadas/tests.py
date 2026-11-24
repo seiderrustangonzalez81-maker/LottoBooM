@@ -379,6 +379,59 @@ class ApostarViewTest(TestCase):
         self.assertEqual(fondo.monto, Decimal('460.00'))
         self.assertEqual(ticket_nueva.estado, 'activa')
 
+    @patch('jugadas.views._sorteo_esta_abierto', return_value=True)
+    @patch('jugadas.models.Jugada.puede_modificar', return_value=True)
+    @patch('jugadas.views._puede_apostar_segun_estado_sorteo', return_value=True)
+    @patch('jugadas.views.get_pool_gestor', return_value=Decimal('1000.00'))
+    def test_guardar_apuesta_multiple_tabs_persists_every_line_and_total(self, _pool, _draw_open, _can_modify, _sorteo_open):
+        """Una boleta debe conservar todas las líneas de pestañas distintas."""
+        self.client.login(username='cliente1', password='testpass123')
+        items = [
+            {'tipo':'pick2','numero':'23','monto':'5.00','sorteo_id':self.sorteo.id},
+            {'tipo':'pick2','numero':'45','monto':'5.00','sorteo_id':self.sorteo.id},
+            {'tipo':'pick3','numero':'123','monto':'7.00','sorteo_id':self.sorteo.id},
+            {'tipo':'vs','numero':'12x34','monto':'3.00','sorteo_id':self.sorteo.id},
+        ]
+        raw_rows = [{
+            'sorteo_id':self.sorteo.id,
+            'tablas':{
+                'tabla-tradicional':{
+                    'kind':'multi','forms':['pick2'],
+                    'rows':[{'num':'23 45','montos':{'pick2':'5.00'}}]
+                },
+                'tabla-pick3':{
+                    'kind':'single','forms':['pick3'],
+                    'rows':[{'num':'123','montos':{'pick3':'7.00'}}]
+                },
+                'tabla-vs':{
+                    'kind':'vs_groups','forms':['vs'],
+                    'rows':[{'numA':'12','numB':'34','monto':'3.00'}]
+                },
+            }
+        }]
+        response = self.client.post(reverse('jugadas:guardar_apuesta'), {
+            'fecha': timezone.localdate().isoformat(),
+            'cliente_id': str(self.user.id),
+            'destinatario_id': str(self.comercial.id),
+            'forma_pago': str(self.forma_pago.id),
+            'carrito_data': json.dumps(items),
+            'superparlet_data': '[]',
+            'sorteos': json.dumps([self.sorteo.id]),
+            'superparlet_sorteos': '[]',
+            'tabla_rows': json.dumps(raw_rows),
+        })
+        self.assertEqual(response.status_code, 200, response.content)
+        self.assertTrue(response.json().get('success'), response.json())
+        ticket = Boleta.objects.get(usuario=self.user)
+        self.assertEqual(ticket.jugadas.count(), 4)
+        self.assertEqual(
+            ticket.jugadas.aggregate(total=__import__('django.db.models', fromlist=['Sum']).Sum('monto'))['total'],
+            Decimal('20.00'),
+        )
+        self.assertEqual(ticket.monto_total, Decimal('20.00'))
+        fondo = Fondo.objects.get(usuario=self.user, forma_pago=self.forma_pago, asignado_por=self.comercial)
+        self.assertEqual(fondo.monto, Decimal('480.00'))
+
     @patch('jugadas.views._puede_apostar_segun_estado_sorteo', return_value=True)
     @patch('jugadas.views.get_pool_gestor', return_value=Decimal('1000.00'))
     def test_guardar_apuesta_invalid_line_aborts_whole_payload(self, _pool, _draw_open):
