@@ -11,6 +11,12 @@ Esta revisión se realizó leyendo el código de la rama indicada. Los hallazgos
 
 La ejecución de GitHub Actions asociada al commit inspeccionado aparece completada con conclusión `success` (run #729). Esto no equivale a una prueba integral de los flujos financieros.
 
+## Aclaración del flujo activo de apuestas
+
+La búsqueda de referencias en el repositorio muestra que `Jugada.procesar_apuesta` aparece definido en `jugadas/models.py` y llamado por sus pruebas, pero no se encontró una llamada desde las vistas de la aplicación. Por ello, el hallazgo F-01 sobre ese método se conserva como defecto de código legado/no confirmado como ruta activa, no como prueba de que ese sea el flujo que actualmente procesa las apuestas.
+
+La ruta principal inspeccionada en `jugadas/views.py` procesa el gasto dentro de su propia operación: consume primero el fondo, después bonos y, si queda un excedente, crea/actualiza un registro `Postpago` para la combinación cliente–gestor–forma de pago. Ese es el flujo activo que debe migrarse cuidadosamente al modelo de deuda acordado. No se debe retirar Postpago hasta mapear sus dependencias, registros y pantallas, pero tampoco se debe tratar como regla definitiva del nuevo sistema.
+
 ## Hallazgos prioritarios
 
 ### F-01 — Apuesta autorizada puede duplicar el déficit
