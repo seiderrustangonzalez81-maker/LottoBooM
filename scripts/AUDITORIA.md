@@ -83,3 +83,48 @@ La rama se comparó con `main` sin rebase/merge: estaba 399 commits ahead y 153 
 - Se corrigió la muestra de estrés y el ejemplo documentado: `13 14 15 parlet 10 candado 30` (tres pares) y `12 34 56 parlet 2 candado 6`.
 - Se añadieron regresiones de UI en vivo: Candado desajustado mantiene el semáforo rojo/deshabilitado; el importe espejo correcto permite verde. La validación existente bloquea el envío y la prevalidación de destinos bloquea Procesar.
 - CI #720 del commit `fb9dadd`: SUCCESS (63 Node, 84 Python unittest, 24 JS, 35 Django). CI #721 del commit de documentación `a60e4d3`: SUCCESS.
+
+
+## Continuidad de auditoría — 25 de noviembre de 2026
+
+**Base comparativa:** HEAD previo de `audit/repository-alignment` = `0aa050589a28e8fe91fd4571ea6bf8fa6efc00c7` (corte del 24 de noviembre). Esta revisión se hizo por lectura del código en GitHub; no se ejecutó código financiero ni se accedió a bases de datos.
+
+### Estado de rama, PR y CI
+
+- Antes de esta actualización documental, la rama seguía exactamente en `0aa050589a28e8fe91fd4571ea6bf8fa6efc00c7`: comparación idéntica, 0 commits por delante y 0 por detrás del corte anterior. No había commits funcionales nuevos en la rama desde ese corte.
+- PR #2 continúa abierto, Draft y sin merge. GitHub reporta actualmente `mergeable=true`; esto no significa que esté aprobado ni que deba integrarse.
+- El CI #731 (run `45486037124`) del HEAD anterior terminó SUCCESS. Se verificaron sus pasos: auditoría estática, instalación de dependencias, smoke Django sin DB de producción, suite Django de `jugadas` con SQLite de prueba, parser Node, unittest, pruebas JavaScript y publicación del artefacto; todos terminaron SUCCESS.
+- `main` avanzó hasta `4a48791b63ca3b918789eddc634ad27298dd0464` (`Update resultados`). La comparación actual indica 420 commits de la rama de auditoría por delante y 192 por detrás de `main`. No se hizo rebase, merge ni actualización de `main`. Las actualizaciones automáticas de resultados en `main` no se cuentan como avance de esta auditoría.
+
+### Hallazgos de premios revalidados
+
+1. `resultados/procesamiento.py`: el worker consulta premios existentes antes de crear, pero no bloquea una fila común de `Jugada` ni vuelve a comprobar la existencia bajo un bloqueo. Dos ejecuciones concurrentes pueden superar el chequeo previo. La creación está dentro de un `transaction.atomic()` por premio, pero no hay una restricción única por `Premio.jugada` en el modelo.
+2. Si falla `_aplicar_ingreso_a_fondo`, el worker captura la excepción, deja el premio pendiente y puede marcar el resultado como `completado`. En una ejecución posterior, los premios ya existentes se omiten, sin reintentar automáticamente los que siguen pendientes.
+3. `resultados/reconciliacion.py` consulta si existe el premio fuera de una transacción/bloqueo común y luego crea. Si ya existe, devuelve ese registro sin distinguir entre pendiente y pagado ni reintentar su acreditación.
+4. El worker y la reconciliación son dos rutas de creación que deben compartir la misma estrategia de exclusión/idempotencia. No se añadió una constraint ni una migración: antes hay que revisar duplicados históricos en una DB aislada y diseñar recuperación de pendientes.
+5. El endpoint manual `solicitar_cobro` sí conserva `transaction.atomic()` y `select_for_update()`; el test existente verifica el orden con mocks. Esto no cubre concurrencia real ni el worker/reconciliación.
+
+**Prioridad:** crítica. Pendiente prueba de concurrencia con el motor de DB de destino, reintento de premio pendiente, fallo a mitad de acreditación, reprocesamiento y resultado corregido/revertido. No se inventan multiplicadores ni reglas de acierto.
+
+### Hallazgos financieros revalidados
+
+- `Prestamo.aprobar()`: el `select_for_update()` del fondo se evalúa antes de entrar en `transaction.atomic()`; el importe igual al saldo se permite, aunque la regla acordada exige que el aprobado sea estrictamente menor. La función usa `monto` como importe solicitado/aprobado, sin campo separado visible para la decisión del prestamista.
+- `Prestamo.pagar_cuota()`: calcula saldo sobre varios fondos, no bloquea previamente el préstamo y todos los fondos, y acredita al prestamista usando la primera forma de pago encontrada. No garantiza la forma de pago acordada para el préstamo.
+- `_aplicar_ingreso_a_fondo()`: la consulta de fondo y el `get_or_create` se basan en cliente/forma de pago, no en gestor; el modelo `Fondo` tiene `unique_together(usuario, sorteo, forma_pago)`, sin incluir `asignado_por`. La estructura actual no representa fondos independientes por cliente–gestor–forma de pago como exige la regla de no mezclar gestores. Resolverlo requiere diseño de datos y migración planificada; no se ejecuta aquí.
+- En ese mismo helper se absorben excepciones al crear movimientos de pago de Postpago, al acreditar al prestamista y al crear movimientos de préstamo/ingreso. El saldo o préstamo puede cambiar aunque falte el asiento correspondiente. Requiere transacción y pruebas de fallo inducido; no basta con que el helper retorne.
+- El helper aplica amortización FIFO de préstamos al recibir ingresos cuando `_skip_prestamos=False`; las rutas de premios inspeccionadas no pasan ese parámetro. La regla de negocio sobre si premios/recargas amortizan automáticamente préstamos cliente–cliente sigue sin confirmación final. El código actual no se toma como decisión de negocio.
+- En `solicitar_cobro`, la llamada al helper pasa `gestor=request.user`, mientras el worker y la reconciliación usan `jugada.destinatario or jugada.usuario`. Para una jugada cuyo destinatario sea distinto del cliente, el cobro manual puede consultar otro registro de Postpago. Debe probarse y alinearse con la regla de acreedor/gestor antes de cambiarlo.
+- `banco.views.recargar_usuario`: los querysets de destinatarios para banco y comercial incluyen usuarios activos en general; el POST solo comprueba pertenencia a ese mismo queryset amplio. No se observa aislamiento por clientes subordinados del banco/comercial en esta vista.
+
+### Decisión de seguridad de esta revisión
+
+No se modificó lógica de premios, fondos, préstamos ni permisos porque el entorno disponible en esta sesión permite inspección GitHub, pero no ejecutar la aplicación con una DB aislada del motor de destino ni pruebas de concurrencia. Tampoco se consultaron datos reales, se ejecutaron migraciones o se alteraron saldos, apuestas, premios o resultados. La única modificación de esta sesión es este registro documental en la rama de auditoría.
+
+### Siguiente secuencia segura
+
+1. Preparar DB aislada y fixtures sintéticos para premio duplicado, premio pendiente, fallo de acreditación y reproceso concurrente.
+2. Definir bloqueo común de `Jugada` en worker y reconciliación; después decidir constraint única solo tras comprobar duplicados históricos en una copia de prueba.
+3. Probar atomicidad de cada asiento en `_aplicar_ingreso_a_fondo`, sin excepciones silenciosas.
+4. Resolver la decisión pendiente sobre amortización automática de préstamos cliente–cliente.
+5. Diseñar la clave de fondos/acreedor por gestor y el alcance de recargas banco/comercial antes de migrar.
+6. Corregir préstamos y permisos con pruebas de concurrencia/roles; no desplegar ni fusionar hasta completar revisión y CI.
