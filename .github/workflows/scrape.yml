@@ -1,3 +1,4 @@
+
 name: Scrape Loterias
 
 on:
@@ -13,6 +14,7 @@ jobs:
   scrape:
     runs-on: ubuntu-latest
     timeout-minutes: 20
+
     permissions:
       contents: write
 
@@ -28,7 +30,7 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Install deps
+      - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           python -m pip install beautifulsoup4 requests playwright tzdata
@@ -38,14 +40,59 @@ jobs:
         run: python scraper.py
 
       - name: Commit and push resultados.json
+        id: publish
         run: |
           git config user.email "action@github.com"
           git config user.name "GitHub Action"
+
           git add resultados.json
+
           if git diff --cached --quiet; then
             echo "No hay cambios en resultados.json."
+            echo "changed=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
+
           git commit -m "Update resultados"
+
           git pull --rebase origin main
+
           git push origin HEAD:main
+
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+
+      - name: Notify server to import results
+        if: success() && steps.publish.outputs.changed == 'true'
+        env:
+          IMPORT_WEBHOOK_URL: ${{ secrets.IMPORT_WEBHOOK_URL }}
+          IMPORT_WEBHOOK_SECRET: ${{ secrets.IMPORT_WEBHOOK_SECRET }}
+        run: |
+          if [ -z "$IMPORT_WEBHOOK_URL" ] || [ -z "$IMPORT_WEBHOOK_SECRET" ]; then
+            echo "::error::Faltan IMPORT_WEBHOOK_URL o IMPORT_WEBHOOK_SECRET."
+            exit 1
+          fi
+
+          PAYLOAD=$(printf '{"event":"results_published","repository":"%s","branch":"main","commit":"%s"}' \
+            "$GITHUB_REPOSITORY" "$GITHUB_SHA")
+
+          SIGNATURE=$(printf '%s' "$PAYLOAD" \
+            | openssl dgst -sha256 -hmac "$IMPORT_WEBHOOK_SECRET" \
+            | awk '{print $2}')
+
+          HTTP_CODE=$(curl --silent --show-error \
+            --output response.json \
+            --write-out "%{http_code}" \
+            --request POST "$IMPORT_WEBHOOK_URL" \
+            --header "Content-Type: application/json" \
+            --header "X-LottoBooM-Signature: sha256=$SIGNATURE" \
+            --data "$PAYLOAD" \
+            --max-time 30)
+
+          cat response.json
+
+          if [ "$HTTP_CODE" -lt 200 ] || [ "$HTTP_CODE" -ge 300 ]; then
+            echo "::error::El servidor rechazó la notificación. HTTP $HTTP_CODE"
+            exit 1
+          fi
+
+          echo "Notificación de importación aceptada por el servidor."
