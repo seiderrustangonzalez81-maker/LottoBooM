@@ -3,17 +3,17 @@ name: Scrape Loterias
 
 on:
   schedule:
-    - cron: "7,22,37,52 * * * *"
+    - cron: "*/5 * * * *"
   workflow_dispatch:
 
 concurrency:
-  group: scrape-loterias
+  group: scrape-loterias-main
   cancel-in-progress: false
 
 jobs:
   scrape:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
 
     permissions:
       contents: write
@@ -39,17 +39,50 @@ jobs:
       - name: Run scraper
         run: python scraper.py
 
+      - name: Validate resultados.json
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          path = Path("resultados.json")
+
+          if not path.exists():
+              raise SystemExit("ERROR: resultados.json no existe")
+
+          with path.open("r", encoding="utf-8") as f:
+              data = json.load(f)
+
+          if not isinstance(data, list) or not data:
+              raise SystemExit("ERROR: JSON vacío o estructura incorrecta")
+
+          valid = [
+              item for item in data
+              if isinstance(item, dict)
+              and item.get("sorteo_nombre")
+              and item.get("fecha")
+          ]
+
+          if not valid:
+              raise SystemExit("ERROR: no hay resultados válidos")
+
+          print(f"JSON validado: {len(valid)} registros.")
+          PY
+
       - name: Commit and push resultados.json
         id: publish
+        shell: bash
         run: |
+          set -euo pipefail
+
           git config user.email "action@github.com"
           git config user.name "GitHub Action"
 
           git add resultados.json
 
           if git diff --cached --quiet; then
-            echo "No hay cambios en resultados.json."
             echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "No hay cambios nuevos."
             exit 0
           fi
 
@@ -59,40 +92,74 @@ jobs:
 
           git push origin HEAD:main
 
-          echo "changed=true" >> "$GITHUB_OUTPUT"
+          COMMIT_PUBLICADO="$(git rev-parse HEAD)"
 
-      - name: Notify server to import results
-        if: success() && steps.publish.outputs.changed == 'true'
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+          echo "commit=$COMMIT_PUBLICADO" >> "$GITHUB_OUTPUT"
+
+          echo "Publicado correctamente: $COMMIT_PUBLICADO"
+
+      - name: Notify Django immediately
+        if: steps.publish.outputs.changed == 'true'
         env:
           IMPORT_WEBHOOK_URL: ${{ secrets.IMPORT_WEBHOOK_URL }}
           IMPORT_WEBHOOK_SECRET: ${{ secrets.IMPORT_WEBHOOK_SECRET }}
+          COMMIT_PUBLICADO: ${{ steps.publish.outputs.commit }}
+        shell: bash
         run: |
+          set -euo pipefail
+
           if [ -z "$IMPORT_WEBHOOK_URL" ] || [ -z "$IMPORT_WEBHOOK_SECRET" ]; then
-            echo "::error::Faltan IMPORT_WEBHOOK_URL o IMPORT_WEBHOOK_SECRET."
+            echo "::error::Faltan los secretos de notificación."
             exit 1
           fi
 
-          PAYLOAD=$(printf '{"event":"results_published","repository":"%s","branch":"main","commit":"%s"}' \
-            "$GITHUB_REPOSITORY" "$GITHUB_SHA")
+          PAYLOAD="$(jq -cn \
+            --arg event "results_published" \
+            --arg repository "$GITHUB_REPOSITORY" \
+            --arg branch "main" \
+            --arg commit "$COMMIT_PUBLICADO" \
+            '{
+              event: $event,
+              repository: $repository,
+              branch: $branch,
+              commit: $commit
+            }')"
 
-          SIGNATURE=$(printf '%s' "$PAYLOAD" \
-            | openssl dgst -sha256 -hmac "$IMPORT_WEBHOOK_SECRET" \
-            | awk '{print $2}')
+          SIGNATURE="$(
+            printf '%s' "$PAYLOAD" |
+            openssl dgst -sha256 -hmac "$IMPORT_WEBHOOK_SECRET" |
+            awk '{print $2}'
+          )"
 
-          HTTP_CODE=$(curl --silent --show-error \
+          echo "Notificando a Django..."
+
+          if ! HTTP_CODE="$(curl \
+            --silent \
+            --show-error \
             --output response.json \
             --write-out "%{http_code}" \
-            --request POST "$IMPORT_WEBHOOK_URL" \
+            --request POST \
             --header "Content-Type: application/json" \
             --header "X-LottoBooM-Signature: sha256=$SIGNATURE" \
             --data "$PAYLOAD" \
-            --max-time 30)
+            --connect-timeout 10 \
+            --max-time 30 \
+            --retry 5 \
+            --retry-delay 3 \
+            --retry-all-errors \
+            "$IMPORT_WEBHOOK_URL")"; then
 
-          cat response.json
-
-          if [ "$HTTP_CODE" -lt 200 ] || [ "$HTTP_CODE" -ge 300 ]; then
-            echo "::error::El servidor rechazó la notificación. HTTP $HTTP_CODE"
+            cat response.json || true
+            echo "::error::Falló la comunicación con Django."
             exit 1
           fi
 
-          echo "Notificación de importación aceptada por el servidor."
+          cat response.json
+
+          if [[ ! "$HTTP_CODE" =~ ^2[0-9][0-9]$ ]]; then
+            echo "::error::Respuesta HTTP no válida: $HTTP_CODE"
+            exit 1
+          fi
+
+          echo "Django aceptó la notificación: HTTP $HTTP_CODE"
