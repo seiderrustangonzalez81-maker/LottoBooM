@@ -662,5 +662,35 @@
     "fijo": "37",
     "corrido_1": "19",
     "corrido_2": "89"
+  },
+  {
+    "sorteo_nombre": "Haiti Bolet 11:30 AM",
+    "numeros": [
+      "97",
+      "85",
+      "70"
+    ],
+    "fecha": "2026-11-25",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "King Lottery Día",
+    "numeros": [
+      "26",
+      "14",
+      "11"
+    ],
+    "fecha": "2026-11-25",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "La Suerte",
+    "numeros": [
+      "21",
+      "46",
+      "32"
+    ],
+    "fecha": "2026-11-25",
+    "fuente": "enloteria"
   }
 ]
