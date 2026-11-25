@@ -128,3 +128,12 @@ No se modificó lógica de premios, fondos, préstamos ni permisos porque el ent
 4. Resolver la decisión pendiente sobre amortización automática de préstamos cliente–cliente.
 5. Diseñar la clave de fondos/acreedor por gestor y el alcance de recargas banco/comercial antes de migrar.
 6. Corregir préstamos y permisos con pruebas de concurrencia/roles; no desplegar ni fusionar hasta completar revisión y CI.
+
+
+### CI posterior a esta actualización documental
+
+- El commit documental `64905d57f8b9e772a060c19896446ade05efe479` fue validado por CI #732 (run `45609537228`): **SUCCESS**.
+- Resultados del run: Django `jugadas` **35/35**; parser Node **63/63**; unittest Python **89/89**; pruebas JavaScript **24/24**. Smoke Django, auditoría estática y publicación del artefacto también finalizaron correctamente.
+- Auditoría estática: **0 errores, 4 warnings, 3 informativos**. Warnings: Real Noche extra en fixture; URL Tennessee 6:30 PM sin resolver; 15 nombres de resultados desconocidos; `sorteos/constants.py` y `rescue.db` vacíos/sospechosos. Se mantienen sin corregir por falta de evidencia para alias, horarios o contenido esperado.
+- El CI #732 no ejecutó concurrencia financiera sobre PostgreSQL ni pruebas del worker/reconciliación de premios contra una DB aislada de destino. Por tanto, no cierra los riesgos J ni los hallazgos financieros de esta revisión.
+- Este commit #732 validó el código sin cambios funcionales respecto al HEAD anterior; el único cambio del commit `64905d5` fue documentación.
