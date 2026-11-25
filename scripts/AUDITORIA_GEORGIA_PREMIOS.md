@@ -1,0 +1,165 @@
+# Auditoría crítica: Georgia nocturno y procesamiento de premios
+
+Rama de trabajo: `audit/repository-alignment`. No modificar `main` ni fusionar PR #2 como parte de esta auditoría.
+
+## Hallazgos confirmados en el código de la rama
+
+### Georgia / fechas efectivas
+- `sorteos/fixtures/sorteos.json`, sorteo PK 54: nombre `Georgia 11:40 PM`, horario de salida configurado `23:30` en las dos temporadas y cierre de 10 minutos (por tanto, 23:20).
+- `scraper.py`: LotteryUSA se identifica como `Georgia 11:34 PM`; alias lo canoniza a `Georgia 11:40 PM`. Georgia usa America/New_York. El cálculo convierte el instante de sorteo a fecha Cuba.
+- `jugadas/templates/jugadas/apostar.html`: selección del ID 54 fuerza mañana con `Date.toISOString()`, que puede producir desfase de fecha por zona horaria y usa ID fijo.
+- `jugadas/views.py`: normalización para clientes transforma fechas cercanas a hoy; un bloque especial busca el nombre exacto `Georgia 11:34 PM` (no coincide con el fixture) y en la ventana 00:00–00:24 cambia hoy a ayer. Esa combinación es inconsistente con la fecha efectiva de Cuba.
+- `sorteos/utils.py`: si no se pasa fecha, aplica otro ajuste especial para `Georgia 11:34 PM` a la fecha anterior, nombre que tampoco coincide con el fixture.
+- La ruta de guardar apuestas usa una sola `fecha_apuesta` para todo el POST y la reutiliza en jugadas, boletas, validaciones de pool y comprobaciones de duplicados. Si Georgia tiene una fecha efectiva distinta a los demás sorteos del mismo envío, no se puede corregir solo cambiando el input global del HTML.
+
+### Premios / reprocesamiento
+- `resultados/views.py`: `jugada_es_ganadora()` solo implementa de forma explícita fijo y corridos; otras formas devuelven falso. Los corridos incluyen pares consecutivos de Pick4 además de corridos manuales.
+- `resultados/procesamiento.py`: procesamiento asíncrono en hilo. Calcula ganadoras, marca perdedoras y crea/paga premios; el conjunto de premios existentes se comprueba solo para las ganadoras nuevas. Una jugada que deje de ganar puede conservar premio existente; un premio existente no se reconcilia por importe/resultado cambiado; los errores de pago pueden dejar premio pendiente y el resultado global se marca completado.
+- `resultados/views.py`: modificación y eliminación de resultado tienen reversión financiera manual y no uniforme. En eliminación se intenta crear el movimiento de reversión, pero los fallos de movimiento se capturan y se continúa eliminando premio/resultado.
+- La ruta de apuesta tardía invoca reconciliación de premios, pero se debe verificar su comportamiento en resultado ya procesado y premio previamente existente.
+- La edición de jugada y boleta necesita una reconciliación del premio anterior antes de cambiar sorteo, fecha, número, forma, monto o destinatario.
+
+## Diseño de corrección requerido (no aplicar reglas de premio ambiguas sin validar)
+
+1. Fecha efectiva **por sorteo**, no una única fecha global cuando un POST incluya varios sorteos.
+2. Fuente canónica de identidad para Georgia nocturno, sin nombres exactos contradictorios ni ID fijo en JS.
+3. El horario de cierre Georgia debe verificarse con el requisito operativo: 00:24 Cuba, diez minutos antes de 00:34 Cuba. Confirmar que las horas del fixture se interpretan en Cuba antes de cambiar el horario.
+4. Cliente y comercial no deben poder alterar fecha/sorteo para evadir cierres; servidor valida.
+5. Banco/superadmin pueden autorizar jugadas tardías, pero la fecha del resultado debe ser la exacta y debe disparar reconciliación.
+6. Un motor único e idempotente para evaluar, crear, actualizar, invalidar y revertir premios, con control transaccional y trazabilidad de movimientos. No marcar procesamiento completado si quedan errores que requieren recuperación.
+7. Definir/validar reglas de Pick2/Pick3/Pick4/Pick5, PF, fijo, corridos, centenas corridas, parlet, VS, posición, tripleta y Superparlet contra las reglas de negocio antes de activar premios automáticos.
+
+## Casos de aceptación mínimos
+
+- Georgia en 23:59 Cuba: fecha efectiva del próximo resultado 00:34 Cuba.
+- Georgia en 00:00, 00:23, 00:24: permanece asociado al sorteo del día actual; confirmar política exacta de inclusión del minuto 00:24.
+- Georgia 00:25: el siguiente sorteo debe ser el de la fecha siguiente, no aceptar el sorteo ya cerrado.
+- En POST con Georgia y otros sorteos, fechas y boletas se asignan individualmente según sorteo.
+- Rechazo de fecha alterada por cliente; fecha/rol autorizados por servidor.
+- Pick3 234 / Pick4 3456: fijo 34, PF 23, corrido1 34, corrido2 56; validar derivaciones adicionales con reglas.
+- Procesar resultado, volver a procesar sin duplicar, modificar resultado, borrar/recrear resultado.
+- Insertar jugada tardía por banco y superadmin; editar jugada después de resultados; mover jugada a otro sorteo/fecha.
+- Si premio deja de ser válido o cambia su importe, ajustar y revertir movimiento previo de manera trazable.
+- Superparlet al modificar/eliminar cualquiera de sus dos resultados.
+- Fallo simulado de pago/reversión: estado recuperable, sin perder historial ni marcar éxito engañoso.
+
+## Estado
+
+Este documento registra hallazgos de lectura del código; no certifica pruebas ejecutadas ni una corrección terminada. Los cambios de lógica financiera/fechas deben ir acompañados de tests y ejecución de CI antes de declarar el paquete listo.
+
+## Regla operativa de fecha y ventana para Georgia (establecida por el usuario)
+
+Esta regla prevalece sobre cualquier ajuste automático anterior que reste o sume días por el nombre del sorteo, el ID fijo, la zona horaria del navegador o una fecha enviada por el cliente. Hora de referencia: **America/Havana**.
+
+- **00:00:00–00:26:59:** la apuesta de Georgia corresponde al resultado cuya fecha efectiva es **el día Cuba en curso**. Se acepta hasta el minuto 00:26 inclusive; a partir de 00:27 se cierra esta ventana.
+- **00:27:00–01:00:59:** Georgia está cerrado para el ciclo de madrugada. No se acepta a clientes/comerciales ni se traslada silenciosamente al siguiente ciclo. Banco/superadmin pueden cargar fuera de tiempo conforme a sus permisos, pero deben conservar la fecha del ciclo que cargan explícitamente y quedar sujetos a validación/reconciliación.
+- **01:01:00–23:59:59:** la apuesta corresponde al **próximo ciclo de Georgia**, cuya fecha efectiva se deriva del instante de sorteo convertido a hora Cuba; el selector debe mostrar la fecha del siguiente ciclo (normalmente el día siguiente), y no una fecha basada en UTC del navegador.
+- La regla se aplica únicamente a Georgia nocturno; si el envío contiene otros sorteos, sus fechas no se desplazan por la regla Georgia.
+- El backend es autoritativo; el frontend solo refleja el cálculo. Se rechaza la manipulación de fecha para clientes/comerciales y no se debe guardar una fecha de Georgia inferida por `toISOString()` ni por un ID hard-coded.
+- La fecha efectiva guardada debe ser estable para jugadas, boletas, premios, resultados, reportes y auditoría. Cambiar el día del sistema no debe reetiquetar registros ya persistidos.
+
+### Pruebas obligatorias de límites
+
+- Cuba 00:00, 00:26:59 → fecha efectiva del día en curso; aceptada.
+- Cuba 00:27:00, 00:59:59 y 01:00:59 → ciclo de madrugada cerrado para clientes/comerciales; rechazada sin auto-traslado.
+- Cuba 01:01:00 y 23:59:59 → siguiente ciclo Georgia; fecha efectiva del siguiente resultado.
+- Verificar cambios de offset de Georgia y Cuba y el override UTC−4 vigente hasta la fecha documentada; conversión debe basarse en el instante del sorteo, no en el offset del navegador.
+- POST mixto Georgia + otro sorteo → fecha especial solo para Georgia.
+
+**Estado:** regla de negocio establecida y documentada; aún no certificada como implementada en runtime. La implementación debe resolver fecha por sorteo en backend y actualizar UI/tests antes de declararla completa.
+
+## Implementación inicial de la regla (21 de noviembre de 2026)
+
+Se inició implementación en esta rama:
+- `jugadas/templates/jugadas/apostar.html`: elimina el PK fijo y calcula la fecha mostrada usando `America/Havana`; 00:00–00:26 mantiene hoy, 00:27–01:00 mantiene hoy (ventana cerrada), y desde 01:01 calcula mañana. No usa la fecha UTC del navegador.
+- `jugadas/views.py`: detecta Georgia por nombre seleccionado, aplica validación de fecha desde servidor y rechaza a usuarios no privilegiados durante 00:27–01:00. Evita la normalización que cambiaba la fecha Georgia a hoy. Si Georgia y otros sorteos requieren días efectivos distintos, exige enviarlos separados para evitar desplazar la fecha de los demás. Banco/superadmin mantienen permisos de carga tardía.
+- Se agregó este documento con la regla y los casos de límite.
+
+**Pendiente de verificación:** todavía no se ejecutaron pruebas locales ni pruebas de integración del endpoint. El código actual sigue usando una fecha global de POST en partes de la creación/validación de jugadas; por eso la regla mixta está protegida mediante rechazo, no implementada como fechas independientes en un mismo envío. Revisar también el horario efectivo Georgia en `sorteos/fixtures/sorteos.json` y `sorteos/utils.py`, porque las horas de fixture todavía no se han alineado con la conversión del resultado oficial a Cuba.
+
+## Revisión de continuidad y correcciones de borradores/filas (21 de noviembre de 2026)
+
+Hallazgos confirmados:
+- Había dos mecanismos de borrador simultáneos: un bloque inline en `apostar.html` y el módulo `static/js/borrador_apostar.js`. Se retiró el bloque inline; queda un único propietario del flujo.
+- El borrador externo guardaba con criterios demasiado permisivos (cliente o sorteo bastaban), y auto-aplicaba el contenido al entrar. Se corrigió para exigir cliente/gestor aplicable, forma de pago, sorteos y al menos un número, y mostrar opciones explícitas Continuar/Borrar.
+- La clave local está scoped por ID de usuario; no comparte borrador entre cuentas. El módulo conserva datos de cliente, cuenta gestora, forma de pago, fecha, orden, sorteos, pestañas y filas.
+- La restauración ahora dispara el evento change de la cuenta gestora seleccionada para sincronizar la carga de clientes.
+- La fila automática se activa por números, no por importe aislado. Un importe sin números no provoca crecimiento de filas.
+
+Pruebas añadidas:
+- `scripts/tests_js/borrador_apostar.test.cjs`: elegibilidad, requisitos, gestor, números en grupos VS y clave por usuario.
+- `scripts/tests_js/apostar_table_validation.test.cjs`: fila numérica sin importe, fila final vacía, posiciones, VS, importe sin números y fila válida con importe positivo.
+
+Pendiente de completar antes de cerrar:
+- Confirmar CI en el commit más reciente.
+- Probar restauración real de cliente/gestor/FP/sorteos/tablas con navegador (incluida carga asíncrona).
+- Validar en backend la representación de filas originales; actualmente el POST de apuesta transmite items ya recolectados y el servidor no recibe el estado crudo de las filas. El backend valida items/importe, pero aún no puede verificar por sí solo una fila de interfaz omitida sin número o sin importe.
+- Completar pruebas de auto-fila por todas las tablas y de render/restore para asegurar que no hay duplicados.
+
+### Protección de filas sin importe (implementación en curso)
+
+- `apostar.html` envía ahora un JSON adicional `tabla_rows` con el estado original de tablas, filas, números, formas e importes.
+- `jugadas/views.py` incorpora `_validar_tablas_crudas_payload`: valida estructura/tipos de tabla, formas permitidas e importes; rechaza filas con números y sin monto positivo, así como importes sin números. Se ejecuta antes de crear boletas/jugadas.
+- Si hay jugadas normales, el backend exige el payload de filas crudas; un cliente desactualizado debe recargar para enviar el nuevo contrato.
+- Se añadió `scripts/tests/test_apostar_raw_rows_validation.py` para fila vacía, números sin importe, importe positivo, VS, posiciones, importe sin números, forma no permitida y tipo de tabla incorrecto.
+- La fila vacía final sigue siendo válida. La validación de importes se hace con Decimal, no con floats.
+
+**Pendiente:** CI del commit con estas pruebas, comprobación de correspondencia entre IDs de sorteos seleccionados y tablas enviadas, y revisar si los valores de números crudos necesitan validación de longitud/formato adicional en servidor. No sustituye la prueba práctica de navegador.
+
+- El servidor también compara IDs de sorteos presentes en `tabla_rows` contra los sorteos seleccionados, y exige que cada sorteo de items normales tenga estado de tabla cruda.
+- La ejecución CI #448 sobre el commit `d01883a3bbce0431d7087d850d530f5aceac7753` terminó SUCCESS; incluye las pruebas de validación de filas crudas. Los cambios posteriores de alineación y documentación tienen nueva ejecución en curso.
+
+
+## Continuación: contrato de sorteo ↔ tablas crudas (21 de noviembre de 2026)
+
+- Se encontró que el backend rechazaba tablas crudas de sorteos no seleccionados, pero no rechazaba la omisión de tablas de un sorteo seleccionado. El contrato del frontend serializa el estado de todos los sorteos seleccionados, aunque estén vacíos.
+- Se añadió `_validar_coincidencia_sorteos_tablas`: exige igualdad exacta entre IDs seleccionados y IDs de tablas crudas, rechaza IDs inválidos, duplicados en selección y duplicados en tablas, y reporta sorteos omitidos o extra.
+- La vista de guardado ejecuta esta comprobación antes de crear boletas/jugadas.
+- Se añadieron pruebas para igualdad exacta, sorteo omitido, sorteo extra, duplicados e ID inválido.
+- También se rechazan formas duplicadas en el estado crudo de tablas y se añadió una prueba.
+- CI de estos commits está en ejecución; aún no se marca como validado hasta que termine el run del HEAD actual.
+- Límite pendiente: validar que cada item normal generado coincide semánticamente con las filas crudas (no solo que los IDs y los montos/formas son válidos). Esto requiere reconstrucción/cotejo por tabla y modalidad, y sigue dentro de la auditoría.
+
+
+## Hallazgo adicional crítico en la validación del POST
+
+- La vista contenía una comprobación de IDs de jugadas que referenciaba `sorteos_raw_ids`, variable que no se definía en ese flujo. Esto podía provocar una excepción al guardar y terminar en HTTP 500.
+- Se sustituyó por un helper explícito que exige que cada jugada normal tenga un ID de sorteo válido y que ese ID pertenezca a la selección enviada.
+- Se añadieron pruebas unitarias para ID presente/seleccionado, ausente, no seleccionado y booleano.
+- Este hallazgo confirma por qué la auditoría continúa con lectura del flujo real, además de pruebas previas. CI para el HEAD actual debe pasar antes de considerar la corrección verificada.
+
+
+## Seguridad del pool durante guardar apuesta
+
+- La validación server-side de disponibilidad de pool tenía un comportamiento fail-open: si el guard interno lanzaba excepción, permitía continuar con el guard omitido.
+- Cambiado a fail-closed: registra el error y responde HTTP 503 sin continuar con el guardado. Esto puede bloquear temporalmente el envío cuando el verificador falla, pero evita aceptar apuestas sin comprobar disponibilidad.
+- Pendiente: probar el escenario de error inducido y revisar concurrencia/locking del consumo de pool. La validación previa a la transacción todavía podría ser vulnerable a carreras entre solicitudes simultáneas; requiere diseño y pruebas de concurrencia antes de darla por cerrada.
+
+
+## Preparación para Python 3.14 (sin cambio de runtime todavía)
+
+- Hay dos manifiestos de dependencias diferentes: raíz `requirements.txt` (pin exacto, Django 5.1.3) y `LottoBooM/requirements.txt` (rangos, Django >=4.2,<5.2). El deploy Render usa el segundo, mientras el workflow de auditoría instala el primero. Esta divergencia debe resolverse antes de cambiar runtime.
+- Render fija actualmente Python 3.11.0; CI de auditoría y scraper también usan Python 3.11.
+- Django 5.1 no es compatible con Python 3.14; Django 5.2.8+ sí lo soporta. La ruta recomendada para una actualización estable será probar primero Django 5.2 LTS en 3.11 y 3.14, unificar/clarificar requirements, ejecutar checks/tests y luego cambiar Render. No se modifica aún el runtime de producción.
+- Antes del upgrade deben verificarse versiones de paquetes con extensiones nativas y todas las dependencias indirectas, además de migraciones y despliegue.
+
+
+## Validación de números restringidos y relación con gestor
+
+- La consulta de números restringidos también era fail-open: ante una excepción se omitía la verificación y el POST continuaba. Se cambió a HTTP 503 con rechazo explícito cuando no puede comprobarse.
+- La comprobación de relación con gestor tenía un `except: pass` alrededor de la consulta de Postpago. Se eliminó ese fail-open silencioso; una consulta fallida ya no se interpreta como ausencia de relación y el error se propaga para detener el flujo.
+- Requiere prueba práctica con fallo de base de datos y pruebas de roles/relaciones (Fondo, Postpago y Subordinación).
+
+
+## Auditoría inicial del procesamiento de premios (pendiente de corrección segura)
+
+Revisión de `resultados/procesamiento.py`, `resultados/reconciliacion.py`, `resultados/models.py`:
+
+1. El worker procesa resultados en un thread daemon y no hay mecanismo durable de cola. Reinicios del proceso pueden interrumpir el cálculo.
+2. Si falla el ingreso automático al fondo, el premio se deja pendiente, pero el resultado puede terminar marcado `completado` sin registrar un estado parcial/errores de pago estructurado.
+3. Reprocesar resultados existentes omite premios que ya existen, por lo que un premio pendiente por fallo de pago no se reintenta automáticamente.
+4. `reconciliar_premio_jugada` crea el premio y después intenta pagar, con excepción de pago absorbida; necesita transacción/idempotencia y ruta de reintento explícita.
+5. El modelo `Premio` no muestra restricción única por jugada en Meta. El chequeo previo por existencia no evita duplicados ante ejecuciones concurrentes.
+6. El signal post_save de Resultado recalcula y vuelve a procesar al editar, pero requiere verificar reversión de premios ya pagados cuando el resultado cambia. No se debe corregir balances con resta simple sin registro financiero de reverso.
+
+No se aplican todavía cambios de pagos/reversos en esta fase: son operaciones financieras y deben tener pruebas de idempotencia, concurrencia, reintento, premio pendiente, cambio de resultado y reverso auditado antes de tocar la lógica.

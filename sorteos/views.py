@@ -18,6 +18,15 @@ from jugadas.models import FormaJuego
 
 CUBA_TZ = ZoneInfo('America/Havana')
 
+DIAS_SEMANA_ES = {
+    0: 'Lunes', 1: 'Martes', 2: 'Miércoles', 3: 'Jueves',
+    4: 'Viernes', 5: 'Sábado', 6: 'Domingo',
+}
+
+
+def _temporada_actual(fecha):
+    return 'Verano' if es_verano_cuba(fecha) else 'Invierno'
+
 def _tz_cuba(fecha):
     """tzinfo con el offset correcto de Cuba (respeta es_verano_cuba)."""
     from LottoBooM.utils import es_verano_cuba
@@ -72,7 +81,7 @@ def _hora_salida_hoy(sorteo, hoy):
 
 
 def _calcular_estado(sorteo, hora_salida, ahora):
-    minutos = sorteo.minutos_cierre if sorteo.minutos_cierre is not None else 60
+    minutos = 10  # Cierre único y obligatorio
     dt_salida = datetime.combine(ahora.date(), hora_salida, tzinfo=_tz_cuba(ahora.date()))
     dt_cierre = dt_salida - timedelta(minutes=minutos)
 
@@ -139,11 +148,8 @@ def lista_sorteos(request):
 
     sorteos_ordenados = abiertos + cerrados + salidos
 
-    mes = hoy.month
-    if 4 <= mes <= 10:
-        temporada_actual, proxima_temporada = 'Verano', 'Invierno'
-    else:
-        temporada_actual, proxima_temporada = 'Invierno', 'Verano'
+    temporada_actual = _temporada_actual(hoy)
+    proxima_temporada = 'Invierno' if temporada_actual == 'Verano' else 'Verano'
 
     context = {
         'sorteos': sorteos_ordenados,
@@ -154,7 +160,7 @@ def lista_sorteos(request):
         'temporada_actual': temporada_actual,
         'proxima_temporada': proxima_temporada,
         'dias_restantes_cambio': 0,
-        'dia_semana_actual': hoy.strftime('%A'),
+        'dia_semana_actual': DIAS_SEMANA_ES[hoy.weekday()],
     }
     return render(request, 'sorteos/sorteos.html', context)
 
@@ -217,7 +223,7 @@ def api_sorteos_list(request):
             'nombre': s.nombre,
             'origen': s.origen,
             'activo': s.activo,
-            'minutos_cierre': s.minutos_cierre,
+            'minutos_cierre': 10,
             'formas_juego': s.formas_juego or [],
             'formas_juego_nombres': [fj.nombre for fj in _formas_de_sorteo(s)],
             'estado': info['estado'],
@@ -436,13 +442,9 @@ def api_sorteos_compartir(request):
             lista_dedup.append(it)
     lista = lista_dedup
 
-    # FIX_SORTEOS_TEMPORADA_V1: dia de semana + fecha + temporada
-    DIAS_ES = {
-        0: 'Lunes', 1: 'Martes', 2: 'Miercoles', 3: 'Jueves',
-        4: 'Viernes', 5: 'Sabado', 6: 'Domingo',
-    }
-    dia_semana = DIAS_ES.get(hoy.weekday(), hoy.strftime('%A'))
-    temporada = 'Verano' if es_verano_cuba(hoy) else 'Invierno'
+    # Calendario determinista: no depende del locale del proceso.
+    dia_semana = DIAS_SEMANA_ES[hoy.weekday()]
+    temporada = _temporada_actual(hoy)
 
     lines = []
     lines.append("*LOTTOBOOM*")

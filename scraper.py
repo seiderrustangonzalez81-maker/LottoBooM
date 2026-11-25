@@ -19,9 +19,11 @@ CUBA_UTC4_DESDE_UTC = datetime(2026, 11, 1, 5, 0, tzinfo=timezone.utc)
 CUBA_UTC4_HASTA_UTC = datetime(2027, 11, 7, 5, 0, tzinfo=timezone.utc)  # límite exclusivo
 CUBA_UTC4 = timezone(timedelta(hours=-4), name="Cuba-UTC-4")
 
-# Hora local oficial usada para calcular la fecha de cada sorteo estadounidense.
-# Tennessee se usa Central (zona de Nashville); Florida se usa Eastern,
-# que es la zona con la que se publican los horarios de los sorteos.
+# Zonas IANA de publicación de la fuente, no offsets fijos ni zona del runner.
+# LotteryUSA publica Florida/NY/NJ/Georgia en Eastern y Tennessee en Central;
+# la lotería oficial de Tennessee muestra sus horarios en CT/ET. Si una fuente
+# futura identifica un sorteo del este de Tennessee en Eastern, debe añadirse
+# una regla explícita por sorteo/fuente, no cambiar el estado por defecto.
 ZONAS_ESTADOS = {
     "Florida": ZoneInfo("America/New_York"),
     "Texas": ZoneInfo("America/Chicago"),
@@ -37,7 +39,7 @@ URL_QUINIELON = "https://enloteria.com/resultados-el-quinielon-dia-hoy"
 ARCHIVO_JSON = "resultados.json"
 
 
-# Matriz maestra de los sorteos que la aplicación espera (51 nombres).
+# Matriz maestra de los sorteos que la aplicación espera (54 nombres).
 # Se usa para auditar cobertura: no bloquea la publicación de resultados parciales.
 SORTEOS_ESPERADOS = [
     "Anguila 8 AM", "Anguila 9 AM", "Haití 1", "Anguila 10 AM",
@@ -53,7 +55,7 @@ SORTEOS_ESPERADOS = [
     "Georgia 7 PM", "Texas 7 PM", "Tennessee 7:20 PM",
     "King Lottery 7:30 PM", "Haití 6", "Loteka 7:50 PM", "Tok 3",
     "Anguila 8 PM", "Nacional", "Leidsa 8:55 PM", "Pega 3+",
-    "Anguila 9 PM", "Florida 9:50 PM", "New York 10:30 PM",
+    "Anguila 9 PM", "Anguila 10 PM", "Florida 9:50 PM", "New York 10:30 PM",
     "New Jersey 10:50 PM", "Texas 11 PM", "Georgia 11:40 PM",
 ]
 URL_CONECTATE = "https://www.conectate.com.do/loterias/"
@@ -204,6 +206,38 @@ def calcular_fecha_esperada_usa(nombre_db):
 def normalizar_nombre(nombre):
     return " ".join(nombre.split())
 
+ALIASES_NOMBRES_SORTEOS = {
+    "anguilla 8am": "Anguila 8 AM", "anguilla 9am": "Anguila 9 AM",
+    "anguilla 10am": "Anguila 10 AM", "anguilla 11am": "Anguila 11 AM",
+    "anguilla 12pm": "Anguila 12 PM", "anguilla 1pm": "Anguila 1 PM",
+    "anguilla 2pm": "Anguila 2 PM", "anguilla 3pm": "Anguila 3 PM",
+    "anguilla 4pm": "Anguila 4 PM", "anguilla 5pm": "Anguila 5 PM",
+    "anguilla 6pm": "Anguila 6 PM", "anguilla 7pm": "Anguila 7 PM",
+    "anguilla 8pm": "Anguila 8 PM", "anguilla 9pm": "Anguila 9 PM",
+    "anguilla 10pm": "Anguila 10 PM",
+    "haiti bolet 9:30 am": "Haití 1", "haiti bolet 10:30 am": "Haití 2",
+    "haiti bolet 1:30 pm": "Haití 3", "haiti bolet 4:30 pm": "Haití 4",
+    "haiti bolet 5:30 pm": "Haití 5", "haiti bolet 6:30 pm": "Haití 6",
+    "el quemaito mayor": "Quemaito", "el quinielon dia": "Quinielón",
+    "la primera": "Primera", "lotedom": "Lotedom",
+    "king lottery dia": "King Lottery 12:30 PM",
+    "florida 9:45 pm": "Florida 9:50 PM",
+    "new jersey 10:57 pm": "New Jersey 10:50 PM",
+    "georgia 6:59 pm": "Georgia 7 PM",
+    "georgia 11:34 pm": "Georgia 11:40 PM",
+    "texas 10:12 pm": "Texas 11 PM",
+}
+def canonizar_nombre_sorteo(nombre):
+    import unicodedata
+    clave = "".join(ch for ch in unicodedata.normalize("NFKD", str(nombre or "").casefold()) if not unicodedata.combining(ch))
+    clave = re.sub(r"[^a-z0-9]+", " ", clave).strip()
+    for alias, canonico in ALIASES_NOMBRES_SORTEOS.items():
+        a = "".join(ch for ch in unicodedata.normalize("NFKD", alias) if not unicodedata.combining(ch))
+        a = re.sub(r"[^a-z0-9]+", " ", a).strip()
+        if a == clave:
+            return canonico
+    return str(nombre or "").strip()
+
 def extraer_numeros_validos(tarjeta_o_soup):
     bolas = tarjeta_o_soup.find_all(class_="result-number")
     if not bolas:
@@ -260,7 +294,8 @@ def scrape_principal(page):
             numeros = extraer_numeros_validos(tarjeta)
             if numeros and len(numeros) >= 2:
                 resultados.append({
-                    "sorteo_nombre": nombre,
+                    "sorteo_nombre": canonizar_nombre_sorteo(nombre),
+                    "nombre_fuente": nombre,
                     "numeros": numeros,
                     "fecha": calcular_fecha_sorteo_enloteria(nombre),
                     "fuente": "enloteria",
@@ -341,7 +376,7 @@ def scrape_lotteryusa(page):
     for nombre_db, juegos in URLS_MULTI.items():
         fecha_esperada_local, fecha_esperada_cuba = calcular_fechas_esperadas_usa(nombre_db)
         resultado_sorteo = {
-            "sorteo_nombre": nombre_db, "fecha": fecha_esperada_cuba, "fuente": "lotteryusa",
+            "sorteo_nombre": canonizar_nombre_sorteo(nombre_db), "nombre_fuente": nombre_db, "fecha": fecha_esperada_cuba, "fuente": "lotteryusa",
             "pick2": "", "pick3": "", "pick4": "", "pick5": "",
             "fijo": "", "corrido_1": "", "corrido_2": "",
         }
@@ -440,7 +475,10 @@ def informar_cobertura(resultados):
     # Auditoría separada: identifica los sorteos estadounidenses que sí están
     # configurados explícitamente en LotteryUSA. La lista de matriz no sustituye
     # esta configuración y así se evita asumir que un nombre ya se está scrapeando.
-    configurados = {normalizar_nombre(n).casefold() for n in URLS_MULTI}
+    configurados = {
+        normalizar_nombre(canonizar_nombre_sorteo(n)).casefold()
+        for n in URLS_MULTI
+    }
     usa_esperados = [n for n in SORTEOS_ESPERADOS if any(n.startswith(e) for e in ZONAS_ESTADOS)]
     sin_config = [n for n in usa_esperados if normalizar_nombre(n).casefold() not in configurados]
     print(f"Sorteos USA esperados con configuración directa: {len(usa_esperados)-len(sin_config)}/{len(usa_esperados)}")
@@ -537,8 +575,17 @@ def main():
     dic = {}
     for r in guardados:
         if r.get("fecha") in fechas_validas and r.get("sorteo_nombre"):
+            r = dict(r)
+            nombre_original = r["sorteo_nombre"]
+            nombre_canonico = canonizar_nombre_sorteo(nombre_original)
+            if nombre_canonico != nombre_original:
+                r.setdefault("nombre_fuente", nombre_original)
+                r["sorteo_nombre"] = nombre_canonico
             clave = f"{r['sorteo_nombre']}|{r['fecha']}"
-            dic[clave] = r
+            if clave in dic:
+                dic[clave] = combinar_resultados(dic[clave], r)
+            else:
+                dic[clave] = r
 
     for nuevo in todos_nuevos:
         fecha = nuevo.get("fecha")

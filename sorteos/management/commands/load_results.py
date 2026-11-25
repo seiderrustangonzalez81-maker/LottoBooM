@@ -1,7 +1,7 @@
 import requests
 import unicodedata
-from datetime import datetime, timedelta
-from zoneinfo import ZoneInfo
+from datetime import datetime, timedelta, timezone
+from LottoBooM.utils import es_verano_cuba
 from django.core.management.base import BaseCommand
 from django.utils.dateparse import parse_date
 from django.contrib.auth.models import User
@@ -41,7 +41,7 @@ MAPEO_NOMBRES = {
     "New Jersey 12:50 PM": "New Jersey 12:50 PM", "New Jersey 10:57 PM": "New Jersey 10:50 PM",
     "Georgia 12:30 PM": "Georgia 12:30 PM",
     "Georgia 6:59 PM": "Georgia 7 PM",                    # ⬅️ BUG B CORREGIDO (Evening)
-    "Georgia 11:34 PM": "Georgia 12:34 AM",               # ⬅️ BUG A CORREGIDO (Night)
+    "Georgia 11:34 PM": "Georgia 11:40 PM",               # ⬅️ BUG A CORREGIDO (Night)
     "Tennessee 10:20 AM": "Tennessee 10:20 AM", "Tennessee 1:20 PM": "Tennessee 1:20 PM", "Tennessee 6:30 PM": "Tennessee 7:20 PM",
 
     # USA - Enloteria (Fallback para Fijo y Corridos)
@@ -53,7 +53,11 @@ MAPEO_NOMBRES = {
     "Tennessee Día": "Tennessee 1:20 PM",
 }
 
-TZ_CUBA = ZoneInfo('America/Havana')
+def obtener_hora_cuba_actual():
+    """Usa la regla operativa vigente de Cuba, sin depender de tzdata desactualizada."""
+    ahora_utc = datetime.now(timezone.utc)
+    offset = -4 if es_verano_cuba(ahora_utc.date()) else -5
+    return ahora_utc.astimezone(timezone(timedelta(hours=offset)))
 TZ_ESTE = ZoneInfo('America/New_York')
 DIAS_ES = {0: 'lunes', 1: 'martes', 2: 'miercoles', 3: 'jueves', 4: 'viernes', 5: 'sabado', 6: 'domingo'}
 
@@ -161,7 +165,7 @@ class Command(BaseCommand):
         req = FakeRequest(admin)
 
         mapeo_normalizado = {normalizar_texto(k): v for k, v in MAPEO_NOMBRES.items()}
-        ahora_cuba = datetime.now(TZ_CUBA)
+        ahora_cuba = obtener_hora_cuba_actual()
         hoy_cuba = ahora_cuba.date()
         ayer_cuba = hoy_cuba - timedelta(days=1)
         dia_actual = DIAS_ES[ahora_cuba.weekday()]

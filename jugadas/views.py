@@ -5,8 +5,8 @@ import logging
 import traceback
 import os
 import threading
-from decimal import Decimal
-from datetime import datetime, timedelta, time
+from decimal import Decimal, InvalidOperation
+from datetime import datetime, timedelta, time, timezone as datetime_timezone
 from collections import defaultdict
 from zoneinfo import ZoneInfo
 
@@ -43,59 +43,68 @@ import threading
 from django.core.management import call_command
 logger = logging.getLogger(__name__)
 
+
+def _zona_horaria_cuba(fecha=None):
+    """Zona fija de Cuba según la regla estacional vigente del proyecto."""
+    if fecha is None:
+        fecha = timezone.now()
+    return datetime_timezone(timedelta(hours=-4 if es_verano_cuba(fecha) else -5))
+
 # ═══════════════════════════════════════════════════════════════
 # FIX URGENTE: FORZAR ZONA HORARIA DE CUBA (UTC-4)
 # ═══════════════════════════════════════════════════════════════
-def _obtener_sorteos_cuba_estricto():
+def _obtener_sorteos_cuba_estricto(incluir_cerrados=False):
     """
-    Calcula la hora real en Cuba y devuelve solo los sorteos abiertos.
+    Devuelve sorteos programados para hoy en hora Cuba que aún no han salido.
+    Comercial/Cliente reciben solo sorteos abiertos; Banco/Superadmin pueden
+    seleccionar sorteos cerrados (dentro de la ventana previa a la salida).
+    Si existe calendario semanal, un día ausente NO usa la hora manual como fallback.
     """
-    try:
-        CUBA_TZ = ZoneInfo('America/Havana')
-    except Exception:
-        CUBA_TZ = pytz.timezone('America/Havana')
-
-    ahora_cuba = timezone.now().astimezone(CUBA_TZ)
+    ahora_utc = timezone.now()
+    CUBA_TZ = _zona_horaria_cuba(ahora_utc)
+    ahora_cuba = ahora_utc.astimezone(CUBA_TZ)
     fecha_cuba = ahora_cuba.date()
-
+    temporada = 'verano' if es_verano_cuba(fecha_cuba) else 'invierno'
+    dia_es = {0: 'lunes', 1: 'martes', 2: 'miercoles', 3: 'jueves', 4: 'viernes', 5: 'sabado', 6: 'domingo'}[fecha_cuba.weekday()]
     sorteos_validos = []
 
     for s in Sorteo.objects.filter(activo=True).order_by('hora_salida'):
-        temp = 'verano' if es_verano_cuba(fecha_cuba) else 'invierno'
-        dia_es = {0: 'lunes', 1: 'martes', 2: 'miercoles', 3: 'jueves', 4: 'viernes', 5: 'sabado', 6: 'domingo'}[fecha_cuba.weekday()]
-
         hora_salida = None
-        if s.horarios and temp in s.horarios and dia_es in s.horarios[temp]:
-            hora_str = s.horarios[temp][dia_es]
-            try:
-                hh, mm = hora_str.split(':')
-                hora_salida = time(int(hh), int(mm))
-            except Exception:
-                pass
-
-        if not hora_salida:
+        if s.horarios:
+            horario_dia = (s.horarios.get(temporada) or {}).get(dia_es)
+            if horario_dia:
+                try:
+                    hh, mm = horario_dia.split(':')
+                    hora_salida = time(int(hh), int(mm))
+                except (ValueError, TypeError):
+                    logger.warning('Horario inválido para %s (%s/%s): %r', s.nombre, temporada, dia_es, horario_dia)
+                    continue
+            else:
+                # Calendario semanal presente: día no programado no se debe mostrar.
+                continue
+        else:
             hora_salida = s.hora_salida
 
         if not hora_salida:
             continue
 
-        # Calcular salida y cierre en hora Cuba
-        dt_salida = datetime.combine(fecha_cuba, hora_salida).replace(tzinfo=CUBA_TZ)
-
-        # Si la hora de salida es de madrugada, pertenece al día siguiente.
-        if hora_salida.hour < 6:
-            dt_salida += timedelta(days=1)
-
-        minutos_cierre = s.minutos_cierre if s.minutos_cierre is not None else 60
+        salida_local = datetime.combine(fecha_cuba, hora_salida)
+        dt_salida = salida_local.replace(tzinfo=_zona_horaria_cuba(salida_local))
+        minutos_cierre = 10  # Cierre obligatorio: 10 minutos antes de la salida
         dt_cierre = dt_salida - timedelta(minutes=minutos_cierre)
 
-        # ¿Estamos antes del cierre?
-        if ahora_cuba < dt_cierre:
-            s.estado_actual = 'abierto'
-            s.hora_salida = hora_salida
-            s.hora_cierre = dt_cierre
-            s.hora_salida_str = hora_salida.strftime('%I:%M %p').lstrip('0')
-            sorteos_validos.append(s)
+        if ahora_cuba >= dt_salida:
+            continue
+        estado = 'abierto' if ahora_cuba < dt_cierre else 'cerrado'
+        if estado == 'cerrado' and not incluir_cerrados:
+            continue
+
+        s.estado_actual = estado
+        s.hora_salida = hora_salida
+        s.hora_cierre = dt_cierre
+        s.hora_salida_str = hora_salida.strftime('%I:%M %p').lstrip('0')
+        s.sorteos_segundos_restantes = max(0, int(((dt_cierre if estado == 'abierto' else dt_salida) - ahora_cuba).total_seconds()))
+        sorteos_validos.append(s)
 
     return sorteos_validos
 
@@ -181,30 +190,370 @@ def _boleta_duplicada(cliente_id, forma_pago_id, fecha_sorteo, items):
 # ═══════════════════════════════════════════════════════════════
 # Helper · Consolidar tripletas (FIX_TRIPLETA_V1)
 # ═══════════════════════════════════════════════════════════════
+def _forma_aplicable_sorteo(tipo, formas_sorteo):
+    """Resuelve alias de formas que el frontend normaliza a una tabla."""
+    tipo = str(tipo or '').strip().lower()
+    formas = {str(f or '').strip().lower() for f in (formas_sorteo or [])}
+    aliases = {
+        'corridos': {'corridos', 'corrido1', 'corrido2'},
+        'centenas corridas': {'centenas corridas', 'centena corrida1', 'centena corrida2'},
+    }
+    return bool(aliases.get(tipo, {tipo}) & formas)
+
+
+def _validar_items_formas_sorteos(items, formas_por_sorteo):
+    """Rechaza items que el guardado normal omitiría por forma no habilitada."""
+    errores = []
+    ids_disponibles = {str(sid) for sid in formas_por_sorteo}
+    for idx, item in enumerate(items or [], start=1):
+        tipo = str(item.get('tipo') or '').strip().lower()
+        sid_item = item.get('sorteo_id')
+        if sid_item not in (None, ''):
+            sid = str(sid_item)
+            if sid not in ids_disponibles:
+                errores.append(f'Jugada #{idx}: sorteo {sid} no está entre los seleccionados.')
+                continue
+            targets = [sid]
+        else:
+            targets = list(ids_disponibles)
+        if not targets:
+            errores.append(f'Jugada #{idx}: no hay sorteos destino.')
+            continue
+        for sid in targets:
+            if not _forma_aplicable_sorteo(tipo, formas_por_sorteo[sid]):
+                errores.append(f'Jugada #{idx}: forma "{tipo}" no está habilitada en sorteo {sid}.')
+    return errores
+
+
+def _puede_apostar_segun_estado_sorteo(estado, usuario):
+    """Abierto: cualquiera permitido por la vista; cerrado: Banco/Superadmin; salido: nadie."""
+    if estado == 'abierto':
+        return True
+    if estado == 'cerrado':
+        return usuario.is_superuser or usuario.roles.filter(tipo='superadmin', activo=True).exists() or usuario.roles.filter(tipo='banco', activo=True).exists()
+    return False
+
+
+def _validar_items_payload(items, etiqueta='jugadas', validar_numero=True):
+    """Valida estructura y montos antes de entrar al flujo transaccional."""
+    errores = []
+    if not isinstance(items, list):
+        return [f'{etiqueta}: debe ser una lista de jugadas.']
+    for idx, item in enumerate(items, start=1):
+        if not isinstance(item, dict):
+            errores.append(f'{etiqueta} #{idx}: formato de item inválido.')
+            continue
+        tipo = str(item.get('tipo') or '').strip()
+        numero = str(item.get('numero') or '').strip()
+        if not tipo:
+            errores.append(f'{etiqueta} #{idx}: forma de juego vacía.')
+        elif len(tipo) > 50:
+            errores.append(f'{etiqueta} #{idx}: forma de juego demasiado larga.')
+        if not numero:
+            errores.append(f'{etiqueta} #{idx}: número vacío.')
+        elif len(numero) > 20:
+            errores.append(f'{etiqueta} #{idx}: número excede 20 caracteres.')
+        if validar_numero and numero and tipo:
+            tipo_lower = tipo.lower()
+            formas_2 = {'fijo', 'corridos', 'corrido', 'corrido1', 'corrido2', 'pick2', 'pf', 'par frontal', 'vs100', 'posicion'}
+            formas_3 = {'pick3', 'centenas corridas', 'centena corrida', 'centena corrida1', 'centena corrida2'}
+            formas_4 = {'pick4'}
+            formas_5 = {'pick5'}
+            formas_pares = {'parlet', 'candado', 'vs', 'vspf', 'vspick2', 'pick2vspf'}
+            if tipo_lower in formas_2 and not re.fullmatch(r'\d{2}', numero):
+                errores.append(f'{etiqueta} #{idx}: {tipo} requiere un número de dos dígitos.')
+            elif tipo_lower in formas_3 and not re.fullmatch(r'\d{3}', numero):
+                errores.append(f'{etiqueta} #{idx}: {tipo} requiere un número de tres dígitos.')
+            elif tipo_lower in formas_4 and not re.fullmatch(r'\d{4}', numero):
+                errores.append(f'{etiqueta} #{idx}: Pick 4 requiere cuatro dígitos.')
+            elif tipo_lower in formas_5 and not re.fullmatch(r'\d{5}', numero):
+                errores.append(f'{etiqueta} #{idx}: Pick 5 requiere cinco dígitos.')
+            elif tipo_lower in formas_pares and not re.fullmatch(r'\d{2}[xX]\d{2}', numero):
+                errores.append(f'{etiqueta} #{idx}: {tipo} requiere un par NNxNN.')
+            elif tipo_lower == 'tripleta' and (len(numero.split()) != 3 or not all(re.fullmatch(r'\d{2}', n) for n in numero.split())):
+                errores.append(f'{etiqueta} #{idx}: Tripleta requiere exactamente tres números de dos dígitos.')
+            elif tipo_lower == 'superparlet' and not re.fullmatch(r'(?:\d{2}[xX]\d{2})(?:\s+\d{2}[xX]\d{2})*', numero):
+                errores.append(f'{etiqueta} #{idx}: Superparlet requiere pares NNxNN separados por espacios.')
+            elif tipo_lower not in formas_2 | formas_3 | formas_4 | formas_5 | formas_pares | {'tripleta', 'superparlet'}:
+                errores.append(f'{etiqueta} #{idx}: forma de juego no reconocida: {tipo}.')
+        try:
+            monto = Decimal(str(item.get('monto', '')))
+            if not monto.is_finite():
+                raise InvalidOperation
+            if monto <= 0:
+                errores.append(f'{etiqueta} #{idx}: monto debe ser mayor que cero.')
+            elif monto > Decimal('99999999.99'):
+                errores.append(f'{etiqueta} #{idx}: monto supera el máximo permitido.')
+            elif monto != monto.quantize(Decimal('0.01')):
+                errores.append(f'{etiqueta} #{idx}: monto debe tener como máximo dos decimales.')
+        except (InvalidOperation, ValueError, TypeError):
+            errores.append(f'{etiqueta} #{idx}: monto inválido.')
+        sorteo_id = item.get('sorteo_id')
+        if sorteo_id not in (None, '') and not str(sorteo_id).isdigit():
+            errores.append(f'{etiqueta} #{idx}: ID de sorteo inválido.')
+        if tipo.lower() == 'posicion':
+            posicion = item.get('posicion')
+            if str(posicion) not in ('1', '2', '3'):
+                errores.append(f'{etiqueta} #{idx}: posición debe ser 1, 2 o 3.')
+    return errores
+
+
+def _validar_items_ids_sorteo(items, sorteos_seleccionados):
+    """Cada item normal debe referir a un sorteo seleccionado."""
+    if not isinstance(items, list):
+        return ['Jugadas: debe ser una lista.']
+    selected = {str(sid) for sid in sorteos_seleccionados}
+    errores = []
+    for index, item in enumerate(items, start=1):
+        if not isinstance(item, dict) or isinstance(item.get('sorteo_id'), bool) or not str(item.get('sorteo_id') or '').isdigit():
+            errores.append(f'Jugada #{index}: ID de sorteo inválido o ausente.')
+            continue
+        if str(item['sorteo_id']) not in selected:
+            errores.append(f'Jugada #{index}: pertenece a un sorteo no seleccionado.')
+    return errores
+
+
+def _validar_coincidencia_sorteos_tablas(sorteos_ids, tablas_crudas):
+    """Exige un estado crudo por cada sorteo seleccionado, sin IDs duplicados o inválidos."""
+    if not isinstance(sorteos_ids, list):
+        return ['La selección de sorteos debe ser una lista.']
+    seleccionados = []
+    for sid in sorteos_ids:
+        if isinstance(sid, bool) or not str(sid).isdigit():
+            return ['La selección contiene un ID de sorteo inválido.']
+        seleccionados.append(str(sid))
+    if len(seleccionados) != len(set(seleccionados)):
+        return ['La selección contiene sorteos duplicados.']
+    if not isinstance(tablas_crudas, list):
+        return ['Las tablas originales deben ser una lista.']
+    crudos = []
+    for draw in tablas_crudas:
+        if not isinstance(draw, dict) or isinstance(draw.get('sorteo_id'), bool) or not str(draw.get('sorteo_id') or '').isdigit():
+            return ['Las tablas originales contienen un ID de sorteo inválido.']
+        crudos.append(str(draw['sorteo_id']))
+    if len(crudos) != len(set(crudos)):
+        return ['Las tablas originales contienen sorteos duplicados.']
+    missing = sorted(set(seleccionados) - set(crudos), key=int)
+    extra = sorted(set(crudos) - set(seleccionados), key=int)
+    errores = []
+    if missing:
+        errores.append('Faltan tablas originales para sorteos seleccionados: ' + ', '.join(missing) + '.')
+    if extra:
+        errores.append('Las filas enviadas incluyen sorteos no seleccionados: ' + ', '.join(extra) + '.')
+    return errores
+
+
+
+def _reconciliar_desglose_pago_edicion(pago_original, total_original, total_nuevo):
+    """Desglose vigente para cancelar/reembolsar una boleta editada."""
+    total_original = Decimal(str(total_original)).quantize(Decimal('0.01'))
+    total_nuevo = Decimal(str(total_nuevo)).quantize(Decimal('0.01'))
+    diferencia = total_nuevo - total_original
+    keys = ('fondo', 'bono', 'postpago')
+    values = {}
+    pago_original = pago_original if isinstance(pago_original, dict) else {}
+    for key in keys:
+        try:
+            value = Decimal(str(pago_original.get(key, '0.00')))
+            if not value.is_finite() or value < 0:
+                value = Decimal('0.00')
+        except (InvalidOperation, ValueError, TypeError):
+            value = Decimal('0.00')
+        values[key] = value.quantize(Decimal('0.01'))
+    paid_total = sum(values.values(), Decimal('0.00'))
+    if paid_total <= 0:
+        values = {'fondo': total_nuevo, 'bono': Decimal('0.00'), 'postpago': Decimal('0.00')}
+    else:
+        if paid_total != total_original:
+            factor_original = total_original / paid_total if total_original else Decimal('0.00')
+            for key in keys:
+                values[key] = (values[key] * factor_original).quantize(Decimal('0.01'))
+            values['fondo'] += total_original - sum(values.values(), Decimal('0.00'))
+        if diferencia > 0:
+            values['fondo'] += diferencia
+        elif diferencia < 0:
+            factor_nuevo = total_nuevo / total_original if total_original else Decimal('0.00')
+            for key in keys:
+                values[key] = (values[key] * factor_nuevo).quantize(Decimal('0.01'))
+            values['fondo'] += total_nuevo - sum(values.values(), Decimal('0.00'))
+    for key in keys:
+        values[key] = values[key].quantize(Decimal('0.01'))
+    values['fondo'] += total_nuevo - sum(values.values(), Decimal('0.00'))
+    if any(values[key] < 0 for key in keys):
+        raise ValueError('Desglose de pago de edición negativo; operación rechazada.')
+    if sum(values.values(), Decimal('0.00')) != total_nuevo:
+        raise ValueError('Desglose de pago no coincide con el total editado.')
+    return values
+
+
+def _snapshot_jugadas_edicion(jugadas):
+    """Snapshot JSON-serializable de jugadas y premios antes de una edición."""
+    snapshots = []
+    for jugada in jugadas:
+        premios = [{
+            'id': premio.id,
+            'monto': str(premio.monto_premio),
+            'estado': premio.estado,
+            'cobrado': bool(premio.cobrado),
+            'fecha_pago': premio.fecha_pago.isoformat() if premio.fecha_pago else None,
+            'pagado_por_id': premio.pagado_por_id,
+            'comentario': premio.comentario,
+            'metadata': premio.metadata or {},
+        } for premio in jugada.premios.all()]
+        snapshots.append({
+            'jugada_id': jugada.id,
+            'numero': jugada.numero,
+            'forma': jugada.forma_juego.nombre if jugada.forma_juego else '',
+            'sorteo_id': jugada.sorteo_id,
+            'sorteo': jugada.sorteo.nombre if jugada.sorteo else '',
+            'fecha_sorteo': jugada.fecha_sorteo.isoformat() if jugada.fecha_sorteo else None,
+            'monto': str(jugada.monto),
+            'estado': jugada.estado,
+            'monto_premio': str(jugada.monto_premio),
+            'metadata': jugada.metadata or {},
+            'premios': premios,
+        })
+    return snapshots
+
+def _validar_tablas_crudas_payload(tablas_payload):
+    """Valida filas originales para que filas con números sin monto no puedan omitirse."""
+    errores = []
+    if not isinstance(tablas_payload, list):
+        return ['Tablas: se esperaba una lista de tablas por sorteo.']
+    kinds = {
+        'tabla-tradicional': 'multi', 'tabla-pick3': 'single',
+        'tabla-centenas': 'multi', 'tabla-pick4': 'single',
+        'tabla-pick5': 'single', 'tabla-vs': 'vs_groups',
+        'tabla-solo-parlet': 'solo_parlet', 'tabla-vspf': 'vs_groups',
+        'tabla-vspick2': 'vs_groups', 'tabla-pick2vspf': 'vs_groups',
+        'tabla-vs100': 'single', 'tabla-posiciones': 'posiciones',
+        'tabla-tripleta': 'single',
+    }
+    forms_allowed = {
+        'tabla-tradicional': {'pick2','pf','fijo','corridos','parlet','candado'},
+        'tabla-pick3': {'pick3'}, 'tabla-centenas': {'centenas corridas'},
+        'tabla-pick4': {'pick4'}, 'tabla-pick5': {'pick5'},
+        'tabla-vs': {'vs'}, 'tabla-solo-parlet': {'parlet'},
+        'tabla-vspf': {'vspf'}, 'tabla-vspick2': {'vspick2'},
+        'tabla-pick2vspf': {'pick2vspf'}, 'tabla-vs100': {'vs100'},
+        'tabla-posiciones': {'posicion'}, 'tabla-tripleta': {'tripleta'},
+    }
+    seen_draws = set()
+    for draw in tablas_payload:
+        if not isinstance(draw, dict):
+            errores.append('Tablas: registro de sorteo inválido.')
+            continue
+        sid = str(draw.get('sorteo_id') or '')
+        if not sid.isdigit():
+            errores.append('Tablas: ID de sorteo inválido.')
+            continue
+        if sid in seen_draws:
+            errores.append(f'Sorteo {sid}: tablas duplicadas en payload.')
+            continue
+        seen_draws.add(sid)
+        tables = draw.get('tablas')
+        if not isinstance(tables, dict):
+            errores.append(f'Sorteo {sid}: estructura de tablas inválida.')
+            continue
+        for table_key, table in tables.items():
+            label = f'Sorteo {sid}, tabla {table_key}'
+            if table_key not in kinds or not isinstance(table, dict):
+                errores.append(f'{label}: tabla no reconocida o inválida.')
+                continue
+            kind = kinds[table_key]
+            if table.get('kind') != kind:
+                errores.append(f'{label}: tipo de tabla no coincide con el catálogo.')
+                continue
+            forms = table.get('forms', [])
+            if not isinstance(forms, list) or not forms or not all(isinstance(f, str) for f in forms):
+                errores.append(f'{label}: formas de juego inválidas.')
+                continue
+            if len(forms) != len(set(forms)):
+                errores.append(f'{label}: formas de juego duplicadas.')
+                continue
+            if set(forms) - forms_allowed[table_key]:
+                errores.append(f'{label}: forma de juego no permitida para esta tabla.')
+                continue
+            rows = table.get('rows')
+            if not isinstance(rows, list):
+                errores.append(f'{label}: filas debe ser una lista.')
+                continue
+            for row_index, row in enumerate(rows, start=1):
+                row_label = f'{label}, fila {row_index}'
+                if not isinstance(row, dict):
+                    errores.append(f'{row_label}: fila inválida.')
+                    continue
+                if kind == 'vs_groups':
+                    has_numbers = bool(str(row.get('numA') or '').strip() or str(row.get('numB') or '').strip())
+                    amount_values = [row.get('monto', '')]
+                elif kind == 'posiciones':
+                    has_numbers = bool(str(row.get('num') or '').strip())
+                    amount_values = [row.get('monto', '')]
+                else:
+                    has_numbers = bool(str(row.get('num') or '').strip())
+                    montos = row.get('montos') or {}
+                    if not isinstance(montos, dict):
+                        errores.append(f'{row_label}: montos debe ser un objeto.')
+                        continue
+                    amount_values = [montos.get(form, '') for form in forms]
+                positive = False
+                nonblank = False
+                for value in amount_values:
+                    if value is None or str(value).strip() == '':
+                        continue
+                    nonblank = True
+                    try:
+                        amount = Decimal(str(value))
+                        if not amount.is_finite() or amount < 0 or amount != amount.quantize(Decimal('0.01')):
+                            raise InvalidOperation
+                        if amount > 0:
+                            positive = True
+                    except (InvalidOperation, ValueError, TypeError):
+                        errores.append(f'{row_label}: importe inválido (máximo dos decimales, no negativo).')
+                if has_numbers and not positive:
+                    errores.append(f'{row_label}: contiene números pero no tiene importe positivo en ninguna forma.')
+                if nonblank and positive and not has_numbers:
+                    errores.append(f'{row_label}: tiene importe pero no contiene números.')
+    return errores
+
+
 def _consolidar_tripletas(items):
-    """Agrupa items tripleta con mismo (sorteo_id, monto) en uno solo."""
+    """Conserva filas agrupadas; convierte items legacy (un número por item) en tripletas completas."""
     if not items:
         return items
     otros = []
-    tripletas_por_key = {}
+    legacy_por_key = {}
     for it in items:
         tipo = (it.get('tipo') or '').strip().lower()
         if tipo != 'tripleta':
             otros.append(it)
             continue
+        numeros = str(it.get('numero', '') or '').split()
+        # Nuevo formato: una fila del frontend ya viene como "NN NN NN".
+        if len(numeros) == 3:
+            if not all(len(n) == 2 and n.isdigit() for n in numeros):
+                raise ValueError('Tripleta debe contener exactamente tres números de dos dígitos.')
+            otros.append(it)
+            continue
+        if len(numeros) > 3:
+            raise ValueError('Una jugada Tripleta no puede contener más de tres números.')
+        # Formato anterior: el frontend enviaba un item por cada número.
         key = (it.get('sorteo_id'), str(it.get('monto', 0)))
-        if key not in tripletas_por_key:
-            tripletas_por_key[key] = {
-                'tipo': it.get('tipo'),
-                'numero': it.get('numero', ''),
-                'monto': it.get('monto', 0),
-                'sorteo_id': it.get('sorteo_id'),
-            }
-        else:
-            nums_prev = tripletas_por_key[key]['numero']
-            nums_new = it.get('numero', '')
-            tripletas_por_key[key]['numero'] = (nums_prev + ' ' + nums_new).strip()
-    return otros + list(tripletas_por_key.values())
+        legacy_por_key.setdefault(key, []).extend(numeros)
+    for (sorteo_id, monto), numeros in legacy_por_key.items():
+        if len(numeros) % 3:
+            raise ValueError('Tripleta incompleta: los números deben agruparse de tres en tres.')
+        for i in range(0, len(numeros), 3):
+            grupo = numeros[i:i + 3]
+            if not all(len(n) == 2 and n.isdigit() for n in grupo):
+                raise ValueError('Tripleta debe contener números de dos dígitos.')
+            otros.append({
+                'tipo': 'tripleta',
+                'numero': ' '.join(grupo),
+                'monto': monto,
+                'sorteo_id': sorteo_id,
+            })
+    return otros
 
 
 # ─── Rangos de teléfonos offline ─────────────────────────────
@@ -1048,14 +1397,7 @@ def superparlet(request):
     clientes = _construir_clientes_visibles(user)
 
     formas_pago = FormaPago.objects.filter(activo=True)
-    sorteos_disponibles = _obtener_sorteos_cuba_estricto()
-    if not (es_superadmin or es_banco):
-        _aux = []
-        for _s in sorteos_disponibles:
-            _s2 = calcular_estado_sorteo(_s, timezone.now())
-            if True:  # Filtro de 10 min desactivado
-                _aux.append(_s)
-        sorteos_disponibles = _aux
+    sorteos_disponibles = _obtener_sorteos_cuba_estricto(incluir_cerrados=(es_superadmin or es_banco))
 
     if es_autorizador:
         total_fondos = 0
@@ -1086,7 +1428,6 @@ def superparlet(request):
 @login_required
 def apostar(request):
     user = request.user
-    _intentar_actualizar_loteria() # <--- AGREGA ESTA LÍNEA AQUÍ
     # ═══════════════════════════════════════════════════════════════
     # BLOQUEO PARA AUDITORES: no pueden apostar, solo supervisar
     # ═══════════════════════════════════════════════════════════════
@@ -1105,6 +1446,9 @@ def apostar(request):
 
     if request.method != 'GET':
         return JsonResponse({'error': 'Método no permitido en esta URL'}, status=405)
+
+    # La actualización en background solo se dispara en un GET permitido, no en POST ni auditor.
+    _intentar_actualizar_loteria()
 
     # FIX_APOSTAR_PRESELECT: params para preseleccion de cliente y aviso de recarga
     cliente_preseleccionado_id = request.GET.get('cliente_id', '').strip()
@@ -1133,8 +1477,19 @@ def apostar(request):
             es_banco_x = user.roles.filter(tipo='banco', activo=True).exists()
             es_comercial_x = user.roles.filter(tipo='comercial', activo=True).exists()
             es_autorizador_x = es_superadmin_x or es_banco_x or es_comercial_x
+            _permisos_preload = _calcular_permisos_boleta(
+                user, b, es_banco=es_banco_x, es_superadmin=es_superadmin_x
+            )
+            _puede_preload = (
+                _permisos_preload.get('puede_editar') if es_modo_editar
+                else _permisos_preload.get('puede_reenviar') if es_modo_reenviar
+                else False
+            )
 
-            if b.usuario_id == user.id or b.destinatario_id == user.id or es_autorizador_x:
+            if _puede_preload:
+                if (b.metadata or {}).get('tipo') == 'superparlet' or b.jugadas.filter(forma_juego__nombre__iexact='superparlet').exists():
+                    from django.shortcuts import redirect
+                    return redirect('jugadas:mis_apuestas')
                 lineas = []
                 sorteo_ids_set = set()
                 for j in b.jugadas.exclude(estado='cancelada'):
@@ -1228,14 +1583,7 @@ def apostar(request):
             })
 
     fecha_actual = timezone.localdate()
-    sorteos_disponibles = _obtener_sorteos_cuba_estricto()
-    if not (es_superadmin or es_banco):
-        _aux = []
-        for _s in sorteos_disponibles:
-            _s2 = calcular_estado_sorteo(_s, timezone.now())
-            if True:  # Filtro de 10 min desactivado
-                _aux.append(_s)
-        sorteos_disponibles = _aux
+    sorteos_disponibles = _obtener_sorteos_cuba_estricto(incluir_cerrados=(es_superadmin or es_banco))
 
     formas_juego = FormaJuego.objects.filter(activo=True)
     formas_pago = FormaPago.objects.filter(activo=True)
@@ -1461,41 +1809,53 @@ def _guardar_apuesta_impl(request):
         except ValueError:
             return JsonResponse({'success': False, 'message': 'Formato de fecha inválido. Use YYYY-MM-DD.'}, status=400)
 
-        # ═══ FIX ZONA HORARIA CUBA (Para evitar que clientes de España envíen fecha de mañana) ═══
-        CUBA_TZ = ZoneInfo('America/Havana')
-        ahora_cuba = timezone.now().astimezone(CUBA_TZ)
+        # Zona horaria y regla especial Georgia: la fecha Georgia se calcula en Cuba.
+        ahora_utc = timezone.now()
+        CUBA_TZ = _zona_horaria_cuba(ahora_utc)
+        ahora_cuba = ahora_utc.astimezone(CUBA_TZ)
         hoy = ahora_cuba.date()
-
-        # Si la fecha enviada por el navegador es el día de hoy o mañana (por el desfase),
-        # la forzamos a la fecha real de Cuba.
-        # Definir si el usuario es admin (banco o superadmin)
+        _now_cuba = ahora_cuba
         _es_admin_f = request.user.is_superuser or request.user.roles.filter(tipo__in=['banco', 'superadmin'], activo=True).exists()
-
-        if not _es_admin_f and abs((fecha_apuesta - hoy).days) <= 1:
-            fecha_apuesta = hoy
-        # ══════════════════════════════════════════════════════════════════════════════════════
-
-        limite_futuro = hoy + timedelta(days=365)  # FIX_FUTURO_1ANO_V1
-
-        # FIX_FUTURO_1ANO_V1 + FIX_USUARIO_URGENTE_V1
-        _u = request.user
-        _es_admin_f = _u.is_superuser or _u.roles.filter(tipo__in=['superadmin','banco'], activo=True).exists()
         _sids_early = []
         try:
             _sstr = request.POST.get('sorteos', '[]')
             _sids_early = json.loads(_sstr) if _sstr else []
         except Exception:
             pass
-        _georgia_late = False
-        _now_cuba = timezone.now().astimezone(ZoneInfo('America/Havana'))
-        if _now_cuba.hour == 0 and _now_cuba.minute < 25 and _sids_early:
-            for _sid in _sids_early:
-                if Sorteo.objects.filter(id=int(_sid), nombre='Georgia 11:34 PM').exists():
-                    _georgia_late = True
-                    if fecha_apuesta == hoy:
-                        fecha_apuesta = hoy - timedelta(days=1)
-                    break
-        if fecha_apuesta < hoy and not _es_admin_f and not _georgia_late:
+        _georgia_ids = []
+        _selected_ids = []
+        try:
+            _selected_ids = [int(x) for x in (_sids_early or []) if str(x).isdigit()]
+            _super_ids_early = json.loads(request.POST.get('superparlet_sorteos', '[]') or '[]')
+            _selected_ids += [int(x) for x in (_super_ids_early or []) if str(x).isdigit()]
+            _selected_ids = list(set(_selected_ids))
+            _georgia_ids = list(Sorteo.objects.filter(id__in=_selected_ids, nombre__icontains='Georgia').values_list('id', flat=True))
+        except (TypeError, ValueError, json.JSONDecodeError):
+            _georgia_ids = []
+        _georgia_selected = bool(_georgia_ids)
+
+        # La normalización convencional no debe cambiar la fecha que el selector
+        # Georgia calcula para su próximo ciclo.
+        if not _es_admin_f and not _georgia_selected and abs((fecha_apuesta - hoy).days) <= 1:
+            fecha_apuesta = hoy
+
+        limite_futuro = hoy + timedelta(days=365)  # FIX_FUTURO_1ANO_V1
+        _georgia_closed_window = (_now_cuba.hour == 0 and _now_cuba.minute >= 27) or (_now_cuba.hour == 1 and _now_cuba.minute <= 0)
+        _georgia_expected_date = hoy
+        if not (_now_cuba.hour == 0 and _now_cuba.minute <= 26):
+            if not _georgia_closed_window:
+                _georgia_expected_date = hoy + timedelta(days=1)
+
+        if _georgia_selected:
+            if len(set(_selected_ids) - set(_georgia_ids)) > 0 and _georgia_expected_date != hoy:
+                return JsonResponse({'success': False, 'message': 'Georgia y otros sorteos tienen fechas efectivas distintas en este horario. Envíalos por separado para no cambiar la fecha de los demás sorteos.'}, status=400)
+            if not _es_admin_f:
+                if _georgia_closed_window:
+                    return JsonResponse({'success': False, 'message': 'Georgia está cerrado entre las 00:27 y la 01:00 hora Cuba. La apuesta no se trasladará automáticamente al siguiente sorteo.'}, status=400)
+                if fecha_apuesta != _georgia_expected_date:
+                    return JsonResponse({'success': False, 'message': f'La fecha efectiva de Georgia para este horario es {_georgia_expected_date.isoformat()}. Actualiza la fecha y vuelve a procesar.'}, status=400)
+
+        if fecha_apuesta < hoy and not _es_admin_f:
             return JsonResponse({'success': False, 'message': 'Los clientes y comerciales solo pueden apostar desde hoy en adelante.'}, status=400)
         if fecha_apuesta > limite_futuro:
             return JsonResponse({'success': False, 'message': 'La fecha de la apuesta no puede ser superior a 6 meses en el futuro.'}, status=400)
@@ -1511,13 +1871,40 @@ def _guardar_apuesta_impl(request):
             items_super = json.loads(super_data) if super_data else []
             sorteos_ids = json.loads(sorteos_str) if sorteos_str else []
             super_sorteos_ids = json.loads(super_sorteos_str) if super_sorteos_str else []
+            tablas_crudas = json.loads(request.POST.get('tabla_rows', '[]') or '[]')
         except json.JSONDecodeError as e:
             logger.error(f"JSON decode error: {e}")
             return JsonResponse({'success': False, 'message': f'Error en formato de datos: {str(e)}'}, status=400)
 
-        # FIX_TRIPLETA_V1
-        items_normales = _consolidar_tripletas(items_normales)
-        items_super = _consolidar_tripletas(items_super)
+        # Validación del payload antes de cualquier creación de boletas/jugadas.
+        if not isinstance(sorteos_ids, list) or not isinstance(super_sorteos_ids, list):
+            return JsonResponse({'success': False, 'message': 'La selección de sorteos debe ser una lista.'}, status=400)
+        if items_normales and not tablas_crudas:
+            return JsonResponse({'success': False, 'message': 'Falta la validación de filas originales. Actualiza la página y vuelve a enviar la apuesta.'}, status=400)
+        errores_tablas = _validar_tablas_crudas_payload(tablas_crudas)
+        if errores_tablas:
+            return JsonResponse({'success': False, 'message': 'Filas de apuestas inválidas.', 'errores': errores_tablas[:30]}, status=400)
+        errores_coincidencia = _validar_coincidencia_sorteos_tablas(sorteos_ids, tablas_crudas)
+        if errores_coincidencia:
+            return JsonResponse({'success': False, 'message': 'Selección de sorteos y filas originales no coincide.', 'errores': errores_coincidencia}, status=400)
+        errores_ids_jugadas = _validar_items_ids_sorteo(items_normales, sorteos_ids)
+        if errores_ids_jugadas:
+            return JsonResponse({'success': False, 'message': 'IDs de sorteos en jugadas inválidos.', 'errores': errores_ids_jugadas[:20]}, status=400)
+        errores_payload = _validar_items_payload(items_normales, 'Jugadas', validar_numero=False)
+        errores_payload += _validar_items_payload(items_super, 'Superparlet', validar_numero=False)
+        if errores_payload:
+            return JsonResponse({'success': False, 'message': 'Payload de apuestas inválido.', 'errores': errores_payload[:20]}, status=400)
+
+        # FIX_TRIPLETA_V1: consolidation may reject incomplete groups; no DB writes yet.
+        try:
+            items_normales = _consolidar_tripletas(items_normales)
+            items_super = _consolidar_tripletas(items_super)
+        except (ValueError, TypeError) as e:
+            return JsonResponse({'success': False, 'message': f'Jugada inválida: {e}'}, status=400)
+        errores_payload = _validar_items_payload(items_normales, 'Jugadas')
+        errores_payload += _validar_items_payload(items_super, 'Superparlet')
+        if errores_payload:
+            return JsonResponse({'success': False, 'message': 'Payload de apuestas inválido.', 'errores': errores_payload[:20]}, status=400)
 
         if not all(str(sid).isdigit() for sid in sorteos_ids):
             return JsonResponse({'success': False, 'message': 'IDs de sorteos inválidos'}, status=400)
@@ -1537,8 +1924,9 @@ def _guardar_apuesta_impl(request):
         )
         if not _es_banco_o_super:
             try:
-                CUBA_TZ = ZoneInfo('America/Havana')
-                ahora_cuba = timezone.now().astimezone(CUBA_TZ)
+                ahora_utc = timezone.now()
+                CUBA_TZ = _zona_horaria_cuba(ahora_utc)
+                ahora_cuba = ahora_utc.astimezone(CUBA_TZ)
 
                 _todos_ids = list(set(list(sorteos_ids) + list(super_sorteos_ids)))
                 _cerrados = []
@@ -1551,16 +1939,32 @@ def _guardar_apuesta_impl(request):
                     dia_chk = {0: 'lunes', 1: 'martes', 2: 'miercoles', 3: 'jueves', 4: 'viernes', 5: 'sabado', 6: 'domingo'}[fecha_apuesta.weekday()]
 
                     hs_chk = _sorteo_chk.hora_salida
-                    if _sorteo_chk.horarios and temp_chk in _sorteo_chk.horarios and dia_chk in _sorteo_chk.horarios[temp_chk]:
-                        hh, mm = _sorteo_chk.horarios[temp_chk][dia_chk].split(':')
-                        hs_chk = time(int(hh), int(mm))
+                    if _sorteo_chk.horarios:
+                        horario_dia_chk = (_sorteo_chk.horarios.get(temp_chk) or {}).get(dia_chk)
+                        if not horario_dia_chk:
+                            _cerrados.append(_sorteo_chk.nombre + ' (no programado)')
+                            continue
+                        try:
+                            hh, mm = horario_dia_chk.split(':')
+                            hs_chk = time(int(hh), int(mm))
+                        except (ValueError, TypeError):
+                            _cerrados.append(_sorteo_chk.nombre + ' (horario inválido)')
+                            continue
 
-                    dt_sal = datetime.combine(fecha_apuesta, hs_chk).replace(tzinfo=CUBA_TZ)
+                    if not hs_chk:
+                        _cerrados.append(_sorteo_chk.nombre + ' (sin horario)')
+                        continue
+
+                    salida_local_chk = datetime.combine(fecha_apuesta, hs_chk)
+                    dt_sal = salida_local_chk.replace(tzinfo=_zona_horaria_cuba(salida_local_chk))
 
                     if hs_chk.hour < 6:
                         dt_sal += timedelta(days=1)
 
-                    dt_cie = dt_sal - timedelta(minutes=(_sorteo_chk.minutos_cierre or 60))
+                    minutos_cierre_chk = (
+                        10
+                    )
+                    dt_cie = dt_sal - timedelta(minutes=minutos_cierre_chk)
 
                     if ahora_cuba >= dt_cie:
                         _cerrados.append(_sorteo_chk.nombre)
@@ -1570,10 +1974,14 @@ def _guardar_apuesta_impl(request):
                         'success': False,
                         'sorteo_cerrado': True,
                         'sorteos_cerrados': _cerrados,
-                        'message': '⛔ Operación rechazada. El sorteo ya cerró en Cuba: ' + ', '.join(_cerrados),
+                        'message': '⛔ Operación rechazada. El sorteo ya cerró o no está programado en Cuba: ' + ', '.join(_cerrados),
                     }, status=400)
             except Exception as e:
-                logger.error(f"Error validando cierre estricto: {e}")
+                logger.exception('Error validando cierre estricto; se rechaza la apuesta por seguridad.')
+                return JsonResponse({
+                    'success': False,
+                    'message': 'No se pudo verificar el horario/cierre de los sorteos. La apuesta no se guardó; inténtalo de nuevo.',
+                }, status=503)
         # ═══ FIN VALIDACIÓN ESTRICTA ═══
 
         usuario = request.user
@@ -1608,6 +2016,10 @@ def _guardar_apuesta_impl(request):
         sorteos_obj = Sorteo.objects.filter(id__in=sorteos_ids)
         if items_normales and len(sorteos_obj) != len(sorteos_ids):
             return JsonResponse({'success': False, 'message': 'Algunos sorteos no existen'}, status=404)
+        formas_por_sorteo = {str(s.id): (s.formas_juego or []) for s in sorteos_obj}
+        errores_formas = _validar_items_formas_sorteos(items_normales, formas_por_sorteo)
+        if errores_formas:
+            return JsonResponse({'success': False, 'message': 'Hay formas de juego no habilitadas.', 'errores': errores_formas[:20]}, status=400)
 
         super_sorteos_obj = Sorteo.objects.filter(id__in=super_sorteos_ids)
         if items_super and len(super_sorteos_obj) != 2:
@@ -1640,7 +2052,11 @@ def _guardar_apuesta_impl(request):
                                 'message': f'⛔ Números restringidos para "{sorteo.nombre}": {", ".join(restringidos)}.'
                             }, status=400)
             except Exception as e:
-                logger.warning(f"Validación de números restringidos omitida: {e}")
+                logger.exception("No se pudo verificar números restringidos; apuesta rechazada.")
+                return JsonResponse({
+                    'success': False,
+                    'message': 'No se pudo verificar la lista de números restringidos. No se guardó la apuesta; inténtalo de nuevo.',
+                }, status=503)
 
         # FIX_RELAJAR_FONDO_V1: banco/comercial/superadmin pueden apostar
         # si el cliente tiene CUALQUIER relación con el gestor (Fondo, Postpago
@@ -1648,12 +2064,9 @@ def _guardar_apuesta_impl(request):
         def _tiene_relacion_gestor(_cliente, _gestor):
             if Fondo.objects.filter(usuario=_cliente, asignado_por=_gestor, activo=True).exists():
                 return True
-            try:
-                from roles.models import Postpago as _PP
-                if _PP.objects.filter(cliente=_cliente, gestor=_gestor, activo=True).exists():
-                    return True
-            except Exception:
-                pass
+            from roles.models import Postpago as _PP
+            if _PP.objects.filter(cliente=_cliente, gestor=_gestor, activo=True).exists():
+                return True
             if Subordinacion.objects.filter(subordinado=_cliente, jefe=_gestor, activo=True).exists():
                 return True
             return False
@@ -1722,23 +2135,9 @@ def _guardar_apuesta_impl(request):
             and boleta_origen_id and boleta_origen_id.isdigit()
         )
 
-        # Validar suma igual si modo_operacion == 'editar'
+        # Editar admite cambio del total; se conciliará contra el fondo del cliente.
         modo_operacion = request.POST.get('modo_operacion', '')
-
         es_solo_editar = (es_edicion_boleta and modo_operacion == 'editar')
-        es_banco_o_admin_edit = usuario.is_superuser or usuario.roles.filter(tipo__in=['superadmin', 'banco'], activo=True).exists()
-        if es_edicion_boleta and modo_operacion == 'editar' and not es_banco_o_admin_edit:
-            try:
-                orig_b = Boleta.objects.get(id=int(boleta_origen_id))
-                suma_orig = sum((j.monto for j in orig_b.jugadas.exclude(estado='cancelada')), Decimal('0.00'))
-                suma_nueva = sum((Decimal(str(it.get('monto', 0))) for it in (items_normales + items_super)), Decimal('0.00'))
-                if abs(suma_nueva - suma_orig) > Decimal('0.01'):
-                    return JsonResponse({
-                        'success': False,
-                        'message': 'Modo Editar: la suma debe ser igual. Original: $' + str(suma_orig) + ', Nueva: $' + str(suma_nueva) + '. Usa Reenviar para cambiar el total.'
-                    }, status=400)
-            except Boleta.DoesNotExist:
-                pass
 
         # ════ Check de BOLETA DUPLICADA — ANTES de crear cualquier jugada ════
         if not es_edicion_boleta and not es_edicion_pura and forma_pago and cliente:
@@ -1764,7 +2163,11 @@ def _guardar_apuesta_impl(request):
                             'advertencias': ['Duplicado con: ' + _refs],
                         }, status=400)
             except Exception as _e:
-                logger.warning('[dup check pre] ERROR: ' + str(_e))
+                logger.exception('[dup check pre] No se pudo comprobar duplicados; se rechaza la apuesta por seguridad.')
+                return JsonResponse({
+                    'success': False,
+                    'message': 'No se pudo verificar si la boleta está duplicada. No se guardó la apuesta; inténtalo de nuevo.',
+                }, status=503)
 
         # ═══ GUARD_POOL_BACKEND_V1 ═══
         try:
@@ -1772,6 +2175,16 @@ def _guardar_apuesta_impl(request):
                 _excluir_jugada_ids = []
                 if es_edicion_pura and jugada_id and str(jugada_id).isdigit():
                     _excluir_jugada_ids.append(int(jugada_id))
+                # En edición de boleta, el pool ya está consumido por sus jugadas
+                # originales. Excluirlas durante la prevalidación para evaluar el
+                # nuevo contenido contra el disponible real tras reemplazarlas.
+                if es_solo_editar and boleta_origen_id and str(boleta_origen_id).isdigit():
+                    _ids_originales_boleta = Boleta.objects.filter(
+                        id=int(boleta_origen_id), usuario=cliente
+                    ).values_list('jugadas__id', flat=True)
+                    _excluir_jugada_ids.extend(
+                        int(_id) for _id in _ids_originales_boleta if _id is not None
+                    )
                 _errores_pool = _validar_pool_items(
                     gestor=destinatario,
                     fecha=fecha_apuesta,
@@ -1792,12 +2205,35 @@ def _guardar_apuesta_impl(request):
                         'errores': _errores_pool,
                     }, status=400)
         except Exception as _ePool:
-            # Fail-open: si la validación falla por bug interno,
-            # permitimos pasar pero dejamos rastro en logs.
-            import traceback as _tb; logger.warning('[GUARD_POOL_BACKEND_V1] error interno: ' + str(_ePool) + '\n' + _tb.format_exc())
+            # Fail-closed: nunca aceptar apuestas si no se pudo comprobar el pool.
+            import traceback as _tb
+            logger.error('[GUARD_POOL_BACKEND_V1] validación no disponible: ' + str(_ePool) + '\n' + _tb.format_exc())
+            return JsonResponse({
+                'success': False,
+                'message': 'No se pudo verificar el disponible del gestor. No se guardó la apuesta; inténtalo de nuevo.',
+            }, status=503)
         # ═══ FIN GUARD_POOL_BACKEND_V1 ═══
 
         with transaction.atomic():
+
+            # Lock por sorteo para evitar sobreconsumo concurrente de pool.
+            _ids_lock = sorted(set(
+                [int(x) for x in sorteos_ids] + [int(x) for x in super_sorteos_ids]
+            ))
+            if _ids_lock:
+                list(Sorteo.objects.select_for_update().filter(id__in=_ids_lock).order_by('id'))
+
+            # Revalidar duplicados dentro de la transacción después de adquirir locks.
+            if not es_edicion_boleta and not es_edicion_pura and forma_pago and cliente:
+                _items_dup_tx = [
+                    {'sorteo_id': int(it.get('sorteo_id')), 'tipo': (it.get('tipo') or '').strip().lower(),
+                     'numero': it.get('numero') or '', 'monto': it.get('monto') or 0}
+                    for it in (items_normales + items_super) if it.get('sorteo_id')
+                ]
+                if _items_dup_tx:
+                    _dups_tx = _boleta_duplicada(cliente.id, forma_pago.id, fecha_apuesta, _items_dup_tx)
+                    if _dups_tx:
+                        raise ValueError('La boleta idéntica ya fue guardada durante el envío. No se creó otra.')
 
             # Asegurar que 'boleta' este siempre definida
             boleta = None
@@ -1807,16 +2243,71 @@ def _guardar_apuesta_impl(request):
                 if not orig:
                     raise ValueError('Boleta original no encontrada')
                 if orig.estado != 'activa':
-                    raise ValueError(f'La boleta original está en estado {orig.estado}, no se puede editar')
+                    raise ValueError(f'La boleta original está en estado {orig.estado}, no se puede modificar')
+                _validar_identidad_boleta_operacion(orig, cliente, destinatario, modo_operacion)
+                if (orig.metadata or {}).get('tipo') == 'superparlet' or orig.jugadas.filter(forma_juego__nombre__iexact='superparlet').exists():
+                    raise ValueError('Editar/Reenviar Superparlet requiere su editor dedicado. No se modificó la boleta original.')
+                _es_superadmin_perm = usuario.is_superuser or usuario.roles.filter(tipo='superadmin', activo=True).exists()
+                _es_banco_perm = usuario.roles.filter(tipo='banco', activo=True).exists()
+                _permisos_boleta = _calcular_permisos_boleta(
+                    usuario, orig, es_banco=_es_banco_perm, es_superadmin=_es_superadmin_perm
+                )
+                if es_solo_editar and not _permisos_boleta.get('puede_editar'):
+                    raise ValueError('No tienes permiso para editar esta boleta; puede estar cerrada o fuera de tu gestión.')
+                if modo_operacion == 'reenviar' and not _permisos_boleta.get('puede_reenviar'):
+                    raise ValueError('No tienes permiso para reenviar esta boleta.')
 
                 if es_solo_editar:
+                    if orig.forma_pago_id != getattr(forma_pago, 'id', None):
+                        raise ValueError('Editar no permite cambiar la forma de pago. Usa Reenviar para crear una boleta nueva.')
+                    total_original_edicion = sum(
+                        (j.monto for j in orig.jugadas.exclude(estado='cancelada')),
+                        Decimal('0.00')
+                    )
+                    # Archivar líneas y premios previos antes de reemplazarlos.
+                    # Premio.jugada usa CASCADE: sin este snapshot la edición
+                    # eliminaría el historial de premios al borrar las jugadas.
+                    _jugadas_antes = _snapshot_jugadas_edicion(
+                        orig.jugadas.select_related('forma_juego', 'sorteo', 'forma_pago').all()
+                    )
+                    _historial_edicion = {
+                        'fecha': timezone.now().isoformat(),
+                        'usuario': usuario.username,
+                        'total_anterior': str(total_original_edicion),
+                        'forma_pago_id_anterior': orig.forma_pago_id,
+                        'fecha_sorteo_anterior': orig.fecha_sorteo.isoformat() if orig.fecha_sorteo else None,
+                        'pago_anterior': (orig.metadata or {}).get('pago', {}),
+                        'jugadas_antes': _jugadas_antes,
+                    }
+                    orig.metadata.setdefault('historial_ediciones', []).append(_historial_edicion)
+                    orig.save(update_fields=['metadata'])
                     # FIX_REENVIAR_Y_BANCO_EDIT_V1: Revertir premios antes de borrar
                     premios_ant = Premio.objects.filter(jugada__boleta=orig, estado='pagado', cobrado=True)
                     for p in premios_ant:
-                        f = Fondo.objects.filter(usuario=orig.usuario, forma_pago=p.jugada.forma_pago).first()
-                        if f:
-                            f.monto -= p.monto_premio
-                            f.save(update_fields=['monto'])
+                        fp_premio = p.jugada.forma_pago or orig.forma_pago
+                        if not fp_premio:
+                            raise ValueError('No se puede revertir un premio pagado sin forma de pago. Edición cancelada.')
+                        f = Fondo.objects.select_for_update().filter(
+                            usuario=orig.usuario, forma_pago=fp_premio,
+                            asignado_por=orig.destinatario, activo=True,
+                        ).first()
+                        if not f:
+                            raise ValueError('No se encontró el fondo del gestor para revertir un premio pagado. Edición cancelada.')
+                        saldo_antes_premio = f.monto
+                        f.monto -= p.monto_premio
+                        f.save(update_fields=['monto'])
+                        MovimientoFondo.objects.create(
+                            emisor=None, receptor=orig.usuario, forma_pago=fp_premio,
+                            monto=-p.monto_premio, tipo='ajuste', estado='confirmado',
+                            motivo=f'Reversión premio #{p.id} por edición boleta {orig.referencia}',
+                            saldo_antes=saldo_antes_premio, saldo_despues=f.monto,
+                            datos_transferencia={
+                                'premio_id': p.id, 'jugada_id': p.jugada_id,
+                                'boleta_id': orig.id, 'boleta_ref': str(orig.referencia),
+                                'tipo_operacion': 'reversion_premio_edicion',
+                            },
+                            nota='Premio pagado revertido por modificación de boleta.',
+                        )
                         p.estado = 'anulado'
                         p.cobrado = False
                         p.save(update_fields=['estado', 'cobrado'])
@@ -1859,7 +2350,7 @@ def _guardar_apuesta_impl(request):
             for item in items_normales + items_super:
                 nombre_tipo = item.get('tipo', '').strip()
                 if not nombre_tipo:
-                    return JsonResponse({'success': False, 'message': 'Tipo de juego vacío'}, status=400)
+                    raise ValueError('Tipo de juego vacío; se cancela la operación para preservar la boleta original.')
                 if nombre_tipo not in tipo_a_forma:
                     # Buscar con case-insensitive para evitar crear duplicados 'Fijo'/'fijo'
                     forma = FormaJuego.objects.filter(nombre__iexact=nombre_tipo).first()
@@ -1872,15 +2363,15 @@ def _guardar_apuesta_impl(request):
                 _tipo_key = (item.get('tipo') or '').strip()
                 forma_juego = tipo_a_forma.get(_tipo_key) or tipo_a_forma.get(item.get('tipo'))
                 if not forma_juego:
-                    logger.warning(f'[DEBUG_APUESTA] item SKIP: forma_juego no encontrada para tipo={item.get("tipo")!r} (strip={_tipo_key!r}, keys_disponibles={list(tipo_a_forma.keys())})')
-                    continue
+                    logger.error(f'[APUESTA] Forma de juego no encontrada para tipo={item.get("tipo")!r}; se cancela el procesamiento.')
+                    raise ValueError(f'Forma de juego no encontrada: {item.get("tipo")!r}. No se guardó la apuesta.')
                 numero = item.get('numero', '').strip()
                 if not numero:
-                    continue
+                    raise ValueError('Jugada recibida sin número. Se canceló la boleta completa; no se guardó ninguna línea.')
                 try:
                     monto = Decimal(str(item.get('monto', 0)))
                 except Exception:
-                    continue
+                    raise ValueError('Importe inválido en una jugada. Se canceló la boleta completa; no se guardó ninguna línea.')
 
                 sorteo_item_id = item.get('sorteo_id')
                 if sorteo_item_id:
@@ -1890,29 +2381,22 @@ def _guardar_apuesta_impl(request):
 
                 for sorteo in sorteos_iter:
                     formas_sorteo = [f.lower() for f in (sorteo.formas_juego or [])]
-                    if item.get('tipo', '').lower() not in formas_sorteo:
-                        continue
+                    if not _forma_aplicable_sorteo(item.get('tipo', ''), formas_sorteo):
+                        raise ValueError(f'La forma {item.get("tipo")} no aplica al sorteo {sorteo.nombre}. Se canceló la boleta completa.')
 
                     estado_sorteo = calcular_estado_sorteo(sorteo, timezone.now(), fecha_apuesta)
-                    esta_abierto = getattr(estado_sorteo, 'estado_actual', 'cerrado') == 'abierto'
+                    estado_actual = getattr(estado_sorteo, 'estado_actual', 'no_programado')
 
-                    if not esta_abierto:
-                        es_superadmin_ = usuario.is_superuser or usuario.roles.filter(tipo='superadmin', activo=True).exists()
-                        es_banco_ = usuario.roles.filter(tipo='banco', activo=True).exists()
-                        # FIX_VENTANA_BANCO_V2 (2026-10-14):
-                        # - superadmin y banco: pueden cargar fuera de tiempo sin limite.
-                        # - resto: bloqueado.
-                        permitido = es_superadmin_ or es_banco_
-                        if not permitido:
-                            advertencias.append(
-                                f'El sorteo "{sorteo.nombre}" está cerrado. Solo banco y superadmin pueden cargar jugadas fuera de tiempo.'
-                            )
-                            continue
+                    if not _puede_apostar_segun_estado_sorteo(estado_actual, usuario):
+                        if estado_actual == 'salido':
+                            motivo = f'El sorteo "{sorteo.nombre}" ya salió; no se permiten apuestas tardías.'
+                        else:
+                            motivo = f'El sorteo "{sorteo.nombre}" está cerrado o no programado para este usuario.'
+                        raise ValueError(motivo + ' Se canceló la boleta completa; no se guardó ninguna línea.')
 
                     pool_total = get_pool_gestor(destinatario, sorteo, forma_juego, forma_pago)
                     if pool_total <= 0:
-                        advertencias.append(f'Sin pool configurado para {sorteo.nombre} - {forma_juego.nombre} - {forma_pago.nombre}.')
-                        continue
+                        raise ValueError(f'Sin pool para {sorteo.nombre} / {forma_juego.nombre}. Se canceló la boleta completa.')
 
                     key_mem = (sorteo.id, forma_juego.id, getattr(forma_pago, 'id', 0), numero)  # FIX_FORMA_PAGO_NONE_V1
                     consumido_db = Jugada.objects.filter(
@@ -1925,15 +2409,13 @@ def _guardar_apuesta_impl(request):
                     disponible = pool_total - consumido
 
                     if disponible <= 0:
-                        advertencias.append(f'El número {numero} en {sorteo.nombre} - {forma_juego.nombre} está agotado para el gestor.')
-                        continue
+                        raise ValueError(f'Pool agotado para {numero} en {sorteo.nombre} / {forma_juego.nombre}. Se canceló la boleta completa.')
 
                     monto_final = monto
                     if monto > disponible:
-                        advertencias.append(
-                            f'El número {numero} en {sorteo.nombre} - {forma_juego.nombre} solo admitía ${disponible:.2f}. Se ajustó a ${disponible:.2f}.'
+                        raise ValueError(
+                            f'El monto ${monto:.2f} excede el disponible ${disponible:.2f} para {numero} en {sorteo.nombre} / {forma_juego.nombre}. Se canceló la boleta completa.'
                         )
-                        monto_final = disponible
 
                     if jugada_id and modo_edicion not in ('duplicar', 'editar_boleta'):
                         try:
@@ -1995,7 +2477,10 @@ def _guardar_apuesta_impl(request):
 
             super_sorteos_list = list(super_sorteos_obj)
             if items_super and len(super_sorteos_list) != 2:
-                advertencias.append('Superparlet requiere exactamente 2 sorteos.')
+                raise ValueError(
+                    'Superparlet requiere exactamente 2 sorteos seleccionados. '
+                    'Se cancela la operación completa para evitar guardar una apuesta parcial.'
+                )
             elif items_super:
                 sorteo_principal = super_sorteos_list[0]
                 sorteo_ids_meta = [s.id for s in super_sorteos_list]
@@ -2010,11 +2495,11 @@ def _guardar_apuesta_impl(request):
 
                     numero = item.get('numero', '').strip()
                     if not numero:
-                        continue
+                        raise ValueError('Línea de Superparlet sin número. Se cancela la operación completa; no se guardó ninguna jugada.')
                     try:
                         monto = Decimal(str(item.get('monto', 0)))
                     except Exception:
-                        continue
+                        raise ValueError('Importe inválido en Superparlet. Se cancela la operación completa; no se guardó ninguna jugada.')
 
                     # FIX_SUPER_AMBOS_ABIERTOS_V1: verificar AMBOS sorteos, no solo el principal
                     es_superadmin_ = usuario.is_superuser or usuario.roles.filter(tipo='superadmin', activo=True).exists()
@@ -2022,25 +2507,24 @@ def _guardar_apuesta_impl(request):
                     permitido_todos = True
                     for _sorteo_chk in super_sorteos_list:
                         _estado_chk = calcular_estado_sorteo(_sorteo_chk, timezone.now(), fecha_apuesta)
-                        _abierto_chk = getattr(_estado_chk, 'estado_actual', 'cerrado') == 'abierto'
-                        if not _abierto_chk:
-                            _permitido = False
-                            if es_superadmin_:
-                                _permitido = True
-                            elif es_banco_:
-                                _permitido = True
-                            if not _permitido:
-                                advertencias.append(
-                                    f'SuperParlet cancelado: el sorteo "{_sorteo_chk.nombre}" no está abierto. Ambos sorteos deben estar abiertos para apostar.'
-                                )
-                                permitido_todos = False
-                                break
+                        _estado_actual_chk = getattr(_estado_chk, 'estado_actual', 'no_programado')
+                        if not _puede_apostar_segun_estado_sorteo(_estado_actual_chk, usuario):
+                            if _estado_actual_chk == 'salido':
+                                _motivo_chk = 'ya salió; no se permiten apuestas tardías'
+                            elif _estado_actual_chk == 'no_programado':
+                                _motivo_chk = 'no está programado para esa fecha'
+                            else:
+                                _motivo_chk = 'está cerrado; solo banco/superadmin pueden apostar antes de la salida'
+                            advertencias.append(
+                                f'SuperParlet cancelado: el sorteo "{_sorteo_chk.nombre}" {_motivo_chk}. Ambos sorteos deben permitir apuestas.'
+                            )
+                            permitido_todos = False
+                            break
                     if not permitido_todos:
-                        continue
+                        raise ValueError('Superparlet no puede procesarse en ambos sorteos. Se cancela la operación completa; no se guardó ninguna jugada.')
                     pool_total = get_pool_gestor(destinatario, sorteo_principal, forma_juego, forma_pago)
                     if pool_total <= 0:
-                        advertencias.append(f'Sin pool configurado para Superparlet - {forma_pago.nombre}.')
-                        continue
+                        raise ValueError(f'Sin pool configurado para Superparlet - {forma_pago.nombre}. Se cancela la operación completa; no se guardó ninguna jugada.')
 
                     key_mem = (sorteo_principal.id, forma_juego.id, getattr(forma_pago, 'id', 0), numero)  # FIX_FORMA_PAGO_NONE_V1
                     consumido_db = Jugada.objects.filter(
@@ -2053,15 +2537,12 @@ def _guardar_apuesta_impl(request):
                     disponible = pool_total - consumido
 
                     if disponible <= 0:
-                        advertencias.append(f'El número {numero} en Superparlet está agotado.')
-                        continue
+                        raise ValueError(f'Superparlet agotado para {numero}. Se cancela la operación completa; no se guardó ninguna jugada.')
 
                     monto_final = monto
                     if monto > disponible:
-                        advertencias.append(
-                            f'El número {numero} en Superparlet solo admitía ${disponible:.2f}. Se ajustó a ${disponible:.2f}.'
-                        )
-                        monto_final = disponible
+                        raise ValueError(f'Monto de Superparlet excede el pool para {numero} (disponible $' + f'{disponible:.2f}' + '). Se cancela la operación completa; no se guardó ninguna jugada.')
+
                     if jugada_id and modo_edicion not in ('duplicar', 'editar_boleta'):
                         try:
                             jugada = Jugada.objects.get(id=jugada_id)
@@ -2130,6 +2611,10 @@ def _guardar_apuesta_impl(request):
                     consumo_memoria[key_mem] += monto_final
 
             if not jugadas_creadas:
+                # En edición, devolver dentro de atomic() confirmaría el borrado de las
+                # jugadas originales. Lanzar excepción fuerza rollback de toda la operación.
+                if es_solo_editar:
+                    raise ValueError('No se reconstruyó ninguna jugada. La edición se revirtió y la boleta original se preservó.')
                 # Determinar la causa principal
                 hay_duplicados = any('ya existe' in adv for adv in advertencias)
                 if hay_duplicados:
@@ -2175,7 +2660,7 @@ def _guardar_apuesta_impl(request):
 
                 monto_restante = total_apostado
 
-                fondo = Fondo.objects.filter(
+                fondo = Fondo.objects.select_for_update().filter(
                     usuario=cliente, forma_pago=forma_pago, asignado_por=destinatario, activo=True
                 ).first()
 
@@ -2184,7 +2669,7 @@ def _guardar_apuesta_impl(request):
                 if fondo and fondo.monto < monto_restante:
                     from django.utils import timezone as _tz_bf
                     from django.db.models import Q as _Q_bf, F as _F_bf
-                    _bonos_fusion = list(Bono.objects.filter(
+                    _bonos_fusion = list(Bono.objects.select_for_update().filter(
                         usuario=cliente,
                         asignado_por=destinatario,
                         estado='activo',
@@ -2246,7 +2731,7 @@ def _guardar_apuesta_impl(request):
                     # FIX_FIFO_BONOS_V2: filtro de vencidos + orden por vencimiento
                     from django.utils import timezone as _tz_fifo
                     from django.db.models import Q as _Q_fifo, F as _F_fifo
-                    bonos_activos = Bono.objects.filter(
+                    bonos_activos = Bono.objects.select_for_update().filter(
                         usuario=cliente,
                         asignado_por=destinatario,
                         estado='activo',
@@ -2292,6 +2777,89 @@ def _guardar_apuesta_impl(request):
                     # El resto se cubre con el postpago (queda como deuda)
                     monto_restante = Decimal('0.00')
 
+            # EDITAR_AJUSTE_FONDO_V1: conciliar diferencia del total editado con el Fondo.
+            if es_solo_editar:
+                diferencia_edicion = total_apostado - total_original_edicion
+                fondo_edicion = None
+                saldo_antes_edicion = None
+                saldo_despues_edicion = None
+                if diferencia_edicion != Decimal('0.00'):
+                    fondo_edicion = Fondo.objects.select_for_update().filter(
+                        usuario=cliente, forma_pago=forma_pago,
+                        asignado_por=destinatario, activo=True
+                    ).first()
+                    if fondo_edicion is None:
+                        if diferencia_edicion > 0:
+                            raise ValueError('No existe fondo activo para descontar el aumento del importe editado.')
+                        fondo_edicion = Fondo.objects.create(
+                            usuario=cliente, forma_pago=forma_pago,
+                            asignado_por=destinatario, monto=Decimal('0.00'), activo=True
+                        )
+                    saldo_antes_edicion = fondo_edicion.monto
+                    if diferencia_edicion > 0 and saldo_antes_edicion < diferencia_edicion:
+                        raise ValueError(
+                            'El aumento requiere fondos adicionales. Diferencia: ' +
+                            str(diferencia_edicion) + '; disponible: ' + str(saldo_antes_edicion) + '.'
+                        )
+                    fondo_edicion.monto -= diferencia_edicion
+                    fondo_edicion.save(update_fields=['monto', 'actualizado_en'])
+                    saldo_despues_edicion = fondo_edicion.monto
+                    MovimientoFondo.objects.create(
+                        emisor=cliente, receptor=destinatario, forma_pago=forma_pago,
+                        monto=-diferencia_edicion, tipo='ajuste', estado='confirmado',
+                        motivo='Ajuste por edición de boleta ' + str(boleta.referencia),
+                        datos_transferencia={
+                            'boleta_id': boleta.id, 'referencia': str(boleta.referencia),
+                            'tipo_operacion': 'ajuste_edicion_boleta',
+                            'total_anterior': str(total_original_edicion),
+                            'total_nuevo': str(total_apostado),
+                            'diferencia': str(diferencia_edicion),
+                        },
+                        nota='Aumento descontado del fondo' if diferencia_edicion > 0 else 'Reducción reintegrada al fondo',
+                        saldo_antes=saldo_antes_edicion,
+                        saldo_despues=saldo_despues_edicion,
+                    )
+                boleta.metadata.setdefault('ajustes_edicion', []).append({
+                    'fecha': timezone.now().isoformat(),
+                    'total_anterior': str(total_original_edicion),
+                    'total_nuevo': str(total_apostado),
+                    'diferencia': str(diferencia_edicion),
+                    'fondo_antes': str(saldo_antes_edicion),
+                    'fondo_despues': str(saldo_despues_edicion),
+                    'usuario': usuario.username,
+                })
+                # Conciliar fuentes para futuras cancelaciones/reembolsos.
+                _valores_pago = _reconciliar_desglose_pago_edicion(
+                    boleta.metadata.get('pago'),
+                    total_original_edicion,
+                    total_apostado,
+                )
+                boleta.metadata['pago'] = {
+                    'fondo': str(_valores_pago['fondo']),
+                    'bono': str(_valores_pago['bono']),
+                    'postpago': str(_valores_pago['postpago']),
+                    'total': str(total_apostado),
+                }
+                if es_solo_editar:
+                    _historial_edicion = boleta.metadata.get('historial_ediciones', [])
+                    if _historial_edicion:
+                        _historial_edicion[-1]['total_nuevo'] = str(total_apostado)
+                        _historial_edicion[-1]['diferencia_fondo'] = str(diferencia_edicion)
+                        _historial_edicion[-1]['pago_nuevo'] = dict(boleta.metadata['pago'])
+                        _historial_edicion[-1]['jugadas_despues'] = [{
+                            'numero': _j_new.numero,
+                            'forma': _j_new.forma_juego.nombre if _j_new.forma_juego else '',
+                            'sorteo_id': _j_new.sorteo_id,
+                            'sorteo': _j_new.sorteo.nombre if _j_new.sorteo else '',
+                            'monto': str(_j_new.monto),
+                            'estado': _j_new.estado,
+                        } for _j_new in boleta.jugadas.select_related('forma_juego', 'sorteo').all()]
+                        boleta.metadata['historial_ediciones'] = _historial_edicion
+                boleta.save(update_fields=['metadata'])
+                # Editar borró y reconstruyó las jugadas; recalcular los totales
+                # de la misma boleta antes de salir de la transacción.
+                boleta.recalcular_totales()
+
             # FASE1_RECONCILIACION_V1_HOOK: si el resultado ya salió,
             # crear premios para jugadas ganadoras insertadas tardíamente.
             try:
@@ -2307,23 +2875,71 @@ def _guardar_apuesta_impl(request):
                 logger.warning(f'Reconciliacion tardia: {_e}')
 
             if boleta:
-
                 if es_solo_editar:
-
-                    # Modo editar: preservar metadata de pago original (no toca metadata['pago'])
-
+                    # El desglose ya fue conciliado durante la edición.
                     pass
-
                 else:
-
                     boleta.metadata['pago'] = {
-                    'fondo': str(monto_fondo_consumido),
-                    'bono': str(monto_bono_consumido),
-                    'postpago': str(monto_postpago_consumido),
-                    'total': str(total_apostado),
+                        'fondo': str(monto_fondo_consumido),
+                        'bono': str(monto_bono_consumido),
+                        'postpago': str(monto_postpago_consumido),
+                        'total': str(total_apostado),
+                    }
+                    boleta.save(update_fields=['metadata'])
+                    boleta.recalcular_totales()
+            elif _todas_boletas_nuevas:
+                # Cada boleta normal/superparlet conserva su parte del pago.
+                # Cancelar una de ellas no debe reembolsar el total de toda la operación.
+                _fuentes_totales = {
+                    'fondo': monto_fondo_consumido,
+                    'bono': monto_bono_consumido,
+                    'postpago': monto_postpago_consumido,
                 }
-                boleta.save(update_fields=['metadata'])
-                boleta.recalcular_totales()
+                _suma_fuentes = sum(_fuentes_totales.values(), Decimal('0.00'))
+                if _suma_fuentes != total_apostado:
+                    raise ValueError(
+                        'El desglose de cobro no coincide con el total apostado. '
+                        'Se canceló la operación para proteger los saldos.'
+                    )
+                _boletas_con_totales = [
+                    (_b_pago, sum((_j.monto for _j in _b_pago.jugadas.all()), Decimal('0.00')))
+                    for _b_pago in _todas_boletas_nuevas
+                ]
+                _suma_boletas = sum((_total_b for _b_pago, _total_b in _boletas_con_totales), Decimal('0.00'))
+                if _suma_boletas != total_apostado:
+                    raise ValueError(
+                        'Los totales individuales de boleta no coinciden con el cobro. '
+                        'Se canceló la operación completa.'
+                    )
+                _fuentes_restantes = dict(_fuentes_totales)
+                # Distribuir el cobro por ticket en el mismo orden de consumo:
+                # Fondo, bonos y finalmente postpago; no usar prorrateos que
+                # puedan crear diferencias por redondeo.
+                for _b_pago, _total_b in _boletas_con_totales:
+                    _asignacion = {
+                        'fondo': Decimal('0.00'),
+                        'bono': Decimal('0.00'),
+                        'postpago': Decimal('0.00'),
+                    }
+                    _pendiente_ticket = _total_b
+                    for _key_pago in ('fondo', 'bono', 'postpago'):
+                        _tomar = min(_fuentes_restantes[_key_pago], _pendiente_ticket)
+                        _asignacion[_key_pago] = _tomar
+                        _fuentes_restantes[_key_pago] -= _tomar
+                        _pendiente_ticket -= _tomar
+                    if _pendiente_ticket != Decimal('0.00'):
+                        raise ValueError(
+                            'No se pudo distribuir el cobro entre las boletas. '
+                            'Se canceló la operación completa.'
+                        )
+                    _b_pago.metadata['pago'] = {
+                        'fondo': str(_asignacion['fondo']),
+                        'bono': str(_asignacion['bono']),
+                        'postpago': str(_asignacion['postpago']),
+                        'total': str(_total_b),
+                    }
+                    _b_pago.save(update_fields=['metadata'])
+
 
         # ── Calcular saldos finales para el resumen ──
         fondo_final    = Decimal('0.00')
@@ -2352,9 +2968,18 @@ def _guardar_apuesta_impl(request):
             logger.warning(f'[resumen] calculo saldos finales: {_eS}')
 
         if boleta:
-            mensaje = f'✅ Boleta {boleta.referencia} guardada ({len(jugadas_creadas)} jugadas)'
+            if es_solo_editar:
+                if diferencia_edicion > 0:
+                    _mensaje_ajuste = 'Fondo descontado: ' + str(diferencia_edicion)
+                elif diferencia_edicion < 0:
+                    _mensaje_ajuste = 'Reintegrado al Fondo: ' + str(abs(diferencia_edicion))
+                else:
+                    _mensaje_ajuste = 'sin cambio en el Fondo'
+                mensaje = f'Boleta {boleta.referencia} editada ({len(jugadas_creadas)} jugadas); ' + _mensaje_ajuste
+            else:
+                mensaje = f'Boleta {boleta.referencia} guardada ({len(jugadas_creadas)} jugadas)'
         else:
-            mensaje = f'✅ Apuesta guardada ({len(jugadas_creadas)} jugadas)'
+            mensaje = f'Apuesta guardada ({len(jugadas_creadas)} jugadas)'
 
         # Serializar jugadas para el preview (usado en dry_run)
         preview_jugadas = []
@@ -2366,7 +2991,8 @@ def _guardar_apuesta_impl(request):
                 'monto': float(_j.monto),
             })
         _items_originales = len(items_normales) + len(items_super)
-        _descartadas = max(0, _items_originales - len(jugadas_creadas))
+        # Éxito es atómico; el conteo item→Jugada no es 1:1 (expansiones/tripletas).
+        _descartadas = 0
 
         # FIX_CASCADE_V1: recomputar cuadres si hubo jugadas retroactivas
         try:
@@ -2383,6 +3009,13 @@ def _guardar_apuesta_impl(request):
             'boleta_id': boleta.id if boleta else None,
             'boleta_referencia': boleta.referencia if boleta else None,
             'advertencias': advertencias,
+            'ajuste_edicion': ({
+                'total_anterior': float(total_original_edicion),
+                'total_nuevo': float(total_apostado),
+                'diferencia': float(diferencia_edicion),
+                'fondo_antes': float(saldo_antes_edicion) if saldo_antes_edicion is not None else None,
+                'fondo_despues': float(saldo_despues_edicion) if saldo_despues_edicion is not None else None,
+            } if es_solo_editar else None),
             'preview': {
                 'jugadas': preview_jugadas,
                 'total': float(total_apostado),
@@ -2422,6 +3055,17 @@ def _sorteo_esta_abierto(sorteo, fecha):
         return getattr(est, "estado_actual", "cerrado") == "abierto"
     except Exception:
         return False
+
+
+def _validar_identidad_boleta_operacion(boleta, cliente, destinatario, modo_operacion):
+    """Fail closed: edit/resend cannot target another client's ticket or manager."""
+    if boleta.usuario_id != cliente.id:
+        raise ValueError('La boleta original no pertenece al cliente seleccionado.')
+    if boleta.destinatario_id != destinatario.id:
+        raise ValueError('No se permite cambiar el gestor de la boleta original.')
+    if modo_operacion not in ('editar', 'reenviar'):
+        raise ValueError('Modo de operación inválido para boleta. Usa Editar o Reenviar explícitamente.')
+    return True
 
 
 def _calcular_permisos_boleta(user, boleta, es_banco=False, es_superadmin=False):
@@ -2738,6 +3382,11 @@ def mis_apuestas(request):
             _b["perms"] = {"puede_editar": False, "puede_reenviar": False, "puede_eliminar": False}
         elif _b.get("boleta"):
             _b["perms"] = _calcular_permisos_boleta(user, _b["boleta"], es_banco=es_banco, es_superadmin=es_superadmin)
+            # Superparlet usa un editor distinto; no ofrecer acciones que Apostar
+            # no puede precargar/reconstruir todavía.
+            if _b.get("es_super"):
+                _b["perms"]["puede_editar"] = False
+                _b["perms"]["puede_reenviar"] = False
         else:
             _b["perms"] = {"puede_editar": False, "puede_reenviar": False, "puede_eliminar": False}
 
@@ -3260,13 +3909,9 @@ def api_forma_pago_cliente(request):
 
 @login_required
 def api_sorteos_disponibles(request):
-    from zoneinfo import ZoneInfo
-    try:
-        CUBA_TZ = ZoneInfo('America/Havana')
-    except Exception:
-        CUBA_TZ = pytz.timezone(settings.TIME_ZONE)
-
-    ahora = timezone.now().astimezone(CUBA_TZ)
+    ahora_utc = timezone.now()
+    CUBA_TZ = _zona_horaria_cuba(ahora_utc)
+    ahora = ahora_utc.astimezone(CUBA_TZ)
     # FIX_FECHA_SORTEOS_V1 (2026-10-18): respetar la fecha enviada por el frontend
     _req_fecha = request.GET.get('fecha')
     if _req_fecha:
@@ -3293,12 +3938,9 @@ def api_sorteos_disponibles(request):
         return sorteo.hora_salida
 
     def _calcular_estado(sorteo, hora_salida):
-        minutos = sorteo.minutos_cierre if sorteo.minutos_cierre is not None else 60
-        dt_salida = datetime.combine(hoy, hora_salida)
-        if hasattr(CUBA_TZ, 'localize'):
-            dt_salida = CUBA_TZ.localize(dt_salida)
-        else:
-            dt_salida = dt_salida.replace(tzinfo=CUBA_TZ)
+        minutos = 10  # Regla fija: cierre exactamente 10 minutos antes
+        salida_local = datetime.combine(hoy, hora_salida)
+        dt_salida = salida_local.replace(tzinfo=_zona_horaria_cuba(salida_local))
         dt_cierre = dt_salida - timedelta(minutes=minutos)
 
         if ahora < dt_cierre:
@@ -3531,8 +4173,6 @@ def api_duplicar_boleta(request, boleta_id):
     if not jugadas_originales:
         return JsonResponse({'success': False, 'error': 'La boleta no tiene jugadas para duplicar'}, status=400)
 
-    puede_override_cierre = es_superadmin or es_banco
-
     lineas_ok = []
     advertencias = []
     consumo_memoria = defaultdict(Decimal)
@@ -3544,10 +4184,45 @@ def api_duplicar_boleta(request, boleta_id):
         monto = j.monto
 
         estado_sorteo = calcular_estado_sorteo(sorteo, timezone.now(), fecha_apuesta)
-        esta_abierto = getattr(estado_sorteo, 'estado_actual', 'cerrado') == 'abierto'
+        estado_actual = getattr(estado_sorteo, 'estado_actual', 'no_programado')
 
-        if not esta_abierto and not puede_override_cierre:
-            advertencias.append(f'Sorteo "{sorteo.nombre}" cerrado — línea {numero} omitida.')
+        if not _puede_apostar_segun_estado_sorteo(estado_actual, user):
+            if estado_actual == 'salido':
+                _motivo = 'ya salió; línea omitida (no se permiten apuestas tardías).'
+            elif estado_actual == 'no_programado':
+                _motivo = 'no está programado para esa fecha; línea omitida.'
+            elif estado_actual == 'cerrado':
+                _motivo = 'está cerrado; línea omitida (solo banco/superadmin pueden apostar antes de la salida).'
+            else:
+                _motivo = f'no tiene estado válido ({estado_actual}); línea omitida.'
+            advertencias.append(f'Sorteo "{sorteo.nombre}" {_motivo}')
+            continue
+
+        # Revalidar forma habilitada para el sorteo destino (no asumir que la
+        # configuración sigue igual desde que se creó la boleta original).
+        if not _forma_aplicable_sorteo(forma_juego.nombre, sorteo.formas_juego or []):
+            advertencias.append(
+                f'Forma {forma_juego.nombre} no habilitada para {sorteo.nombre}; línea {numero} omitida.'
+            )
+            continue
+
+        # Revalidar restricciones al duplicar; si no se puede consultar, falla cerrado.
+        _numero_norm_restr = str(numero).strip().lower()
+        _partes_numero = [p.strip() for p in _numero_norm_restr.split('x') if p.strip()] if 'x' in _numero_norm_restr else [_numero_norm_restr]
+        try:
+            _restringidos = list(NumeroRestringido.objects.filter(
+                sorteo=sorteo, valor__in=_partes_numero
+            ).values_list('valor', flat=True))
+        except Exception:
+            logger.exception('No se pudo comprobar números restringidos durante duplicación; se rechaza.')
+            return JsonResponse({
+                'success': False,
+                'error': 'No se pudo verificar la lista de números restringidos. No se duplicó la boleta.',
+            }, status=503)
+        if _restringidos:
+            advertencias.append(
+                f'Números restringidos {_restringidos} para {sorteo.nombre}; línea {numero} omitida.'
+            )
             continue
 
         pool_total = get_pool_gestor(destinatario, sorteo, forma_juego, forma_pago)

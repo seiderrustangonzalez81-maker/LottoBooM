@@ -40,9 +40,9 @@
     }
     var sa = getSA();
     if (sa) {
-      Object.keys(sa).forEach(function(sid){
+      var drawKeys = Object.keys(sa);
+      drawKeys.forEach(function(sid){
         var s = sa[sid]; if (!s) return;
-        snap.orden.push(sid);
         snap.sorteos[sid] = {
           nombre: s.nombre || '',
           cerrado: !!s.cerrado,
@@ -50,11 +50,40 @@
           tablasActivas: safeParse(JSON.stringify(s.tablasActivas || {}))
         };
       });
+      // Preserve the real selected order (first draw is the replicate master).
+      var selectedOrder = (typeof ordenSorteos !== 'undefined' && Array.isArray(ordenSorteos))
+        ? ordenSorteos.map(String) : [];
+      var seenOrder = {};
+      snap.orden = selectedOrder.filter(function(sid){
+        if (!Object.prototype.hasOwnProperty.call(snap.sorteos, sid) || seenOrder[sid]) return false;
+        seenOrder[sid] = true;
+        return true;
+      });
+      drawKeys.forEach(function(sid){
+        if (!seenOrder[sid]) { seenOrder[sid] = true; snap.orden.push(sid); }
+      });
     }
     return snap;
   }
 
-  function isEmpty(s){ if (!s) return true; if (s.clienteId) return false; return Object.keys(s.sorteos||{}).length === 0; }
+  function hasNumbers(s){
+    var sorteos=s&&s.sorteos||{},found=false;
+    Object.keys(sorteos).forEach(function(sid){
+      var tabs=sorteos[sid]&&sorteos[sid].tablasActivas||{};
+      Object.keys(tabs).forEach(function(tk){
+        (tabs[tk].rows||[]).forEach(function(row){
+          if(String(row.num||'').trim()||String(row.numA||'').trim()||String(row.numB||'').trim())found=true;
+        });
+      });
+    });
+    return found;
+  }
+  function isEligible(s){
+    if(!s||!s.clienteId||!(s.fpId||s.fpNombre)||!s.orden||!s.orden.length)return false;
+    if(s.gestorId===null && document.getElementById('selGestorCuenta'))return false;
+    return hasNumbers(s);
+  }
+  function isEmpty(s){ return !isEligible(s); }
 
   function scheduleSave(){
     if (_aplicando) return;
@@ -88,26 +117,43 @@
   }
 
   function reabrir(snap){
-    var sids = Object.keys(snap.sorteos||{});
-    if (!sids.length) { _aplicando = false; showBanner(snap); return; }
+    var available = Object.keys(snap.sorteos||{}), sids = [], seen = {};
+    (Array.isArray(snap.orden) ? snap.orden : []).forEach(function(raw){
+      var sid = String(raw);
+      if (available.indexOf(sid) >= 0 && !seen[sid]) { seen[sid] = true; sids.push(sid); }
+    });
+    available.forEach(function(sid){ if (!seen[sid]) { seen[sid] = true; sids.push(sid); } });
+    if (!sids.length) { _aplicando = false; return; }
     sids.forEach(function(sid){
       var btn = document.querySelector('.sorteo-btn[data-id="'+sid+'"]');
       if (!btn) return;
       if (!btn.classList.contains('active')) { try { btn.click(); } catch(e){} }
     });
-    setTimeout(function(){
+    // Wait for every draw configuration before restoring rows. A late config fetch
+    // initializes empty tables and would otherwise overwrite the saved draft.
+    wait(function(){
+      var sa = getSA();
+      return sids.every(function(sid){ return sa && sa[sid] && sa[sid].cargado; });
+    }, 10000, function(){
+      var sa = getSA();
+      var pending = sids.filter(function(sid){ return !sa || !sa[sid] || !sa[sid].cargado; });
+      if (pending.length) {
+        _aplicando = false;
+        showBanner(snap, true);
+        return; // Keep the local draft intact; never restore into unloaded tables.
+      }
       sids.forEach(function(sid){
-        var sa = getSA(); if (!sa || !sa[sid]) return;
         var g = snap.sorteos[sid];
         if (g.tablasActivas) sa[sid].tablasActivas = safeParse(JSON.stringify(g.tablasActivas));
         if (g.tabActual)     sa[sid].tabActual     = g.tabActual;
         try {
           if (typeof window.renderTabsSorteo === 'function') window.renderTabsSorteo(sid);
+          if (typeof window.renderMiniResumenSorteo === 'function') window.renderMiniResumenSorteo(sid);
         } catch(e){}
       });
       _aplicando = false;
-      showBanner(snap);
-    }, 900);
+      try { if (typeof window.recalcGlobal === 'function') window.recalcGlobal(); } catch(e){}
+    });
   }
 
   function applySnapshot(snap){
@@ -115,7 +161,10 @@
     _aplicando = true;
     var sg = document.getElementById('selGestorCuenta');
     if (sg && snap.gestorId) {
-      if ([].some.call(sg.options, function(o){ return o.value === snap.gestorId; })) sg.value = snap.gestorId;
+      if ([].some.call(sg.options, function(o){ return o.value === snap.gestorId; })) {
+        sg.value = snap.gestorId;
+        try { sg.dispatchEvent(new Event('change', {bubbles:true})); } catch(e){}
+      }
     }
     var sc = document.getElementById('selCliente');
     if (sc && snap.clienteId) {
@@ -133,19 +182,23 @@
     if (inpF && snap.fecha) inpF.value = snap.fecha;
   }
 
-  function showBanner(snap){
-    if (document.getElementById('borradorBanner')) return;
+  function showBanner(snap, restoreFailed){
+    if (!isEligible(snap) || document.getElementById('borradorBanner')) return;
     var el = document.createElement('div');
     el.id = 'borradorBanner';
     el.style.cssText = 'position:fixed;top:10px;right:10px;z-index:9999;max-width:340px;background:linear-gradient(145deg,#fef3c7,#fde68a);color:#78350f;padding:14px 16px;border-radius:10px;border:2px solid #f59e0b;box-shadow:0 4px 14px rgba(0,0,0,.25);font-family:inherit;font-size:.85rem;';
-    el.innerHTML = '📝 <strong>Tienes una jugada en edición sin enviar</strong><br>'
-      + '<span style="font-size:.78rem;display:block;margin-top:6px;">¿Qué quieres hacer?</span>'
+    var message = restoreFailed
+      ? 'No terminó de cargar la configuración de todos los sorteos. El borrador se conserva; inténtalo cuando estén listos.'
+      : '¿Deseas continuar o borrar el borrador?';
+    var action = restoreFailed ? 'Reintentar' : 'Continuar';
+    el.innerHTML = '📝 <strong>Tienes una apuesta sin guardar</strong><br>'
+      + '<span style="font-size:.78rem;display:block;margin-top:6px;">'+message+'</span>'
       + '<div style="margin-top:10px;display:flex;gap:8px;">'
-      + '<button type="button" id="borrCont" style="flex:1;padding:8px 10px;background:#6b7280;color:#fff;border:none;border-radius:6px;font-weight:800;cursor:pointer;font-size:.8rem;">Continuar</button>'
+      + '<button type="button" id="borrCont" style="flex:1;padding:8px 10px;background:#2563eb;color:#fff;border:none;border-radius:6px;font-weight:800;cursor:pointer;font-size:.8rem;">'+action+'</button>'
       + '<button type="button" id="borrBorr" style="flex:1;padding:8px 10px;background:#dc2626;color:#fff;border:none;border-radius:6px;font-weight:800;cursor:pointer;font-size:.8rem;">Borrar</button>'
       + '</div>';
     document.body.appendChild(el);
-    document.getElementById('borrCont').onclick = function(){ el.remove(); };
+    document.getElementById('borrCont').onclick = function(){ el.remove(); applySnapshot(snap); };
     document.getElementById('borrBorr').onclick = function(){
       clearBorrador();
       el.remove();
@@ -162,7 +215,15 @@
     document.addEventListener('click', function(ev){
       var t = ev.target;
       while (t && t !== document.body){
-        if (t.classList && (t.classList.contains('fp-chip') || t.classList.contains('sorteo-btn'))) {
+        var structural = t.classList && (
+          t.classList.contains('del') || t.classList.contains('add-row') ||
+          t.classList.contains('tab-btn') || t.classList.contains('tab') ||
+          t.classList.contains('fp-chip') || t.classList.contains('sorteo-btn')
+        );
+        var tabSelector = t.matches && t.matches('[data-tab],[data-sorteo-tab]');
+        if (structural || tabSelector || t.id === 'btnProcAhora') {
+          // Structural edits, tab changes and text processing change the
+          // persisted table snapshot without emitting input/change events.
           setTimeout(scheduleSave, 250); return;
         }
         t = t.parentElement;
@@ -178,27 +239,27 @@
   }
 
   function hookSubmit(){
-    if (typeof window.enviarApuesta !== 'function') return;
-    if (window._borradorSubmitHooked) return;
+    if (typeof window.enviarApuesta !== 'function' || window._borradorSubmitHooked) return;
     window._borradorSubmitHooked = true;
-    var _orig = window.enviarApuesta;
+    var original = window.enviarApuesta;
     window.enviarApuesta = function(dryRun){
-      var r = _orig.apply(this, arguments);
+      var result = original.apply(this, arguments);
       if (!dryRun) {
-        setTimeout(function(){
-          var sa = getSA();
-          var vacio = !sa || Object.keys(sa).length === 0;
-          if (vacio) clearBorrador();
-        }, 3500);
+        var started = Date.now();
+        var timer = setInterval(function(){
+          if (window.location.pathname.indexOf('mis-apuestas') !== -1) { clearBorrador(); clearInterval(timer); }
+          if (Date.now()-started > 30000) clearInterval(timer);
+        }, 500);
       }
-      return r;
+      return result;
     };
   }
+  window._borradorDraftApi = {snapshot:snapshot,isEligible:isEligible,hasNumbers:hasNumbers,clear:clearBorrador,read:readBorrador,apply:applySnapshot,storageKey:KEY};
 
   function init(){
     attachHooks();
-    // FIX_BORRADOR_CLEAR_ON_SUCCESS_V1: hookSubmit eliminado (ya no necesario)
-    // El borrador se limpia directamente en apostar.html al confirmar éxito
+    hookSubmit();
+    // Limpiar únicamente al confirmar redirección de envío exitoso.
     var snap = readBorrador();
     if (snap && !isEmpty(snap)) {
       // FIX_BORRADOR_EDAD_V1: no mostrar si tiene más de 12h (huérfano)
@@ -207,7 +268,7 @@
         clearBorrador();
         return;
       }
-      setTimeout(function(){ applySnapshot(snap); }, 1500);
+      setTimeout(function(){ showBanner(snap); }, 1500);
     }
   }
 
