@@ -768,5 +768,15 @@
     "fijo": "94",
     "corrido_1": "40",
     "corrido_2": "69"
+  },
+  {
+    "sorteo_nombre": "Loteka Tarde",
+    "numeros": [
+      "26",
+      "77",
+      "33"
+    ],
+    "fecha": "2026-11-25",
+    "fuente": "enloteria"
   }
 ]
