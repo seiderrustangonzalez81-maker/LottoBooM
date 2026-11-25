@@ -590,5 +590,15 @@
     ],
     "fecha": "2026-11-25",
     "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Anguilla 11AM",
+    "numeros": [
+      "83",
+      "98",
+      "25"
+    ],
+    "fecha": "2026-11-25",
+    "fuente": "enloteria"
   }
 ]
