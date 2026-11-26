@@ -1013,11 +1013,11 @@
     "sorteo_nombre": "Florida 9:45 PM",
     "fecha": "2026-11-25",
     "fuente": "lotteryusa",
-    "pick2": "",
-    "pick3": "",
+    "pick2": "82",
+    "pick3": "041",
     "pick4": "7214",
-    "pick5": "",
-    "fijo": "",
+    "pick5": "98694",
+    "fijo": "41",
     "corrido_1": "72",
     "corrido_2": "14"
   }
