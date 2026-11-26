@@ -724,5 +724,27 @@
     "fijo": "07",
     "corrido_1": "46",
     "corrido_2": "83"
+  },
+  {
+    "sorteo_nombre": "Anguilla 2PM",
+    "numeros": [
+      "80",
+      "71",
+      "14"
+    ],
+    "fecha": "2026-11-26",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "New Jersey 12:50 PM",
+    "fecha": "2026-11-26",
+    "fuente": "lotteryusa",
+    "pick2": "",
+    "pick3": "385",
+    "pick4": "8112",
+    "pick5": "",
+    "fijo": "85",
+    "corrido_1": "81",
+    "corrido_2": "12"
   }
 ]
