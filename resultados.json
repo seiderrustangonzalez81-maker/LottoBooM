@@ -1008,5 +1008,17 @@
     ],
     "fecha": "2026-11-25",
     "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Florida 9:45 PM",
+    "fecha": "2026-11-25",
+    "fuente": "lotteryusa",
+    "pick2": "",
+    "pick3": "",
+    "pick4": "7214",
+    "pick5": "",
+    "fijo": "",
+    "corrido_1": "72",
+    "corrido_2": "14"
   }
 ]
