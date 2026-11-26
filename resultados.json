@@ -682,5 +682,15 @@
     ],
     "fecha": "2026-11-26",
     "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "King Lottery Día",
+    "numeros": [
+      "27",
+      "47",
+      "92"
+    ],
+    "fecha": "2026-11-26",
+    "fuente": "enloteria"
   }
 ]
