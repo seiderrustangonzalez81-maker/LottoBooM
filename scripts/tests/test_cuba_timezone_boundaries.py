@@ -205,9 +205,10 @@ if __name__ == "__main__":
             hora_salida=None,
             minutos_cierre=5,
         )
-        now = datetime(2026, 11, 23, 11, 5, tzinfo=ZoneInfo("America/Havana"))
+        cuba_utc4 = timezone(timedelta(hours=-4))
+        now = datetime(2026, 11, 23, 11, 5, tzinfo=cuba_utc4)
         result = calcular_estado_sorteo(draw, now, date(2026, 11, 23))
-        self.assertEqual(result.hora_cierre, datetime(2026, 11, 23, 11, 5, tzinfo=ZoneInfo("America/Havana")))
+        self.assertEqual(result.hora_cierre, datetime(2026, 11, 23, 11, 5, tzinfo=cuba_utc4))
         self.assertEqual(result.estado_actual, "cerrado")
 
     def test_texas_draws_with_null_sunday_are_not_scheduled(self):
@@ -231,7 +232,7 @@ if __name__ == "__main__":
         )
         self.assertEqual(
             get_datetime_salida_cuba(primera, date(2026, 11, 29)).time(),
-            time(15, 0),
+            time(16, 0),
         )
         real_noche = SimpleNamespace(
             nombre="Real Noche",
@@ -243,5 +244,21 @@ if __name__ == "__main__":
         )
         self.assertEqual(
             get_datetime_salida_cuba(real_noche, date(2026, 11, 29)).time(),
-            time(19, 0),
+            time(20, 0),
         )
+
+    def test_winter_sunday_schedule_uses_winter_clock(self):
+        from sorteos.utils import get_datetime_salida_cuba
+        winter_sunday = date(2027, 11, 14)
+        primera = SimpleNamespace(
+            nombre="Primera 7 PM",
+            horarios={"invierno": {"domingo": "15:00"}, "verano": {"domingo": "16:00"}},
+            hora_salida=None,
+        )
+        real_noche = SimpleNamespace(
+            nombre="Real Noche",
+            horarios={"invierno": {"domingo": "19:00"}, "verano": {"domingo": "20:00"}},
+            hora_salida=None,
+        )
+        self.assertEqual(get_datetime_salida_cuba(primera, winter_sunday).time(), time(15, 0))
+        self.assertEqual(get_datetime_salida_cuba(real_noche, winter_sunday).time(), time(19, 0))
