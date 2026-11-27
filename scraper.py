@@ -42,16 +42,16 @@ ARCHIVO_JSON = "resultados.json"
 # Se usa para auditar cobertura: no bloquea la publicación de resultados parciales.
 SORTEOS_ESPERADOS = [
     "Anguila 8 AM", "Anguila 9 AM", "Haití 1", "Anguila 10 AM",
-    "Tennessee 10:20 AM", "Haití 2", "Anguila 11 AM", "Texas 11 AM",
+    "Tennessee 9:28 AM", "Haití 2", "Anguila 11 AM", "Texas 11 AM",
     "Haití 3", "Lotedom", "Quemaito", "Anguila 12 PM", "Primera",
     "Quinielón", "Suerte 12:30 PM", "King Lottery 12:30 PM",
     "Georgia 12:30 PM", "Real 12:55 PM", "New Yol Real 12:50 PM",
-    "New Jersey 12:50 PM", "Anguila 1 PM", "Tennessee 1:20 PM",
+    "New Jersey 12:50 PM", "Anguila 1 PM", "Tennessee 12:28 PM",
     "Texas 1:20 PM", "Florida 1:35 PM", "Anguila 2 PM",
     "Gana Más 2:30 PM", "New York 2:30 PM", "Anguila 3 PM",
     "Anguila 4 PM", "Anguila 5 PM", "Haití 4", "Suerte 6 PM",
     "Anguila 6 PM", "Haití 5", "Anguila 7 PM", "Primera 7 PM",
-    "Georgia 7 PM", "Texas 7 PM", "Tennessee 7:20 PM",
+    "Georgia 7 PM", "Texas 7 PM", "Tennessee 6:28 PM",
     "King Lottery 7:30 PM", "Haití 6", "Loteka 7:55 PM", "Loteka Tarde", "Lotedom Noche", "Quemaito Noche", "Quinielón Noche", "Tok 3",
     "Anguila 8 PM", "Nacional", "Leidsa 8:55 PM", "Pega 3+",
     "Anguila 9 PM", "Anguila 10 PM", "Florida 9:50 PM", "New York 10:30 PM",
@@ -100,15 +100,15 @@ URLS_MULTI = {
     },
     # Tennessee Morning (la matriz de la app lo etiqueta 10:20 AM).
     # LotteryUSA publica Cash 3 Morning y Cash 4 Morning.
-    "Tennessee 10:20 AM": {
+    "Tennessee 9:28 AM": {
         "pick3": ["https://www.lotteryusa.com/tennessee/morning-cash-3/"],
         "pick4": ["https://www.lotteryusa.com/tennessee/morning-cash-4/"],
     },
-    "Tennessee 1:20 PM": {
+    "Tennessee 12:28 PM": {
         "pick3": ["https://www.lotteryusa.com/tennessee/midday-cash-3/"],
         "pick4": ["https://www.lotteryusa.com/tennessee/midday-cash-4/"],
     },
-    "Tennessee 6:30 PM": {
+    "Tennessee 6:28 PM": {
         "pick3": ["https://www.lotteryusa.com/tennessee/cash-3/"],
         "pick4": ["https://www.lotteryusa.com/tennessee/cash-4/"],
     },
@@ -215,6 +215,13 @@ def _hora_enloteria(nombre, fecha):
         "king lottery noche": (19, 30),
         "king lottery 7 30 pm": (19, 30),
         "new york noche": (22, 30),
+        "tennessee 10 20 am": (9, 28),
+        "tennessee 9 28 am": (9, 28),
+        "tennessee 1 20 pm": (12, 28),
+        "tennessee 12 28 pm": (12, 28),
+        "tennessee 6 30 pm": (18, 28),
+        "tennessee 7 20 pm": (18, 28),
+        "tennessee 6 28 pm": (18, 28),
     }
     hora = horarios.get(clave)
     if not hora:
@@ -328,6 +335,10 @@ ALIASES_NOMBRES_SORTEOS = {
     "new york noche": "New York 10:30 PM",
     "nacional gana mas": "Gana Más 2:30 PM",
     "leidsa": "Leidsa 8:55 PM",
+    "tennessee 10:20 am": "Tennessee 9:28 AM",
+    "tennessee 1:20 pm": "Tennessee 12:28 PM",
+    "tennessee 6:30 pm": "Tennessee 6:28 PM",
+    "tennessee 7:20 pm": "Tennessee 6:28 PM",
     "loteka": "Loteka 7:55 PM",
     "loteka tarde": "Loteka Tarde",
     "lotedom noche": "Lotedom Noche",
