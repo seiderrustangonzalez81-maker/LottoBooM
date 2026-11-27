@@ -170,7 +170,7 @@
           "jueves": "09:28",
           "viernes": "09:28",
           "sabado": "09:28",
-          "domingo": "09:28"
+          "domingo": null
         },
         "verano": {
           "lunes": "09:28",
@@ -179,7 +179,7 @@
           "jueves": "09:28",
           "viernes": "09:28",
           "sabado": "09:28",
-          "domingo": "09:28"
+          "domingo": null
         }
       },
       "origen": "americano",
@@ -865,7 +865,7 @@
           "jueves": "12:28",
           "viernes": "12:28",
           "sabado": "12:28",
-          "domingo": "12:28"
+          "domingo": null
         },
         "verano": {
           "lunes": "12:28",
@@ -874,7 +874,7 @@
           "jueves": "12:28",
           "viernes": "12:28",
           "sabado": "12:28",
-          "domingo": "12:28"
+          "domingo": null
         }
       },
       "origen": "americano",
