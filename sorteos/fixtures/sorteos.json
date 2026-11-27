@@ -414,22 +414,22 @@
       "minutos_cierre": 10,
       "horarios": {
         "invierno": {
-          "lunes": "10:50",
-          "martes": "10:50",
-          "miercoles": "10:50",
-          "jueves": "10:50",
-          "viernes": "10:50",
-          "sabado": "10:50",
-          "domingo": "10:50"
+          "lunes": "11:00",
+          "martes": "11:00",
+          "miercoles": "11:00",
+          "jueves": "11:00",
+          "viernes": "11:00",
+          "sabado": "11:00",
+          "domingo": "11:00"
         },
         "verano": {
-          "lunes": "11:50",
-          "martes": "11:50",
-          "miercoles": "11:50",
-          "jueves": "11:50",
-          "viernes": "11:50",
-          "sabado": "11:50",
-          "domingo": "11:50"
+          "lunes": "12:00",
+          "martes": "12:00",
+          "miercoles": "12:00",
+          "jueves": "12:00",
+          "viernes": "12:00",
+          "sabado": "12:00",
+          "domingo": "12:00"
         }
       },
       "origen": "dominicano",
@@ -690,27 +690,27 @@
     "model": "sorteos.sorteo",
     "pk": 18,
     "fields": {
-      "nombre": "Real 12:50 PM",
+      "nombre": "Real 12:55 PM",
       "activo": true,
       "minutos_cierre": 10,
       "horarios": {
         "invierno": {
-          "lunes": "11:50",
-          "martes": "11:50",
-          "miercoles": "11:50",
-          "jueves": "11:50",
-          "viernes": "11:50",
-          "sabado": "11:50",
-          "domingo": "11:50"
+          "lunes": "11:55",
+          "martes": "11:55",
+          "miercoles": "11:55",
+          "jueves": "11:55",
+          "viernes": "11:55",
+          "sabado": "11:55",
+          "domingo": "11:55"
         },
         "verano": {
-          "lunes": "12:50",
-          "martes": "12:50",
-          "miercoles": "12:50",
-          "jueves": "12:50",
-          "viernes": "12:50",
-          "sabado": "12:50",
-          "domingo": "12:50"
+          "lunes": "12:55",
+          "martes": "12:55",
+          "miercoles": "12:55",
+          "jueves": "12:55",
+          "viernes": "12:55",
+          "sabado": "12:55",
+          "domingo": "12:55"
         }
       },
       "origen": "dominicano",
@@ -1701,27 +1701,27 @@
     "model": "sorteos.sorteo",
     "pk": 42,
     "fields": {
-      "nombre": "Loteka 7:50 PM",
+      "nombre": "Loteka 7:55 PM",
       "activo": true,
       "minutos_cierre": 10,
       "horarios": {
         "invierno": {
-          "lunes": "13:30",
-          "martes": "13:30",
-          "miercoles": "13:30",
-          "jueves": "13:30",
-          "viernes": "13:30",
-          "sabado": "13:30",
-          "domingo": "19:50"
+          "lunes": "18:55",
+          "martes": "18:55",
+          "miercoles": "18:55",
+          "jueves": "18:55",
+          "viernes": "18:55",
+          "sabado": "18:55",
+          "domingo": "18:55"
         },
         "verano": {
-          "lunes": "13:30",
-          "martes": "13:30",
-          "miercoles": "13:30",
-          "jueves": "13:30",
-          "viernes": "13:30",
-          "sabado": "13:30",
-          "domingo": "19:50"
+          "lunes": "19:55",
+          "martes": "19:55",
+          "miercoles": "19:55",
+          "jueves": "19:55",
+          "viernes": "19:55",
+          "sabado": "19:55",
+          "domingo": "19:55"
         }
       },
       "origen": "dominicano",
@@ -1831,21 +1831,21 @@
       "minutos_cierre": 10,
       "horarios": {
         "invierno": {
-          "lunes": "19:50",
-          "martes": "19:50",
-          "miercoles": "19:50",
-          "jueves": "19:50",
-          "viernes": "19:50",
-          "sabado": "19:50",
+          "lunes": "20:00",
+          "martes": "20:00",
+          "miercoles": "20:00",
+          "jueves": "20:00",
+          "viernes": "20:00",
+          "sabado": "20:00",
           "domingo": "17:00"
         },
         "verano": {
-          "lunes": "20:50",
-          "martes": "20:50",
-          "miercoles": "20:50",
-          "jueves": "20:50",
-          "viernes": "20:50",
-          "sabado": "20:50",
+          "lunes": "21:00",
+          "martes": "21:00",
+          "miercoles": "21:00",
+          "jueves": "21:00",
+          "viernes": "21:00",
+          "sabado": "21:00",
           "domingo": "18:00"
         }
       },
