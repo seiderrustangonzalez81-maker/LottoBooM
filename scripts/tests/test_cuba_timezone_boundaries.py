@@ -88,11 +88,13 @@ class CubaTimezoneBoundaryIntegrationTests(unittest.TestCase):
             nombre="Georgia 11:34 PM",
             horarios={"verano": {"lunes": "23:34"}},
             hora_salida=None,
+            minutos_cierre=5,
         )
         now_utc = datetime(2026, 11, 24, 4, 10, tzinfo=timezone.utc)
-        result = calcular_estado_sorteo(draw, now_utc, date(2026, 11, 24))
-        self.assertEqual(result.hora_salida, time(23, 34))
-        self.assertEqual(result.hora_cierre.date(), date(2026, 11, 23))
+        result = calcular_estado_sorteo(draw, now_utc, date(2026, 11, 23))
+        # 23:34 Eastern (UTC-5) equivale a 00:34 del día siguiente en Cuba (UTC-4).
+        self.assertEqual(result.hora_salida, time(0, 34))
+        self.assertEqual(result.hora_cierre, datetime(2026, 11, 24, 0, 24, tzinfo=timezone(timedelta(hours=-4))))
         self.assertEqual(result.hora_cierre.utcoffset(), timedelta(hours=-4))
 
     def test_scraper_and_django_share_identical_override_boundaries(self):
@@ -195,3 +197,51 @@ class CubaTimezoneBoundaryIntegrationTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+    def test_legacy_five_minute_setting_cannot_shorten_fixed_cutoff(self):
+        draw = SimpleNamespace(
+            nombre="Test fixed cutoff",
+            horarios={"verano": {"lunes": "11:15"}},
+            hora_salida=None,
+            minutos_cierre=5,
+        )
+        now = datetime(2026, 11, 23, 11, 5, tzinfo=ZoneInfo("America/Havana"))
+        result = calcular_estado_sorteo(draw, now, date(2026, 11, 23))
+        self.assertEqual(result.hora_cierre, datetime(2026, 11, 23, 11, 5, tzinfo=ZoneInfo("America/Havana")))
+        self.assertEqual(result.estado_actual, "cerrado")
+
+    def test_texas_draws_with_null_sunday_are_not_scheduled(self):
+        draw = SimpleNamespace(
+            nombre="Texas 11 PM",
+            horarios={"verano": {"domingo": None}, "invierno": {"domingo": None}},
+            hora_salida=None,
+        )
+        from sorteos.utils import get_datetime_salida_cuba
+        self.assertIsNone(get_datetime_salida_cuba(draw, date(2026, 11, 29)))
+
+    def test_sunday_schedule_uses_its_own_time_not_weekday_time(self):
+        from sorteos.utils import get_datetime_salida_cuba
+        primera = SimpleNamespace(
+            nombre="Primera 7 PM",
+            horarios={
+                "verano": {"domingo": "16:00"},
+                "invierno": {"domingo": "15:00"},
+            },
+            hora_salida=None,
+        )
+        self.assertEqual(
+            get_datetime_salida_cuba(primera, date(2026, 11, 29)).time(),
+            time(15, 0),
+        )
+        real_noche = SimpleNamespace(
+            nombre="Real Noche",
+            horarios={
+                "verano": {"domingo": "20:00"},
+                "invierno": {"domingo": "19:00"},
+            },
+            hora_salida=None,
+        )
+        self.assertEqual(
+            get_datetime_salida_cuba(real_noche, date(2026, 11, 29)).time(),
+            time(19, 0),
+        )
