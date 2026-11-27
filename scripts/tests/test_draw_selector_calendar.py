@@ -7,6 +7,7 @@ from types import SimpleNamespace
 from unittest.mock import Mock
 
 from LottoBooM.utils import es_verano_cuba
+from sorteos.utils import calcular_estado_sorteo
 
 VIEWS = Path(__file__).resolve().parents[2] / "jugadas" / "views.py"
 TREE = ast.parse(VIEWS.read_text(encoding="utf-8"))
@@ -38,6 +39,7 @@ def build_helper_with_cuba_offsets(now, draws):
         "pytz": __import__("pytz"),
         "timezone": SimpleNamespace(now=lambda: now),
         "es_verano_cuba": es_verano_cuba,
+        "calcular_estado_sorteo": calcular_estado_sorteo,
         "time": time,
         "datetime": datetime,
         "timedelta": timedelta,
