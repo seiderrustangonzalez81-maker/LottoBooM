@@ -145,8 +145,8 @@ def get_hora_cierre(sorteo, fecha=None):
     dt_salida = get_datetime_salida_cuba(sorteo, fecha)
     if not dt_salida:
         return None
-    minutos = sorteo.minutos_cierre if sorteo.minutos_cierre is not None else 10
-    return dt_salida - timedelta(minutes=minutos)
+    # Política única del sistema: cerrar exactamente 10 minutos antes.
+    return dt_salida - timedelta(minutes=10)
 
 
 def calcular_estado_sorteo(sorteo, ahora=None, fecha_consulta=None):
@@ -173,12 +173,15 @@ def calcular_estado_sorteo(sorteo, ahora=None, fecha_consulta=None):
         sorteo.hora_salida_str = "No programado"
         sorteo.hora_cierre_str = "—"
         sorteo.segundos_proximo = None
+        sorteo.segundos_restantes = None
+        sorteo.hora_cierre = None
         return sorteo
 
-    minutos_cierre = sorteo.minutos_cierre if sorteo.minutos_cierre is not None else 10
-    dt_cierre = dt_salida - timedelta(minutes=minutos_cierre)
+    # Política única: ningún registro antiguo puede reducir el margen a 5 minutos.
+    dt_cierre = dt_salida - timedelta(minutes=10)
     sorteo.proximo_datetime = dt_salida
     sorteo.hora_cierre_datetime = dt_cierre
+    sorteo.hora_cierre = dt_cierre
     sorteo.fecha_operativa_salida = _fecha_operativa_cuba(dt_salida)
 
     sorteo.hora_salida = dt_salida.timetz().replace(tzinfo=None)
@@ -188,12 +191,15 @@ def calcular_estado_sorteo(sorteo, ahora=None, fecha_consulta=None):
     if ahora_local < dt_cierre:
         sorteo.estado_actual = "abierto"
         sorteo.segundos_proximo = max(0, int((dt_cierre - ahora_local).total_seconds()))
+        sorteo.segundos_restantes = sorteo.segundos_proximo
     elif ahora_local < dt_salida:
         sorteo.estado_actual = "cerrado"
         sorteo.segundos_proximo = max(0, int((dt_salida - ahora_local).total_seconds()))
+        sorteo.segundos_restantes = sorteo.segundos_proximo
     else:
         sorteo.estado_actual = "salido"
         sorteo.segundos_proximo = segundos_hasta_proximo(sorteo, ahora_local)
+        sorteo.segundos_restantes = sorteo.segundos_proximo
 
     return sorteo
 
