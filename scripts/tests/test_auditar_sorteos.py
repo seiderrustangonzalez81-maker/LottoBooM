@@ -13,6 +13,8 @@ class NormalizeTests(unittest.TestCase):
         self.assertEqual(audit.canon("Loteka 7:50 PM"), audit.canon("Loteka 7:55 PM"))
     def test_known_schedule_alias(self):
         self.assertEqual(audit.canon("Florida 9:45 PM"), audit.canon("Florida 9:50 PM"))
+        self.assertEqual(audit.canon("Tennessee 6:30 PM"), audit.canon("Tennessee 6:28 PM"))
+        self.assertEqual(audit.canon("Tennessee 7:20 PM"), audit.canon("Tennessee 6:28 PM"))
     def test_different_draws_not_collapsed(self):
         self.assertNotEqual(audit.canon("Suerte 12:30 PM"), audit.canon("Suerte 6 PM"))
 class CanonicalNamesTests(unittest.TestCase):
@@ -30,7 +32,7 @@ class CanonicalNamesTests(unittest.TestCase):
         self.assertEqual(canon("El Quinielon Dia"), "Quinielón")
         self.assertEqual(canon("King Lottery Día"), "King Lottery 12:30 PM")
         self.assertEqual(canon("Florida 9:45 PM"), "Florida 9:50 PM")
-        self.assertEqual(canon("Tennessee 6:30 PM"), "Tennessee 6:30 PM")
+        self.assertEqual(canon("Tennessee 6:30 PM"), "Tennessee 6:28 PM")
 
 class TemplateIdTests(unittest.TestCase):
     def test_mutually_exclusive_template_branches_are_not_duplicates(self):
@@ -106,7 +108,7 @@ class ScraperCoverageTests(unittest.TestCase):
         self.assertNotIn("USA sin configuración directa:", report)
         self.assertEqual(
             namespace["canonizar_nombre_sorteo"]("Tennessee 6:30 PM"),
-            "Tennessee 6:30 PM",
+            "Tennessee 6:28 PM",
         )
 
 
