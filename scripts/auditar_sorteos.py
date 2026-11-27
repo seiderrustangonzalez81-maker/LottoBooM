@@ -35,7 +35,7 @@ ALIASES = {
     "new jersey 10 57 pm": "new jersey 10 50 pm",
     "georgia 6 59 pm": "georgia 7 pm",
     "georgia 11 34 pm": "georgia 11 40 pm",
-    "texas 10 12 pm": "texas 11 pm", "tennessee 6 30 pm": "tennessee 7 20 pm",
+    "texas 10 12 pm": "texas 11 pm",
 }
 def norm(s):
     s = unicodedata.normalize("NFKD", str(s or "")).encode("ascii","ignore").decode().lower()
