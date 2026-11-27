@@ -56,6 +56,7 @@ MAPEO_NOMBRES = {
     "King Lottery Noche": "King Lottery 7:30 PM",
     "Real": "Real 12:50 PM",
     "Nacional Noche": "Nacional",
+    "New York Noche": "New York 10:30 PM",
     "Nacional Gana Más": "Gana Más 2:30 PM",
     "Leidsa": "Leidsa 8:55 PM",
     "Texas 10:12 PM": "Texas 11 PM",
@@ -189,6 +190,8 @@ class Command(BaseCommand):
         self.stdout.write(f"Fecha/hora Cuba: {ahora_cuba.isoformat()} | Día operativo: {dia_operativo} (01:00–00:59)")
 
         creados = actualizados = errores = premios_ok = 0
+        nombres_sin_mapeo = set()
+        destinos_sin_sorteo = set()
 
         # PRIMERA PASADA: identificar qué sorteos tienen datos de enloteria en este JSON
         sorteos_con_enloteria = set()
@@ -198,6 +201,8 @@ class Command(BaseCommand):
                 nombre_db = (MAPEO_NOMBRES.get(nombre_web) or mapeo_normalizado.get(normalizar_texto(nombre_web)))
                 if nombre_db:
                     sorteos_con_enloteria.add(nombre_db)
+                else:
+                    nombres_sin_mapeo.add(nombre_web)
 
         # SEGUNDA PASADA: procesar
         for item in data:
@@ -207,10 +212,12 @@ class Command(BaseCommand):
 
             nombre_db = (MAPEO_NOMBRES.get(nombre_web) or mapeo_normalizado.get(normalizar_texto(nombre_web)))
             if not nombre_db:
+                nombres_sin_mapeo.add(nombre_web)
                 continue
 
             sorteo = Sorteo.objects.filter(nombre__iexact=nombre_db).first()
             if not sorteo:
+                destinos_sin_sorteo.add((nombre_web, nombre_db))
                 continue
             if not sorteo_corre_hoy(sorteo, dia_actual, temporada):
                 continue
@@ -308,8 +315,16 @@ class Command(BaseCommand):
                 errores += 1
                 self.stdout.write(self.style.ERROR(f"❌ Error procesando '{nombre_web}': {str(e)}"))
 
+        if nombres_sin_mapeo:
+            self.stdout.write(self.style.WARNING(
+                "Nombres de fuente sin equivalencia: " + ", ".join(sorted(nombres_sin_mapeo))
+            ))
+        if destinos_sin_sorteo:
+            detalle = ", ".join(f"{origen} -> {destino}" for origen, destino in sorted(destinos_sin_sorteo))
+            self.stdout.write(self.style.WARNING("Destinos inexistentes en Sorteo: " + detalle))
+
         self.stdout.write(self.style.SUCCESS(
-            f"\nResumen Final -> Creados={creados}, Actualizados={actualizados}, Premios OK={premios_ok}, Errores={errores}"
+            f"\nResumen Final -> Creados={creados}, Actualizados={actualizados}, Premios OK={premios_ok}, Errores={errores}, Sin mapeo={len(nombres_sin_mapeo)}, Sin destino={len(destinos_sin_sorteo)}"
         ))
 
 if __name__ == "__main__":
