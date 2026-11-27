@@ -429,18 +429,6 @@
     "tripleta",
     "posicion"
   ],
-  "Real 12:50 PM": [
-    "fijo",
-    "corrido1",
-    "corrido2",
-    "centena corrida1",
-    "centena corrida2",
-    "VsPick2",
-    "vspf",
-    "pick2vspf",
-    "tripleta",
-    "posicion"
-  ],
   "Gana Más 2:30 PM": [
     "fijo",
     "corrido1",
@@ -460,13 +448,6 @@
     "posicion"
   ],
   "Primera 7 PM": [
-    "fijo",
-    "corrido1",
-    "corrido2",
-    "tripleta",
-    "posicion"
-  ],
-  "Loteka 7:50 PM": [
     "fijo",
     "corrido1",
     "corrido2",
@@ -513,5 +494,24 @@
     "PF",
     "fijo",
     "vspf"
+  ],
+  "Real 12:55 PM": [
+    "fijo",
+    "corrido1",
+    "corrido2",
+    "centena corrida1",
+    "centena corrida2",
+    "VsPick2",
+    "vspf",
+    "pick2vspf",
+    "tripleta",
+    "posicion"
+  ],
+  "Loteka 7:55 PM": [
+    "fijo",
+    "corrido1",
+    "corrido2",
+    "tripleta",
+    "posicion"
   ]
 }
