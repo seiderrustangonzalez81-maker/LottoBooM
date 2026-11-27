@@ -1905,38 +1905,28 @@ def api_sorteos_disponibles(request):
     except ValueError:
         return JsonResponse({'error': 'Fecha inválida'}, status=400)
 
-    CUBA_TZ = ZoneInfo('America/Havana')
-    ahora_local = datetime.now(CUBA_TZ)
-    hoy = ahora_local.date()
-    hora_actual = ahora_local.time()
+    from sorteos.utils import get_datetime_salida_cuba, fecha_operativa_actual, _tz_cuba
+    ahora_utc = timezone.now()
+    ahora_cuba = ahora_utc.astimezone(_tz_cuba(ahora_utc))
+    hoy_operativo = fecha_operativa_actual(ahora_utc)
 
     ids_con_resultado = Resultado.objects.filter(fecha=fecha).values_list('sorteo_id', flat=True)
-
-    base_qs = Sorteo.objects.filter(
-        activo=True,
-    ).exclude(id__in=ids_con_resultado).order_by('nombre')
+    base_qs = Sorteo.objects.filter(activo=True).exclude(id__in=ids_con_resultado).order_by('nombre')
 
     sorteos_filtrados = []
     for s in base_qs:
-        hora_salida = get_hora_salida(s, fecha)
-        if not hora_salida:
+        salida = get_datetime_salida_cuba(s, fecha)
+        if not salida:
             continue
-
-        if fecha < hoy:
-            sorteos_filtrados.append((s, hora_salida))
-        elif fecha == hoy:
-            if hora_salida <= hora_actual:
-                sorteos_filtrados.append((s, hora_salida))
+        if fecha < hoy_operativo or (fecha == hoy_operativo and salida <= ahora_cuba):
+            sorteos_filtrados.append((s, salida))
 
     sorteos_filtrados.sort(key=lambda x: x[1])
-
-    data = []
-    for s, hora in sorteos_filtrados:
-        data.append({
-            'id': s.id,
-            'nombre': s.nombre,
-            'hora_salida': hora.strftime('%H:%M'),
-        })
+    data = [{
+        'id': s.id,
+        'nombre': s.nombre,
+        'hora_salida': salida.strftime('%H:%M'),
+    } for s, salida in sorteos_filtrados]
 
     return JsonResponse(data, safe=False)
 
@@ -2340,21 +2330,8 @@ def _fmt_m(v):
     return f"{d:,.2f}"
 
 def _hora_salida_hoy(sorteo, hoy=None):
-    from datetime import time as _time
-    if hoy is None:
-        hoy = timezone.localdate()
-    if not sorteo.horarios:
-        return getattr(sorteo, 'hora_salida', None)
-    dia_es = ['lunes','martes','miercoles','jueves','viernes','sabado','domingo'][hoy.weekday()]
-    temp = 'verano' if es_verano_cuba(hoy) else 'invierno'
-    try:
-        hora_str = (sorteo.horarios or {}).get(temp, {}).get(dia_es)
-        if hora_str:
-            hh, mm = hora_str.split(':')
-            return _time(int(hh), int(mm))
-    except Exception:
-        pass
-    return None
+    from sorteos.utils import get_hora_salida, fecha_operativa_actual
+    return get_hora_salida(sorteo, hoy or fecha_operativa_actual())
 
 
 @login_required
@@ -2400,7 +2377,8 @@ def api_premios_todos(request):
     # FIX_FECHA_HOY_V1: default de hoy si no vienen fechas
     if not fdesde and not fhasta:
         from django.utils import timezone as _tz_fix3
-        _hoy_fix3 = _tz_fix3.localdate()
+        from sorteos.utils import fecha_operativa_actual
+        _hoy_fix3 = fecha_operativa_actual()
         fdesde = _hoy_fix3.strftime('%Y-%m-%d')
         fhasta = _hoy_fix3.strftime('%Y-%m-%d')
 
@@ -2410,7 +2388,8 @@ def api_premios_todos(request):
     if estado == 'pendiente': premios = premios.filter(cobrado=False)
     elif estado == 'cobrado': premios = premios.filter(cobrado=True)
 
-    hoy = timezone.localdate()
+    from sorteos.utils import fecha_operativa_actual
+    hoy = fecha_operativa_actual()
     if not periodo and not fdesde and not fhasta:
         periodo = 'hoy'
 
