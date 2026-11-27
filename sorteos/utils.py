@@ -35,9 +35,11 @@ def _ahora_local():
 
 
 def _fecha_local(fecha=None):
-    if fecha is None:
-        return _ahora_local().date()
-    return fecha
+    """Fecha operativa Cuba: 01:00–00:59 del día siguiente."""
+    if fecha is not None:
+        return fecha.date() if isinstance(fecha, datetime) else fecha
+    ahora = _ahora_local()
+    return (ahora - timedelta(hours=1)).date()
 
 
 def _temporada(fecha):
@@ -72,109 +74,124 @@ def obtener_hora_desde_horarios(sorteo, fecha=None):
         return None
 
 
+# Los horarios estadounidenses están guardados en hora local del estado.
+# Los sorteos dominicanos/haitianos ya están normalizados a hora Cuba en la matriz.
+ZONAS_SORTEOS_USA = {
+    "new york": "America/New_York",
+    "new jersey": "America/New_York",
+    "new yol real": "America/New_York",
+    "florida": "America/New_York",
+    "georgia": "America/New_York",
+    "texas": "America/Chicago",
+    "tennessee": "America/Chicago",
+}
+
+
+def _zona_fuente_sorteo(sorteo):
+    if getattr(sorteo, "origen", None) != "americano":
+        return None
+    nombre = str(getattr(sorteo, "nombre", "") or "").casefold()
+    for prefijo, zona in ZONAS_SORTEOS_USA.items():
+        if nombre.startswith(prefijo):
+            return ZoneInfo(zona)
+    return None
+
+
+def _fecha_operativa_cuba(instante):
+    local = instante.astimezone(_tz_cuba(instante))
+    return (local - timedelta(hours=1)).date()
+
+
+def _convertir_fuente_a_cuba(instante_fuente):
+    instante_utc = instante_fuente.astimezone(dt_timezone.utc)
+    return instante_utc.astimezone(_tz_cuba(instante_utc))
+
+
+def get_datetime_salida_cuba(sorteo, fecha=None):
+    """Devuelve la salida como datetime aware en hora Cuba."""
+    fecha = _fecha_local(fecha)
+    zona_fuente = _zona_fuente_sorteo(sorteo)
+
+    if zona_fuente:
+        # Un sorteo estadounidense puede caer en el día calendario siguiente de Cuba.
+        for fecha_fuente in (
+            fecha,
+            fecha - timedelta(days=1),
+            fecha + timedelta(days=1),
+        ):
+            hora = obtener_hora_desde_horarios(sorteo, fecha_fuente)
+            if not hora:
+                continue
+            dt_fuente = datetime.combine(fecha_fuente, hora).replace(tzinfo=zona_fuente)
+            dt_cuba = _convertir_fuente_a_cuba(dt_fuente)
+            if _fecha_operativa_cuba(dt_cuba) == fecha:
+                return dt_cuba
+        return None
+
+    hora = obtener_hora_desde_horarios(sorteo, fecha)
+    if not hora:
+        return None
+    salida_naive = datetime.combine(fecha, hora)
+    return salida_naive.replace(tzinfo=_tz_cuba(salida_naive))
+
+
 def get_hora_salida(sorteo, fecha=None):
-    """La programación oficial semanal prevalece sobre la hora manual."""
-    if sorteo.horarios:
-        return obtener_hora_desde_horarios(sorteo, fecha)
-    return sorteo.hora_salida
+    """Hora de salida convertida a Cuba para guardar y mostrar el resultado."""
+    dt_salida = get_datetime_salida_cuba(sorteo, fecha)
+    return dt_salida.timetz().replace(tzinfo=None) if dt_salida else None
 
 
 def get_hora_cierre(sorteo, fecha=None):
-    """Momento de cierre (salida - minutos_cierre) como datetime aware Cuba, o None."""
-    fecha = _fecha_local(fecha)
-    hora_salida = get_hora_salida(sorteo, fecha)
-    if not hora_salida:
+    """Cierre exacto: salida real menos los minutos configurados."""
+    dt_salida = get_datetime_salida_cuba(sorteo, fecha)
+    if not dt_salida:
         return None
     minutos = sorteo.minutos_cierre if sorteo.minutos_cierre is not None else 10
-    salida_local = datetime.combine(fecha, hora_salida)
-    salida_dt = salida_local.replace(tzinfo=_tz_cuba(salida_local))
-    return salida_dt - timedelta(minutes=minutos)
+    return dt_salida - timedelta(minutes=minutos)
 
 
 def calcular_estado_sorteo(sorteo, ahora=None, fecha_consulta=None):
-    """
-    Enriquece el sorteo con atributos calculados SIEMPRE en hora Cuba.
-
-    Atributos que setea:
-      - estado_actual: 'abierto' | 'cerrado' | 'salido' | 'no_programado'
-      - segundos_restantes: segundos hacia el próximo evento
-          · abierto → segundos hasta el CIERRE
-          · cerrado → segundos hasta la SALIDA
-          · salido / no_programado → 0
-      - segundos_para_salida: segundos hasta la SALIDA (0 si ya salió)
-      - hora_salida: time o None
-      - hora_cierre: datetime aware o None
-      - hora_salida_str: "01:35 PM" o "—"
-    """
+    """Calcula el estado usando la próxima salida real en hora Cuba."""
     if ahora is None:
         ahora = timezone.now()
+    ahora_local = ahora.astimezone(_tz_cuba(ahora))
 
-    ahora_local_actual = ahora.astimezone(_tz_cuba(ahora))
     if fecha_consulta is None:
-        ahora_local = ahora_local_actual
-        fecha_consulta = ahora_local.date()
+        dt_salida, _ = get_proximo_datetime_sorteo(sorteo, ahora_local)
+        if not dt_salida:
+            sorteo.estado_actual = "no_programado"
+            sorteo.hora_salida_str = "No programado"
+            sorteo.hora_cierre_str = "—"
+            sorteo.segundos_proximo = None
+            return sorteo
+        fecha_consulta = _fecha_operativa_cuba(dt_salida)
     else:
-        if fecha_consulta == ahora_local_actual.date():
-            # En la fecha actual se usa el offset del instante, incluso durante
-            # la hora exacta de transición de Cuba.
-            ahora_local = ahora_local_actual
-        else:
-            ahora_local = ahora.astimezone(_tz_cuba(fecha_consulta))
-        if (sorteo.nombre == 'Georgia 11:34 PM' and ahora_local.hour == 0 and ahora_local.minute < 25):
-            fecha_consulta = fecha_consulta - timedelta(days=1)
+        fecha_consulta = _fecha_local(fecha_consulta)
+        dt_salida = get_datetime_salida_cuba(sorteo, fecha_consulta)
 
-    # Determinar hora de salida para HOY (Cuba)
-    if sorteo.horarios:
-        hora_salida = obtener_hora_desde_horarios(sorteo, fecha_consulta)
-    else:
-        hora_salida = sorteo.hora_salida
-
-    # Sorteo no programado para hoy
-    if not hora_salida:
-        sorteo.estado_actual = 'no_programado'
-        sorteo.segundos_restantes = 0
-        sorteo.segundos_para_salida = 0
-        sorteo.hora_salida = None
-        sorteo.hora_cierre = None
-        sorteo.hora_salida_str = '—'
+    if not dt_salida:
+        sorteo.estado_actual = "no_programado"
+        sorteo.hora_salida_str = "No programado"
+        sorteo.hora_cierre_str = "—"
+        sorteo.segundos_proximo = None
         return sorteo
 
     minutos_cierre = sorteo.minutos_cierre if sorteo.minutos_cierre is not None else 10
-
-    salida_local = datetime.combine(fecha_consulta, hora_salida)
-    dt_salida = salida_local.replace(tzinfo=_tz_cuba(salida_local))
     dt_cierre = dt_salida - timedelta(minutes=minutos_cierre)
 
-    # ── Estado ──
+    sorteo.hora_salida = dt_salida.timetz().replace(tzinfo=None)
+    sorteo.hora_salida_str = dt_salida.strftime("%I:%M %p").lstrip("0")
+    sorteo.hora_cierre_str = dt_cierre.strftime("%I:%M %p").lstrip("0")
+
     if ahora_local < dt_cierre:
-        estado = 'abierto'
-        segundos = int((dt_cierre - ahora_local).total_seconds())
+        sorteo.estado_actual = "abierto"
+        sorteo.segundos_proximo = max(0, int((dt_cierre - ahora_local).total_seconds()))
     elif ahora_local < dt_salida:
-        estado = 'cerrado'
-        segundos = int((dt_salida - ahora_local).total_seconds())
+        sorteo.estado_actual = "cerrado"
+        sorteo.segundos_proximo = max(0, int((dt_salida - ahora_local).total_seconds()))
     else:
-        estado = 'salido'
-        segundos = 0
-
-    segundos_para_salida = (
-        int((dt_salida - ahora_local).total_seconds())
-        if ahora_local < dt_salida else 0
-    )
-
-    sorteo.estado_actual = estado
-    sorteo.segundos_restantes = max(0, segundos)
-    sorteo.segundos_para_salida = max(0, segundos_para_salida)
-    sorteo.hora_salida = hora_salida
-    sorteo.hora_cierre = dt_cierre
-    sorteo.hora_salida_str = hora_salida.strftime('%I:%M %p')
-
-    # FIX_PROXIMO_EN_LISTA_V1: si ya salió, calcular segundos al próximo día
-    sorteo.segundos_proximo = 0
-    if estado == 'salido':
-        try:
-            sorteo.segundos_proximo = segundos_hasta_proximo(sorteo, ahora) or 0
-        except Exception:
-            sorteo.segundos_proximo = 0
+        sorteo.estado_actual = "salido"
+        sorteo.segundos_proximo = segundos_hasta_proximo(sorteo, ahora_local)
 
     return sorteo
 
@@ -242,25 +259,42 @@ def get_sorteos_del_dia(fecha=None):
 # FIX_PROXIMO_DIA_V1 — Countdown extendido al próximo día
 # ═══════════════════════════════════════════════════════════════
 def get_proximo_datetime_sorteo(sorteo, ahora=None):
-    """
-    Devuelve (dt_salida, es_hoy) del PRÓXIMO sorteo a partir de `ahora`.
-    Busca desde hoy hasta +7 días. None si no hay programación en la semana.
-    """
+    """Busca la próxima salida real en Cuba, incluso si cruza la medianoche."""
     if ahora is None:
-        ahora_utc = timezone.now()
-        ahora = ahora_utc.astimezone(_tz_cuba(ahora_utc))
+        ahora = _ahora_local()
+    ahora_local = ahora.astimezone(_tz_cuba(ahora))
+    zona_fuente = _zona_fuente_sorteo(sorteo)
+    candidatos = []
 
-    hoy = ahora.date()
-    for offset in range(0, 8):
-        fecha = hoy + timedelta(days=offset)
-        hora = obtener_hora_desde_horarios(sorteo, fecha)
-        if not hora:
-            continue
-        salida_local = datetime.combine(fecha, hora)
-        dt = salida_local.replace(tzinfo=_tz_cuba(salida_local))
-        if dt > ahora:
-            return dt, (offset == 0)
-    return None, None
+    if zona_fuente:
+        ahora_fuente = ahora_local.astimezone(zona_fuente)
+        fechas_fuente = [
+            ahora_fuente.date() + timedelta(days=i)
+            for i in (-1, 0, 1, 2)
+        ]
+        for fecha_fuente in fechas_fuente:
+            hora = obtener_hora_desde_horarios(sorteo, fecha_fuente)
+            if not hora:
+                continue
+            dt_fuente = datetime.combine(fecha_fuente, hora).replace(tzinfo=zona_fuente)
+            dt_cuba = _convertir_fuente_a_cuba(dt_fuente)
+            if dt_cuba > ahora_local:
+                candidatos.append(dt_cuba)
+    else:
+        for offset in range(0, 8):
+            fecha = ahora_local.date() + timedelta(days=offset)
+            hora = obtener_hora_desde_horarios(sorteo, fecha)
+            if not hora:
+                continue
+            dt_cuba = datetime.combine(fecha, hora).replace(tzinfo=_tz_cuba(fecha))
+            if dt_cuba > ahora_local:
+                candidatos.append(dt_cuba)
+
+    if not candidatos:
+        return None, False
+    proximo = min(candidatos)
+    es_hoy = _fecha_operativa_cuba(proximo) == _fecha_operativa_cuba(ahora_local)
+    return proximo, es_hoy
 
 
 def segundos_hasta_proximo(sorteo, ahora=None):
