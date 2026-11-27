@@ -244,6 +244,7 @@ ALIASES_NOMBRES_SORTEOS = {
     "king lottery noche": "King Lottery 7:30 PM",
     "real": "Real 12:50 PM",
     "nacional noche": "Nacional",
+    "new york noche": "New York 10:30 PM",
     "nacional gana mas": "Gana Más 2:30 PM",
     "leidsa": "Leidsa 8:55 PM",
     "florida 9:45 pm": "Florida 9:50 PM",
