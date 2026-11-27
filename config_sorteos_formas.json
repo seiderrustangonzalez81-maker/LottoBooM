@@ -513,5 +513,30 @@
     "corrido2",
     "tripleta",
     "posicion"
+  ],
+  "Loteka Tarde": [
+    "fijo",
+    "corrido1",
+    "corrido2",
+    "tripleta",
+    "posicion"
+  ],
+  "Lotedom Noche": [
+    "fijo",
+    "corrido1",
+    "corrido2",
+    "centena corrida1",
+    "centena corrida2",
+    "VsPick2",
+    "vspf",
+    "pick2vspf",
+    "tripleta",
+    "posicion"
+  ],
+  "Quemaito Noche": [
+    "fijo"
+  ],
+  "Quinielón Noche": [
+    "fijo"
   ]
 }
