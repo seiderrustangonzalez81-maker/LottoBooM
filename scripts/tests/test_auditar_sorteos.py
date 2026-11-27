@@ -21,6 +21,20 @@ class NormalizeTests(unittest.TestCase):
     def test_different_draws_not_collapsed(self):
         self.assertNotEqual(audit.canon("Suerte 12:30 PM"), audit.canon("Suerte 6 PM"))
 class CanonicalNamesTests(unittest.TestCase):
+    def test_loader_uses_the_same_tennessee_source_aliases(self):
+        import ast
+        path = SCRIPT.parents[1] / "sorteos" / "management" / "commands" / "load_results.py"
+        tree = ast.parse(path.read_text(encoding="utf-8"))
+        node = next(
+            n for n in tree.body
+            if isinstance(n, ast.Assign)
+            and any(isinstance(t, ast.Name) and t.id == "MAPEO_NOMBRES" for t in n.targets)
+        )
+        mapping = ast.literal_eval(node.value)
+        self.assertEqual(mapping["Tennessee 10:28 AM"], "Tennessee 9:28 AM")
+        self.assertEqual(mapping["Tennessee 1:28 PM"], "Tennessee 12:28 PM")
+        self.assertEqual(mapping["Tennessee 7:28 PM"], "Tennessee 6:28 PM")
+
     def test_external_aliases_canonicalize_without_scraper_import(self):
         import ast, re, unicodedata
         path=SCRIPT.parents[1]/"scraper.py"
