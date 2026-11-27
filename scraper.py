@@ -170,9 +170,72 @@ def fecha_operativa_actual(ahora=None):
     return fecha_operativa_cuba(ahora)
 
 
+def _hora_enloteria(nombre, fecha):
+    """Hora real del sorteo según el calendario dominicano publicado por la fuente."""
+    import unicodedata
+    clave = unicodedata.normalize("NFKD", str(nombre or "").casefold())
+    clave = "".join(c for c in clave if not unicodedata.combining(c))
+    clave = re.sub(r"[^a-z0-9]+", " ", clave).strip()
+
+    horarios = {
+        "loteka tarde": (13, 30),
+        "loteka": (19, 55),
+        "loteka 7 55 pm": (19, 55),
+        "lotedom": (12, 0),
+        "lotedom noche": (22, 0),
+        "el quemaito mayor": (12, 0),
+        "quemaito": (12, 0),
+        "el quemaito mayor noche": (22, 0),
+        "quemaito noche": (22, 0),
+        "el quinielon dia": (12, 0),
+        "quinielon": (12, 0),
+        "el quinielon noche": (19, 0),
+        "quinielon noche": (19, 0),
+        "la primera": (12, 0),
+        "primera": (12, 0),
+        "la primera noche": (19, 0),
+        "primera 7 pm": (19, 0),
+        "la suerte": (12, 30),
+        "suerte 12 30 pm": (12, 30),
+        "la suerte 6pm": (18, 0),
+        "suerte 6 pm": (18, 0),
+        "nacional gana mas": (14, 30),
+        "gana mas 2 30 pm": (14, 30),
+        "nacional noche": (21, 0),
+        "nacional": (21, 0),
+        "real": (12, 55),
+        "real 12 55 pm": (12, 55),
+        "real noche": (19, 55),
+        "leidsa": (20, 55),
+        "leidsa 8 55 pm": (20, 55),
+        "pega 3": (20, 55),
+        "pega 3": (20, 55),
+        "king lottery dia": (12, 30),
+        "king lottery 12 30 pm": (12, 30),
+        "king lottery noche": (19, 30),
+        "king lottery 7 30 pm": (19, 30),
+        "new york noche": (22, 30),
+    }
+    hora = horarios.get(clave)
+    if not hora:
+        hora = parsear_hora_sorteo(nombre)
+    if not hora:
+        return None
+
+    # Algunos sorteos cambian el domingo; la hora sigue siendo República Dominicana.
+    if fecha.weekday() == 6:
+        if clave in {"la primera noche", "primera 7 pm", "el quinielon noche", "quinielon noche"}:
+            return (16, 0)
+        if clave in {"nacional noche", "nacional"}:
+            return (18, 0)
+        if clave in {"leidsa", "leidsa 8 55 pm", "pega 3", "pega 3"}:
+            return (15, 55)
+    return hora
+
+
 def calcular_fecha_sorteo_enloteria(nombre):
     ahora_cuba = obtener_hora_cuba()
-    hora_sorteo = parsear_hora_sorteo(nombre)
+    hora_sorteo = _hora_enloteria(nombre, ahora_cuba.date())
     if hora_sorteo:
         hora, minuto = hora_sorteo
         candidato = ahora_cuba.replace(hour=hora, minute=minuto, second=0, microsecond=0)
@@ -247,6 +310,11 @@ ALIASES_NOMBRES_SORTEOS = {
     "new york noche": "New York 10:30 PM",
     "nacional gana mas": "Gana Más 2:30 PM",
     "leidsa": "Leidsa 8:55 PM",
+    "loteka": "Loteka 7:55 PM",
+    "loteka tarde": "Loteka Tarde",
+    "lotedom noche": "Lotedom Noche",
+    "el quemaito mayor noche": "Quemaito Noche",
+    "el quinielon noche": "Quinielón Noche",
     "loteka": "Loteka 7:55 PM",
     "loteka tarde": "Loteka Tarde",
     "lotedom noche": "Lotedom Noche",
