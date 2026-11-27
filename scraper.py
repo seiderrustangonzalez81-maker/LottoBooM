@@ -338,8 +338,6 @@ ALIASES_NOMBRES_SORTEOS = {
     "leidsa": "Leidsa 8:55 PM",
     "tennessee 10:20 am": "Tennessee 9:28 AM",
     "tennessee 1:20 pm": "Tennessee 12:28 PM",
-    "tennessee 6:30 pm": "Tennessee 6:28 PM",
-    "tennessee 7:20 pm": "Tennessee 6:28 PM",
     "loteka": "Loteka 7:55 PM",
     "loteka tarde": "Loteka Tarde",
     "lotedom noche": "Lotedom Noche",
@@ -350,6 +348,12 @@ ALIASES_NOMBRES_SORTEOS = {
     "georgia 6:59 pm": "Georgia 7 PM",
     "georgia 11:34 pm": "Georgia 11:40 PM",
     "texas 10:12 pm": "Texas 11 PM",
+    "florida 9:45 pm": "Florida 9:50 PM",
+    "new jersey 10:57 pm": "New Jersey 10:50 PM",
+    "georgia 6:59 pm": "Georgia 7 PM",
+    "georgia 11:34 pm": "Georgia 11:40 PM",
+    "loteka 1:30 pm": "Loteka Tarde",
+    "loteka 7:50 pm": "Loteka 7:55 PM",
 }
 
 
@@ -587,10 +591,11 @@ def combinar_resultados(anterior, nuevo):
 
 
 def informar_cobertura(resultados):
-    """Resumen de cobertura contra la matriz de sorteos, normalizando nombres."""
-    obtenidos = {normalizar_nombre(r.get("sorteo_nombre", "")).casefold() for r in resultados}
-    esperados = {normalizar_nombre(n).casefold() for n in SORTEOS_ESPERADOS}
-    faltan = [n for n in SORTEOS_ESPERADOS if normalizar_nombre(n).casefold() not in obtenidos]
+    """Resume cobertura de la matriz usando nombres canónicos y alias de fuente."""
+    canon = lambda nombre: normalizar_nombre(canonizar_nombre_sorteo(nombre)).casefold()
+    obtenidos = {canon(r.get("sorteo_nombre", "")) for r in resultados}
+    esperados = {canon(n) for n in SORTEOS_ESPERADOS}
+    faltan = [n for n in SORTEOS_ESPERADOS if canon(n) not in obtenidos]
     print(f"\n=== AUDITORÍA MATRIZ ({len(SORTEOS_ESPERADOS)} sorteos configurados) ===")
     print(f"Nombres distintos obtenidos: {len(obtenidos & esperados)}/{len(SORTEOS_ESPERADOS)}")
     if faltan:
@@ -600,12 +605,14 @@ def informar_cobertura(resultados):
     else:
         print("✅ Se detectaron todos los nombres de la matriz.")
 
-    # Auditoría separada: identifica los sorteos estadounidenses que sí están
-    # configurados explícitamente en LotteryUSA. La lista de matriz no sustituye
-    # esta configuración y así se evita asumir que un nombre ya se está scrapeando.
-    configurados = {normalizar_nombre(n).casefold() for n in URLS_MULTI}
-    usa_esperados = [n for n in SORTEOS_ESPERADOS if any(n.startswith(e) for e in ZONAS_ESTADOS)]
-    sin_config = [n for n in usa_esperados if normalizar_nombre(n).casefold() not in configurados]
+    # New Yol Real se obtiene por Enloteria; no es una integración LotteryUSA.
+    usa_esperados = [
+        n for n in SORTEOS_ESPERADOS
+        if n != "New Yol Real 12:50 PM"
+        and any(n.startswith(estado) for estado in ZONAS_ESTADOS)
+    ]
+    configurados = {canon(nombre) for nombre in URLS_MULTI}
+    sin_config = [n for n in usa_esperados if canon(n) not in configurados]
     print(f"Sorteos USA esperados con configuración directa: {len(usa_esperados)-len(sin_config)}/{len(usa_esperados)}")
     if sin_config:
         print("USA sin configuración directa:")
