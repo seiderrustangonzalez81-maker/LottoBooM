@@ -152,7 +152,7 @@ def get_hora_salida(sorteo, fecha=None):
 
 
 def get_hora_cierre(sorteo, fecha=None):
-    """Cierre exacto: salida real menos los minutos configurados."""
+    """Cierre fijo del sistema: diez minutos antes de la salida."""
     dt_salida = get_datetime_salida_cuba(sorteo, fecha)
     if not dt_salida:
         return None
@@ -165,6 +165,8 @@ def calcular_estado_sorteo(sorteo, ahora=None, fecha_consulta=None):
     if ahora is None:
         ahora = timezone.now()
     ahora_local = ahora.astimezone(_tz_cuba(ahora))
+    # La regla de negocio es fija; normaliza también el objeto en memoria.
+    sorteo.minutos_cierre = 10
 
     if fecha_consulta is None:
         dt_salida, _ = get_proximo_datetime_sorteo(sorteo, ahora_local)
