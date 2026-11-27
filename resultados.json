@@ -1,992 +1,114 @@
 [
   {
-    "sorteo_nombre": "Texas 10:12 PM",
-    "fecha": "2026-11-25",
-    "fuente": "lotteryusa",
-    "pick2": "",
-    "pick3": "368",
-    "pick4": "",
-    "pick5": "",
-    "fijo": "68",
-    "corrido_1": "",
-    "corrido_2": ""
-  },
-  {
-    "sorteo_nombre": "Georgia 11:34 PM",
-    "fecha": "2026-11-25",
-    "fuente": "lotteryusa",
-    "pick2": "",
-    "pick3": "347",
-    "pick4": "9157",
-    "pick5": "",
-    "fijo": "47",
-    "corrido_1": "91",
-    "corrido_2": "57"
-  },
-  {
     "sorteo_nombre": "Anguilla 8AM",
     "numeros": [
-      "32",
-      "02",
-      "87"
-    ],
-    "fecha": "2026-11-25",
-    "fuente": "enloteria"
-  },
-  {
-    "sorteo_nombre": "Anguilla 9AM",
-    "numeros": [
-      "04",
-      "02",
-      "03"
-    ],
-    "fecha": "2026-11-25",
-    "fuente": "enloteria"
-  },
-  {
-    "sorteo_nombre": "Anguilla 10AM",
-    "numeros": [
-      "11",
-      "16",
-      "44"
-    ],
-    "fecha": "2026-11-25",
-    "fuente": "enloteria"
-  },
-  {
-    "sorteo_nombre": "Haiti Bolet 9:30 AM",
-    "numeros": [
-      "31",
-      "16",
-      "64"
-    ],
-    "fecha": "2026-11-25",
-    "fuente": "enloteria"
-  },
-  {
-    "sorteo_nombre": "Anguilla 11AM",
-    "numeros": [
-      "83",
-      "98",
-      "25"
-    ],
-    "fecha": "2026-11-25",
-    "fuente": "enloteria"
-  },
-  {
-    "sorteo_nombre": "Haiti Bolet 10:30 AM",
-    "numeros": [
-      "30",
-      "65",
-      "23"
-    ],
-    "fecha": "2026-11-25",
-    "fuente": "enloteria"
-  },
-  {
-    "sorteo_nombre": "Anguilla 12PM",
-    "numeros": [
-      "88",
-      "09",
-      "99"
-    ],
-    "fecha": "2026-11-25",
-    "fuente": "enloteria"
-  },
-  {
-    "sorteo_nombre": "La Primera",
-    "numeros": [
-      "93",
-      "96",
-      "61"
-    ],
-    "fecha": "2026-11-25",
-    "fuente": "enloteria"
-  },
-  {
-    "sorteo_nombre": "LoteDom",
-    "numeros": [
-      "19",
-      "55",
-      "75"
-    ],
-    "fecha": "2026-11-25",
-    "fuente": "enloteria"
-  },
-  {
-    "sorteo_nombre": "El Quinielon Dia",
-    "numeros": [
-      "80",
-      "83",
-      "95"
-    ],
-    "fecha": "2026-11-25",
-    "fuente": "enloteria"
-  },
-  {
-    "sorteo_nombre": "Tennessee 10:20 AM",
-    "fecha": "2026-11-25",
-    "fuente": "lotteryusa",
-    "pick2": "",
-    "pick3": "337",
-    "pick4": "1989",
-    "pick5": "",
-    "fijo": "37",
-    "corrido_1": "19",
-    "corrido_2": "89"
-  },
-  {
-    "sorteo_nombre": "Haiti Bolet 11:30 AM",
-    "numeros": [
-      "97",
-      "85",
-      "70"
-    ],
-    "fecha": "2026-11-25",
-    "fuente": "enloteria"
-  },
-  {
-    "sorteo_nombre": "King Lottery Día",
-    "numeros": [
-      "26",
-      "14",
-      "11"
-    ],
-    "fecha": "2026-11-25",
-    "fuente": "enloteria"
-  },
-  {
-    "sorteo_nombre": "La Suerte",
-    "numeros": [
-      "21",
-      "46",
-      "32"
-    ],
-    "fecha": "2026-11-25",
-    "fuente": "enloteria"
-  },
-  {
-    "sorteo_nombre": "Real",
-    "numeros": [
-      "68",
-      "19",
-      "43"
-    ],
-    "fecha": "2026-11-25",
-    "fuente": "enloteria"
-  },
-  {
-    "sorteo_nombre": "Anguilla 1PM",
-    "numeros": [
-      "95",
-      "62",
-      "76"
-    ],
-    "fecha": "2026-11-25",
-    "fuente": "enloteria"
-  },
-  {
-    "sorteo_nombre": "Georgia 12:30 PM",
-    "fecha": "2026-11-25",
-    "fuente": "lotteryusa",
-    "pick2": "",
-    "pick3": "335",
-    "pick4": "6841",
-    "pick5": "",
-    "fijo": "35",
-    "corrido_1": "68",
-    "corrido_2": "41"
-  },
-  {
-    "sorteo_nombre": "Anguilla 2PM",
-    "numeros": [
-      "23",
-      "41",
-      "55"
-    ],
-    "fecha": "2026-11-25",
-    "fuente": "enloteria"
-  },
-  {
-    "sorteo_nombre": "New Jersey 12:50 PM",
-    "fecha": "2026-11-25",
-    "fuente": "lotteryusa",
-    "pick2": "",
-    "pick3": "284",
-    "pick4": "8296",
-    "pick5": "",
-    "fijo": "84",
-    "corrido_1": "82",
-    "corrido_2": "96"
-  },
-  {
-    "sorteo_nombre": "Nacional Gana Más",
-    "numeros": [
-      "39",
-      "59",
-      "25"
-    ],
-    "fecha": "2026-11-25",
-    "fuente": "enloteria"
-  },
-  {
-    "sorteo_nombre": "Florida 1:35 PM",
-    "fecha": "2026-11-25",
-    "fuente": "lotteryusa",
-    "pick2": "63",
-    "pick3": "794",
-    "pick4": "4069",
-    "pick5": "61194",
-    "fijo": "94",
-    "corrido_1": "40",
-    "corrido_2": "69"
-  },
-  {
-    "sorteo_nombre": "Loteka Tarde",
-    "numeros": [
-      "28",
-      "67",
-      "06"
-    ],
-    "fecha": "2026-11-25",
-    "fuente": "enloteria"
-  },
-  {
-    "sorteo_nombre": "Anguilla 3PM",
-    "numeros": [
-      "74",
-      "50",
-      "15"
-    ],
-    "fecha": "2026-11-25",
-    "fuente": "enloteria"
-  },
-  {
-    "sorteo_nombre": "Texas 1:20 PM",
-    "fecha": "2026-11-25",
-    "fuente": "lotteryusa",
-    "pick2": "",
-    "pick3": "892",
-    "pick4": "",
-    "pick5": "",
-    "fijo": "92",
-    "corrido_1": "",
-    "corrido_2": ""
-  },
-  {
-    "sorteo_nombre": "Tennessee 1:20 PM",
-    "fecha": "2026-11-25",
-    "fuente": "lotteryusa",
-    "pick2": "",
-    "pick3": "739",
-    "pick4": "9705",
-    "pick5": "",
-    "fijo": "39",
-    "corrido_1": "97",
-    "corrido_2": "05"
-  },
-  {
-    "sorteo_nombre": "New York 2:30 PM",
-    "fecha": "2026-11-25",
-    "fuente": "lotteryusa",
-    "pick2": "",
-    "pick3": "006",
-    "pick4": "3239",
-    "pick5": "",
-    "fijo": "06",
-    "corrido_1": "32",
-    "corrido_2": "39"
-  },
-  {
-    "sorteo_nombre": "Anguilla 4PM",
-    "numeros": [
-      "04",
-      "59",
-      "82"
-    ],
-    "fecha": "2026-11-25",
-    "fuente": "enloteria"
-  },
-  {
-    "sorteo_nombre": "Anguilla 5PM",
-    "numeros": [
-      "51",
-      "32",
-      "65"
-    ],
-    "fecha": "2026-11-25",
-    "fuente": "enloteria"
-  },
-  {
-    "sorteo_nombre": "Anguilla 6PM",
-    "numeros": [
-      "19",
-      "06",
-      "34"
-    ],
-    "fecha": "2026-11-25",
-    "fuente": "enloteria"
-  },
-  {
-    "sorteo_nombre": "La Suerte 6PM",
-    "numeros": [
-      "41",
-      "61",
-      "40"
-    ],
-    "fecha": "2026-11-25",
-    "fuente": "enloteria"
-  },
-  {
-    "sorteo_nombre": "Anguilla 7PM",
-    "numeros": [
-      "67",
-      "92",
-      "06"
-    ],
-    "fecha": "2026-11-25",
-    "fuente": "enloteria"
-  },
-  {
-    "sorteo_nombre": "Anguilla 8PM",
-    "numeros": [
-      "16",
-      "21",
-      "03"
-    ],
-    "fecha": "2026-11-25",
-    "fuente": "enloteria"
-  },
-  {
-    "sorteo_nombre": "Georgia 6:59 PM",
-    "fecha": "2026-11-25",
-    "fuente": "lotteryusa",
-    "pick2": "",
-    "pick3": "414",
-    "pick4": "9333",
-    "pick5": "",
-    "fijo": "14",
-    "corrido_1": "93",
-    "corrido_2": "33"
-  },
-  {
-    "sorteo_nombre": "Loteka",
-    "numeros": [
-      "15",
-      "87",
-      "68"
-    ],
-    "fecha": "2026-11-25",
-    "fuente": "enloteria"
-  },
-  {
-    "sorteo_nombre": "Tennessee 6:30 PM",
-    "fecha": "2026-11-25",
-    "fuente": "lotteryusa",
-    "pick2": "",
-    "pick3": "574",
-    "pick4": "0349",
-    "pick5": "",
-    "fijo": "74",
-    "corrido_1": "03",
-    "corrido_2": "49"
-  },
-  {
-    "sorteo_nombre": "La Primera Noche",
-    "numeros": [
-      "88",
-      "06",
-      "29"
-    ],
-    "fecha": "2026-11-25",
-    "fuente": "enloteria"
-  },
-  {
-    "sorteo_nombre": "King Lottery Noche",
-    "numeros": [
-      "87",
-      "48",
-      "72"
-    ],
-    "fecha": "2026-11-25",
-    "fuente": "enloteria"
-  },
-  {
-    "sorteo_nombre": "Real Noche",
-    "numeros": [
-      "44",
-      "25",
-      "73"
-    ],
-    "fecha": "2026-11-25",
-    "fuente": "enloteria"
-  },
-  {
-    "sorteo_nombre": "Leidsa",
-    "numeros": [
-      "94",
-      "02",
-      "25"
-    ],
-    "fecha": "2026-11-25",
-    "fuente": "enloteria"
-  },
-  {
-    "sorteo_nombre": "Anguilla 9PM",
-    "numeros": [
-      "74",
-      "66",
-      "81"
-    ],
-    "fecha": "2026-11-25",
-    "fuente": "enloteria"
-  },
-  {
-    "sorteo_nombre": "El Quemaito Mayor",
-    "numeros": [
-      "79",
-      "39",
-      "18"
-    ],
-    "fecha": "2026-11-25",
-    "fuente": "enloteria"
-  },
-  {
-    "sorteo_nombre": "Nacional Noche",
-    "numeros": [
-      "24",
-      "02",
-      "96"
-    ],
-    "fecha": "2026-11-25",
-    "fuente": "enloteria"
-  },
-  {
-    "sorteo_nombre": "Anguilla 10PM",
-    "numeros": [
-      "56",
-      "52",
-      "83"
-    ],
-    "fecha": "2026-11-25",
-    "fuente": "enloteria"
-  },
-  {
-    "sorteo_nombre": "LoteDom Noche",
-    "numeros": [
-      "20",
-      "69",
-      "00"
-    ],
-    "fecha": "2026-11-25",
-    "fuente": "enloteria"
-  },
-  {
-    "sorteo_nombre": "Florida 9:45 PM",
-    "fecha": "2026-11-25",
-    "fuente": "lotteryusa",
-    "pick2": "82",
-    "pick3": "041",
-    "pick4": "7214",
-    "pick5": "98694",
-    "fijo": "41",
-    "corrido_1": "72",
-    "corrido_2": "14"
-  },
-  {
-    "sorteo_nombre": "New York Noche",
-    "numeros": [
-      "08",
-      "96",
+      "77",
+      "07",
       "10"
     ],
-    "fecha": "2026-11-25",
-    "fuente": "enloteria"
-  },
-  {
-    "sorteo_nombre": "New York 10:30 PM",
-    "fecha": "2026-11-25",
-    "fuente": "lotteryusa",
-    "pick2": "",
-    "pick3": "908",
-    "pick4": "9610",
-    "pick5": "",
-    "fijo": "08",
-    "corrido_1": "96",
-    "corrido_2": "10"
-  },
-  {
-    "sorteo_nombre": "New Jersey 10:57 PM",
-    "fecha": "2026-11-25",
-    "fuente": "lotteryusa",
-    "pick2": "",
-    "pick3": "686",
-    "pick4": "1118",
-    "pick5": "",
-    "fijo": "86",
-    "corrido_1": "11",
-    "corrido_2": "18"
-  },
-  {
-    "sorteo_nombre": "Texas 10:12 PM",
-    "fecha": "2026-11-26",
-    "fuente": "lotteryusa",
-    "pick2": "",
-    "pick3": "404",
-    "pick4": "",
-    "pick5": "",
-    "fijo": "04",
-    "corrido_1": "",
-    "corrido_2": ""
-  },
-  {
-    "sorteo_nombre": "Georgia 11:34 PM",
-    "fecha": "2026-11-26",
-    "fuente": "lotteryusa",
-    "pick2": "",
-    "pick3": "863",
-    "pick4": "3221",
-    "pick5": "",
-    "fijo": "63",
-    "corrido_1": "32",
-    "corrido_2": "21"
-  },
-  {
-    "sorteo_nombre": "Anguilla 8AM",
-    "numeros": [
-      "01",
-      "87",
-      "21"
-    ],
-    "fecha": "2026-11-26",
+    "fecha": "2026-11-27",
     "fuente": "enloteria"
   },
   {
     "sorteo_nombre": "Anguilla 9AM",
     "numeros": [
-      "77",
-      "29",
-      "53"
+      "33",
+      "89",
+      "17"
     ],
-    "fecha": "2026-11-26",
+    "fecha": "2026-11-27",
     "fuente": "enloteria"
   },
   {
     "sorteo_nombre": "Anguilla 10AM",
     "numeros": [
-      "09",
-      "86",
-      "53"
+      "16",
+      "41",
+      "22"
     ],
-    "fecha": "2026-11-26",
+    "fecha": "2026-11-27",
     "fuente": "enloteria"
   },
   {
     "sorteo_nombre": "Haiti Bolet 9:30 AM",
     "numeros": [
-      "60",
-      "55",
-      "30"
+      "74",
+      "90",
+      "14"
     ],
-    "fecha": "2026-11-26",
+    "fecha": "2026-11-27",
     "fuente": "enloteria"
   },
   {
     "sorteo_nombre": "Anguilla 11AM",
     "numeros": [
-      "54",
-      "74",
-      "97"
+      "06",
+      "81",
+      "60"
     ],
-    "fecha": "2026-11-26",
+    "fecha": "2026-11-27",
     "fuente": "enloteria"
   },
   {
     "sorteo_nombre": "Haiti Bolet 10:30 AM",
     "numeros": [
-      "00",
-      "36",
-      "01"
+      "49",
+      "31",
+      "12"
     ],
-    "fecha": "2026-11-26",
-    "fuente": "enloteria"
-  },
-  {
-    "sorteo_nombre": "El Quinielon Dia",
-    "numeros": [
-      "17",
-      "80",
-      "83"
-    ],
-    "fecha": "2026-11-26",
+    "fecha": "2026-11-27",
     "fuente": "enloteria"
   },
   {
     "sorteo_nombre": "Anguilla 12PM",
     "numeros": [
-      "38",
-      "45",
-      "12"
+      "36",
+      "27",
+      "45"
     ],
-    "fecha": "2026-11-26",
+    "fecha": "2026-11-27",
     "fuente": "enloteria"
   },
   {
     "sorteo_nombre": "La Primera",
     "numeros": [
-      "24",
-      "64",
-      "99"
+      "76",
+      "02",
+      "95"
     ],
-    "fecha": "2026-11-26",
+    "fecha": "2026-11-27",
     "fuente": "enloteria"
   },
   {
     "sorteo_nombre": "LoteDom",
     "numeros": [
-      "19",
-      "18",
-      "22"
+      "37",
+      "05",
+      "44"
     ],
-    "fecha": "2026-11-26",
+    "fecha": "2026-11-27",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "El Quinielon Dia",
+    "numeros": [
+      "53",
+      "17",
+      "80"
+    ],
+    "fecha": "2026-11-27",
     "fuente": "enloteria"
   },
   {
     "sorteo_nombre": "Tennessee 10:20 AM",
-    "fecha": "2026-11-26",
+    "fecha": "2026-11-27",
     "fuente": "lotteryusa",
     "pick2": "",
-    "pick3": "660",
-    "pick4": "8000",
+    "pick3": "173",
+    "pick4": "8697",
     "pick5": "",
-    "fijo": "60",
-    "corrido_1": "80",
-    "corrido_2": "00"
-  },
-  {
-    "sorteo_nombre": "Haiti Bolet 11:30 AM",
-    "numeros": [
-      "75",
-      "30",
-      "95"
-    ],
-    "fecha": "2026-11-26",
-    "fuente": "enloteria"
-  },
-  {
-    "sorteo_nombre": "La Suerte",
-    "numeros": [
-      "23",
-      "71",
-      "00"
-    ],
-    "fecha": "2026-11-26",
-    "fuente": "enloteria"
-  },
-  {
-    "sorteo_nombre": "King Lottery Día",
-    "numeros": [
-      "27",
-      "47",
-      "92"
-    ],
-    "fecha": "2026-11-26",
-    "fuente": "enloteria"
-  },
-  {
-    "sorteo_nombre": "Real",
-    "numeros": [
-      "92",
-      "42",
-      "95"
-    ],
-    "fecha": "2026-11-26",
-    "fuente": "enloteria"
-  },
-  {
-    "sorteo_nombre": "Anguilla 1PM",
-    "numeros": [
-      "20",
-      "70",
-      "98"
-    ],
-    "fecha": "2026-11-26",
-    "fuente": "enloteria"
-  },
-  {
-    "sorteo_nombre": "Georgia 12:30 PM",
-    "fecha": "2026-11-26",
-    "fuente": "lotteryusa",
-    "pick2": "",
-    "pick3": "107",
-    "pick4": "4683",
-    "pick5": "",
-    "fijo": "07",
-    "corrido_1": "46",
-    "corrido_2": "83"
-  },
-  {
-    "sorteo_nombre": "Anguilla 2PM",
-    "numeros": [
-      "80",
-      "71",
-      "14"
-    ],
-    "fecha": "2026-11-26",
-    "fuente": "enloteria"
-  },
-  {
-    "sorteo_nombre": "New Jersey 12:50 PM",
-    "fecha": "2026-11-26",
-    "fuente": "lotteryusa",
-    "pick2": "",
-    "pick3": "385",
-    "pick4": "8112",
-    "pick5": "",
-    "fijo": "85",
-    "corrido_1": "81",
-    "corrido_2": "12"
-  },
-  {
-    "sorteo_nombre": "Nacional Gana Más",
-    "numeros": [
-      "31",
-      "88",
-      "01"
-    ],
-    "fecha": "2026-11-26",
-    "fuente": "enloteria"
-  },
-  {
-    "sorteo_nombre": "Florida 1:35 PM",
-    "fecha": "2026-11-26",
-    "fuente": "lotteryusa",
-    "pick2": "72",
-    "pick3": "088",
-    "pick4": "6829",
-    "pick5": "72649",
-    "fijo": "88",
-    "corrido_1": "68",
-    "corrido_2": "29"
-  },
-  {
-    "sorteo_nombre": "Loteka Tarde",
-    "numeros": [
-      "28",
-      "67",
-      "06"
-    ],
-    "fecha": "2026-11-26",
-    "fuente": "enloteria"
-  },
-  {
-    "sorteo_nombre": "Anguilla 3PM",
-    "numeros": [
-      "58",
-      "07",
-      "30"
-    ],
-    "fecha": "2026-11-26",
-    "fuente": "enloteria"
-  },
-  {
-    "sorteo_nombre": "Texas 1:20 PM",
-    "fecha": "2026-11-26",
-    "fuente": "lotteryusa",
-    "pick2": "",
-    "pick3": "988",
-    "pick4": "",
-    "pick5": "",
-    "fijo": "88",
-    "corrido_1": "",
-    "corrido_2": ""
-  },
-  {
-    "sorteo_nombre": "Tennessee 1:20 PM",
-    "fecha": "2026-11-26",
-    "fuente": "lotteryusa",
-    "pick2": "",
-    "pick3": "713",
-    "pick4": "1678",
-    "pick5": "",
-    "fijo": "13",
-    "corrido_1": "16",
-    "corrido_2": "78"
-  },
-  {
-    "sorteo_nombre": "Anguilla 4PM",
-    "numeros": [
-      "29",
-      "23",
-      "14"
-    ],
-    "fecha": "2026-11-26",
-    "fuente": "enloteria"
-  },
-  {
-    "sorteo_nombre": "Anguilla 5PM",
-    "numeros": [
-      "95",
-      "50",
-      "53"
-    ],
-    "fecha": "2026-11-26",
-    "fuente": "enloteria"
-  },
-  {
-    "sorteo_nombre": "Anguilla 6PM",
-    "numeros": [
-      "77",
-      "87",
-      "68"
-    ],
-    "fecha": "2026-11-26",
-    "fuente": "enloteria"
-  },
-  {
-    "sorteo_nombre": "La Suerte 6PM",
-    "numeros": [
-      "84",
-      "70",
-      "93"
-    ],
-    "fecha": "2026-11-26",
-    "fuente": "enloteria"
-  },
-  {
-    "sorteo_nombre": "Anguilla 7PM",
-    "numeros": [
-      "40",
-      "90",
-      "01"
-    ],
-    "fecha": "2026-11-26",
-    "fuente": "enloteria"
-  },
-  {
-    "sorteo_nombre": "New York 2:30 PM",
-    "fecha": "2026-11-26",
-    "fuente": "lotteryusa",
-    "pick2": "",
-    "pick3": "611",
-    "pick4": "7586",
-    "pick5": "",
-    "fijo": "11",
-    "corrido_1": "75",
-    "corrido_2": "86"
-  },
-  {
-    "sorteo_nombre": "Anguilla 8PM",
-    "numeros": [
-      "59",
-      "37",
-      "66"
-    ],
-    "fecha": "2026-11-26",
-    "fuente": "enloteria"
-  },
-  {
-    "sorteo_nombre": "Georgia 6:59 PM",
-    "fecha": "2026-11-26",
-    "fuente": "lotteryusa",
-    "pick2": "",
-    "pick3": "430",
-    "pick4": "9550",
-    "pick5": "",
-    "fijo": "30",
-    "corrido_1": "95",
-    "corrido_2": "50"
-  },
-  {
-    "sorteo_nombre": "Loteka",
-    "numeros": [
-      "58",
-      "53",
-      "85"
-    ],
-    "fecha": "2026-11-26",
-    "fuente": "enloteria"
-  },
-  {
-    "sorteo_nombre": "Tennessee 6:30 PM",
-    "fecha": "2026-11-26",
-    "fuente": "lotteryusa",
-    "pick2": "",
-    "pick3": "240",
-    "pick4": "9121",
-    "pick5": "",
-    "fijo": "40",
-    "corrido_1": "91",
-    "corrido_2": "21"
-  },
-  {
-    "sorteo_nombre": "La Primera Noche",
-    "numeros": [
-      "88",
-      "06",
-      "29"
-    ],
-    "fecha": "2026-11-26",
-    "fuente": "enloteria"
-  },
-  {
-    "sorteo_nombre": "King Lottery Noche",
-    "numeros": [
-      "87",
-      "48",
-      "72"
-    ],
-    "fecha": "2026-11-26",
-    "fuente": "enloteria"
-  },
-  {
-    "sorteo_nombre": "Real Noche",
-    "numeros": [
-      "44",
-      "25",
-      "73"
-    ],
-    "fecha": "2026-11-26",
-    "fuente": "enloteria"
-  },
-  {
-    "sorteo_nombre": "Leidsa",
-    "numeros": [
-      "56",
-      "97",
-      "40"
-    ],
-    "fecha": "2026-11-26",
-    "fuente": "enloteria"
-  },
-  {
-    "sorteo_nombre": "Anguilla 9PM",
-    "numeros": [
-      "18",
-      "31",
-      "78"
-    ],
-    "fecha": "2026-11-26",
-    "fuente": "enloteria"
-  },
-  {
-    "sorteo_nombre": "El Quemaito Mayor",
-    "numeros": [
-      "79",
-      "39",
-      "18"
-    ],
-    "fecha": "2026-11-26",
-    "fuente": "enloteria"
-  },
-  {
-    "sorteo_nombre": "Nacional Noche",
-    "numeros": [
-      "53",
-      "94",
-      "70"
-    ],
-    "fecha": "2026-11-26",
-    "fuente": "enloteria"
+    "fijo": "73",
+    "corrido_1": "86",
+    "corrido_2": "97"
   }
 ]
