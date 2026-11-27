@@ -81,3 +81,28 @@ class CierreSorteosCubaTests(SimpleTestCase):
         sorteo = self._sorteo_usa("Haití 6", "19:30", origen="haitiano")
         salida = get_datetime_salida_cuba(sorteo, date(2026, 11, 26))
         self.assertEqual(salida, datetime(2026, 11, 26, 19, 30, tzinfo=self.cuba))
+
+    def test_georgia_sigue_abierto_hasta_diez_minutos_antes_de_la_salida(self):
+        sorteo = self._sorteo_usa("Georgia 11:40 PM", "23:30")
+        antes = datetime(2026, 11, 27, 0, 19, 59, tzinfo=self.cuba)
+        en_cierre = datetime(2026, 11, 27, 0, 20, 0, tzinfo=self.cuba)
+        self.assertEqual(
+            calcular_estado_sorteo(sorteo, antes, date(2026, 11, 26)).estado_actual,
+            "abierto",
+        )
+        self.assertEqual(
+            calcular_estado_sorteo(sorteo, en_cierre, date(2026, 11, 26)).estado_actual,
+            "cerrado",
+        )
+
+    def test_texas_cierra_a_las_cero_cincuenta_hora_cuba(self):
+        sorteo = self._sorteo_usa("Texas 11 PM", "23:00")
+        antes = datetime(2026, 11, 27, 0, 49, 59, tzinfo=self.cuba)
+        en_cierre = datetime(2026, 11, 27, 0, 50, 0, tzinfo=self.cuba)
+        self.assertEqual(calcular_estado_sorteo(sorteo, antes).estado_actual, "abierto")
+        self.assertEqual(calcular_estado_sorteo(sorteo, en_cierre).estado_actual, "cerrado")
+
+    def test_new_yol_real_se_convierte_desde_hora_nueva_york(self):
+        sorteo = self._sorteo_usa("New Yol Real 12:50 PM", "12:50")
+        salida = get_datetime_salida_cuba(sorteo, date(2026, 11, 26))
+        self.assertEqual(salida, datetime(2026, 11, 26, 13, 50, tzinfo=self.cuba))
