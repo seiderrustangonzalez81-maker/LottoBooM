@@ -1416,6 +1416,8 @@ def superparlet(request):
 @login_required
 def apostar(request):
     user = request.user
+    from sorteos.utils import fecha_operativa_actual
+    fecha_actual = fecha_operativa_actual()
     # ═══════════════════════════════════════════════════════════════
     # BLOQUEO PARA AUDITORES: no pueden apostar, solo supervisar
     # ═══════════════════════════════════════════════════════════════
@@ -1502,7 +1504,7 @@ def apostar(request):
                     'forma_pago_id': b.forma_pago_id,
                     'fecha_sorteo': (
                         b.fecha_sorteo.strftime('%Y-%m-%d')
-                        if b.fecha_sorteo else __import__('sorteos.utils', fromlist=['fecha_operativa_actual']).fecha_operativa_actual().strftime('%Y-%m-%d')
+                        if b.fecha_sorteo else fecha_actual.strftime('%Y-%m-%d')
                     ),
                     'lineas': lineas,
                     'sorteo_ids': list(sorteo_ids_set),
@@ -1570,8 +1572,6 @@ def apostar(request):
                 'opciones': comerciales_list,
             })
 
-    from sorteos.utils import fecha_operativa_actual
-    fecha_actual = fecha_operativa_actual()
     sorteos_disponibles = _obtener_sorteos_cuba_estricto(incluir_cerrados=(es_superadmin or es_banco))
 
     formas_juego = FormaJuego.objects.filter(activo=True)
