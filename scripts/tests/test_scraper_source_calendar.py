@@ -87,6 +87,25 @@ class ScraperSourceCalendarTests(unittest.TestCase):
         self.assertEqual(winter_draw.astimezone(timezone.utc), datetime(2026, 12, 1, 18, 30, tzinfo=timezone.utc))
         self.assertEqual(summer_draw.astimezone(timezone.utc), datetime(2027, 6, 1, 17, 30, tzinfo=timezone.utc))
 
+    def test_tennessee_eastern_labels_are_normalized_to_central_draw_times(self):
+        hora = self.scraper["_hora_enloteria"]
+        self.assertEqual(hora("Tennessee 10:28 AM", datetime(2026, 11, 26).date()), (9, 28))
+        self.assertEqual(hora("Tennessee 1:28 PM", datetime(2026, 11, 26).date()), (12, 28))
+        self.assertEqual(hora("Tennessee 7:28 PM", datetime(2026, 11, 26).date()), (18, 28))
+
+    def test_haiti_and_cuba_offsets_are_recomputed_for_both_seasons(self):
+        haiti = ZoneInfo("America/Port-au-Prince")
+        winter_now = datetime(2026, 12, 1, 15, 0, tzinfo=timezone.utc)
+        summer_now = datetime(2027, 6, 1, 14, 0, tzinfo=timezone.utc)
+        winter_draw = self.scraper["_ultimo_sorteo_fuente"](
+            "Haití 1", winter_now.astimezone(haiti)
+        )
+        summer_draw = self.scraper["_ultimo_sorteo_fuente"](
+            "Haití 1", summer_now.astimezone(haiti)
+        )
+        self.assertEqual(winter_draw.astimezone(timezone.utc), datetime(2026, 12, 1, 14, 30, tzinfo=timezone.utc))
+        self.assertEqual(summer_draw.astimezone(timezone.utc), datetime(2027, 6, 1, 13, 30, tzinfo=timezone.utc))
+
     def test_cuba_keeps_utc_minus_four_until_exact_november_2027_transition(self):
         convert = self.scraper["obtener_hora_cuba"]
         before_extension = convert(datetime(2026, 11, 1, 5, 0, tzinfo=timezone.utc))
