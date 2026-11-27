@@ -26,6 +26,9 @@ with CONFIG_PATH.open(encoding="utf-8") as archivo:
 for nombre_anterior, nombre_nuevo in (
     ("Loteka 7:50 PM", "Loteka 7:55 PM"),
     ("Real 12:50 PM", "Real 12:55 PM"),
+    ("Tennessee 10:20 AM", "Tennessee 9:28 AM"),
+    ("Tennessee 1:20 PM", "Tennessee 12:28 PM"),
+    ("Tennessee 7:20 PM", "Tennessee 6:28 PM"),
 ):
     anterior = Sorteo.objects.filter(nombre=nombre_anterior).first()
     nuevo_existe = Sorteo.objects.filter(nombre=nombre_nuevo).exists()
