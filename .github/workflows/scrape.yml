@@ -36,6 +36,11 @@ jobs:
           python -m pip install beautifulsoup4 requests playwright tzdata
           python -m playwright install --with-deps chromium
 
+      - name: Validate scraper startup
+        run: |
+          python -m py_compile scraper.py
+          python scripts/check_scraper_startup.py
+
       - name: Run scraper
         run: python scraper.py
 
