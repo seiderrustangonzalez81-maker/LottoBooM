@@ -362,7 +362,19 @@ def canonizar_nombre_sorteo(nombre):
     clave = unicodedata.normalize("NFKD", str(nombre or "").casefold())
     clave = "".join(c for c in clave if not unicodedata.combining(c))
     clave = re.sub(r"[^a-z0-9]+", " ", clave).strip()
-    return ALIASES_NOMBRES_SORTEOS.get(clave, " ".join(str(nombre or "").split()))
+    destino = ALIASES_NOMBRES_SORTEOS.get(clave)
+    if destino:
+        return destino
+    # Las claves históricas del mapa no siempre estaban guardadas normalizadas
+    # (algunas conservan ':' y otras no). Normalizarlas al comparar evita falsos
+    # desconocidos sin fusionar sorteos diferentes.
+    for alias, canonico in ALIASES_NOMBRES_SORTEOS.items():
+        alias_norm = unicodedata.normalize("NFKD", str(alias).casefold())
+        alias_norm = "".join(c for c in alias_norm if not unicodedata.combining(c))
+        alias_norm = re.sub(r"[^a-z0-9]+", " ", alias_norm).strip()
+        if alias_norm == clave:
+            return canonico
+    return " ".join(str(nombre or "").split())
 
 def extraer_numeros_validos(tarjeta_o_soup):
     bolas = tarjeta_o_soup.find_all(class_="result-number")
