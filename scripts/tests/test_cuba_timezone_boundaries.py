@@ -162,6 +162,28 @@ class CubaTimezoneBoundaryIntegrationTests(unittest.TestCase):
     def test_tzdata_release_is_iana_2026f_or_later(self):
         self.assertGreaterEqual(tzdata.IANA_VERSION, "2026f")
 
+    def test_scraper_source_times_and_sunday_exceptions(self):
+        import re
+        import unicodedata
+        tree = ast.parse((ROOT / "scraper.py").read_text(encoding="utf-8"))
+        node = next(item for item in tree.body if isinstance(item, ast.FunctionDef) and item.name == "_hora_enloteria")
+        namespace = {"re": re, "unicodedata": unicodedata, "parsear_hora_sorteo": lambda nombre: None}
+        exec(compile(ast.Module(body=[node], type_ignores=[]), "scraper.py", "exec"), namespace)
+        hora = namespace["_hora_enloteria"]
+        jueves = date(2026, 11, 26)
+        domingo = date(2026, 11, 29)
+        self.assertEqual(hora("Texas 11 AM", jueves), (10, 0))
+        self.assertEqual(hora("Texas 1:20 PM", jueves), (12, 27))
+        self.assertEqual(hora("Texas 7 PM", jueves), (18, 0))
+        self.assertEqual(hora("Texas 10:12 PM", jueves), (22, 12))
+        self.assertEqual(hora("Florida 1:35 PM", jueves), (13, 30))
+        self.assertEqual(hora("Georgia 11:40 PM", jueves), (23, 34))
+        self.assertEqual(hora("New Jersey 10:50 PM", jueves), (22, 57))
+        self.assertIsNone(hora("Texas 10:12 PM", domingo))
+        self.assertIsNone(hora("Tennessee 10:20 AM", domingo))
+        self.assertEqual(hora("Tennessee 6:30 PM", domingo), (18, 28))
+        self.assertEqual(hora("Haití 1", domingo), (9, 30))
+
     def test_usa_draw_zones_use_iana_dst_and_source_mapping(self):
         tree = ast.parse((ROOT / "scraper.py").read_text(encoding="utf-8"))
         node = next(
