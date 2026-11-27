@@ -75,7 +75,6 @@ for s in sorteos_json:
         defaults={
             "activo": s["activo"],
             "horarios": s["horarios"],
-            "creado_en": timezone.now(),
             "actualizado_en": timezone.now(),
             **({"origen": s["origen"]} if s.get("origen") else {}),
             **({"minutos_cierre": s["minutos_cierre"]} if s.get("minutos_cierre") is not None else {}),
