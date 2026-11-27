@@ -78,7 +78,9 @@ def _obtener_sorteos_cuba_estricto(incluir_cerrados=False):
 
         # Mostrar el día operativo vigente y también un sorteo del siguiente día
         # si cruza la medianoche y faltan 60 minutos o menos para su salida.
-        if dia_operativo_salida != dia_operativo_actual and minutos_hasta_salida > 60:
+        misma_fecha_calendario = dt_salida.astimezone(_zona_horaria_cuba(dt_salida)).date() == ahora_cuba.date()
+        ventana_inicio_dia = ahora_cuba.hour == 0 and misma_fecha_calendario
+        if dia_operativo_salida != dia_operativo_actual and minutos_hasta_salida > 60 and not ventana_inicio_dia:
             continue
 
         if sorteo.estado_actual == "abierto":
