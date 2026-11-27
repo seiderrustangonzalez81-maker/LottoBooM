@@ -362,7 +362,7 @@ def canonizar_nombre_sorteo(nombre):
     clave = unicodedata.normalize("NFKD", str(nombre or "").casefold())
     clave = "".join(c for c in clave if not unicodedata.combining(c))
     clave = re.sub(r"[^a-z0-9]+", " ", clave).strip()
-    return ALIASES_NOMBRES_SORTEOS.get(clave, normalizar_nombre(str(nombre or "")))
+    return ALIASES_NOMBRES_SORTEOS.get(clave, " ".join(str(nombre or "").split()))
 
 def extraer_numeros_validos(tarjeta_o_soup):
     bolas = tarjeta_o_soup.find_all(class_="result-number")
