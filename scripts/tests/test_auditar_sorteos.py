@@ -15,6 +15,9 @@ class NormalizeTests(unittest.TestCase):
         self.assertEqual(audit.canon("Florida 9:45 PM"), audit.canon("Florida 9:50 PM"))
         self.assertEqual(audit.canon("Tennessee 6:30 PM"), audit.canon("Tennessee 6:28 PM"))
         self.assertEqual(audit.canon("Tennessee 7:20 PM"), audit.canon("Tennessee 6:28 PM"))
+        self.assertEqual(audit.canon("Tennessee 10:28 AM"), audit.canon("Tennessee 9:28 AM"))
+        self.assertEqual(audit.canon("Tennessee 1:28 PM"), audit.canon("Tennessee 12:28 PM"))
+        self.assertEqual(audit.canon("Tennessee 7:28 PM"), audit.canon("Tennessee 6:28 PM"))
     def test_different_draws_not_collapsed(self):
         self.assertNotEqual(audit.canon("Suerte 12:30 PM"), audit.canon("Suerte 6 PM"))
 class CanonicalNamesTests(unittest.TestCase):
@@ -33,6 +36,7 @@ class CanonicalNamesTests(unittest.TestCase):
         self.assertEqual(canon("King Lottery Día"), "King Lottery 12:30 PM")
         self.assertEqual(canon("Florida 9:45 PM"), "Florida 9:50 PM")
         self.assertEqual(canon("Tennessee 6:30 PM"), "Tennessee 6:28 PM")
+        self.assertEqual(canon("Tennessee 7:28 PM"), "Tennessee 6:28 PM")
 
 class TemplateIdTests(unittest.TestCase):
     def test_mutually_exclusive_template_branches_are_not_duplicates(self):
@@ -109,6 +113,14 @@ class ScraperCoverageTests(unittest.TestCase):
         self.assertEqual(
             namespace["canonizar_nombre_sorteo"]("Tennessee 6:30 PM"),
             "Tennessee 6:28 PM",
+        )
+        self.assertEqual(
+            namespace["canonizar_nombre_sorteo"]("Tennessee 10:28 AM"),
+            "Tennessee 9:28 AM",
+        )
+        self.assertEqual(
+            namespace["canonizar_nombre_sorteo"]("Tennessee 1:28 PM"),
+            "Tennessee 12:28 PM",
         )
 
 
