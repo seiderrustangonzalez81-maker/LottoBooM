@@ -2,6 +2,7 @@ import json
 import os
 import time
 import re
+import unicodedata
 import requests
 from datetime import datetime, timezone, timedelta
 from zoneinfo import ZoneInfo
@@ -250,7 +251,9 @@ def _hora_enloteria(nombre, fecha):
 def calcular_fecha_sorteo_enloteria(nombre, ahora_cuba=None):
     """Calcula el día operativo usando la zona horaria real de la fuente."""
     ahora_cuba = ahora_cuba or obtener_hora_cuba()
-    nombre_norm = re.sub(r"[^a-z0-9]+", " ", str(nombre or "").casefold()).strip()
+    nombre_norm = unicodedata.normalize("NFKD", str(nombre or "").casefold())
+    nombre_norm = "".join(c for c in nombre_norm if not unicodedata.combining(c))
+    nombre_norm = re.sub(r"[^a-z0-9]+", " ", nombre_norm).strip()
     if nombre_norm.startswith(("haiti bolet 9 30", "haiti bolet 10 30", "haiti bolet 11 30",
                                "haiti 1", "haiti 2", "haiti 3")):
         zona_fuente = TZ_HAITI
