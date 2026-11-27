@@ -249,42 +249,6 @@
     "tripleta",
     "posicion"
   ],
-  "Tennessee 10:20 AM": [
-    "pick3",
-    "PF",
-    "fijo",
-    "corrido1",
-    "corrido2",
-    "centena corrida1",
-    "centena corrida2",
-    "vspf",
-    "tripleta",
-    "posicion"
-  ],
-  "Tennessee 1:20 PM": [
-    "pick3",
-    "PF",
-    "fijo",
-    "corrido1",
-    "corrido2",
-    "centena corrida1",
-    "centena corrida2",
-    "vspf",
-    "tripleta",
-    "posicion"
-  ],
-  "Tennessee 7:20 PM": [
-    "pick3",
-    "PF",
-    "fijo",
-    "corrido1",
-    "corrido2",
-    "centena corrida1",
-    "centena corrida2",
-    "vspf",
-    "tripleta",
-    "posicion"
-  ],
   "Texas 11 AM": [
     "pick3",
     "PF",
@@ -548,6 +512,42 @@
     "VsPick2",
     "vspf",
     "pick2vspf",
+    "tripleta",
+    "posicion"
+  ],
+  "Tennessee 9:28 AM": [
+    "pick3",
+    "PF",
+    "fijo",
+    "corrido1",
+    "corrido2",
+    "centena corrida1",
+    "centena corrida2",
+    "vspf",
+    "tripleta",
+    "posicion"
+  ],
+  "Tennessee 12:28 PM": [
+    "pick3",
+    "PF",
+    "fijo",
+    "corrido1",
+    "corrido2",
+    "centena corrida1",
+    "centena corrida2",
+    "vspf",
+    "tripleta",
+    "posicion"
+  ],
+  "Tennessee 6:28 PM": [
+    "pick3",
+    "PF",
+    "fijo",
+    "corrido1",
+    "corrido2",
+    "centena corrida1",
+    "centena corrida2",
+    "vspf",
     "tripleta",
     "posicion"
   ]
