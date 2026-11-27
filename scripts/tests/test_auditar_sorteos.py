@@ -100,7 +100,7 @@ class ScraperCoverageTests(unittest.TestCase):
             namespace["informar_cobertura"]([])
         report = output.getvalue()
         self.assertIn(
-            "Sorteos USA esperados con configuración directa: 14/16",
+            "Sorteos USA esperados con configuración directa: 16/16",
             report,
         )
         section = report.split("USA sin configuración directa:", 1)[-1]
@@ -109,10 +109,7 @@ class ScraperCoverageTests(unittest.TestCase):
             for line in section.splitlines()
             if line.strip().startswith("- ")
         ]
-        self.assertEqual(
-            missing,
-            ["Texas 11 AM", "Texas 7 PM"],
-        )
+        self.assertEqual(missing, [])
         self.assertEqual(
             namespace["canonizar_nombre_sorteo"]("Tennessee 6:30 PM"),
             "Tennessee 6:30 PM",
