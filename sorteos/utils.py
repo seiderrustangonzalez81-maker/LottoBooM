@@ -87,8 +87,8 @@ ZONAS_SORTEOS_USA = {
 
 
 def _zona_fuente_sorteo(sorteo):
-    if getattr(sorteo, "origen", None) != "americano":
-        return None
+    # El nombre del sorteo identifica su estado incluso en bases antiguas
+    # donde el campo origen todavía no estaba poblado.
     nombre = str(getattr(sorteo, "nombre", "") or "").casefold()
     for prefijo, zona in ZONAS_SORTEOS_USA.items():
         if nombre.startswith(prefijo):
