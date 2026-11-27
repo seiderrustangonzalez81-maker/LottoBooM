@@ -90,7 +90,7 @@ def _obtener_sorteos_cuba_estricto(incluir_cerrados=False):
 
         salida_local = datetime.combine(fecha_cuba, hora_salida)
         dt_salida = salida_local.replace(tzinfo=_zona_horaria_cuba(salida_local))
-        minutos_cierre = 10  # Cierre obligatorio: 10 minutos antes de la salida
+        minutos_cierre = s.minutos_cierre if s.minutos_cierre is not None else 10
         dt_cierre = dt_salida - timedelta(minutes=minutos_cierre)
 
         if ahora_cuba >= dt_salida:
