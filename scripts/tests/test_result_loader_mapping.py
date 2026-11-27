@@ -46,7 +46,9 @@ class ResultLoaderMappingTests(unittest.TestCase):
 
 
     def test_catalog_refresh_preserves_history_and_deactivates_duplicate_aliases(self):
+        import ast
         script = (ROOT / "cargar_sorteos.py").read_text(encoding="utf-8")
+        ast.parse(script)
         self.assertIn("from sorteos.management.commands.load_results import MAPEO_NOMBRES", script)
         self.assertIn("anterior.activo = False", script)
         self.assertNotIn(".delete()", script)
