@@ -174,7 +174,7 @@ def fecha_operativa_actual(ahora=None):
 
 
 def _hora_enloteria(nombre, fecha):
-    """Hora real del sorteo según el calendario dominicano publicado por la fuente."""
+    """Hora real del sorteo en la zona local de la fuente."""
     import unicodedata
     clave = unicodedata.normalize("NFKD", str(nombre or "").casefold())
     clave = "".join(c for c in clave if not unicodedata.combining(c))
@@ -292,16 +292,8 @@ def calcular_fechas_esperadas_usa(nombre_db):
     """Retorna fecha local de origen y día operativo Cuba."""
     zona = zona_horaria_sorteo_usa(nombre_db)
     ahora_local = datetime.now(zona)
-    hora_sorteo = parsear_hora_sorteo(nombre_db)
+    hora_sorteo = _hora_enloteria(nombre_db, ahora_local.date())
     if not hora_sorteo:
-        return None, None
-
-    clave_sorteo = re.sub(r"[^a-z0-9]+", " ", str(nombre_db or "").casefold()).strip()
-    if ahora_local.weekday() == 6 and clave_sorteo in {
-        "texas 11 am", "texas 1 20 pm", "texas 7 pm", "texas 11 pm",
-        "tennessee 9 28 am", "tennessee 10 20 am",
-        "tennessee 12 28 pm", "tennessee 1 20 pm",
-    }:
         return None, None
 
     hora, minuto = hora_sorteo
