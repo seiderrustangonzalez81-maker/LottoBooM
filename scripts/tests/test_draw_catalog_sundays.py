@@ -28,7 +28,10 @@ class SundayDrawCalendarTests(unittest.TestCase):
         self.assertEqual(fixture_names, self.expected)
 
     def test_texas_draws_without_sunday_are_explicitly_disabled(self):
-        for name in ("Texas 11 AM", "Texas 1:20 PM", "Texas 7 PM", "Texas 11 PM"):
+        for name in (
+            "Texas 11 AM", "Texas 1:20 PM", "Texas 7 PM", "Texas 11 PM",
+            "Tennessee 9:28 AM", "Tennessee 12:28 PM",
+        ):
             with self.subTest(draw=name):
                 schedule = self.draws[name]["horarios"]
                 self.assertIsNone(schedule["invierno"]["domingo"])
@@ -67,7 +70,10 @@ class SundayDrawCalendarTests(unittest.TestCase):
 
 
     def test_only_explicitly_unscheduled_sunday_draws_are_null(self):
-        no_sunday = {"Texas 11 AM", "Texas 1:20 PM", "Texas 7 PM", "Texas 11 PM"}
+        no_sunday = {
+            "Texas 11 AM", "Texas 1:20 PM", "Texas 7 PM", "Texas 11 PM",
+            "Tennessee 9:28 AM", "Tennessee 12:28 PM",
+        }
         for name, fields in self.draws.items():
             with self.subTest(draw=name):
                 for season in ("invierno", "verano"):
