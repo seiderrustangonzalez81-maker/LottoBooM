@@ -159,27 +159,27 @@
     "model": "sorteos.sorteo",
     "pk": 5,
     "fields": {
-      "nombre": "Tennessee 10:20 AM",
+      "nombre": "Tennessee 9:28 AM",
       "activo": true,
       "minutos_cierre": 10,
       "horarios": {
         "invierno": {
-          "lunes": "10:20",
-          "martes": "10:20",
-          "miercoles": "10:20",
-          "jueves": "10:20",
-          "viernes": "10:20",
-          "sabado": "10:20",
-          "domingo": null
+          "lunes": "09:28",
+          "martes": "09:28",
+          "miercoles": "09:28",
+          "jueves": "09:28",
+          "viernes": "09:28",
+          "sabado": "09:28",
+          "domingo": "09:28"
         },
         "verano": {
-          "lunes": "10:20",
-          "martes": "10:20",
-          "miercoles": "10:20",
-          "jueves": "10:20",
-          "viernes": "10:20",
-          "sabado": "10:20",
-          "domingo": null
+          "lunes": "09:28",
+          "martes": "09:28",
+          "miercoles": "09:28",
+          "jueves": "09:28",
+          "viernes": "09:28",
+          "sabado": "09:28",
+          "domingo": "09:28"
         }
       },
       "origen": "americano",
@@ -854,27 +854,27 @@
     "model": "sorteos.sorteo",
     "pk": 22,
     "fields": {
-      "nombre": "Tennessee 1:20 PM",
+      "nombre": "Tennessee 12:28 PM",
       "activo": true,
       "minutos_cierre": 10,
       "horarios": {
         "invierno": {
-          "lunes": "13:20",
-          "martes": "13:20",
-          "miercoles": "13:20",
-          "jueves": "13:20",
-          "viernes": "13:20",
-          "sabado": "13:20",
-          "domingo": null
+          "lunes": "12:28",
+          "martes": "12:28",
+          "miercoles": "12:28",
+          "jueves": "12:28",
+          "viernes": "12:28",
+          "sabado": "12:28",
+          "domingo": "12:28"
         },
         "verano": {
-          "lunes": "13:20",
-          "martes": "13:20",
-          "miercoles": "13:20",
-          "jueves": "13:20",
-          "viernes": "13:20",
-          "sabado": "13:20",
-          "domingo": null
+          "lunes": "12:28",
+          "martes": "12:28",
+          "miercoles": "12:28",
+          "jueves": "12:28",
+          "viernes": "12:28",
+          "sabado": "12:28",
+          "domingo": "12:28"
         }
       },
       "origen": "americano",
@@ -1568,27 +1568,27 @@
     "model": "sorteos.sorteo",
     "pk": 39,
     "fields": {
-      "nombre": "Tennessee 7:20 PM",
+      "nombre": "Tennessee 6:28 PM",
       "activo": true,
       "minutos_cierre": 10,
       "horarios": {
         "invierno": {
-          "lunes": "19:20",
-          "martes": "19:20",
-          "miercoles": "19:20",
-          "jueves": "19:20",
-          "viernes": "19:20",
-          "sabado": "19:20",
-          "domingo": "19:20"
+          "lunes": "18:28",
+          "martes": "18:28",
+          "miercoles": "18:28",
+          "jueves": "18:28",
+          "viernes": "18:28",
+          "sabado": "18:28",
+          "domingo": "18:28"
         },
         "verano": {
-          "lunes": "19:20",
-          "martes": "19:20",
-          "miercoles": "19:20",
-          "jueves": "19:20",
-          "viernes": "19:20",
-          "sabado": "19:20",
-          "domingo": "19:20"
+          "lunes": "18:28",
+          "martes": "18:28",
+          "miercoles": "18:28",
+          "jueves": "18:28",
+          "viernes": "18:28",
+          "sabado": "18:28",
+          "domingo": "18:28"
         }
       },
       "origen": "americano",
