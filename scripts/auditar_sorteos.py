@@ -26,7 +26,7 @@ ALIASES = {
     "el quemaito mayor": "quemaito", "el quinielon dia": "quinielon",
     "la primera": "primera", "la primera noche": "primera 7 pm", "lotedom": "lotedom",
     "la suerte": "suerte 12 30 pm", "la suerte 6pm": "suerte 6 pm",
-    "king lottery noche": "king lottery 7 30 pm", "real": "real 12 55 pm",
+    "king lottery noche": "king lottery 7 30 pm", "real": "real 12 55 pm", "real noche": "real noche",
     "nacional noche": "nacional", "nacional gana mas": "gana mas 2 30 pm",
     "leidsa": "leidsa 8 55 pm", "new york noche": "new york 10 30 pm",
     "king lottery dia": "king lottery 12 30 pm",
