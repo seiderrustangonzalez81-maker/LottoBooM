@@ -12,7 +12,7 @@ from django.contrib.auth.decorators import login_required  # FIX_IMPORT_LOGIN
 
 from .models import Sorteo
 from .forms import SorteoForm
-from .utils import segundos_hasta_proximo as _seg_hasta_prox, calcular_estado_sorteo, get_hora_salida, obtener_hora_desde_horarios
+from .utils import (segundos_hasta_proximo as _seg_hasta_prox, calcular_estado_sorteo, get_hora_salida, get_datetime_salida_cuba, obtener_hora_desde_horarios)
 from jugadas.models import FormaJuego
 
 
@@ -68,10 +68,19 @@ def _hora_salida_hoy(sorteo, hoy):
 
 
 def _calcular_estado(sorteo, hora_salida, ahora, fecha_operativa=None):
-    """Delegación al cálculo único de estado, zona horaria y cierre."""
+    """Devuelve el contrato histórico como diccionario, con cálculo horario único."""
     if fecha_operativa is None:
         fecha_operativa = (ahora - timedelta(hours=1)).date()
-    return calcular_estado_sorteo(sorteo, ahora, fecha_operativa)
+    estado = calcular_estado_sorteo(sorteo, ahora, fecha_operativa)
+    return {
+        'estado': estado.estado_actual,
+        'segundos_restantes': getattr(estado, 'segundos_restantes', 0) or 0,
+        'hora_cierre': getattr(estado, 'hora_cierre', None),
+        'hora_salida': getattr(estado, 'hora_salida', None),
+        'hora_salida_str': getattr(estado, 'hora_salida_str', '—'),
+        'hora_cierre_str': getattr(estado, 'hora_cierre_str', '—'),
+        'segundos_proximo': getattr(estado, 'segundos_proximo', None),
+    }
 
 
 def lista_sorteos(request):
@@ -86,16 +95,24 @@ def lista_sorteos(request):
             continue
 
         info = _calcular_estado(s, hora_salida, ahora, hoy)
-        if info.estado_actual == 'no_programado':
+        if info['estado'] == 'no_programado':
             continue
 
+        s.estado_actual = info['estado']
+        s.segundos_restantes = info['segundos_restantes']
+        s.hora_salida = info['hora_salida']
+        s.hora_salida_str = info['hora_salida_str']
+        s.hora_cierre = info['hora_cierre']
+        s.hora_cierre_str = info['hora_cierre_str']
+        s.segundos_proximo = info['segundos_proximo']
         s.formas_filtradas = _formas_de_sorteo(s)
-        if info.estado_actual == 'abierto':
-            abiertos.append(info)
-        elif info.estado_actual == 'cerrado':
-            cerrados.append(info)
+
+        if info['estado'] == 'abierto':
+            abiertos.append(s)
+        elif info['estado'] == 'cerrado':
+            cerrados.append(s)
         else:
-            salidos.append(info)
+            salidos.append(s)
 
     abiertos.sort(key=lambda x: x.segundos_restantes)
     cerrados.sort(key=lambda x: x.segundos_restantes)
@@ -123,7 +140,7 @@ def lista_sorteos(request):
 def detalle_sorteo(request, sorteo_id):
     sorteo = get_object_or_404(Sorteo, id=sorteo_id, activo=True)
     ahora = _ahora_cuba()
-    hoy = ahora.date()
+    hoy = (ahora - timedelta(hours=1)).date()
 
     hora_salida = _hora_salida_hoy(sorteo, hoy)
     if hora_salida:
@@ -292,26 +309,22 @@ def api_sorteos_abiertos(request):
 
 def api_proximos_sorteos(request, horas=4):
     ahora = _ahora_cuba()
-    hoy = ahora.date()
+    hoy = (ahora - timedelta(hours=1)).date()
     limite = int(horas) * 3600
     result = []
     for s in Sorteo.objects.filter(activo=True):
-        hora_salida = _hora_salida_hoy(s, hoy)
-        if not hora_salida:
-            continue
-        dt_salida = datetime.combine(hoy, hora_salida, tzinfo=_tz_cuba(hoy))
-        if dt_salida <= ahora:
+        dt_salida = get_datetime_salida_cuba(s, hoy)
+        if not dt_salida or dt_salida <= ahora:
             continue
         seg = int((dt_salida - ahora).total_seconds())
         if seg <= limite:
-            minutos = s.minutos_cierre if s.minutos_cierre is not None else 60
-            cierre = dt_salida - timedelta(minutes=minutos)
+            cierre = dt_salida - timedelta(minutes=10)
             result.append({
                 'id': s.id, 'nombre': s.nombre, 'origen': s.origen,
                 'formas_juego': s.formas_juego or [],
                 'estado': 'abierto' if ahora < cierre else 'cerrado',
                 'segundos_restantes': seg,
-                'hora_salida': hora_salida.strftime('%I:%M %p').lstrip('0'),
+                'hora_salida': dt_salida.strftime('%I:%M %p').lstrip('0'),
             })
     result.sort(key=lambda x: x['segundos_restantes'])
     return JsonResponse({'sorteos': result})
