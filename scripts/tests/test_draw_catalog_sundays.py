@@ -52,6 +52,19 @@ class SundayDrawCalendarTests(unittest.TestCase):
                 self.assertEqual(schedule["invierno"]["domingo"], winter)
                 self.assertEqual(schedule["verano"]["domingo"], summer)
 
+
+    def test_all_haiti_bolet_draws_run_every_day_and_use_source_local_time(self):
+        source_times = {
+            "Haití 1": "09:30", "Haití 2": "10:30", "Haití 3": "11:30",
+            "Haití 4": "17:30", "Haití 5": "18:30", "Haití 6": "19:30",
+        }
+        for name, source_time in source_times.items():
+            with self.subTest(draw=name):
+                schedule = self.draws[name]["horarios"]
+                for season in ("invierno", "verano"):
+                    self.assertEqual(set(schedule[season].values()), {source_time})
+                    self.assertEqual(schedule[season]["domingo"], source_time)
+
     def test_sunday_draws_that_do_not_change_keep_same_time(self):
         for name in ("Georgia 7 PM", "Florida 9:50 PM", "New York 10:30 PM", "Tennessee 6:28 PM"):
             with self.subTest(draw=name):
