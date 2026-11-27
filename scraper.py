@@ -37,7 +37,7 @@ URL_QUINIELON = "https://enloteria.com/resultados-el-quinielon-dia-hoy"
 ARCHIVO_JSON = "resultados.json"
 
 
-# Matriz maestra conciliada contra los 55 sorteos del fixture.
+# Matriz maestra conciliada contra los 54 sorteos del catálogo CSV/JSON.
 # Se usa para auditar cobertura: no bloquea la publicación de resultados parciales.
 SORTEOS_ESPERADOS = [
     "Anguila 8 AM", "Anguila 9 AM", "Haití 1", "Anguila 10 AM",
@@ -54,7 +54,7 @@ SORTEOS_ESPERADOS = [
     "King Lottery 7:30 PM", "Haití 6", "Loteka 7:50 PM", "Tok 3",
     "Anguila 8 PM", "Nacional", "Leidsa 8:55 PM", "Pega 3+",
     "Anguila 9 PM", "Anguila 10 PM", "Florida 9:50 PM", "New York 10:30 PM",
-    "New Jersey 10:50 PM", "Texas 11 PM", "Georgia 11:40 PM", "Real Noche",
+    "New Jersey 10:50 PM", "Texas 11 PM", "Georgia 11:40 PM",
 ]
 URL_CONECTATE = "https://www.conectate.com.do/loterias/"
 
@@ -252,7 +252,6 @@ ALIASES_NOMBRES_SORTEOS = {
     "georgia 6:59 pm": "Georgia 7 PM",
     "georgia 11:34 pm": "Georgia 11:40 PM",
     "texas 10:12 pm": "Texas 11 PM",
-    "tennessee 6:30 pm": "Tennessee 7:20 PM",
 }
 
 
