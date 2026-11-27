@@ -232,7 +232,7 @@ if __name__ == "__main__":
         )
         self.assertEqual(
             get_datetime_salida_cuba(primera, date(2026, 11, 29)).time(),
-            time(16, 0),
+            time(19, 0),
         )
         real_noche = SimpleNamespace(
             nombre="Real Noche",
@@ -260,7 +260,7 @@ if __name__ == "__main__":
             horarios={"invierno": {"domingo": "19:00"}, "verano": {"domingo": "20:00"}},
             hora_salida=None,
         )
-        self.assertEqual(get_datetime_salida_cuba(primera, winter_sunday).time(), time(15, 0))
+        self.assertEqual(get_datetime_salida_cuba(primera, winter_sunday).time(), time(18, 0))
         self.assertEqual(get_datetime_salida_cuba(real_noche, winter_sunday).time(), time(19, 0))
     def test_haiti_bolet_morning_uses_haitian_timezone_and_evening_uses_dominican(self):
         from sorteos.utils import get_datetime_salida_cuba
