@@ -34,6 +34,8 @@ ALIASES = {
     "lotedom noche": "lotedom noche", "el quemaito mayor noche": "quemaito noche",
     "el quinielon noche": "quinielon noche",
     "florida 9 45 pm": "florida 9 50 pm",
+    "loteka 1 30 pm": "loteka tarde",
+    "loteka 7 50 pm": "loteka 7 55 pm",
     "new jersey 10 57 pm": "new jersey 10 50 pm",
     "georgia 6 59 pm": "georgia 7 pm",
     "georgia 11 34 pm": "georgia 11 40 pm",
