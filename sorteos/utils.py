@@ -160,8 +160,13 @@ def calcular_estado_sorteo(sorteo, ahora=None, fecha_consulta=None):
         if not dt_salida:
             sorteo.estado_actual = "no_programado"
             sorteo.hora_salida_str = "No programado"
+            sorteo.hora_salida = None
+            sorteo.hora_cierre = None
+            sorteo.hora_cierre_datetime = None
+            sorteo.proximo_datetime = None
             sorteo.hora_cierre_str = "—"
             sorteo.segundos_proximo = None
+            sorteo.segundos_restantes = None
             return sorteo
         fecha_consulta = _fecha_operativa_cuba(dt_salida)
     else:
@@ -171,10 +176,13 @@ def calcular_estado_sorteo(sorteo, ahora=None, fecha_consulta=None):
     if not dt_salida:
         sorteo.estado_actual = "no_programado"
         sorteo.hora_salida_str = "No programado"
+        sorteo.hora_salida = None
+        sorteo.hora_cierre = None
+        sorteo.hora_cierre_datetime = None
+        sorteo.proximo_datetime = None
         sorteo.hora_cierre_str = "—"
         sorteo.segundos_proximo = None
         sorteo.segundos_restantes = None
-        sorteo.hora_cierre = None
         return sorteo
 
     # Política única: ningún registro antiguo puede reducir el margen a 5 minutos.
