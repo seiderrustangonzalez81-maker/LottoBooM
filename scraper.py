@@ -11,6 +11,7 @@ from playwright.sync_api import sync_playwright
 TZ_CUBA = ZoneInfo("America/Havana")
 TZ_ESTE = ZoneInfo("America/New_York")
 TZ_RD = ZoneInfo("America/Santo_Domingo")
+TZ_HAITI = ZoneInfo("America/Port-au-Prince")
 
 # Cuba decidió mantener UTC-4 durante el período indicado.
 # El override evita depender de que la imagen de Ubuntu/GitHub tenga
@@ -206,7 +207,13 @@ def _hora_enloteria(nombre, fecha):
         "nacional": (21, 0),
         "real": (12, 55),
         "real 12 55 pm": (12, 55),
-        "real noche": (20, 55),
+        "real noche": (20, 0),
+        "haiti 1": (9, 30),
+        "haiti 2": (10, 30),
+        "haiti 3": (11, 30),
+        "haiti 4": (17, 30),
+        "haiti 5": (18, 30),
+        "haiti 6": (19, 30),
         "leidsa": (20, 55),
         "leidsa 8 55 pm": (20, 55),
         "pega 3": (20, 55),
@@ -233,14 +240,10 @@ def _hora_enloteria(nombre, fecha):
     if fecha.weekday() == 6:
         if clave in {"texas 11 am", "texas 1 20 pm", "texas 7 pm", "texas 11 pm"}:
             return None
-        if clave in {"la primera noche", "primera 7 pm", "el quinielon noche", "quinielon noche"}:
-            return (16, 0)
         if clave in {"nacional noche", "nacional"}:
             return (18, 0)
         if clave in {"leidsa", "leidsa 8 55 pm", "pega 3"}:
             return (15, 55)
-        if clave == "real noche":
-            return (20, 0)
     return hora
 
 
@@ -248,11 +251,15 @@ def calcular_fecha_sorteo_enloteria(nombre, ahora_cuba=None):
     """Calcula el día operativo usando la zona horaria real de la fuente."""
     ahora_cuba = ahora_cuba or obtener_hora_cuba()
     nombre_norm = re.sub(r"[^a-z0-9]+", " ", str(nombre or "").casefold()).strip()
-    zona_fuente = next(
-        (zona for estado, zona in ZONAS_ESTADOS.items()
-         if nombre_norm.startswith(estado.casefold())),
-        TZ_RD,
-    )
+    if nombre_norm.startswith(("haiti bolet 9 30", "haiti bolet 10 30", "haiti bolet 11 30",
+                               "haiti 1", "haiti 2", "haiti 3")):
+        zona_fuente = TZ_HAITI
+    else:
+        zona_fuente = next(
+            (zona for estado, zona in ZONAS_ESTADOS.items()
+             if nombre_norm.startswith(estado.casefold())),
+            TZ_RD,
+        )
     ahora_fuente = ahora_cuba.astimezone(zona_fuente)
     hora_sorteo = _hora_enloteria(nombre, ahora_fuente.date())
     if not hora_sorteo:
