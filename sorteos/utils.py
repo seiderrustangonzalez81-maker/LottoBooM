@@ -1,18 +1,16 @@
-from LottoBooM.utils import es_verano_cuba
 # -*- coding: utf-8 -*-
-from datetime import datetime, timedelta, timezone as dt_timezone
+from datetime import datetime, timedelta, time, timezone as dt_timezone
 from zoneinfo import ZoneInfo
 from django.utils import timezone
+from LottoBooM.utils import es_verano_cuba
 from .models import Sorteo
 
-
-from datetime import timezone as _dt_tz
 
 def _tz_cuba(fecha=None):
     """Offset civil de Cuba; acepta instante aware o fecha/hora local programada."""
     if fecha is None:
         fecha = timezone.now()
-    return _dt_tz(timedelta(hours=-4 if es_verano_cuba(fecha) else -5))
+    return dt_timezone(timedelta(hours=-4 if es_verano_cuba(fecha) else -5))
 
 MAPA_DIAS = {
     'monday': 'lunes',
