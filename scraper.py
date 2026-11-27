@@ -386,6 +386,8 @@ ALIASES_NOMBRES_SORTEOS = {
     "leidsa": "Leidsa 8:55 PM",
     "tennessee 10:20 am": "Tennessee 9:28 AM",
     "tennessee 1:20 pm": "Tennessee 12:28 PM",
+    "tennessee 6:30 pm": "Tennessee 6:28 PM",
+    "tennessee 7:20 pm": "Tennessee 6:28 PM",
     "loteka": "Loteka 7:55 PM",
     "loteka tarde": "Loteka Tarde",
     "lotedom noche": "Lotedom Noche",
