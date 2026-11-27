@@ -3,7 +3,7 @@ from types import SimpleNamespace
 
 from django.test import SimpleTestCase
 
-from sorteos.utils import calcular_estado_sorteo, get_hora_cierre
+from sorteos.utils import (calcular_estado_sorteo, get_hora_cierre, get_datetime_salida_cuba, get_proximo_datetime_sorteo)
 from sorteos.helpers import get_hora_cierre as get_hora_cierre_legacy
 
 
@@ -38,3 +38,46 @@ class CierreSorteosCubaTests(SimpleTestCase):
         cierre = get_hora_cierre_legacy(self.sorteo, self.fecha)
         self.assertEqual(cierre, get_hora_cierre(self.sorteo, self.fecha))
         self.assertIsNotNone(cierre.utcoffset())
+
+    def _sorteo_usa(self, nombre, hora, origen="americano"):
+        dias = ("lunes", "martes", "miercoles", "jueves", "viernes", "sabado", "domingo")
+        return SimpleNamespace(
+            nombre=nombre,
+            origen=origen,
+            horarios={
+                "verano": {dia: hora for dia in dias},
+                "invierno": {dia: hora for dia in dias},
+            },
+            hora_salida=None,
+            minutos_cierre=10,
+        )
+
+    def test_new_york_se_convierte_a_hora_cuba(self):
+        sorteo = self._sorteo_usa("New York 2:30 PM", "14:30")
+        salida = get_datetime_salida_cuba(sorteo, date(2026, 11, 26))
+        self.assertEqual(salida, datetime(2026, 11, 26, 15, 30, tzinfo=self.cuba))
+
+    def test_texas_se_convierte_desde_hora_central_a_cuba(self):
+        sorteo = self._sorteo_usa("Texas 1:20 PM", "13:20")
+        salida = get_datetime_salida_cuba(sorteo, date(2026, 11, 26))
+        self.assertEqual(salida, datetime(2026, 11, 26, 15, 20, tzinfo=self.cuba))
+
+    def test_georgia_de_noche_pasa_a_medianoche_cuba_sin_cambiar_dia_operativo(self):
+        sorteo = self._sorteo_usa("Georgia 11:40 PM", "23:30")
+        salida = get_datetime_salida_cuba(sorteo, date(2026, 11, 26))
+        self.assertEqual(salida, datetime(2026, 11, 27, 0, 30, tzinfo=self.cuba))
+        cierre = get_hora_cierre(sorteo, date(2026, 11, 26))
+        self.assertEqual(cierre, datetime(2026, 11, 27, 0, 20, tzinfo=self.cuba))
+
+    def test_draw_americano_a_la_una_sigue_visible_antes_del_cierre(self):
+        sorteo = self._sorteo_usa("Texas 11 PM", "23:00")
+        ahora = datetime(2026, 11, 27, 0, 40, tzinfo=self.cuba)
+        salida, _ = get_proximo_datetime_sorteo(sorteo, ahora)
+        self.assertEqual(salida, datetime(2026, 11, 27, 1, 0, tzinfo=self.cuba))
+        estado = calcular_estado_sorteo(sorteo, ahora)
+        self.assertEqual(estado.estado_actual, "abierto")
+
+    def test_dominicanas_y_haitianas_no_reciben_desplazamiento_americano(self):
+        sorteo = self._sorteo_usa("Haití 6", "19:30", origen="haitiano")
+        salida = get_datetime_salida_cuba(sorteo, date(2026, 11, 26))
+        self.assertEqual(salida, datetime(2026, 11, 26, 19, 30, tzinfo=self.cuba))
