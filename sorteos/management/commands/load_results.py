@@ -124,16 +124,21 @@ def normalizar_texto(texto):
     texto = ''.join(c for c in texto if unicodedata.category(c) != 'Mn')
     return texto.lower().strip()
 
-def temporada_actual():
-    # FIX_CARIBE_UTC4_2027: Cuba y Rep. Dominicana mantienen UTC-4 hasta nov 2027.
-    # No aplicar cambio de horario para sorteos del Caribe.
-    return 'verano'
+def temporada_actual(fecha=None):
+    """Temporada de Cuba para la fecha operativa consultada."""
+    if fecha is None:
+        fecha = (obtener_hora_cuba_actual() - timedelta(hours=1)).date()
+    return 'verano' if es_verano_cuba(fecha) else 'invierno'
+
 
 def sorteo_corre_hoy(sorteo, dia_actual, temporada):
-    horarios = sorteo.horarios
-    if not horarios or not isinstance(horarios, dict): return True
-    bloque = horarios.get(temporada) or horarios.get('invierno') or {}
-    if not bloque: return True
+    """No inventa sorteos: el día debe existir explícitamente en la temporada."""
+    horarios = getattr(sorteo, 'horarios', None)
+    if not isinstance(horarios, dict) or not horarios:
+        return False
+    bloque = horarios.get(temporada)
+    if not isinstance(bloque, dict):
+        return False
     valor = bloque.get(dia_actual)
     return bool(valor and str(valor).strip())
 
@@ -227,7 +232,7 @@ class Command(BaseCommand):
         dia_operativo = (ahora_cuba - timedelta(hours=1)).date()
         ayer_cuba = dia_operativo - timedelta(days=1)
         dia_actual = DIAS_ES[dia_operativo.weekday()]
-        temporada = 'verano' if es_verano_cuba(dia_operativo) else 'invierno'
+        temporada = temporada_actual(dia_operativo)
 
         self.stdout.write(f"Día actual: {dia_actual} | Temporada: {temporada}")
         self.stdout.write(f"Fecha/hora Cuba: {ahora_cuba.isoformat()} | Día operativo: {dia_operativo} (01:00–00:59)")
