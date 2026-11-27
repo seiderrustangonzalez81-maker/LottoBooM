@@ -3,15 +3,33 @@ name: Scrape Loterias
 
 on:
   schedule:
-    - cron: "*/5 * * * *"
+    - cron: "7,22,37,52 * * * *"
   workflow_dispatch:
+  pull_request:
+    branches: [main]
 
 concurrency:
   group: scrape-loterias-main
   cancel-in-progress: false
 
 jobs:
+  validate-pr:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout pull request
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Validate scraper startup
+        run: |
+          python -m py_compile scraper.py
+          python scripts/check_scraper_startup.py
+
   scrape:
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 25
 
@@ -35,6 +53,11 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install beautifulsoup4 requests playwright tzdata
           python -m playwright install --with-deps chromium
+
+      - name: Validate scraper startup
+        run: |
+          python -m py_compile scraper.py
+          python scripts/check_scraper_startup.py
 
       - name: Run scraper
         run: python scraper.py

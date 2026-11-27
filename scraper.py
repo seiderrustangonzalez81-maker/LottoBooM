@@ -468,6 +468,8 @@ def main():
 
     now_cuba = obtener_hora_cuba()
     hoy_cuba = now_cuba.strftime("%Y-%m-%d")
+    # Calcular antes del diagnóstico: la fecha operativa se imprime al inicio.
+    dia_operativo = fecha_operativa_actual(now_cuba)
     ahora_utc = datetime.now(timezone.utc)
     now_et = ahora_utc.astimezone(TZ_ESTE)
     hoy_et = now_et.strftime("%Y-%m-%d")
@@ -544,7 +546,6 @@ def main():
 
     # Un único día operativo Cuba: desde 01:00 inclusive hasta 00:59
     # del día calendario siguiente. No mezclar registros de días operativos.
-    dia_operativo = fecha_operativa_actual(now_cuba)
     fechas_validas = {dia_operativo}
     dic = {}
     for r in guardados:
