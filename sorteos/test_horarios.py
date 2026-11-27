@@ -106,3 +106,20 @@ class CierreSorteosCubaTests(SimpleTestCase):
         sorteo = self._sorteo_usa("New Yol Real 12:50 PM", "12:50")
         salida = get_datetime_salida_cuba(sorteo, date(2026, 11, 26))
         self.assertEqual(salida, datetime(2026, 11, 26, 13, 50, tzinfo=self.cuba))
+    def test_texas_actual_pick3_draw_times_convert_to_cuba(self):
+        from sorteos.utils import get_datetime_salida_cuba
+        cases = [
+            ("Texas 11 AM", "10:00", time(12, 0)),
+            ("Texas 1:20 PM", "12:27", time(14, 27)),
+            ("Texas 7 PM", "18:00", time(20, 0)),
+            ("Texas 11 PM", "22:12", time(0, 12)),
+        ]
+        for nombre, hora_fuente, hora_cuba in cases:
+            sorteo = SimpleNamespace(
+                nombre=nombre,
+                horarios={"verano": {"jueves": hora_fuente}, "invierno": {"jueves": hora_fuente}},
+                hora_salida=None,
+            )
+            with self.subTest(draw=nombre):
+                salida = get_datetime_salida_cuba(sorteo, date(2026, 11, 26))
+                self.assertEqual(salida.time(), hora_cuba)
