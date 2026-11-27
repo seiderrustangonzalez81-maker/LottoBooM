@@ -2293,5 +2293,153 @@
         "tripleta"
       ]
     }
+  },
+  {
+    "model": "sorteos.sorteo",
+    "pk": 56,
+    "fields": {
+      "nombre": "Loteka Tarde",
+      "activo": true,
+      "minutos_cierre": 10,
+      "horarios": {
+        "verano": {
+          "lunes": "13:30",
+          "martes": "13:30",
+          "miercoles": "13:30",
+          "jueves": "13:30",
+          "viernes": "13:30",
+          "sabado": "13:30",
+          "domingo": "13:30"
+        },
+        "invierno": {
+          "lunes": "12:30",
+          "martes": "12:30",
+          "miercoles": "12:30",
+          "jueves": "12:30",
+          "viernes": "12:30",
+          "sabado": "12:30",
+          "domingo": "12:30"
+        }
+      },
+      "origen": "dominicano",
+      "creado_en": "2026-11-26T00:00:00Z",
+      "actualizado_en": "2026-11-26T00:00:00Z",
+      "formas_juego": [
+        "corrido1",
+        "corrido2",
+        "fijo",
+        "posicion",
+        "tripleta"
+      ]
+    }
+  },
+  {
+    "model": "sorteos.sorteo",
+    "pk": 57,
+    "fields": {
+      "nombre": "Lotedom Noche",
+      "activo": true,
+      "minutos_cierre": 10,
+      "horarios": {
+        "verano": {
+          "lunes": "22:00",
+          "martes": "22:00",
+          "miercoles": "22:00",
+          "jueves": "22:00",
+          "viernes": "22:00",
+          "sabado": "22:00",
+          "domingo": "22:00"
+        },
+        "invierno": {
+          "lunes": "21:00",
+          "martes": "21:00",
+          "miercoles": "21:00",
+          "jueves": "21:00",
+          "viernes": "21:00",
+          "sabado": "21:00",
+          "domingo": "21:00"
+        }
+      },
+      "origen": "dominicano",
+      "creado_en": "2026-11-26T00:00:00Z",
+      "actualizado_en": "2026-11-26T00:00:00Z",
+      "formas_juego": [
+        "fijo",
+        "corrido1",
+        "corrido2",
+        "tripleta",
+        "posicion"
+      ]
+    }
+  },
+  {
+    "model": "sorteos.sorteo",
+    "pk": 58,
+    "fields": {
+      "nombre": "Quemaito Noche",
+      "activo": true,
+      "minutos_cierre": 10,
+      "horarios": {
+        "verano": {
+          "lunes": "22:00",
+          "martes": "22:00",
+          "miercoles": "22:00",
+          "jueves": "22:00",
+          "viernes": "22:00",
+          "sabado": "22:00",
+          "domingo": "22:00"
+        },
+        "invierno": {
+          "lunes": "21:00",
+          "martes": "21:00",
+          "miercoles": "21:00",
+          "jueves": "21:00",
+          "viernes": "21:00",
+          "sabado": "21:00",
+          "domingo": "21:00"
+        }
+      },
+      "origen": "dominicano",
+      "creado_en": "2026-11-26T00:00:00Z",
+      "actualizado_en": "2026-11-26T00:00:00Z",
+      "formas_juego": [
+        "fijo"
+      ]
+    }
+  },
+  {
+    "model": "sorteos.sorteo",
+    "pk": 59,
+    "fields": {
+      "nombre": "Quinielón Noche",
+      "activo": true,
+      "minutos_cierre": 10,
+      "horarios": {
+        "verano": {
+          "lunes": "19:00",
+          "martes": "19:00",
+          "miercoles": "19:00",
+          "jueves": "19:00",
+          "viernes": "19:00",
+          "sabado": "19:00",
+          "domingo": "16:00"
+        },
+        "invierno": {
+          "lunes": "18:00",
+          "martes": "18:00",
+          "miercoles": "18:00",
+          "jueves": "18:00",
+          "viernes": "18:00",
+          "sabado": "18:00",
+          "domingo": "15:00"
+        }
+      },
+      "origen": "dominicano",
+      "creado_en": "2026-11-26T00:00:00Z",
+      "actualizado_en": "2026-11-26T00:00:00Z",
+      "formas_juego": [
+        "fijo"
+      ]
+    }
   }
 ]
