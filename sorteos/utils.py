@@ -33,12 +33,20 @@ def _ahora_local():
     return ahora_utc.astimezone(_tz_cuba(ahora_utc))
 
 
+def fecha_operativa_actual(ahora=None):
+    """Día operativo Cuba: de 01:00 a 00:59 del día calendario siguiente."""
+    if ahora is None:
+        ahora = timezone.now()
+    if ahora.tzinfo is None:
+        ahora = ahora.replace(tzinfo=_tz_cuba(ahora))
+    ahora_cuba = ahora.astimezone(_tz_cuba(ahora))
+    return (ahora_cuba - timedelta(hours=1)).date()
+
+
 def _fecha_local(fecha=None):
-    """Fecha operativa Cuba: 01:00–00:59 del día siguiente."""
     if fecha is not None:
         return fecha.date() if isinstance(fecha, datetime) else fecha
-    ahora = _ahora_local()
-    return (ahora - timedelta(hours=1)).date()
+    return fecha_operativa_actual()
 
 
 def _temporada(fecha):
