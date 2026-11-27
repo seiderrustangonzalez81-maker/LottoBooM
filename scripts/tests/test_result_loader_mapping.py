@@ -44,6 +44,14 @@ class ResultLoaderMappingTests(unittest.TestCase):
         self.assertEqual(self.mapping["El Quemaito Mayor Noche"], "Quemaito Noche")
         self.assertEqual(self.mapping["El Quinielon Noche"], "Quinielón Noche")
 
+
+    def test_catalog_refresh_preserves_history_and_deactivates_duplicate_aliases(self):
+        script = (ROOT / "cargar_sorteos.py").read_text(encoding="utf-8")
+        self.assertIn("from sorteos.management.commands.load_results import MAPEO_NOMBRES", script)
+        self.assertIn("anterior.activo = False", script)
+        self.assertNotIn(".delete()", script)
+        self.assertNotIn("Sorteo.objects.all().delete()", script)
+
     def test_similar_draw_names_are_not_merged(self):
         self.assertNotEqual(self.mapping["Loteka Tarde"], self.mapping["Loteka 7:55 PM"])
         self.assertNotEqual(self.mapping["Suerte 12:30 PM"], self.mapping["Suerte 6 PM"])
