@@ -237,10 +237,10 @@ def _hora_enloteria(nombre, fecha):
     if not hora:
         return None
 
-    # Algunos sorteos cambian el domingo; la hora sigue siendo República Dominicana.
+    # Las excepciones dominicales son específicas de cada sorteo y de su fuente.
     if fecha.weekday() == 6:
         if clave in {
-            "texas 11 am", "texas 1 20 pm", "texas 7 pm", "texas 11 pm",
+            "texas 11 am", "texas 1 20 pm", "texas 7 pm", "texas 11 pm", "texas 10 12 pm",
             "tennessee 9 28 am", "tennessee 10 20 am",
             "tennessee 12 28 pm", "tennessee 1 20 pm",
         }:
