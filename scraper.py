@@ -230,6 +230,18 @@ def _hora_enloteria(nombre, fecha):
         "tennessee 6 30 pm": (18, 28),
         "tennessee 7 20 pm": (18, 28),
         "tennessee 6 28 pm": (18, 28),
+        "florida 1 35 pm": (13, 30),
+        "florida 9 50 pm": (21, 45),
+        "georgia 12 30 pm": (12, 29),
+        "georgia 7 pm": (18, 59),
+        "georgia 11 40 pm": (23, 34),
+        "new jersey 12 50 pm": (12, 59),
+        "new jersey 10 50 pm": (22, 57),
+        "texas 11 am": (10, 0),
+        "texas 1 20 pm": (12, 27),
+        "texas 7 pm": (18, 0),
+        "texas 11 pm": (22, 12),
+        "texas 10 12 pm": (22, 12),
     }
     hora = horarios.get(clave)
     if not hora:
