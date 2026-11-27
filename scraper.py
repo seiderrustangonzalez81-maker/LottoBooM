@@ -166,7 +166,17 @@ def parsear_hora_sorteo(nombre):
 
 def fecha_operativa_cuba(instante):
     """Día operativo: 01:00 a 00:59 del día calendario siguiente, hora Cuba."""
-    hora_cuba = convertir_a_cuba(instante) if instante.tzinfo else instante.replace(tzinfo=TZ_CUBA)
+    if instante.tzinfo:
+        hora_cuba = convertir_a_cuba(instante)
+    else:
+        # Los datetime naive de este módulo representan hora civil cubana.
+        fecha_local = instante.date()
+        hasta = CUBA_UTC4_HASTA_UTC.date()
+        usa_override = (
+            CUBA_UTC4_DESDE_UTC.date() <= fecha_local < hasta
+            or (fecha_local == hasta and instante.time() < datetime.min.replace(hour=1).time())
+        )
+        hora_cuba = instante.replace(tzinfo=CUBA_UTC4 if usa_override else TZ_CUBA)
     return (hora_cuba - timedelta(hours=1)).date().isoformat()
 
 
@@ -270,8 +280,36 @@ def _hora_enloteria(nombre, fecha):
     return hora
 
 
+def _ultimo_sorteo_fuente(nombre, ahora_fuente):
+    """Último sorteo válido, comprobando el calendario del día candidato.
+
+    No se debe aplicar el domingo de la fecha actual al sorteo de ayer:
+    una ejecución dominical de madrugada debe poder recuperar el sábado.
+    """
+    candidatos = []
+    for desplazamiento in (0, 1):
+        fecha_candidata = ahora_fuente.date() - timedelta(days=desplazamiento)
+        hora = _hora_enloteria(nombre, fecha_candidata)
+        if not hora:
+            continue
+        candidato = ahora_fuente.replace(
+            year=fecha_candidata.year,
+            month=fecha_candidata.month,
+            day=fecha_candidata.day,
+            hour=hora[0],
+            minute=hora[1],
+            second=0,
+            microsecond=0,
+        )
+        if candidato <= ahora_fuente:
+            candidatos.append(candidato)
+    if not candidatos:
+        return None
+    return max(candidatos, key=lambda valor: valor.astimezone(timezone.utc))
+
+
 def calcular_fecha_sorteo_enloteria(nombre, ahora_cuba=None):
-    """Calcula el día operativo usando la zona horaria real de la fuente."""
+    """Calcula el último sorteo y su día operativo desde la zona de la fuente."""
     ahora_cuba = ahora_cuba or obtener_hora_cuba()
     nombre_norm = unicodedata.normalize("NFKD", str(nombre or "").casefold())
     nombre_norm = "".join(c for c in nombre_norm if not unicodedata.combining(c))
@@ -286,17 +324,8 @@ def calcular_fecha_sorteo_enloteria(nombre, ahora_cuba=None):
             TZ_RD,
         )
     ahora_fuente = ahora_cuba.astimezone(zona_fuente)
-    hora_sorteo = _hora_enloteria(nombre, ahora_fuente.date())
-    if not hora_sorteo:
-        return None
-
-    hora, minuto = hora_sorteo
-    candidato_fuente = ahora_fuente.replace(
-        hour=hora, minute=minuto, second=0, microsecond=0
-    )
-    if candidato_fuente > ahora_fuente:
-        candidato_fuente -= timedelta(days=1)
-    return fecha_operativa_cuba(convertir_a_cuba(candidato_fuente))
+    candidato = _ultimo_sorteo_fuente(nombre, ahora_fuente)
+    return fecha_operativa_cuba(convertir_a_cuba(candidato)) if candidato else None
 
 
 def zona_horaria_sorteo_usa(nombre_db):
@@ -306,24 +335,16 @@ def zona_horaria_sorteo_usa(nombre_db):
     return TZ_ESTE
 
 
-def calcular_fechas_esperadas_usa(nombre_db):
-    """Retorna fecha local de origen y día operativo Cuba."""
+def calcular_fechas_esperadas_usa(nombre_db, ahora_cuba=None):
+    """Retorna fecha local de origen y día operativo Cuba para el último sorteo."""
+    ahora_cuba = ahora_cuba or obtener_hora_cuba()
     zona = zona_horaria_sorteo_usa(nombre_db)
-    ahora_local = datetime.now(zona)
-    hora_sorteo = _hora_enloteria(nombre_db, ahora_local.date())
-    if not hora_sorteo:
+    ahora_local = ahora_cuba.astimezone(zona)
+    dia_operativo = fecha_operativa_actual(ahora_cuba)
+    candidato = _ultimo_sorteo_fuente(nombre_db, ahora_local)
+    if not candidato or fecha_operativa_cuba(candidato) != dia_operativo:
         return None, None
-
-    hora, minuto = hora_sorteo
-    hoy_sorteo = ahora_local.replace(hour=hora, minute=minuto, second=0, microsecond=0)
-    ayer_sorteo = hoy_sorteo - timedelta(days=1)
-    dia_operativo = fecha_operativa_actual()
-    candidatos = (hoy_sorteo, ayer_sorteo)
-    validos = [x for x in candidatos if fecha_operativa_cuba(x) == dia_operativo]
-    instante_sorteo = validos[0] if validos else (
-        hoy_sorteo if ahora_local >= hoy_sorteo else ayer_sorteo
-    )
-    return instante_sorteo.date().isoformat(), fecha_operativa_cuba(instante_sorteo)
+    return candidato.date().isoformat(), fecha_operativa_cuba(candidato)
 
 
 def calcular_fecha_esperada_usa(nombre_db):
@@ -757,15 +778,15 @@ def main():
 
     finales_filtrados = list(dic.values())
     if not finales_filtrados:
-        print("⚠️ No hay resultados del día operativo. Se publicará [] para no conservar datos de una fecha anterior.")
-
-    # Escritura atómica: evita dejar un JSON truncado si la ejecución falla.
-    archivo_temporal = ARCHIVO_JSON + ".tmp"
-    with open(archivo_temporal, "w", encoding="utf-8") as f:
-        json.dump(finales_filtrados, f, ensure_ascii=False, indent=2)
-    os.replace(archivo_temporal, ARCHIVO_JSON)
-
-    print(f"✅ Guardados {len(finales_filtrados)} resultados del día operativo Cuba ({dia_operativo}; ventana 01:00–00:59).")
+        # Una caída de todas las fuentes no debe vaciar resultados.json.
+        print("⚠️ No hay resultados nuevos ni registros previos del día operativo. Se conserva resultados.json sin modificar.")
+    else:
+        # Escritura atómica: evita dejar un JSON truncado si la ejecución falla.
+        archivo_temporal = ARCHIVO_JSON + ".tmp"
+        with open(archivo_temporal, "w", encoding="utf-8") as f:
+            json.dump(finales_filtrados, f, ensure_ascii=False, indent=2)
+        os.replace(archivo_temporal, ARCHIVO_JSON)
+        print(f"✅ Guardados {len(finales_filtrados)} resultados del día operativo Cuba ({dia_operativo}; ventana 01:00–00:59).")
     print("\n=== RESUMEN ===")
     print(f"Total sorteos en JSON: {len(finales_filtrados)}")
     print(f"Fecha Cuba: {hoy_cuba}")
