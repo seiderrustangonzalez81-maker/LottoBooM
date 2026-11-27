@@ -1793,54 +1793,60 @@ def _guardar_apuesta_impl(request):
         except ValueError:
             return JsonResponse({'success': False, 'message': 'Formato de fecha inválido. Use YYYY-MM-DD.'}, status=400)
 
-        # Zona horaria y regla especial Georgia: la fecha Georgia se calcula en Cuba.
+        # Hora Cuba y día operativo único (01:00–00:59).
         ahora_utc = timezone.now()
         CUBA_TZ = _zona_horaria_cuba(ahora_utc)
         ahora_cuba = ahora_utc.astimezone(CUBA_TZ)
-        hoy = ahora_cuba.date()
+        hoy = (ahora_cuba - timedelta(hours=1)).date()
         _now_cuba = ahora_cuba
-        _es_admin_f = request.user.is_superuser or request.user.roles.filter(tipo__in=['banco', 'superadmin'], activo=True).exists()
-        _sids_early = []
-        try:
-            _sstr = request.POST.get('sorteos', '[]')
-            _sids_early = json.loads(_sstr) if _sstr else []
-        except Exception:
-            pass
-        _georgia_ids = []
+        _es_admin_f = request.user.is_superuser or request.user.roles.filter(
+            tipo__in=['banco', 'superadmin'], activo=True
+        ).exists()
+
         _selected_ids = []
         try:
-            _selected_ids = [int(x) for x in (_sids_early or []) if str(x).isdigit()]
+            _sids_early = json.loads(request.POST.get('sorteos', '[]') or '[]')
             _super_ids_early = json.loads(request.POST.get('superparlet_sorteos', '[]') or '[]')
-            _selected_ids += [int(x) for x in (_super_ids_early or []) if str(x).isdigit()]
-            _selected_ids = list(set(_selected_ids))
-            _georgia_ids = list(Sorteo.objects.filter(id__in=_selected_ids, nombre__icontains='Georgia').values_list('id', flat=True))
+            _selected_ids = list({
+                int(x) for x in list(_sids_early or []) + list(_super_ids_early or [])
+                if str(x).isdigit()
+            })
         except (TypeError, ValueError, json.JSONDecodeError):
-            _georgia_ids = []
-        _georgia_selected = bool(_georgia_ids)
+            return JsonResponse({'success': False, 'message': 'Selección de sorteos inválida.'}, status=400)
 
-        # La normalización convencional no debe cambiar la fecha que el selector
-        # Georgia calcula para su próximo ciclo.
-        if not _es_admin_f and not _georgia_selected and abs((fecha_apuesta - hoy).days) <= 1:
-            fecha_apuesta = hoy
+        # La fecha se deriva del instante real de cada sorteo. Esto sustituye
+        # las excepciones manuales de Georgia y cubre todos los husos USA.
+        if not _es_admin_f and _selected_ids:
+            from sorteos.utils import get_proximo_datetime_sorteo
+            fechas_efectivas = {}
+            for _sid in _selected_ids:
+                _sorteo_fecha = Sorteo.objects.filter(id=_sid, activo=True).first()
+                if not _sorteo_fecha:
+                    continue
+                _dt_proximo, _ = get_proximo_datetime_sorteo(_sorteo_fecha, ahora_cuba)
+                if _dt_proximo:
+                    _dt_cuba = _dt_proximo.astimezone(CUBA_TZ)
+                    fechas_efectivas[_sid] = (_dt_cuba - timedelta(hours=1)).date()
+
+            _fechas_unicas = set(fechas_efectivas.values())
+            if len(_fechas_unicas) > 1:
+                _detalle_fechas = ", ".join(
+                    f"{Sorteo.objects.get(id=_sid).nombre}: {_fecha.isoformat()}"
+                    for _sid, _fecha in fechas_efectivas.items()
+                )
+                return JsonResponse({
+                    'success': False,
+                    'message': 'Los sorteos seleccionados pertenecen a fechas operativas distintas. '
+                               'Envíalos por separado: ' + _detalle_fechas
+                }, status=400)
+
+            if len(_fechas_unicas) == 1:
+                _fecha_efectiva = next(iter(_fechas_unicas))
+                if abs((fecha_apuesta - _fecha_efectiva).days) <= 1:
+                    fecha_apuesta = _fecha_efectiva
 
         limite_futuro = hoy + timedelta(days=365)  # FIX_FUTURO_1ANO_V1
-        _georgia_closed_window = (_now_cuba.hour == 0 and _now_cuba.minute >= 27) or (_now_cuba.hour == 1 and _now_cuba.minute <= 0)
-        _georgia_expected_date = hoy
-        if not (_now_cuba.hour == 0 and _now_cuba.minute <= 26):
-            if not _georgia_closed_window:
-                _georgia_expected_date = hoy + timedelta(days=1)
 
-        if _georgia_selected:
-            if len(set(_selected_ids) - set(_georgia_ids)) > 0 and _georgia_expected_date != hoy:
-                return JsonResponse({'success': False, 'message': 'Georgia y otros sorteos tienen fechas efectivas distintas en este horario. Envíalos por separado para no cambiar la fecha de los demás sorteos.'}, status=400)
-            if not _es_admin_f:
-                if _georgia_closed_window:
-                    return JsonResponse({'success': False, 'message': 'Georgia está cerrado entre las 00:27 y la 01:00 hora Cuba. La apuesta no se trasladará automáticamente al siguiente sorteo.'}, status=400)
-                if fecha_apuesta != _georgia_expected_date:
-                    return JsonResponse({'success': False, 'message': f'La fecha efectiva de Georgia para este horario es {_georgia_expected_date.isoformat()}. Actualiza la fecha y vuelve a procesar.'}, status=400)
-
-        if fecha_apuesta < hoy and not _es_admin_f:
-            return JsonResponse({'success': False, 'message': 'Los clientes y comerciales solo pueden apostar desde hoy en adelante.'}, status=400)
         if fecha_apuesta > limite_futuro:
             return JsonResponse({'success': False, 'message': 'La fecha de la apuesta no puede ser superior a 6 meses en el futuro.'}, status=400)
 
@@ -1900,57 +1906,30 @@ def _guardar_apuesta_impl(request):
         if items_super and (len(super_sorteos_ids) < 2 or not all(super_sorteos_ids)):
             return JsonResponse({'success': False, 'message': 'Superparlet requiere dos sorteos'}, status=400)
 
-                # ═══ VALIDACIÓN ESTRICTA DE CIERRE (ZONA HORARIA CUBA) ═══
-        # Excepción: bancos y superadmins pueden saltarse el cierre para cargar jugadas retroactivas
+                # Validación estricta con el mismo horario convertido a Cuba que usa Apostar.
         _es_banco_o_super = (
             request.user.is_superuser
-            or request.user.roles.filter(tipo__in=['superadmin','banco'], activo=True).exists()
+            or request.user.roles.filter(tipo__in=['superadmin', 'banco'], activo=True).exists()
         )
         if not _es_banco_o_super:
             try:
-                ahora_utc = timezone.now()
-                CUBA_TZ = _zona_horaria_cuba(ahora_utc)
-                ahora_cuba = ahora_utc.astimezone(CUBA_TZ)
-
+                from sorteos.utils import get_datetime_salida_cuba, get_hora_cierre
                 _todos_ids = list(set(list(sorteos_ids) + list(super_sorteos_ids)))
                 _cerrados = []
 
                 for _sid in _todos_ids:
-                    _sorteo_chk = Sorteo.objects.filter(id=int(_sid)).first()
-                    if not _sorteo_chk: continue
-
-                    temp_chk = 'verano' if es_verano_cuba(fecha_apuesta) else 'invierno'
-                    dia_chk = {0: 'lunes', 1: 'martes', 2: 'miercoles', 3: 'jueves', 4: 'viernes', 5: 'sabado', 6: 'domingo'}[fecha_apuesta.weekday()]
-
-                    hs_chk = _sorteo_chk.hora_salida
-                    if _sorteo_chk.horarios:
-                        horario_dia_chk = (_sorteo_chk.horarios.get(temp_chk) or {}).get(dia_chk)
-                        if not horario_dia_chk:
-                            _cerrados.append(_sorteo_chk.nombre + ' (no programado)')
-                            continue
-                        try:
-                            hh, mm = horario_dia_chk.split(':')
-                            hs_chk = time(int(hh), int(mm))
-                        except (ValueError, TypeError):
-                            _cerrados.append(_sorteo_chk.nombre + ' (horario inválido)')
-                            continue
-
-                    if not hs_chk:
-                        _cerrados.append(_sorteo_chk.nombre + ' (sin horario)')
+                    _sorteo_chk = Sorteo.objects.filter(id=int(_sid), activo=True).first()
+                    if not _sorteo_chk:
+                        _cerrados.append(f'Sorteo ID {_sid} (inexistente o inactivo)')
                         continue
 
-                    salida_local_chk = datetime.combine(fecha_apuesta, hs_chk)
-                    dt_sal = salida_local_chk.replace(tzinfo=_zona_horaria_cuba(salida_local_chk))
+                    _dt_salida = get_datetime_salida_cuba(_sorteo_chk, fecha_apuesta)
+                    _dt_cierre = get_hora_cierre(_sorteo_chk, fecha_apuesta)
+                    if not _dt_salida or not _dt_cierre:
+                        _cerrados.append(_sorteo_chk.nombre + ' (no programado)')
+                        continue
 
-                    if hs_chk.hour < 6:
-                        dt_sal += timedelta(days=1)
-
-                    minutos_cierre_chk = (
-                        10
-                    )
-                    dt_cie = dt_sal - timedelta(minutes=minutos_cierre_chk)
-
-                    if ahora_cuba >= dt_cie:
+                    if ahora_cuba >= _dt_cierre:
                         _cerrados.append(_sorteo_chk.nombre)
 
                 if _cerrados:
@@ -1958,9 +1937,10 @@ def _guardar_apuesta_impl(request):
                         'success': False,
                         'sorteo_cerrado': True,
                         'sorteos_cerrados': _cerrados,
-                        'message': '⛔ Operación rechazada. El sorteo ya cerró o no está programado en Cuba: ' + ', '.join(_cerrados),
+                        'message': '⛔ Operación rechazada. El sorteo ya alcanzó su cierre en hora Cuba: '
+                                   + ', '.join(_cerrados),
                     }, status=400)
-            except Exception as e:
+            except Exception:
                 logger.exception('Error validando cierre estricto; se rechaza la apuesta por seguridad.')
                 return JsonResponse({
                     'success': False,
