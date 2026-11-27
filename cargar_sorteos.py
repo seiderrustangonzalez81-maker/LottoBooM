@@ -2,7 +2,7 @@ import json
 from django.utils import timezone
 from sorteos.models import Sorteo
 
-# Aquí va el JSON completo de los 54 sorteos
+# Catálogo de 58 sorteos; no elimina registros existentes.
 sorteos_json = [
     {"nombre": "Anguila 8 AM", "activo": True, "horarios": {"invierno": {"lunes": "08:00", "martes": "08:00", "miercoles": "08:00", "jueves": "08:00", "viernes": "08:00", "sabado": "08:00", "domingo": "08:00"}, "verano": {"lunes": "08:00", "martes": "08:00", "miercoles": "08:00", "jueves": "08:00", "viernes": "08:00", "sabado": "08:00", "domingo": "08:00"}}},
     {"nombre": "Anguila 9 AM", "activo": True, "horarios": {"invierno": {"lunes": "09:00", "martes": "09:00", "miercoles": "09:00", "jueves": "09:00", "viernes": "09:00", "sabado": "09:00", "domingo": "09:00"}, "verano": {"lunes": "09:00", "martes": "09:00", "miercoles": "09:00", "jueves": "09:00", "viernes": "09:00", "sabado": "09:00", "domingo": "09:00"}}},
@@ -38,9 +38,9 @@ sorteos_json = [
     {"nombre": "King Lottery 12:30 PM", "activo": True, "horarios": {"invierno": {"lunes": "12:30", "martes": "12:30", "miercoles": "12:30", "jueves": "12:30", "viernes": "12:30", "sabado": "12:30", "domingo": "12:30"}, "verano": {"lunes": "12:30", "martes": "12:30", "miercoles": "12:30", "jueves": "12:30", "viernes": "12:30", "sabado": "12:30", "domingo": "12:30"}}},
     {"nombre": "King Lottery 7:30 PM", "activo": True, "horarios": {"invierno": {"lunes": "19:30", "martes": "19:30", "miercoles": "19:30", "jueves": "19:30", "viernes": "19:30", "sabado": "19:30", "domingo": "19:30"}, "verano": {"lunes": "19:30", "martes": "19:30", "miercoles": "19:30", "jueves": "19:30", "viernes": "19:30", "sabado": "19:30", "domingo": "19:30"}}},
     {"nombre": "Leidsa 8:55 PM", "activo": True, "horarios": {"invierno": {"lunes": "20:55", "martes": "20:55", "miercoles": "20:55", "jueves": "20:55", "viernes": "20:55", "sabado": "20:55", "domingo": "15:55"}, "verano": {"lunes": "20:55", "martes": "20:55", "miercoles": "20:55", "jueves": "20:55", "viernes": "20:55", "sabado": "20:55", "domingo": "15:55"}}},
-    {"nombre": "Lotedom", "activo": True, "horarios": {"invierno": {"lunes": "12:00", "martes": "12:00", "miercoles": "12:00", "jueves": "12:00", "viernes": "12:00", "sabado": "12:00", "domingo": "12:00"}, "verano": {"lunes": "12:00", "martes": "12:00", "miercoles": "12:00", "jueves": "12:00", "viernes": "12:00", "sabado": "12:00", "domingo": "12:00"}}},
+    {"nombre": "Lotedom", "activo": True, "horarios": {"invierno": {"lunes": "11:00", "martes": "11:00", "miercoles": "11:00", "jueves": "11:00", "viernes": "11:00", "sabado": "11:00", "domingo": "11:00"}, "verano": {"lunes": "12:00", "martes": "12:00", "miercoles": "12:00", "jueves": "12:00", "viernes": "12:00", "sabado": "12:00", "domingo": "12:00"}}},
     {"nombre": "Loteka 7:55 PM", "activo": True, "horarios": {"invierno": {"lunes": "19:50", "martes": "19:50", "miercoles": "19:50", "jueves": "19:50", "viernes": "19:50", "sabado": "19:50", "domingo": "19:50"}, "verano": {"lunes": "19:50", "martes": "19:50", "miercoles": "19:50", "jueves": "19:50", "viernes": "19:50", "sabado": "19:50", "domingo": "19:50"}}},
-    {"nombre": "Nacional", "activo": True, "horarios": {"invierno": {"lunes": "21:00", "martes": "21:00", "miercoles": "21:00", "jueves": "21:00", "viernes": "21:00", "sabado": "21:00", "domingo": "18:00"}, "verano": {"lunes": "21:00", "martes": "21:00", "miercoles": "21:00", "jueves": "21:00", "viernes": "21:00", "sabado": "21:00", "domingo": "18:00"}}},
+    {"nombre": "Nacional", "activo": True, "horarios": {"invierno": {"lunes": "20:00", "martes": "20:00", "miercoles": "20:00", "jueves": "20:00", "viernes": "20:00", "sabado": "20:00", "domingo": "17:00"}, "verano": {"lunes": "21:00", "martes": "21:00", "miercoles": "21:00", "jueves": "21:00", "viernes": "21:00", "sabado": "21:00", "domingo": "18:00"}}},
     {"nombre": "New Jersey 12:50 PM", "activo": True, "horarios": {"invierno": {"lunes": "12:55", "martes": "12:55", "miercoles": "12:55", "jueves": "12:55", "viernes": "12:55", "sabado": "12:55", "domingo": "12:55"}, "verano": {"lunes": "12:55", "martes": "12:55", "miercoles": "12:55", "jueves": "12:55", "viernes": "12:55", "sabado": "12:55", "domingo": "12:55"}}},
     {"nombre": "New Jersey 10:50 PM", "activo": True, "horarios": {"invierno": {"lunes": "22:50", "martes": "22:50", "miercoles": "22:50", "jueves": "22:50", "viernes": "22:50", "sabado": "22:50", "domingo": "22:50"}, "verano": {"lunes": "22:50", "martes": "22:50", "miercoles": "22:50", "jueves": "22:50", "viernes": "22:50", "sabado": "22:50", "domingo": "22:50"}}},
     {"nombre": "New York 2:30 PM", "activo": True, "horarios": {"invierno": {"lunes": "14:30", "martes": "14:30", "miercoles": "14:30", "jueves": "14:30", "viernes": "14:30", "sabado": "14:30", "domingo": "14:30"}, "verano": {"lunes": "14:30", "martes": "14:30", "miercoles": "14:30", "jueves": "14:30", "viernes": "14:30", "sabado": "14:30", "domingo": "14:30"}}},
@@ -48,8 +48,8 @@ sorteos_json = [
     {"nombre": "New Yol Real 12:50 PM", "activo": True, "horarios": {"invierno": {"lunes": "12:55", "martes": "12:55", "miercoles": "12:55", "jueves": "12:55", "viernes": "12:55", "sabado": "12:55", "domingo": "12:55"}, "verano": {"lunes": "12:55", "martes": "12:55", "miercoles": "12:55", "jueves": "12:55", "viernes": "12:55", "sabado": "12:55", "domingo": "12:55"}}},
     {"nombre": "Pega 3+", "activo": True, "horarios": {"invierno": {"lunes": "20:55", "martes": "20:55", "miercoles": "20:55", "jueves": "20:55", "viernes": "20:55", "sabado": "20:55", "domingo": "15:55"}, "verano": {"lunes": "20:55", "martes": "20:55", "miercoles": "20:55", "jueves": "20:55", "viernes": "20:55", "sabado": "20:55", "domingo": "15:55"}}},
     {"nombre": "Primera", "activo": True, "horarios": {"invierno": {"lunes": "12:00", "martes": "12:00", "miercoles": "12:00", "jueves": "12:00", "viernes": "12:00", "sabado": "12:00", "domingo": "12:00"}, "verano": {"lunes": "12:00", "martes": "12:00", "miercoles": "12:00", "jueves": "12:00", "viernes": "12:00", "sabado": "12:00", "domingo": "12:00"}}},
-    {"nombre": "Primera 7 PM", "activo": True, "horarios": {"invierno": {"lunes": "19:00", "martes": "19:00", "miercoles": "19:00", "jueves": "19:00", "viernes": "19:00", "sabado": "19:00", "domingo": "19:00"}, "verano": {"lunes": "19:00", "martes": "19:00", "miercoles": "19:00", "jueves": "19:00", "viernes": "19:00", "sabado": "19:00", "domingo": "19:00"}}},
-    {"nombre": "Quemaito", "activo": True, "horarios": {"invierno": {"lunes": "12:00", "martes": "12:00", "miercoles": "12:00", "jueves": "12:00", "viernes": "12:00", "sabado": "12:00", "domingo": "12:00"}, "verano": {"lunes": "12:00", "martes": "12:00", "miercoles": "12:00", "jueves": "12:00", "viernes": "12:00", "sabado": "12:00", "domingo": "12:00"}}},
+    {"nombre": "Primera 7 PM", "activo": True, "horarios": {"invierno": {"lunes": "18:00", "martes": "18:00", "miercoles": "18:00", "jueves": "18:00", "viernes": "18:00", "sabado": "18:00", "domingo": "15:00"}, "verano": {"lunes": "19:00", "martes": "19:00", "miercoles": "19:00", "jueves": "19:00", "viernes": "19:00", "sabado": "19:00", "domingo": "16:00"}}},
+    {"nombre": "Quemaito", "activo": True, "horarios": {"invierno": {"lunes": "11:00", "martes": "11:00", "miercoles": "11:00", "jueves": "11:00", "viernes": "11:00", "sabado": "11:00", "domingo": "11:00"}, "verano": {"lunes": "12:00", "martes": "12:00", "miercoles": "12:00", "jueves": "12:00", "viernes": "12:00", "sabado": "12:00", "domingo": "12:00"}}},
     {"nombre": "Quinielón", "activo": True, "horarios": {"invierno": {"lunes": "12:00", "martes": "12:00", "miercoles": "12:00", "jueves": "12:00", "viernes": "12:00", "sabado": "12:00", "domingo": "12:00"}, "verano": {"lunes": "12:00", "martes": "12:00", "miercoles": "12:00", "jueves": "12:00", "viernes": "12:00", "sabado": "12:00", "domingo": "12:00"}}},
     {"nombre": "Real 12:55 PM", "activo": True, "horarios": {"invierno": {"lunes": "12:55", "martes": "12:55", "miercoles": "12:55", "jueves": "12:55", "viernes": "12:55", "sabado": "12:55", "domingo": "12:55"}, "verano": {"lunes": "12:55", "martes": "12:55", "miercoles": "12:55", "jueves": "12:55", "viernes": "12:55", "sabado": "12:55", "domingo": "12:55"}}},
     {"nombre": "Suerte 12:30 PM", "activo": True, "horarios": {"invierno": {"lunes": "12:30", "martes": "12:30", "miercoles": "12:30", "jueves": "12:30", "viernes": "12:30", "sabado": "12:30", "domingo": "12:30"}, "verano": {"lunes": "12:30", "martes": "12:30", "miercoles": "12:30", "jueves": "12:30", "viernes": "12:30", "sabado": "12:30", "domingo": "12:30"}}},
@@ -58,10 +58,17 @@ sorteos_json = [
     {"nombre": "Tennessee 1:20 PM", "activo": True, "horarios": {"invierno": {"lunes": "13:20", "martes": "13:20", "miercoles": "13:20", "jueves": "13:20", "viernes": "13:20", "sabado": "13:20", "domingo": None}, "verano": {"lunes": "13:20", "martes": "13:20", "miercoles": "13:20", "jueves": "13:20", "viernes": "13:20", "sabado": "13:20", "domingo": None}}},
     {"nombre": "Tennessee 7:20 PM", "activo": True, "horarios": {"invierno": {"lunes": "19:20", "martes": "19:20", "miercoles": "19:20", "jueves": "19:20", "viernes": "19:20", "sabado": "19:20", "domingo": "19:20"}, "verano": {"lunes": "19:20", "martes": "19:20", "miercoles": "19:20", "jueves": "19:20", "viernes": "19:20", "sabado": "19:20", "domingo": "19:20"}}},
     {"nombre": "Tok 3", "activo": True, "horarios": {"invierno": {"lunes": "19:50", "martes": "19:50", "miercoles": "19:50", "jueves": "19:50", "viernes": "19:50", "sabado": "19:50", "domingo": "19:50"}, "verano": {"lunes": "19:50", "martes": "19:50", "miercoles": "19:50", "jueves": "19:50", "viernes": "19:50", "sabado": "19:50", "domingo": "19:50"}}},
+    {"nombre": "Loteka Tarde", "activo": True, "origen": "dominicano", "minutos_cierre": 10, "horarios": {"invierno": {"lunes": "12:30", "martes": "12:30", "miercoles": "12:30", "jueves": "12:30", "viernes": "12:30", "sabado": "12:30", "domingo": "12:30"}, "verano": {"lunes": "13:30", "martes": "13:30", "miercoles": "13:30", "jueves": "13:30", "viernes": "13:30", "sabado": "13:30", "domingo": "13:30"}}},
+    {"nombre": "Lotedom Noche", "activo": True, "origen": "dominicano", "minutos_cierre": 10, "horarios": {"invierno": {"lunes": "21:00", "martes": "21:00", "miercoles": "21:00", "jueves": "21:00", "viernes": "21:00", "sabado": "21:00", "domingo": "21:00"}, "verano": {"lunes": "22:00", "martes": "22:00", "miercoles": "22:00", "jueves": "22:00", "viernes": "22:00", "sabado": "22:00", "domingo": "22:00"}}},
+    {"nombre": "Quemaito Noche", "activo": True, "origen": "dominicano", "minutos_cierre": 10, "horarios": {"invierno": {"lunes": "21:00", "martes": "21:00", "miercoles": "21:00", "jueves": "21:00", "viernes": "21:00", "sabado": "21:00", "domingo": "21:00"}, "verano": {"lunes": "22:00", "martes": "22:00", "miercoles": "22:00", "jueves": "22:00", "viernes": "22:00", "sabado": "22:00", "domingo": "22:00"}}},
+    {"nombre": "Quinielón Noche", "activo": True, "origen": "dominicano", "minutos_cierre": 10, "horarios": {"invierno": {"lunes": "18:00", "martes": "18:00", "miercoles": "18:00", "jueves": "18:00", "viernes": "18:00", "sabado": "18:00", "domingo": "15:00"}, "verano": {"lunes": "19:00", "martes": "19:00", "miercoles": "19:00", "jueves": "19:00", "viernes": "19:00", "sabado": "19:00", "domingo": "16:00"}}},
 ]
 
-# Eliminar todos los sorteos existentes
-# Cargar todos los sorteos del JSON
+# Renombrar las etiquetas corregidas conservando sus relaciones históricas.
+Sorteo.objects.filter(nombre="Loteka 7:50 PM").update(nombre="Loteka 7:55 PM")
+Sorteo.objects.filter(nombre="Real 12:50 PM").update(nombre="Real 12:55 PM")
+
+# Actualizar/crear sin borrar sorteos ni resultados existentes.
 for s in sorteos_json:
     obj, created = Sorteo.objects.update_or_create(
         nombre=s["nombre"],
@@ -69,7 +76,9 @@ for s in sorteos_json:
             "activo": s["activo"],
             "horarios": s["horarios"],
             "creado_en": timezone.now(),
-            "actualizado_en": timezone.now()
+            "actualizado_en": timezone.now(),
+            **({"origen": s["origen"]} if s.get("origen") else {}),
+            **({"minutos_cierre": s["minutos_cierre"]} if s.get("minutos_cierre") is not None else {}),
         }
     )
     if created:
