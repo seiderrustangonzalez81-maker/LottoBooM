@@ -65,6 +65,18 @@ class SundayDrawCalendarTests(unittest.TestCase):
                     self.assertEqual(set(schedule[season].values()), {source_time})
                     self.assertEqual(schedule[season]["domingo"], source_time)
 
+
+    def test_only_explicitly_unscheduled_sunday_draws_are_null(self):
+        no_sunday = {"Texas 11 AM", "Texas 1:20 PM", "Texas 7 PM", "Texas 11 PM"}
+        for name, fields in self.draws.items():
+            with self.subTest(draw=name):
+                for season in ("invierno", "verano"):
+                    sunday = fields["horarios"][season]["domingo"]
+                    if name in no_sunday:
+                        self.assertIsNone(sunday)
+                    else:
+                        self.assertTrue(sunday, f"{name} debe estar programado el domingo en {season}")
+
     def test_sunday_draws_that_do_not_change_keep_same_time(self):
         for name in ("Georgia 7 PM", "Florida 9:50 PM", "New York 10:30 PM", "Tennessee 6:28 PM"):
             with self.subTest(draw=name):
