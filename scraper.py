@@ -159,18 +159,27 @@ def parsear_hora_sorteo(nombre):
             return (hora, 0)
     return None
 
+def fecha_operativa_cuba(instante):
+    """Día operativo: 01:00 a 00:59 del día calendario siguiente, hora Cuba."""
+    hora_cuba = convertir_a_cuba(instante) if instante.tzinfo else instante.replace(tzinfo=TZ_CUBA)
+    return (hora_cuba - timedelta(hours=1)).date().isoformat()
+
+
+def fecha_operativa_actual(ahora=None):
+    ahora = ahora or obtener_hora_cuba()
+    return fecha_operativa_cuba(ahora)
+
+
 def calcular_fecha_sorteo_enloteria(nombre):
     ahora_cuba = obtener_hora_cuba()
     hora_sorteo = parsear_hora_sorteo(nombre)
     if hora_sorteo:
         hora, minuto = hora_sorteo
-        hoy_sorteo = ahora_cuba.replace(hour=hora, minute=minuto, second=0, microsecond=0)
-        if ahora_cuba >= hoy_sorteo:
-            return ahora_cuba.strftime("%Y-%m-%d")
-        return (ahora_cuba - timedelta(days=1)).strftime("%Y-%m-%d")
-    if ahora_cuba.hour < 6:
-        return (ahora_cuba - timedelta(days=1)).strftime("%Y-%m-%d")
-    return ahora_cuba.strftime("%Y-%m-%d")
+        candidato = ahora_cuba.replace(hour=hora, minute=minuto, second=0, microsecond=0)
+        if candidato > ahora_cuba:
+            candidato -= timedelta(days=1)
+        return fecha_operativa_cuba(candidato)
+    return fecha_operativa_cuba(ahora_cuba)
 
 
 def zona_horaria_sorteo_usa(nombre_db):
@@ -181,19 +190,23 @@ def zona_horaria_sorteo_usa(nombre_db):
 
 
 def calcular_fechas_esperadas_usa(nombre_db):
-    """Retorna (fecha local oficial del sorteo, fecha correspondiente en Cuba)."""
+    """Retorna fecha local de la tarjeta y día operativo Cuba del sorteo."""
     hora_sorteo = parsear_hora_sorteo(nombre_db)
     zona = zona_horaria_sorteo_usa(nombre_db)
     ahora_local = datetime.now(zona)
     if not hora_sorteo:
-        fecha_local = ahora_local.date()
-        instante_sorteo = datetime.combine(fecha_local, datetime.min.time(), tzinfo=zona)
+        instante_sorteo = datetime.combine(ahora_local.date(), datetime.min.time(), tzinfo=zona)
     else:
         hora, minuto = hora_sorteo
         hoy_sorteo = ahora_local.replace(hour=hora, minute=minuto, second=0, microsecond=0)
-        instante_sorteo = hoy_sorteo if ahora_local >= hoy_sorteo else hoy_sorteo - timedelta(days=1)
-        fecha_local = instante_sorteo.date()
-    fecha_cuba_sorteo = convertir_a_cuba(instante_sorteo).strftime("%Y-%m-%d")
+        ayer_sorteo = hoy_sorteo - timedelta(days=1)
+        # Elegir la ocurrencia que pertenece al día operativo vigente en Cuba.
+        dia_operativo = fecha_operativa_actual()
+        candidatos = (hoy_sorteo, ayer_sorteo)
+        validos = [x for x in candidatos if fecha_operativa_cuba(x) == dia_operativo]
+        instante_sorteo = validos[0] if validos else (hoy_sorteo if ahora_local >= hoy_sorteo else ayer_sorteo)
+    fecha_local = instante_sorteo.date()
+    fecha_cuba_sorteo = fecha_operativa_cuba(instante_sorteo)
     return fecha_local.strftime("%Y-%m-%d"), fecha_cuba_sorteo
 
 
@@ -465,7 +478,7 @@ def main():
     print(f"Cuba: {now_cuba.isoformat()}")
     print(f"Nueva York: {now_et.isoformat()}")
     print(f"República Dominicana: {ahora_utc.astimezone(TZ_RD).isoformat()}")
-    print(f"Fecha Cuba: {hoy_cuba}")
+    print(f"Fecha operativa Cuba: {dia_operativo} (01:00–00:59)")
     print(f"Fecha Este: {hoy_et}")
     print("===============================")
 
@@ -529,11 +542,10 @@ def main():
             print(f"⚠️ No se pudo leer JSON previo: {e}")
             guardados = []
 
-    # Se conservan hoy y ayer (Cuba) para no descartar sorteos nocturnos
-    # válidos por diferencias entre la fecha del país del sorteo y Cuba.
-    # El consumidor del JSON debe usar el campo fecha para elegir el día.
-    fecha_ayer = (now_cuba.date() - timedelta(days=1)).strftime("%Y-%m-%d")
-    fechas_validas = {hoy_cuba, fecha_ayer}
+    # Un único día operativo Cuba: desde 01:00 inclusive hasta 00:59
+    # del día calendario siguiente. No mezclar registros de días operativos.
+    dia_operativo = fecha_operativa_actual(now_cuba)
+    fechas_validas = {dia_operativo}
     dic = {}
     for r in guardados:
         if r.get("fecha") in fechas_validas and r.get("sorteo_nombre"):
@@ -545,8 +557,6 @@ def main():
         if fecha not in fechas_validas:
             print(f"⏭️ Fecha demasiado antigua/futura: {nuevo.get('sorteo_nombre')} | {fecha}")
             continue
-        if fecha == fecha_ayer:
-            print(f"ℹ️ Se conserva resultado de ayer: {nuevo.get('sorteo_nombre')} | {fecha}")
         clave = f"{nuevo['sorteo_nombre']}|{fecha}"
         if clave in dic:
             dic[clave] = combinar_resultados(dic[clave], nuevo)
@@ -564,7 +574,7 @@ def main():
         json.dump(finales_filtrados, f, ensure_ascii=False, indent=2)
     os.replace(archivo_temporal, ARCHIVO_JSON)
 
-    print(f"✅ Guardados {len(finales_filtrados)} resultados de hoy/ayer Cuba ({hoy_cuba}/{fecha_ayer}).")
+    print(f"✅ Guardados {len(finales_filtrados)} resultados del día operativo Cuba ({dia_operativo}; ventana 01:00–00:59).")
     print("\n=== RESUMEN ===")
     print(f"Total sorteos en JSON: {len(finales_filtrados)}")
     print(f"Fecha Cuba: {hoy_cuba}")
