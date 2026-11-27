@@ -29,6 +29,7 @@ ZONAS_ESTADOS = {
     "New Jersey": ZoneInfo("America/New_York"),
     "Georgia": ZoneInfo("America/New_York"),
     "Tennessee": ZoneInfo("America/Chicago"),
+    "New Yol Real": ZoneInfo("America/New_York"),
 }
 
 URL_MAIN = "https://enloteria.com/resultados-loterias-hoy"
@@ -233,16 +234,34 @@ def _hora_enloteria(nombre, fecha):
     return hora
 
 
-def calcular_fecha_sorteo_enloteria(nombre):
-    ahora_cuba = obtener_hora_cuba()
+def calcular_fecha_sorteo_enloteria(nombre, ahora_cuba=None):
+    ahora_cuba = ahora_cuba or obtener_hora_cuba()
     hora_sorteo = _hora_enloteria(nombre, ahora_cuba.date())
-    if hora_sorteo:
-        hora, minuto = hora_sorteo
-        candidato = ahora_cuba.replace(hour=hora, minute=minuto, second=0, microsecond=0)
-        if candidato > ahora_cuba:
-            candidato -= timedelta(days=1)
-        return fecha_operativa_cuba(candidato)
-    return fecha_operativa_cuba(ahora_cuba)
+    if not hora_sorteo:
+        return fecha_operativa_cuba(ahora_cuba)
+
+    hora, minuto = hora_sorteo
+    nombre_norm = re.sub(r"[^a-z0-9]+", " ", str(nombre or "").casefold()).strip()
+    zona_fuente = next(
+        (zona for estado, zona in ZONAS_ESTADOS.items()
+         if nombre_norm.startswith(estado.casefold())),
+        None,
+    )
+
+    if zona_fuente:
+        ahora_fuente = ahora_cuba.astimezone(zona_fuente)
+        candidato_fuente = ahora_fuente.replace(
+            hour=hora, minute=minuto, second=0, microsecond=0
+        )
+        if candidato_fuente > ahora_fuente:
+            candidato_fuente -= timedelta(days=1)
+        candidato_cuba = convertir_a_cuba(candidato_fuente)
+        return fecha_operativa_cuba(candidato_cuba)
+
+    candidato = ahora_cuba.replace(hour=hora, minute=minuto, second=0, microsecond=0)
+    if candidato > ahora_cuba:
+        candidato -= timedelta(days=1)
+    return fecha_operativa_cuba(candidato)
 
 
 def zona_horaria_sorteo_usa(nombre_db):
