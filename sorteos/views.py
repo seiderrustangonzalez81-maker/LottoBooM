@@ -163,7 +163,7 @@ def detalle_sorteo(request, sorteo_id):
 
 def api_sorteos_data(request):
     ahora = _ahora_cuba()
-    hoy = ahora.date()
+    hoy = (ahora - timedelta(hours=1)).date()
     data = {'sorteos': []}
     for s in Sorteo.objects.filter(activo=True).order_by('nombre'):
         hora_salida = _hora_salida_hoy(s, hoy)
@@ -183,7 +183,7 @@ def api_sorteos_data(request):
 
 def api_sorteos_list(request):
     ahora = _ahora_cuba()
-    hoy = ahora.date()
+    hoy = (ahora - timedelta(hours=1)).date()
     result = []
     for s in Sorteo.objects.filter(activo=True).order_by('nombre'):
         hora_salida = _hora_salida_hoy(s, hoy)
@@ -213,7 +213,7 @@ def api_sorteo_detail(request, sorteo_id):
         return JsonResponse({'error': 'Sorteo no encontrado'}, status=404)
 
     ahora = _ahora_cuba()
-    hoy = ahora.date()
+    hoy = (ahora - timedelta(hours=1)).date()
     hora_salida = _hora_salida_hoy(sorteo, hoy)
 
     if hora_salida:
@@ -245,7 +245,7 @@ def api_sorteos_by_origin(request, origen):
     if origen not in ['dominicano', 'americano', 'haitiano']:
         return JsonResponse({'error': 'Origen no válido'}, status=400)
     ahora = _ahora_cuba()
-    hoy = ahora.date()
+    hoy = (ahora - timedelta(hours=1)).date()
     result = []
     for s in Sorteo.objects.filter(activo=True, origen=origen).order_by('nombre'):
         hora_salida = _hora_salida_hoy(s, hoy)
@@ -265,7 +265,7 @@ def api_sorteos_by_status(request, estado):
     if estado not in ['abierto', 'cerrado', 'salido', 'no_programado']:
         return JsonResponse({'error': 'Estado no válido'}, status=400)
     ahora = _ahora_cuba()
-    hoy = ahora.date()
+    hoy = (ahora - timedelta(hours=1)).date()
     result = []
     for s in Sorteo.objects.filter(activo=True).order_by('nombre'):
         hora_salida = _hora_salida_hoy(s, hoy)
@@ -288,7 +288,7 @@ def api_sorteos_by_status(request, estado):
 
 def api_sorteos_abiertos(request):
     ahora = _ahora_cuba()
-    hoy = ahora.date()
+    hoy = (ahora - timedelta(hours=1)).date()
     result = []
     for s in Sorteo.objects.filter(activo=True).order_by('nombre'):
         hora_salida = _hora_salida_hoy(s, hoy)
@@ -382,7 +382,7 @@ def api_sorteos_compartir(request):
     # igual que lista_sorteos. Antes usaba timezone.localtime() que devuelve
     # la hora del servidor (UTC) y daba todos los sorteos como cerrados.
     ahora = _ahora_cuba()
-    hoy = ahora.date()
+    hoy = (ahora - timedelta(hours=1)).date()
     lista = []
 
     for s in Sorteo.objects.filter(activo=True):
