@@ -896,5 +896,15 @@
     "fijo": "30",
     "corrido_1": "95",
     "corrido_2": "50"
+  },
+  {
+    "sorteo_nombre": "Loteka",
+    "numeros": [
+      "58",
+      "53",
+      "85"
+    ],
+    "fecha": "2026-11-26",
+    "fuente": "enloteria"
   }
 ]
