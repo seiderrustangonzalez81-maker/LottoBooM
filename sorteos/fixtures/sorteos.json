@@ -86,13 +86,13 @@
       "minutos_cierre": 10,
       "horarios": {
         "invierno": {
-          "lunes": "08:30",
-          "martes": "08:30",
-          "miercoles": "08:30",
-          "jueves": "08:30",
-          "viernes": "08:30",
-          "sabado": "08:30",
-          "domingo": "08:30"
+          "lunes": "09:30",
+          "martes": "09:30",
+          "miercoles": "09:30",
+          "jueves": "09:30",
+          "viernes": "09:30",
+          "sabado": "09:30",
+          "domingo": "09:30"
         },
         "verano": {
           "lunes": "09:30",
@@ -211,13 +211,13 @@
       "minutos_cierre": 10,
       "horarios": {
         "invierno": {
-          "lunes": "09:30",
-          "martes": "09:30",
-          "miercoles": "09:30",
-          "jueves": "09:30",
-          "viernes": "09:30",
-          "sabado": "09:30",
-          "domingo": "09:30"
+          "lunes": "10:30",
+          "martes": "10:30",
+          "miercoles": "10:30",
+          "jueves": "10:30",
+          "viernes": "10:30",
+          "sabado": "10:30",
+          "domingo": "10:30"
         },
         "verano": {
           "lunes": "10:30",
@@ -336,13 +336,13 @@
       "minutos_cierre": 10,
       "horarios": {
         "invierno": {
-          "lunes": "10:30",
-          "martes": "10:30",
-          "miercoles": "10:30",
-          "jueves": "10:30",
-          "viernes": "10:30",
-          "sabado": "10:30",
-          "domingo": "10:30"
+          "lunes": "11:30",
+          "martes": "11:30",
+          "miercoles": "11:30",
+          "jueves": "11:30",
+          "viernes": "11:30",
+          "sabado": "11:30",
+          "domingo": "11:30"
         },
         "verano": {
           "lunes": "11:30",
@@ -1244,13 +1244,13 @@
       "minutos_cierre": 10,
       "horarios": {
         "invierno": {
-          "lunes": "16:30",
-          "martes": "16:30",
-          "miercoles": "16:30",
-          "jueves": "16:30",
-          "viernes": "16:30",
-          "sabado": "16:30",
-          "domingo": "16:30"
+          "lunes": "17:30",
+          "martes": "17:30",
+          "miercoles": "17:30",
+          "jueves": "17:30",
+          "viernes": "17:30",
+          "sabado": "17:30",
+          "domingo": "17:30"
         },
         "verano": {
           "lunes": "17:30",
@@ -1361,13 +1361,13 @@
       "minutos_cierre": 10,
       "horarios": {
         "invierno": {
-          "lunes": "17:30",
-          "martes": "17:30",
-          "miercoles": "17:30",
-          "jueves": "17:30",
-          "viernes": "17:30",
-          "sabado": "17:30",
-          "domingo": "17:30"
+          "lunes": "18:30",
+          "martes": "18:30",
+          "miercoles": "18:30",
+          "jueves": "18:30",
+          "viernes": "18:30",
+          "sabado": "18:30",
+          "domingo": "18:30"
         },
         "verano": {
           "lunes": "18:30",
@@ -1445,7 +1445,7 @@
           "jueves": "18:00",
           "viernes": "18:00",
           "sabado": "18:00",
-          "domingo": "15:00"
+          "domingo": "18:00"
         },
         "verano": {
           "lunes": "19:00",
@@ -1454,7 +1454,7 @@
           "jueves": "19:00",
           "viernes": "19:00",
           "sabado": "19:00",
-          "domingo": "16:00"
+          "domingo": "19:00"
         }
       },
       "origen": "dominicano",
@@ -1667,13 +1667,13 @@
       "minutos_cierre": 10,
       "horarios": {
         "invierno": {
-          "lunes": "18:30",
-          "martes": "18:30",
-          "miercoles": "18:30",
-          "jueves": "18:30",
-          "viernes": "18:30",
-          "sabado": "18:30",
-          "domingo": "18:30"
+          "lunes": "19:30",
+          "martes": "19:30",
+          "miercoles": "19:30",
+          "jueves": "19:30",
+          "viernes": "19:30",
+          "sabado": "19:30",
+          "domingo": "19:30"
         },
         "verano": {
           "lunes": "19:30",
@@ -2264,21 +2264,21 @@
       "minutos_cierre": 10,
       "horarios": {
         "invierno": {
-          "lunes": "19:55",
-          "martes": "19:55",
-          "miercoles": "19:55",
-          "jueves": "19:55",
-          "viernes": "19:55",
-          "sabado": "19:55",
+          "lunes": "19:00",
+          "martes": "19:00",
+          "miercoles": "19:00",
+          "jueves": "19:00",
+          "viernes": "19:00",
+          "sabado": "19:00",
           "domingo": "19:00"
         },
         "verano": {
-          "lunes": "20:55",
-          "martes": "20:55",
-          "miercoles": "20:55",
-          "jueves": "20:55",
-          "viernes": "20:55",
-          "sabado": "20:55",
+          "lunes": "20:00",
+          "martes": "20:00",
+          "miercoles": "20:00",
+          "jueves": "20:00",
+          "viernes": "20:00",
+          "sabado": "20:00",
           "domingo": "20:00"
         }
       },
@@ -2422,7 +2422,7 @@
           "jueves": "19:00",
           "viernes": "19:00",
           "sabado": "19:00",
-          "domingo": "16:00"
+          "domingo": "19:00"
         },
         "invierno": {
           "lunes": "18:00",
@@ -2431,7 +2431,7 @@
           "jueves": "18:00",
           "viernes": "18:00",
           "sabado": "18:00",
-          "domingo": "15:00"
+          "domingo": "18:00"
         }
       },
       "origen": "dominicano",
