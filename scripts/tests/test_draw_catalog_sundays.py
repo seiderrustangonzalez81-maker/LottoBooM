@@ -36,11 +36,11 @@ class SundayDrawCalendarTests(unittest.TestCase):
 
     def test_sunday_time_changes_are_explicit_for_each_season(self):
         expected = {
-            "Primera 7 PM": ("15:00", "16:00"),
+            "Primera 7 PM": ("18:00", "19:00"),
             "Nacional": ("17:00", "18:00"),
             "Leidsa 8:55 PM": ("14:55", "15:55"),
             "Pega 3+": ("14:55", "15:55"),
-            "Quinielón Noche": ("15:00", "16:00"),
+            "Quinielón Noche": ("18:00", "19:00"),
             "Real Noche": ("19:00", "20:00"),
             "Loteka Tarde": ("12:30", "13:30"),
             "Lotedom Noche": ("21:00", "22:00"),
