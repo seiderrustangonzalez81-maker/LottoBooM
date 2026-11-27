@@ -39,10 +39,10 @@ def _ultimos_resultados(limit=15):
 
 def _proximos_sorteos(limit=6):
     from sorteos.models import Sorteo
-    hoy = timezone.localdate()
     lista = []
     try:
-        from sorteos.utils import get_sorteos_hoy
+        from sorteos.utils import get_sorteos_hoy, fecha_operativa_actual
+        hoy = fecha_operativa_actual()
         sorteos, _ = get_sorteos_hoy(hoy)
         abiertos = [s for s in sorteos if getattr(s, 'estado_actual', None) == 'abierto']
         lista = abiertos or sorteos
@@ -51,14 +51,9 @@ def _proximos_sorteos(limit=6):
 
     # Enriquecer con datetime para countdown
     for s in lista:
-        hs = getattr(s, 'hora_salida', None)
-        s.proximo_dt = None
-        if hs:
-            try:
-                naive = datetime.combine(hoy, hs)
-                s.proximo_dt = timezone.make_aware(naive)
-            except Exception:
-                pass
+        # El cálculo compartido conserva la fecha y zona de origen, incluso
+        # cuando un sorteo americano o haitiano cruza la medianoche en Cuba.
+        s.proximo_dt = getattr(s, 'proximo_datetime', None)
     return lista[:limit]
 
 
