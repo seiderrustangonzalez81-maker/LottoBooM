@@ -3,7 +3,7 @@ from django.contrib.auth.models import User
 from django.utils import timezone
 from decimal import Decimal
 
-from .models import (
+from roles.models import (
     Rol, Subordinacion, Fondo, MovimientoFondo, Bono,
     Deuda, Notificacion, CuadreDiario, Prestamo,
     SuscripcionBanco, DosisPago, LimiteApuesta
