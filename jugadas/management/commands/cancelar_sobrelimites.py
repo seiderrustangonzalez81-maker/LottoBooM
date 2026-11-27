@@ -22,7 +22,7 @@ class Command(BaseCommand):
 
         canceladas = 0
         for jugada in jugadas:
-            cierre = get_hora_cierre(jugada.sorteo.horarios, jugada.sorteo)
+            cierre = get_hora_cierre(jugada.sorteo, jugada.fecha_sorteo)
             if cierre and cierre < ahora:
                 # Cancelar la jugada
                 jugada.estado = 'cancelada'
