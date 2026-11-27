@@ -51,6 +51,28 @@ class ScraperSourceCalendarTests(unittest.TestCase):
     def setUpClass(cls):
         cls.scraper = load_scraper_time_functions()
 
+    def test_empty_scrape_does_not_overwrite_results_json(self):
+        tree = ast.parse(SCRAPER.read_text(encoding="utf-8"))
+        main = next(node for node in tree.body if isinstance(node, ast.FunctionDef) and node.name == "main")
+        guard = next(
+            node for node in ast.walk(main)
+            if isinstance(node, ast.If)
+            and isinstance(node.test, ast.UnaryOp)
+            and isinstance(node.test.op, ast.Not)
+            and isinstance(node.test.operand, ast.Name)
+            and node.test.operand.id == "finales_filtrados"
+        )
+        has_replace = lambda nodes: any(
+            isinstance(node, ast.Call)
+            and isinstance(node.func, ast.Attribute)
+            and isinstance(node.func.value, ast.Name)
+            and node.func.value.id == "os"
+            and node.func.attr == "replace"
+            for statement in nodes for node in ast.walk(statement)
+        )
+        self.assertFalse(has_replace(guard.body))
+        self.assertTrue(has_replace(guard.orelse))
+
     def test_saturday_texas_result_is_not_suppressed_when_run_sunday_after_midnight(self):
         # 00:30 en Cuba el domingo sigue perteneciendo al día operativo sábado.
         now_cuba = datetime(2026, 11, 29, 4, 30, tzinfo=timezone.utc)
