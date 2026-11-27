@@ -239,7 +239,11 @@ def _hora_enloteria(nombre, fecha):
 
     # Algunos sorteos cambian el domingo; la hora sigue siendo República Dominicana.
     if fecha.weekday() == 6:
-        if clave in {"texas 11 am", "texas 1 20 pm", "texas 7 pm", "texas 11 pm"}:
+        if clave in {
+            "texas 11 am", "texas 1 20 pm", "texas 7 pm", "texas 11 pm",
+            "tennessee 9 28 am", "tennessee 10 20 am",
+            "tennessee 12 28 pm", "tennessee 1 20 pm",
+        }:
             return None
         if clave in {"nacional noche", "nacional"}:
             return (18, 0)
@@ -292,8 +296,11 @@ def calcular_fechas_esperadas_usa(nombre_db):
     if not hora_sorteo:
         return None, None
 
-    if ahora_local.weekday() == 6 and normalizar_nombre(nombre_db).casefold() in {
-        "texas 11 am", "texas 1:20 pm", "texas 7 pm", "texas 11 pm"
+    clave_sorteo = re.sub(r"[^a-z0-9]+", " ", str(nombre_db or "").casefold()).strip()
+    if ahora_local.weekday() == 6 and clave_sorteo in {
+        "texas 11 am", "texas 1 20 pm", "texas 7 pm", "texas 11 pm",
+        "tennessee 9 28 am", "tennessee 10 20 am",
+        "tennessee 12 28 pm", "tennessee 1 20 pm",
     }:
         return None, None
 
