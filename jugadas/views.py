@@ -3909,7 +3909,6 @@ def api_sorteos_disponibles(request):
             )
             estado = estado_sorteo.estado_actual
             hora_salida = getattr(estado_sorteo, 'hora_salida', None)
-            hora_cierre = getattr(estado_sorteo, 'hora_cierre', None)
             segundos = getattr(estado_sorteo, 'segundos_restantes', None) or 0
 
             sorteos_data.append({
@@ -3955,7 +3954,6 @@ def api_sorteos_disponibles(request):
     ))
     return JsonResponse(sorteos_data, safe=False)
 
-@login_required
 @login_required
 def api_sorteos_con_boleta(request):
     """
@@ -4496,7 +4494,8 @@ def api_info_apuesta(request):
         sorteo = get_object_or_404(Sorteo, id=sorteo_id)
         forma_pago = get_object_or_404(FormaPago, id=forma_pago_id)
 
-        fecha_apuesta = datetime.strptime(fecha_str, '%Y-%m-%d').date() if fecha_str else timezone.localdate()
+        from sorteos.utils import fecha_operativa_actual
+        fecha_apuesta = datetime.strptime(fecha_str, '%Y-%m-%d').date() if fecha_str else fecha_operativa_actual()
 
         usuario = request.user
 
