@@ -262,3 +262,26 @@ if __name__ == "__main__":
         )
         self.assertEqual(get_datetime_salida_cuba(primera, winter_sunday).time(), time(15, 0))
         self.assertEqual(get_datetime_salida_cuba(real_noche, winter_sunday).time(), time(19, 0))
+    def test_haiti_bolet_morning_uses_haitian_timezone_and_evening_uses_dominican(self):
+        from sorteos.utils import get_datetime_salida_cuba
+        haiti_morning = SimpleNamespace(
+            nombre="Haití 1",
+            horarios={"invierno": {"jueves": "09:30"}, "verano": {"jueves": "09:30"}},
+            hora_salida=None,
+        )
+        haiti_evening = SimpleNamespace(
+            nombre="Haití 4",
+            horarios={"invierno": {"jueves": "17:30"}, "verano": {"jueves": "17:30"}},
+            hora_salida=None,
+        )
+        self.assertEqual(get_datetime_salida_cuba(haiti_morning, date(2026, 11, 26)).time(), time(10, 30))
+        self.assertEqual(get_datetime_salida_cuba(haiti_evening, date(2026, 11, 26)).time(), time(17, 30))
+
+    def test_haiti_and_cuba_realign_after_haitian_dst_returns(self):
+        from sorteos.utils import get_datetime_salida_cuba
+        haiti_morning = SimpleNamespace(
+            nombre="Haití 1",
+            horarios={"invierno": {"domingo": "09:30"}, "verano": {"domingo": "09:30"}},
+            hora_salida=None,
+        )
+        self.assertEqual(get_datetime_salida_cuba(haiti_morning, date(2027, 11, 14)).time(), time(9, 30))
