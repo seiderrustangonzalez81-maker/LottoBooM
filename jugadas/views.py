@@ -61,10 +61,26 @@ def _obtener_sorteos_cuba_estricto(incluir_cerrados=False):
     Banco/Superadmin pueden seleccionar sorteos cerrados antes de la salida.
     """
     ahora = timezone.now()
+    ahora_cuba = ahora.astimezone(_zona_horaria_cuba(ahora))
+    dia_operativo_actual = (ahora_cuba - timedelta(hours=1)).date()
     sorteos_validos = []
 
     for sorteo in Sorteo.objects.filter(activo=True):
         sorteo = calcular_estado_sorteo(sorteo, ahora)
+        dt_salida = getattr(sorteo, "proximo_datetime", None)
+        if not dt_salida:
+            continue
+
+        dia_operativo_salida = (
+            dt_salida.astimezone(_zona_horaria_cuba(dt_salida)) - timedelta(hours=1)
+        ).date()
+        minutos_hasta_salida = (dt_salida - ahora_cuba).total_seconds() / 60
+
+        # Mostrar el día operativo vigente y también un sorteo del siguiente día
+        # si cruza la medianoche y faltan 60 minutos o menos para su salida.
+        if dia_operativo_salida != dia_operativo_actual and minutos_hasta_salida > 60:
+            continue
+
         if sorteo.estado_actual == "abierto":
             sorteos_validos.append(sorteo)
         elif incluir_cerrados and sorteo.estado_actual == "cerrado":
