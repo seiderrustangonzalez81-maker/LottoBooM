@@ -181,6 +181,7 @@ def calcular_estado_sorteo(sorteo, ahora=None, fecha_consulta=None):
     dt_cierre = dt_salida - timedelta(minutes=minutos_cierre)
     sorteo.proximo_datetime = dt_salida
     sorteo.hora_cierre_datetime = dt_cierre
+    sorteo.fecha_operativa_salida = _fecha_operativa_cuba(dt_salida)
 
     sorteo.hora_salida = dt_salida.timetz().replace(tzinfo=None)
     sorteo.hora_salida_str = dt_salida.strftime("%I:%M %p").lstrip("0")
