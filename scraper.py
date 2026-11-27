@@ -19,11 +19,9 @@ CUBA_UTC4_DESDE_UTC = datetime(2026, 11, 1, 5, 0, tzinfo=timezone.utc)
 CUBA_UTC4_HASTA_UTC = datetime(2027, 11, 7, 5, 0, tzinfo=timezone.utc)  # límite exclusivo
 CUBA_UTC4 = timezone(timedelta(hours=-4), name="Cuba-UTC-4")
 
-# Zonas IANA de publicación de la fuente, no offsets fijos ni zona del runner.
-# LotteryUSA publica Florida/NY/NJ/Georgia en Eastern y Tennessee en Central;
-# la lotería oficial de Tennessee muestra sus horarios en CT/ET. Si una fuente
-# futura identifica un sorteo del este de Tennessee en Eastern, debe añadirse
-# una regla explícita por sorteo/fuente, no cambiar el estado por defecto.
+# Hora local oficial usada para calcular la fecha de cada sorteo estadounidense.
+# Tennessee se usa Central (zona de Nashville); Florida se usa Eastern,
+# que es la zona con la que se publican los horarios de los sorteos.
 ZONAS_ESTADOS = {
     "Florida": ZoneInfo("America/New_York"),
     "Texas": ZoneInfo("America/Chicago"),
@@ -39,7 +37,7 @@ URL_QUINIELON = "https://enloteria.com/resultados-el-quinielon-dia-hoy"
 ARCHIVO_JSON = "resultados.json"
 
 
-# Matriz maestra de los sorteos que la aplicación espera (54 nombres).
+# Matriz maestra de los sorteos que la aplicación espera (51 nombres).
 # Se usa para auditar cobertura: no bloquea la publicación de resultados parciales.
 SORTEOS_ESPERADOS = [
     "Anguila 8 AM", "Anguila 9 AM", "Haití 1", "Anguila 10 AM",
@@ -55,7 +53,7 @@ SORTEOS_ESPERADOS = [
     "Georgia 7 PM", "Texas 7 PM", "Tennessee 7:20 PM",
     "King Lottery 7:30 PM", "Haití 6", "Loteka 7:50 PM", "Tok 3",
     "Anguila 8 PM", "Nacional", "Leidsa 8:55 PM", "Pega 3+",
-    "Anguila 9 PM", "Anguila 10 PM", "Florida 9:50 PM", "New York 10:30 PM",
+    "Anguila 9 PM", "Florida 9:50 PM", "New York 10:30 PM",
     "New Jersey 10:50 PM", "Texas 11 PM", "Georgia 11:40 PM",
 ]
 URL_CONECTATE = "https://www.conectate.com.do/loterias/"
@@ -141,7 +139,7 @@ def fecha_este():
 
 HORAS_POR_PALABRA = {
     'MADRUGADA': 3, 'DIA': 12, 'DÍA': 12, 'MEDIODIA': 12, 'MEDIODÍA': 12,
-    'TARDE': 15, 'NOCHE': 21, 'MAYOR': 21,
+    'TARDE': 15, 'NOCHE': 21,
 }
 
 def parsear_hora_sorteo(nombre):
@@ -161,18 +159,27 @@ def parsear_hora_sorteo(nombre):
             return (hora, 0)
     return None
 
+def fecha_operativa_cuba(instante):
+    """Día operativo: 01:00 a 00:59 del día calendario siguiente, hora Cuba."""
+    hora_cuba = convertir_a_cuba(instante) if instante.tzinfo else instante.replace(tzinfo=TZ_CUBA)
+    return (hora_cuba - timedelta(hours=1)).date().isoformat()
+
+
+def fecha_operativa_actual(ahora=None):
+    ahora = ahora or obtener_hora_cuba()
+    return fecha_operativa_cuba(ahora)
+
+
 def calcular_fecha_sorteo_enloteria(nombre):
     ahora_cuba = obtener_hora_cuba()
     hora_sorteo = parsear_hora_sorteo(nombre)
     if hora_sorteo:
         hora, minuto = hora_sorteo
-        hoy_sorteo = ahora_cuba.replace(hour=hora, minute=minuto, second=0, microsecond=0)
-        if ahora_cuba >= hoy_sorteo:
-            return ahora_cuba.strftime("%Y-%m-%d")
-        return (ahora_cuba - timedelta(days=1)).strftime("%Y-%m-%d")
-    if ahora_cuba.hour < 6:
-        return (ahora_cuba - timedelta(days=1)).strftime("%Y-%m-%d")
-    return ahora_cuba.strftime("%Y-%m-%d")
+        candidato = ahora_cuba.replace(hour=hora, minute=minuto, second=0, microsecond=0)
+        if candidato > ahora_cuba:
+            candidato -= timedelta(days=1)
+        return fecha_operativa_cuba(candidato)
+    return fecha_operativa_cuba(ahora_cuba)
 
 
 def zona_horaria_sorteo_usa(nombre_db):
@@ -183,19 +190,23 @@ def zona_horaria_sorteo_usa(nombre_db):
 
 
 def calcular_fechas_esperadas_usa(nombre_db):
-    """Retorna (fecha local oficial del sorteo, fecha correspondiente en Cuba)."""
+    """Retorna fecha local de la tarjeta y día operativo Cuba del sorteo."""
     hora_sorteo = parsear_hora_sorteo(nombre_db)
     zona = zona_horaria_sorteo_usa(nombre_db)
     ahora_local = datetime.now(zona)
     if not hora_sorteo:
-        fecha_local = ahora_local.date()
-        instante_sorteo = datetime.combine(fecha_local, datetime.min.time(), tzinfo=zona)
+        instante_sorteo = datetime.combine(ahora_local.date(), datetime.min.time(), tzinfo=zona)
     else:
         hora, minuto = hora_sorteo
         hoy_sorteo = ahora_local.replace(hour=hora, minute=minuto, second=0, microsecond=0)
-        instante_sorteo = hoy_sorteo if ahora_local >= hoy_sorteo else hoy_sorteo - timedelta(days=1)
-        fecha_local = instante_sorteo.date()
-    fecha_cuba_sorteo = convertir_a_cuba(instante_sorteo).strftime("%Y-%m-%d")
+        ayer_sorteo = hoy_sorteo - timedelta(days=1)
+        # Elegir la ocurrencia que pertenece al día operativo vigente en Cuba.
+        dia_operativo = fecha_operativa_actual()
+        candidatos = (hoy_sorteo, ayer_sorteo)
+        validos = [x for x in candidatos if fecha_operativa_cuba(x) == dia_operativo]
+        instante_sorteo = validos[0] if validos else (hoy_sorteo if ahora_local >= hoy_sorteo else ayer_sorteo)
+    fecha_local = instante_sorteo.date()
+    fecha_cuba_sorteo = fecha_operativa_cuba(instante_sorteo)
     return fecha_local.strftime("%Y-%m-%d"), fecha_cuba_sorteo
 
 
@@ -206,37 +217,50 @@ def calcular_fecha_esperada_usa(nombre_db):
 def normalizar_nombre(nombre):
     return " ".join(nombre.split())
 
+
+# Alias confirmados contra sorteos/fixtures/sorteos.json.
+# Se conserva nombre_fuente para poder auditar cada coincidencia.
 ALIASES_NOMBRES_SORTEOS = {
-    "anguilla 8am": "Anguila 8 AM", "anguilla 9am": "Anguila 9 AM",
-    "anguilla 10am": "Anguila 10 AM", "anguilla 11am": "Anguila 11 AM",
-    "anguilla 12pm": "Anguila 12 PM", "anguilla 1pm": "Anguila 1 PM",
-    "anguilla 2pm": "Anguila 2 PM", "anguilla 3pm": "Anguila 3 PM",
-    "anguilla 4pm": "Anguila 4 PM", "anguilla 5pm": "Anguila 5 PM",
-    "anguilla 6pm": "Anguila 6 PM", "anguilla 7pm": "Anguila 7 PM",
-    "anguilla 8pm": "Anguila 8 PM", "anguilla 9pm": "Anguila 9 PM",
-    "anguilla 10pm": "Anguila 10 PM",
-    "haiti bolet 9:30 am": "Haití 1", "haiti bolet 10:30 am": "Haití 2",
-    "haiti bolet 1:30 pm": "Haití 3", "haiti bolet 4:30 pm": "Haití 4",
-    "haiti bolet 5:30 pm": "Haití 5", "haiti bolet 6:30 pm": "Haití 6",
-    "el quemaito mayor": "Quemaito", "el quinielon dia": "Quinielón",
-    "la primera": "Primera", "lotedom": "Lotedom",
+    **{f"anguilla {h}{ampm.lower()}": f"Anguila {h} {ampm}" for h, ampm in [
+        ("8", "AM"), ("9", "AM"), ("10", "AM"), ("11", "AM"),
+        ("12", "PM"), ("1", "PM"), ("2", "PM"), ("3", "PM"),
+        ("4", "PM"), ("5", "PM"), ("6", "PM"), ("7", "PM"),
+        ("8", "PM"), ("9", "PM"), ("10", "PM"),
+    ]},
+    "haiti bolet 9:30 am": "Haití 1",
+    "haiti bolet 10:30 am": "Haití 2",
+    "haiti bolet 11:30 am": "Haití 3",
+    "haiti bolet 5:30 pm": "Haití 4",
+    "haiti bolet 6:30 pm": "Haití 5",
+    "haiti bolet 7:30 pm": "Haití 6",
+    "el quemaito mayor": "Quemaito",
+    "el quinielon dia": "Quinielón",
+    "la primera": "Primera",
+    "la primera noche": "Primera 7 PM",
+    "lotedom": "Lotedom",
+    "la suerte": "Suerte 12:30 PM",
+    "la suerte 6pm": "Suerte 6 PM",
     "king lottery dia": "King Lottery 12:30 PM",
+    "king lottery noche": "King Lottery 7:30 PM",
+    "real": "Real 12:50 PM",
+    "nacional noche": "Nacional",
+    "nacional gana mas": "Gana Más 2:30 PM",
+    "leidsa": "Leidsa 8:55 PM",
     "florida 9:45 pm": "Florida 9:50 PM",
     "new jersey 10:57 pm": "New Jersey 10:50 PM",
     "georgia 6:59 pm": "Georgia 7 PM",
     "georgia 11:34 pm": "Georgia 11:40 PM",
     "texas 10:12 pm": "Texas 11 PM",
+    "tennessee 6:30 pm": "Tennessee 7:20 PM",
 }
+
+
 def canonizar_nombre_sorteo(nombre):
     import unicodedata
-    clave = "".join(ch for ch in unicodedata.normalize("NFKD", str(nombre or "").casefold()) if not unicodedata.combining(ch))
+    clave = unicodedata.normalize("NFKD", str(nombre or "").casefold())
+    clave = "".join(c for c in clave if not unicodedata.combining(c))
     clave = re.sub(r"[^a-z0-9]+", " ", clave).strip()
-    for alias, canonico in ALIASES_NOMBRES_SORTEOS.items():
-        a = "".join(ch for ch in unicodedata.normalize("NFKD", alias) if not unicodedata.combining(ch))
-        a = re.sub(r"[^a-z0-9]+", " ", a).strip()
-        if a == clave:
-            return canonico
-    return str(nombre or "").strip()
+    return ALIASES_NOMBRES_SORTEOS.get(clave, normalizar_nombre(str(nombre or "")))
 
 def extraer_numeros_validos(tarjeta_o_soup):
     bolas = tarjeta_o_soup.find_all(class_="result-number")
@@ -312,9 +336,10 @@ def scrape_especifica(page, url, nombre_forzado):
         numeros = extraer_numeros_validos(soup)[:3]
         if numeros and len(numeros) >= 2:
             return [{
-                "sorteo_nombre": nombre_forzado,
+                "sorteo_nombre": canonizar_nombre_sorteo(nombre_forzado),
+                "nombre_fuente": nombre_forzado,
                 "numeros": numeros,
-                "fecha": calcular_fecha_sorteo_enloteria(nombre_forzado),
+                "fecha": calcular_fecha_sorteo_enloteria(canonizar_nombre_sorteo(nombre_forzado)),
                 "fuente": "enloteria",
             }]
     except Exception as e:
@@ -475,10 +500,7 @@ def informar_cobertura(resultados):
     # Auditoría separada: identifica los sorteos estadounidenses que sí están
     # configurados explícitamente en LotteryUSA. La lista de matriz no sustituye
     # esta configuración y así se evita asumir que un nombre ya se está scrapeando.
-    configurados = {
-        normalizar_nombre(canonizar_nombre_sorteo(n)).casefold()
-        for n in URLS_MULTI
-    }
+    configurados = {normalizar_nombre(n).casefold() for n in URLS_MULTI}
     usa_esperados = [n for n in SORTEOS_ESPERADOS if any(n.startswith(e) for e in ZONAS_ESTADOS)]
     sin_config = [n for n in usa_esperados if normalizar_nombre(n).casefold() not in configurados]
     print(f"Sorteos USA esperados con configuración directa: {len(usa_esperados)-len(sin_config)}/{len(usa_esperados)}")
@@ -492,6 +514,7 @@ def main():
     todos_nuevos = []
 
     now_cuba = obtener_hora_cuba()
+    dia_operativo = fecha_operativa_actual(now_cuba)
     hoy_cuba = now_cuba.strftime("%Y-%m-%d")
     ahora_utc = datetime.now(timezone.utc)
     now_et = ahora_utc.astimezone(TZ_ESTE)
@@ -503,7 +526,7 @@ def main():
     print(f"Cuba: {now_cuba.isoformat()}")
     print(f"Nueva York: {now_et.isoformat()}")
     print(f"República Dominicana: {ahora_utc.astimezone(TZ_RD).isoformat()}")
-    print(f"Fecha Cuba: {hoy_cuba}")
+    print(f"Fecha operativa Cuba: {dia_operativo} (01:00–00:59)")
     print(f"Fecha Este: {hoy_et}")
     print("===============================")
 
@@ -567,33 +590,21 @@ def main():
             print(f"⚠️ No se pudo leer JSON previo: {e}")
             guardados = []
 
-    # Se conservan hoy y ayer (Cuba) para no descartar sorteos nocturnos
-    # válidos por diferencias entre la fecha del país del sorteo y Cuba.
-    # El consumidor del JSON debe usar el campo fecha para elegir el día.
-    fecha_ayer = (now_cuba.date() - timedelta(days=1)).strftime("%Y-%m-%d")
-    fechas_validas = {hoy_cuba, fecha_ayer}
+    # Un único día operativo Cuba: desde 01:00 inclusive hasta 00:59
+    # del día calendario siguiente. No mezclar registros de días operativos.
+    dia_operativo = fecha_operativa_actual(now_cuba)
+    fechas_validas = {dia_operativo}
     dic = {}
     for r in guardados:
         if r.get("fecha") in fechas_validas and r.get("sorteo_nombre"):
-            r = dict(r)
-            nombre_original = r["sorteo_nombre"]
-            nombre_canonico = canonizar_nombre_sorteo(nombre_original)
-            if nombre_canonico != nombre_original:
-                r.setdefault("nombre_fuente", nombre_original)
-                r["sorteo_nombre"] = nombre_canonico
             clave = f"{r['sorteo_nombre']}|{r['fecha']}"
-            if clave in dic:
-                dic[clave] = combinar_resultados(dic[clave], r)
-            else:
-                dic[clave] = r
+            dic[clave] = r
 
     for nuevo in todos_nuevos:
         fecha = nuevo.get("fecha")
         if fecha not in fechas_validas:
             print(f"⏭️ Fecha demasiado antigua/futura: {nuevo.get('sorteo_nombre')} | {fecha}")
             continue
-        if fecha == fecha_ayer:
-            print(f"ℹ️ Se conserva resultado de ayer: {nuevo.get('sorteo_nombre')} | {fecha}")
         clave = f"{nuevo['sorteo_nombre']}|{fecha}"
         if clave in dic:
             dic[clave] = combinar_resultados(dic[clave], nuevo)
@@ -611,7 +622,7 @@ def main():
         json.dump(finales_filtrados, f, ensure_ascii=False, indent=2)
     os.replace(archivo_temporal, ARCHIVO_JSON)
 
-    print(f"✅ Guardados {len(finales_filtrados)} resultados de hoy/ayer Cuba ({hoy_cuba}/{fecha_ayer}).")
+    print(f"✅ Guardados {len(finales_filtrados)} resultados del día operativo Cuba ({dia_operativo}; ventana 01:00–00:59).")
     print("\n=== RESUMEN ===")
     print(f"Total sorteos en JSON: {len(finales_filtrados)}")
     print(f"Fecha Cuba: {hoy_cuba}")
