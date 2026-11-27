@@ -55,58 +55,26 @@ def _zona_horaria_cuba(fecha=None):
 # ═══════════════════════════════════════════════════════════════
 def _obtener_sorteos_cuba_estricto(incluir_cerrados=False):
     """
-    Devuelve sorteos programados para hoy en hora Cuba que aún no han salido.
-    Comercial/Cliente reciben solo sorteos abiertos; Banco/Superadmin pueden
-    seleccionar sorteos cerrados (dentro de la ventana previa a la salida).
-    Si existe calendario semanal, un día ausente NO usa la hora manual como fallback.
+    Usa el mismo cálculo horario que el resto de la aplicación.
+    El sorteo permanece visible hasta el instante exacto de cierre configurado;
+    no se aplica una segunda ventana preventiva de 10 minutos.
+    Banco/Superadmin pueden seleccionar sorteos cerrados antes de la salida.
     """
-    ahora_utc = timezone.now()
-    CUBA_TZ = _zona_horaria_cuba(ahora_utc)
-    ahora_cuba = ahora_utc.astimezone(CUBA_TZ)
-    fecha_cuba = ahora_cuba.date()
-    temporada = 'verano' if es_verano_cuba(fecha_cuba) else 'invierno'
-    dia_es = {0: 'lunes', 1: 'martes', 2: 'miercoles', 3: 'jueves', 4: 'viernes', 5: 'sabado', 6: 'domingo'}[fecha_cuba.weekday()]
+    ahora = timezone.now()
     sorteos_validos = []
 
-    for s in Sorteo.objects.filter(activo=True).order_by('hora_salida'):
-        hora_salida = None
-        if s.horarios:
-            horario_dia = (s.horarios.get(temporada) or {}).get(dia_es)
-            if horario_dia:
-                try:
-                    hh, mm = horario_dia.split(':')
-                    hora_salida = time(int(hh), int(mm))
-                except (ValueError, TypeError):
-                    logger.warning('Horario inválido para %s (%s/%s): %r', s.nombre, temporada, dia_es, horario_dia)
-                    continue
-            else:
-                # Calendario semanal presente: día no programado no se debe mostrar.
-                continue
-        else:
-            hora_salida = s.hora_salida
+    for sorteo in Sorteo.objects.filter(activo=True):
+        sorteo = calcular_estado_sorteo(sorteo, ahora)
+        if sorteo.estado_actual == "abierto":
+            sorteos_validos.append(sorteo)
+        elif incluir_cerrados and sorteo.estado_actual == "cerrado":
+            sorteos_validos.append(sorteo)
 
-        if not hora_salida:
-            continue
+    return sorted(
+        sorteos_validos,
+        key=lambda sorteo: sorteo.hora_salida or time.max,
+    )
 
-        salida_local = datetime.combine(fecha_cuba, hora_salida)
-        dt_salida = salida_local.replace(tzinfo=_zona_horaria_cuba(salida_local))
-        minutos_cierre = s.minutos_cierre if s.minutos_cierre is not None else 10
-        dt_cierre = dt_salida - timedelta(minutes=minutos_cierre)
-
-        if ahora_cuba >= dt_salida:
-            continue
-        estado = 'abierto' if ahora_cuba < dt_cierre else 'cerrado'
-        if estado == 'cerrado' and not incluir_cerrados:
-            continue
-
-        s.estado_actual = estado
-        s.hora_salida = hora_salida
-        s.hora_cierre = dt_cierre
-        s.hora_salida_str = hora_salida.strftime('%I:%M %p').lstrip('0')
-        s.sorteos_segundos_restantes = max(0, int(((dt_cierre if estado == 'abierto' else dt_salida) - ahora_cuba).total_seconds()))
-        sorteos_validos.append(s)
-
-    return sorteos_validos
 
 # ═══════════════════════════════════════════════════════════════
 # Helper · Detecta si una BOLETA completa ya existe en BD
