@@ -206,7 +206,7 @@ def _hora_enloteria(nombre, fecha):
         "nacional": (21, 0),
         "real": (12, 55),
         "real 12 55 pm": (12, 55),
-        "real noche": (19, 55),
+        "real noche": (20, 55),
         "leidsa": (20, 55),
         "leidsa 8 55 pm": (20, 55),
         "pega 3": (20, 55),
