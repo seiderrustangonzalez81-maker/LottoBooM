@@ -538,5 +538,17 @@
   ],
   "Quinielón Noche": [
     "fijo"
+  ],
+  "Real Noche": [
+    "fijo",
+    "corrido1",
+    "corrido2",
+    "centena corrida1",
+    "centena corrida2",
+    "VsPick2",
+    "vspf",
+    "pick2vspf",
+    "tripleta",
+    "posicion"
   ]
 }
