@@ -73,8 +73,8 @@ def obtener_hora_desde_horarios(sorteo, fecha=None):
         return None
 
 
-# Los horarios estadounidenses están guardados en hora local del estado.
-# Los sorteos dominicanos/haitianos ya están normalizados a hora Cuba en la matriz.
+# Los horarios estadounidenses y Haiti Bolet se guardan en hora local de su fuente.
+# Los sorteos dominicanos se guardan normalizados a hora Cuba por temporada.
 ZONAS_SORTEOS_USA = {
     "new york": "America/New_York",
     "new jersey": "America/New_York",
@@ -87,9 +87,12 @@ ZONAS_SORTEOS_USA = {
 
 
 def _zona_fuente_sorteo(sorteo):
-    # El nombre del sorteo identifica su estado incluso en bases antiguas
-    # donde el campo origen todavía no estaba poblado.
+    """Zona original de los sorteos USA y Haiti Bolet."""
     nombre = str(getattr(sorteo, "nombre", "") or "").casefold()
+    if nombre.startswith(("haití 1", "haiti 1", "haití 2", "haiti 2", "haití 3", "haiti 3")):
+        return ZoneInfo("America/Port-au-Prince")
+    if nombre.startswith(("haití 4", "haiti 4", "haití 5", "haiti 5", "haití 6", "haiti 6")):
+        return ZoneInfo("America/Santo_Domingo")
     for prefijo, zona in ZONAS_SORTEOS_USA.items():
         if nombre.startswith(prefijo):
             return ZoneInfo(zona)
@@ -112,7 +115,7 @@ def get_datetime_salida_cuba(sorteo, fecha=None):
     zona_fuente = _zona_fuente_sorteo(sorteo)
 
     if zona_fuente:
-        # Un sorteo estadounidense puede caer en el día calendario siguiente de Cuba.
+        # El sorteo puede caer en otro día calendario al convertir desde su fuente.
         for fecha_fuente in (
             fecha,
             fecha - timedelta(days=1),
