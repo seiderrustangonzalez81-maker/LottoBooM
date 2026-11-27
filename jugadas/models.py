@@ -252,7 +252,7 @@ class Jugada(models.Model):
     def puede_modificar(self):
         """Verifica si la jugada puede ser modificada (antes del cierre del sorteo)."""
         try:
-            cierre = get_hora_cierre(self.sorteo)
+            cierre = get_hora_cierre(self.sorteo, self.fecha_sorteo)
             if not cierre:
                 return False
             return cierre > timezone.now() and self.estado in ['pendiente', 'confirmada']
