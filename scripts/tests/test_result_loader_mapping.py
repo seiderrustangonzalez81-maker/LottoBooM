@@ -25,5 +25,30 @@ class ResultLoaderMappingTests(unittest.TestCase):
         self.assertNotEqual(self.mapping["Georgia 11:34 PM"], "Georgia 12:34 AM")
 
 
+    def test_every_catalog_draw_has_an_explicit_identity_mapping(self):
+        import json
+        fixture = json.loads((ROOT / "sorteos" / "fixtures" / "sorteos.json").read_text(encoding="utf-8"))
+        names = {
+            item["fields"]["nombre"]
+            for item in fixture
+            if item.get("model") == "sorteos.sorteo"
+        }
+        self.assertEqual(len(names), 59)
+        self.assertEqual({name for name in names if self.mapping.get(name) != name}, set())
+
+    def test_dominican_source_aliases_map_to_their_own_draws(self):
+        self.assertEqual(self.mapping["Loteka 1:30 PM"], "Loteka Tarde")
+        self.assertEqual(self.mapping["Loteka 7:50 PM"], "Loteka 7:55 PM")
+        self.assertEqual(self.mapping["Nacional Gana Más"], "Gana Más 2:30 PM")
+        self.assertEqual(self.mapping["Nacional Noche"], "Nacional")
+        self.assertEqual(self.mapping["El Quemaito Mayor Noche"], "Quemaito Noche")
+        self.assertEqual(self.mapping["El Quinielon Noche"], "Quinielón Noche")
+
+    def test_similar_draw_names_are_not_merged(self):
+        self.assertNotEqual(self.mapping["Loteka Tarde"], self.mapping["Loteka 7:55 PM"])
+        self.assertNotEqual(self.mapping["Suerte 12:30 PM"], self.mapping["Suerte 6 PM"])
+        self.assertNotEqual(self.mapping["Nacional"], self.mapping["Gana Más 2:30 PM"])
+
+
 if __name__ == "__main__":
     unittest.main()
