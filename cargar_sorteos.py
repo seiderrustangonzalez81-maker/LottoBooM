@@ -21,20 +21,38 @@ with FIXTURE_PATH.open(encoding="utf-8") as archivo:
 with CONFIG_PATH.open(encoding="utf-8") as archivo:
     formas_configuradas = json.load(archivo)
 
-# Renombrar únicamente si el nombre nuevo aún no existe. Nunca se borran
-# sorteos ni se tocan las apuestas/resultados vinculados por FK.
-for nombre_anterior, nombre_nuevo in (
-    ("Loteka 7:50 PM", "Loteka 7:55 PM"),
-    ("Real 12:50 PM", "Real 12:55 PM"),
-    ("Tennessee 10:20 AM", "Tennessee 9:28 AM"),
-    ("Tennessee 1:20 PM", "Tennessee 12:28 PM"),
-    ("Tennessee 7:20 PM", "Tennessee 6:28 PM"),
-):
+# Conciliar nombres antiguos usando exactamente el mismo mapa que el cargador.
+# Si ya existe el nombre canónico, se desactiva el alias antiguo pero no se borra:
+# las apuestas y resultados históricos conservan su FK al registro original.
+from sorteos.management.commands.load_results import MAPEO_NOMBRES
+
+nombres_canonicos = {
+    registro.get("fields", {}).get("nombre")
+    for registro in fixture
+    if registro.get("fields", {}).get("nombre")
+}
+renombrados = 0
+desactivados = 0
+
+for nombre_anterior, nombre_nuevo in MAPEO_NOMBRES.items():
+    if nombre_anterior in nombres_canonicos or nombre_nuevo not in nombres_canonicos:
+        continue
+
     anterior = Sorteo.objects.filter(nombre=nombre_anterior).first()
-    nuevo_existe = Sorteo.objects.filter(nombre=nombre_nuevo).exists()
-    if anterior and not nuevo_existe:
+    if not anterior:
+        continue
+
+    nuevo = Sorteo.objects.filter(nombre=nombre_nuevo).first()
+    if nuevo and nuevo.pk != anterior.pk:
+        if anterior.activo:
+            anterior.activo = False
+            anterior.save(update_fields=["activo"])
+            desactivados += 1
+    else:
         anterior.nombre = nombre_nuevo
         anterior.save(update_fields=["nombre"])
+        renombrados += 1
+
 
 actualizados = 0
 creados = 0
@@ -65,6 +83,7 @@ for registro in fixture:
         actualizados += 1
 
 print(f"Catálogo conciliado: {actualizados} actualizados, {creados} creados.")
+print(f"Alias históricos: {renombrados} renombrados, {desactivados} desactivados (sin borrar registros).")
 if omitidos:
     print("Sorteos del fixture no incluidos en la matriz de formas (no modificados):")
     for nombre in omitidos:
