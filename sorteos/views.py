@@ -229,7 +229,7 @@ def api_sorteo_detail(request, sorteo_id):
         'nombre': sorteo.nombre,
         'origen': sorteo.origen,
         'activo': sorteo.activo,
-        'minutos_cierre': sorteo.minutos_cierre,
+        'minutos_cierre': 10,
         'horarios': sorteo.horarios,
         'formas_juego': sorteo.formas_juego or [],
         'formas_disponibles': [{'id': fj.id, 'nombre': fj.nombre, 'activo': fj.activo}
