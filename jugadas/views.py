@@ -3882,59 +3882,56 @@ def api_forma_pago_cliente(request):
 
 @login_required
 def api_sorteos_disponibles(request):
+    """Devuelve estados y horas convertidos con el calendario maestro."""
+    from sorteos.utils import calcular_estado_sorteo, fecha_operativa_actual
+
     ahora_utc = timezone.now()
-    CUBA_TZ = _zona_horaria_cuba(ahora_utc)
-    ahora = ahora_utc.astimezone(CUBA_TZ)
-    # FIX_FECHA_SORTEOS_V1 (2026-10-18): respetar la fecha enviada por el frontend
-    _req_fecha = request.GET.get('fecha')
-    if _req_fecha:
+    fecha_param = request.GET.get('fecha')
+    if fecha_param:
         try:
-            hoy = datetime.strptime(_req_fecha, '%Y-%m-%d').date()
+            fecha_consulta = datetime.strptime(fecha_param, '%Y-%m-%d').date()
         except ValueError:
-            hoy = ahora.date()
+            return JsonResponse({'error': 'Fecha inválida.'}, status=400)
     else:
-        hoy = ahora.date()
-
-    def _hora_salida_hoy(sorteo):
-        dia_es = {0: 'lunes', 1: 'martes', 2: 'miercoles', 3: 'jueves',
-                  4: 'viernes', 5: 'sabado', 6: 'domingo'}[hoy.weekday()]
-        temp = 'verano' if es_verano_cuba(hoy) else 'invierno'
-        if sorteo.horarios:
-            hora_str = (sorteo.horarios.get(temp) or {}).get(dia_es)
-            if not hora_str:
-                return None
-            try:
-                hh, mm = hora_str.split(':')
-                return datetime.strptime(f"{hh}:{mm}", "%H:%M").time()
-            except Exception:
-                return None
-        return sorteo.hora_salida
-
-    def _calcular_estado(sorteo, hora_salida):
-        minutos = 10  # Regla fija: cierre exactamente 10 minutos antes
-        salida_local = datetime.combine(hoy, hora_salida)
-        dt_salida = salida_local.replace(tzinfo=_zona_horaria_cuba(salida_local))
-        dt_cierre = dt_salida - timedelta(minutes=minutos)
-
-        if ahora < dt_cierre:
-            return 'abierto', int((dt_cierre - ahora).total_seconds()), dt_cierre
-        elif ahora < dt_salida:
-            return 'cerrado', int((dt_salida - ahora).total_seconds()), dt_cierre
-        else:
-            # FIX_PROXIMO_DIA_V1: el sorteo ya salió hoy. Calculamos el countdown
-            # hasta la próxima salida (mañana o el día que corresponda).
-            seg_prox = _seg_hasta_prox(sorteo, ahora)
-            return 'salido', (seg_prox or 0), dt_cierre
+        fecha_consulta = fecha_operativa_actual(ahora_utc)
 
     sorteos_data = []
-    for s in Sorteo.objects.filter(activo=True).order_by('id'):
-        hora_salida = _hora_salida_hoy(s)
+    for sorteo in Sorteo.objects.filter(activo=True).order_by('id'):
+        try:
+            estado_sorteo = calcular_estado_sorteo(
+                sorteo,
+                ahora=ahora_utc,
+                fecha_consulta=fecha_consulta,
+            )
+            estado = estado_sorteo.estado_actual
+            hora_salida = getattr(estado_sorteo, 'hora_salida', None)
+            hora_cierre = getattr(estado_sorteo, 'hora_cierre', None)
+            segundos = getattr(estado_sorteo, 'segundos_restantes', None) or 0
 
-        if not hora_salida:
             sorteos_data.append({
-                'id': s.id,
-                'nombre': s.nombre,
-                'origen': s.origen or 'otro',
+                'id': sorteo.id,
+                'nombre': sorteo.nombre,
+                'origen': sorteo.origen or 'otro',
+                'estado': estado,
+                'esta_abierto': estado == 'abierto',
+                'hora_salida': getattr(estado_sorteo, 'hora_salida_str', '—'),
+                'hora_salida_sort': hora_salida.strftime('%H:%M') if hora_salida else '99:99',
+                'hora_cierre': getattr(estado_sorteo, 'hora_cierre_str', '—'),
+                'segundos_restantes': segundos,
+                'minutos_restantes': max(0, segundos // 60),
+                'es_proximo_dia': (estado == 'salido' and segundos > 0),
+                'minutos_cierre': 10,
+                'formas_juego': sorteo.formas_juego or [],
+            })
+        except Exception:
+            logger.exception(
+                'No se pudo calcular el estado del sorteo %s (%s); se bloquea su disponibilidad.',
+                sorteo.id, sorteo.nombre,
+            )
+            sorteos_data.append({
+                'id': sorteo.id,
+                'nombre': sorteo.nombre,
+                'origen': sorteo.origen or 'otro',
                 'estado': 'no_programado',
                 'esta_abierto': False,
                 'hora_salida': '—',
@@ -3942,34 +3939,16 @@ def api_sorteos_disponibles(request):
                 'hora_cierre': '—',
                 'segundos_restantes': 0,
                 'minutos_restantes': 0,
-                'formas_juego': s.formas_juego or [],
+                'es_proximo_dia': False,
+                'minutos_cierre': 10,
+                'formas_juego': sorteo.formas_juego or [],
             })
-            continue
-
-        estado, segundos, dt_cierre = _calcular_estado(s, hora_salida)
-        minutos = max(0, segundos // 60)
-
-        sorteos_data.append({
-            'id': s.id,
-            'nombre': s.nombre,
-            'origen': s.origen or 'otro',
-            'estado': estado,
-            'esta_abierto': estado == 'abierto',
-            'hora_salida': hora_salida.strftime('%I:%M %p').lstrip('0'),
-            'hora_salida_sort': hora_salida.strftime('%H:%M'),
-            'hora_cierre': dt_cierre.strftime('%I:%M %p').lstrip('0') if dt_cierre else '',
-            'segundos_restantes': segundos,
-            'minutos_restantes': minutos,
-            'es_proximo_dia': (estado == 'salido' and segundos > 0),
-            'formas_juego': s.formas_juego or [],
-        })
 
     orden_estado = {'abierto': 0, 'cerrado': 1, 'salido': 2, 'no_programado': 3}
     sorteos_data.sort(key=lambda x: (
         orden_estado.get(x['estado'], 9),
         x.get('hora_salida_sort', '99:99')
     ))
-
     return JsonResponse(sorteos_data, safe=False)
 
 @login_required
