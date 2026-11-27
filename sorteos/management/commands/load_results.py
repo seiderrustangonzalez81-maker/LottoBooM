@@ -9,7 +9,7 @@ from django.contrib.auth.models import User
 from sorteos.models import Sorteo
 from resultados.models import Resultado
 from resultados.views import procesar_resultado
-from sorteos.utils import get_hora_salida
+from sorteos.utils import get_hora_salida, get_datetime_salida_cuba
 
 URL_JSON = "https://raw.githubusercontent.com/seiderrustangonzalez81-maker/LottoBooM/main/resultados.json"
 
@@ -131,8 +131,10 @@ def temporada_actual(fecha=None):
     return 'verano' if es_verano_cuba(fecha) else 'invierno'
 
 
-def sorteo_corre_hoy(sorteo, dia_actual, temporada):
-    """No inventa sorteos: el día debe existir explícitamente en la temporada."""
+def sorteo_corre_hoy(sorteo, dia_actual, temporada, fecha_operativa=None):
+    """Comprueba el calendario real; USA se evalúa en su zona de origen."""
+    if fecha_operativa is not None:
+        return get_datetime_salida_cuba(sorteo, fecha_operativa) is not None
     horarios = getattr(sorteo, 'horarios', None)
     if not isinstance(horarios, dict) or not horarios:
         return False
@@ -267,7 +269,7 @@ class Command(BaseCommand):
             if not sorteo:
                 destinos_sin_sorteo.add((nombre_web, nombre_db))
                 continue
-            if not sorteo_corre_hoy(sorteo, dia_actual, temporada):
+            if not sorteo_corre_hoy(sorteo, dia_actual, temporada, dia_operativo):
                 continue
 
             fecha = parse_date(item.get("fecha", ""))
