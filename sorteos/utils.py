@@ -309,7 +309,7 @@ def get_proximo_datetime_sorteo(sorteo, ahora=None):
     if not candidatos:
         return None, False
     proximo = min(candidatos)
-    es_hoy = _fecha_operativa_cuba(proximo) == _fecha_operativa_cuba(ahora_local)
+    es_hoy = proximo.date() == ahora_local.date()
     return proximo, es_hoy
 
 
