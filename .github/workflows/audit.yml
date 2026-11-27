@@ -34,7 +34,7 @@ jobs:
         env:
           DEBUG: "true"
           SECRET_KEY: "ci-only-not-a-production-secret"
-        run: python manage.py test jugadas --verbosity 2
+        run: python manage.py test jugadas sorteos --verbosity 2
       - name: Pruebas del parser de apuestas (Node.js)
         run: node --test scripts/tests/test_apostar_text_validator.js
       - name: Pruebas unitarias de auditoría
