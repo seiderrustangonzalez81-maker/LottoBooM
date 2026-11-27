@@ -1373,6 +1373,8 @@ def _intentar_actualizar_loteria():
 @login_required
 def superparlet(request):
     _intentar_actualizar_loteria()
+    from sorteos.utils import fecha_operativa_actual
+    hoy_operativo = fecha_operativa_actual()
     user = request.user
     es_superadmin = user.is_superuser or user.roles.filter(tipo='superadmin', activo=True).exists()
     es_banco = user.roles.filter(tipo='banco', activo=True).exists()
@@ -1403,7 +1405,7 @@ def superparlet(request):
         'es_banco': es_banco,
         'es_comercial': es_comercial,
         'user': user,
-        'hoy': timezone.now(),
+        'hoy': hoy_operativo,
         'saldo_total': float(total_fondos),
         'saldo_bonos': float(total_bonos),
         'rol': user.roles.filter(activo=True).first().tipo if user.roles.filter(activo=True).exists() else 'cliente',
@@ -1500,7 +1502,7 @@ def apostar(request):
                     'forma_pago_id': b.forma_pago_id,
                     'fecha_sorteo': (
                         b.fecha_sorteo.strftime('%Y-%m-%d')
-                        if b.fecha_sorteo else timezone.localdate().strftime('%Y-%m-%d')
+                        if b.fecha_sorteo else __import__('sorteos.utils', fromlist=['fecha_operativa_actual']).fecha_operativa_actual().strftime('%Y-%m-%d')
                     ),
                     'lineas': lineas,
                     'sorteo_ids': list(sorteo_ids_set),
@@ -1568,7 +1570,8 @@ def apostar(request):
                 'opciones': comerciales_list,
             })
 
-    fecha_actual = timezone.localdate()
+    from sorteos.utils import fecha_operativa_actual
+    fecha_actual = fecha_operativa_actual()
     sorteos_disponibles = _obtener_sorteos_cuba_estricto(incluir_cerrados=(es_superadmin or es_banco))
 
     formas_juego = FormaJuego.objects.filter(activo=True)
@@ -1604,7 +1607,7 @@ def apostar(request):
         'saldo_bonos': float(total_bonos),
         'rol': user.roles.filter(activo=True).first().tipo if user.roles.filter(activo=True).exists() else 'cliente',
         'user': user,
-        'hoy': timezone.now(),
+        'hoy': fecha_actual,
         'edit_mode': edit_mode,
         'jugada_id': jugada_id,
         'modo_edicion': modo_edicion,
@@ -3677,7 +3680,8 @@ def api_verificar_sorteo(request, sorteo_id):
     try:
         sorteo = get_object_or_404(Sorteo, id=sorteo_id)
         ahora = timezone.now()
-        hoy = timezone.localdate()
+        from sorteos.utils import fecha_operativa_actual
+        hoy = fecha_operativa_actual(ahora)
         sorteo = calcular_estado_sorteo(sorteo, ahora, hoy)
         esta_abierto = getattr(sorteo, 'estado_actual', 'cerrado') == 'abierto'
         return JsonResponse({
@@ -4096,6 +4100,8 @@ def api_duplicar_boleta(request, boleta_id):
     if not (original.usuario_id == user.id or original.destinatario_id == user.id or es_autorizador):
         return JsonResponse({'success': False, 'error': 'No tienes permiso'}, status=403)
 
+    from sorteos.utils import fecha_operativa_actual
+    hoy_operativo = fecha_operativa_actual()
     fecha_str = request.POST.get('fecha')
     if fecha_str:
         try:
@@ -4103,9 +4109,9 @@ def api_duplicar_boleta(request, boleta_id):
         except ValueError:
             return JsonResponse({'success': False, 'error': 'Formato de fecha inválido'}, status=400)
     else:
-        fecha_apuesta = timezone.localdate()
+        fecha_apuesta = hoy_operativo
 
-    hoy = timezone.localdate()
+    hoy = hoy_operativo
     # FIX_FUTURO_1ANO_V1
     _es_admin_d = user.is_superuser or user.roles.filter(tipo__in=['superadmin','banco'], activo=True).exists()
     if fecha_apuesta < hoy and not _es_admin_d:
