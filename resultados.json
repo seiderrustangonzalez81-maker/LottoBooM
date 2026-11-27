@@ -223,12 +223,22 @@
     "sorteo_nombre": "Florida 1:35 PM",
     "fecha": "2026-11-27",
     "fuente": "lotteryusa",
-    "pick2": "",
-    "pick3": "",
-    "pick4": "",
+    "pick2": "62",
+    "pick3": "951",
+    "pick4": "9567",
     "pick5": "02086",
-    "fijo": "",
-    "corrido_1": "",
-    "corrido_2": ""
+    "fijo": "51",
+    "corrido_1": "95",
+    "corrido_2": "67"
+  },
+  {
+    "sorteo_nombre": "Nacional Gana Más",
+    "numeros": [
+      "97",
+      "46",
+      "76"
+    ],
+    "fecha": "2026-11-27",
+    "fuente": "enloteria"
   }
 ]
