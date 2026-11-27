@@ -231,43 +231,40 @@ def _hora_enloteria(nombre, fecha):
 
     # Algunos sorteos cambian el domingo; la hora sigue siendo República Dominicana.
     if fecha.weekday() == 6:
+        if clave in {"texas 11 am", "texas 1 20 pm", "texas 7 pm", "texas 11 pm"}:
+            return None
         if clave in {"la primera noche", "primera 7 pm", "el quinielon noche", "quinielon noche"}:
             return (16, 0)
         if clave in {"nacional noche", "nacional"}:
             return (18, 0)
-        if clave in {"leidsa", "leidsa 8 55 pm", "pega 3", "pega 3"}:
+        if clave in {"leidsa", "leidsa 8 55 pm", "pega 3"}:
             return (15, 55)
+        if clave == "real noche":
+            return (20, 0)
     return hora
 
 
 def calcular_fecha_sorteo_enloteria(nombre, ahora_cuba=None):
+    """Calcula el día operativo usando la zona horaria real de la fuente."""
     ahora_cuba = ahora_cuba or obtener_hora_cuba()
-    hora_sorteo = _hora_enloteria(nombre, ahora_cuba.date())
-    if not hora_sorteo:
-        return fecha_operativa_cuba(ahora_cuba)
-
-    hora, minuto = hora_sorteo
     nombre_norm = re.sub(r"[^a-z0-9]+", " ", str(nombre or "").casefold()).strip()
     zona_fuente = next(
         (zona for estado, zona in ZONAS_ESTADOS.items()
          if nombre_norm.startswith(estado.casefold())),
-        None,
+        TZ_RD,
     )
+    ahora_fuente = ahora_cuba.astimezone(zona_fuente)
+    hora_sorteo = _hora_enloteria(nombre, ahora_fuente.date())
+    if not hora_sorteo:
+        return None
 
-    if zona_fuente:
-        ahora_fuente = ahora_cuba.astimezone(zona_fuente)
-        candidato_fuente = ahora_fuente.replace(
-            hour=hora, minute=minuto, second=0, microsecond=0
-        )
-        if candidato_fuente > ahora_fuente:
-            candidato_fuente -= timedelta(days=1)
-        candidato_cuba = convertir_a_cuba(candidato_fuente)
-        return fecha_operativa_cuba(candidato_cuba)
-
-    candidato = ahora_cuba.replace(hour=hora, minute=minuto, second=0, microsecond=0)
-    if candidato > ahora_cuba:
-        candidato -= timedelta(days=1)
-    return fecha_operativa_cuba(candidato)
+    hora, minuto = hora_sorteo
+    candidato_fuente = ahora_fuente.replace(
+        hour=hora, minute=minuto, second=0, microsecond=0
+    )
+    if candidato_fuente > ahora_fuente:
+        candidato_fuente -= timedelta(days=1)
+    return fecha_operativa_cuba(convertir_a_cuba(candidato_fuente))
 
 
 def zona_horaria_sorteo_usa(nombre_db):
@@ -278,24 +275,28 @@ def zona_horaria_sorteo_usa(nombre_db):
 
 
 def calcular_fechas_esperadas_usa(nombre_db):
-    """Retorna fecha local de la tarjeta y día operativo Cuba del sorteo."""
-    hora_sorteo = parsear_hora_sorteo(nombre_db)
+    """Retorna fecha local de origen y día operativo Cuba."""
     zona = zona_horaria_sorteo_usa(nombre_db)
     ahora_local = datetime.now(zona)
+    hora_sorteo = parsear_hora_sorteo(nombre_db)
     if not hora_sorteo:
-        instante_sorteo = datetime.combine(ahora_local.date(), datetime.min.time(), tzinfo=zona)
-    else:
-        hora, minuto = hora_sorteo
-        hoy_sorteo = ahora_local.replace(hour=hora, minute=minuto, second=0, microsecond=0)
-        ayer_sorteo = hoy_sorteo - timedelta(days=1)
-        # Elegir la ocurrencia que pertenece al día operativo vigente en Cuba.
-        dia_operativo = fecha_operativa_actual()
-        candidatos = (hoy_sorteo, ayer_sorteo)
-        validos = [x for x in candidatos if fecha_operativa_cuba(x) == dia_operativo]
-        instante_sorteo = validos[0] if validos else (hoy_sorteo if ahora_local >= hoy_sorteo else ayer_sorteo)
-    fecha_local = instante_sorteo.date()
-    fecha_cuba_sorteo = fecha_operativa_cuba(instante_sorteo)
-    return fecha_local.strftime("%Y-%m-%d"), fecha_cuba_sorteo
+        return None, None
+
+    if ahora_local.weekday() == 6 and normalizar_nombre(nombre_db).casefold() in {
+        "texas 11 am", "texas 1:20 pm", "texas 7 pm", "texas 11 pm"
+    }:
+        return None, None
+
+    hora, minuto = hora_sorteo
+    hoy_sorteo = ahora_local.replace(hour=hora, minute=minuto, second=0, microsecond=0)
+    ayer_sorteo = hoy_sorteo - timedelta(days=1)
+    dia_operativo = fecha_operativa_actual()
+    candidatos = (hoy_sorteo, ayer_sorteo)
+    validos = [x for x in candidatos if fecha_operativa_cuba(x) == dia_operativo]
+    instante_sorteo = validos[0] if validos else (
+        hoy_sorteo if ahora_local >= hoy_sorteo else ayer_sorteo
+    )
+    return instante_sorteo.date().isoformat(), fecha_operativa_cuba(instante_sorteo)
 
 
 def calcular_fecha_esperada_usa(nombre_db):
@@ -413,12 +414,13 @@ def scrape_principal(page):
             if not nombre or nombre in NOMBRES_IGNORADOS:
                 continue
             numeros = extraer_numeros_validos(tarjeta)
-            if numeros and len(numeros) >= 2:
+            fecha_resultado = calcular_fecha_sorteo_enloteria(nombre)
+            if numeros and len(numeros) >= 2 and fecha_resultado:
                 resultados.append({
                     "sorteo_nombre": canonizar_nombre_sorteo(nombre),
                     "nombre_fuente": nombre,
                     "numeros": numeros,
-                    "fecha": calcular_fecha_sorteo_enloteria(nombre),
+                    "fecha": fecha_resultado,
                     "fuente": "enloteria",
                 })
         except Exception as e:
@@ -431,12 +433,13 @@ def scrape_especifica(page, url, nombre_forzado):
         page.wait_for_timeout(4000)
         soup = BeautifulSoup(page.content(), "html.parser")
         numeros = extraer_numeros_validos(soup)[:3]
-        if numeros and len(numeros) >= 2:
+        fecha_resultado = calcular_fecha_sorteo_enloteria(canonizar_nombre_sorteo(nombre_forzado))
+        if numeros and len(numeros) >= 2 and fecha_resultado:
             return [{
                 "sorteo_nombre": canonizar_nombre_sorteo(nombre_forzado),
                 "nombre_fuente": nombre_forzado,
                 "numeros": numeros,
-                "fecha": calcular_fecha_sorteo_enloteria(canonizar_nombre_sorteo(nombre_forzado)),
+                "fecha": fecha_resultado,
                 "fuente": "enloteria",
             }]
     except Exception as e:
@@ -497,6 +500,9 @@ def scrape_lotteryusa(page):
 
     for nombre_db, juegos in URLS_MULTI.items():
         fecha_esperada_local, fecha_esperada_cuba = calcular_fechas_esperadas_usa(nombre_db)
+        if not fecha_esperada_local or not fecha_esperada_cuba:
+            print(f"  ⏭️ {nombre_db}: no está programado para hoy.")
+            continue
         resultado_sorteo = {
             "sorteo_nombre": canonizar_nombre_sorteo(nombre_db), "nombre_fuente": nombre_db, "fecha": fecha_esperada_cuba, "fuente": "lotteryusa",
             "pick2": "", "pick3": "", "pick4": "", "pick5": "",
