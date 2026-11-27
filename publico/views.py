@@ -33,13 +33,14 @@ def _calcular_estadisticas():
     # FIX_SORTEOS_PENDIENTES_V1: usar get_hora_salida (respeta horarios JSON)
     try:
         total_sorteos = Sorteo.objects.filter(activo=True).count()
-        from sorteos.utils import get_hora_salida
-        hora_actual = timezone.localtime(ahora).time()
+        from sorteos.utils import get_datetime_salida_cuba, fecha_operativa_actual, _tz_cuba
+        ahora_cuba = ahora.astimezone(_tz_cuba(ahora))
+        fecha_operativa = fecha_operativa_actual(ahora)
         sorteos_pendientes = 0
         for s in Sorteo.objects.filter(activo=True):
             try:
-                hs = get_hora_salida(s, hoy)
-                if hs and hs > hora_actual:
+                salida = get_datetime_salida_cuba(s, fecha_operativa)
+                if salida and salida > ahora_cuba:
                     sorteos_pendientes += 1
             except Exception:
                 pass
