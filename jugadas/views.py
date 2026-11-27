@@ -1842,8 +1842,15 @@ def _guardar_apuesta_impl(request):
 
             if len(_fechas_unicas) == 1:
                 _fecha_efectiva = next(iter(_fechas_unicas))
-                if abs((fecha_apuesta - _fecha_efectiva).days) <= 1:
+                if fecha_apuesta == ahora_cuba.date() and _fecha_efectiva == hoy:
+                    # El selector envía la fecha calendario actual; para un sorteo
+                    # entre 00:00 y 00:59 debe guardarse el día operativo anterior.
                     fecha_apuesta = _fecha_efectiva
+                elif fecha_apuesta != _fecha_efectiva and abs((fecha_apuesta - _fecha_efectiva).days) <= 1:
+                    return JsonResponse({
+                        'success': False,
+                        'message': f'La fecha operativa correcta para los sorteos seleccionados es {_fecha_efectiva.isoformat()}. Actualiza la fecha y vuelve a enviar.',
+                    }, status=400)
 
         limite_futuro = hoy + timedelta(days=365)  # FIX_FUTURO_1ANO_V1
 
