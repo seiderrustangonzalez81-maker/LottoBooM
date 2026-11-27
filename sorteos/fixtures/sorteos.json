@@ -289,21 +289,21 @@
       "minutos_cierre": 10,
       "horarios": {
         "invierno": {
-          "lunes": "11:00",
-          "martes": "11:00",
-          "miercoles": "11:00",
-          "jueves": "11:00",
-          "viernes": "11:00",
-          "sabado": "11:00",
+          "lunes": "10:00",
+          "martes": "10:00",
+          "miercoles": "10:00",
+          "jueves": "10:00",
+          "viernes": "10:00",
+          "sabado": "10:00",
           "domingo": null
         },
         "verano": {
-          "lunes": "11:00",
-          "martes": "11:00",
-          "miercoles": "11:00",
-          "jueves": "11:00",
-          "viernes": "11:00",
-          "sabado": "11:00",
+          "lunes": "10:00",
+          "martes": "10:00",
+          "miercoles": "10:00",
+          "jueves": "10:00",
+          "viernes": "10:00",
+          "sabado": "10:00",
           "domingo": null
         }
       },
@@ -648,22 +648,22 @@
       "minutos_cierre": 10,
       "horarios": {
         "invierno": {
-          "lunes": "12:30",
-          "martes": "12:30",
-          "miercoles": "12:30",
-          "jueves": "12:30",
-          "viernes": "12:30",
-          "sabado": "12:30",
-          "domingo": "12:30"
+          "lunes": "12:29",
+          "martes": "12:29",
+          "miercoles": "12:29",
+          "jueves": "12:29",
+          "viernes": "12:29",
+          "sabado": "12:29",
+          "domingo": "12:29"
         },
         "verano": {
-          "lunes": "12:30",
-          "martes": "12:30",
-          "miercoles": "12:30",
-          "jueves": "12:30",
-          "viernes": "12:30",
-          "sabado": "12:30",
-          "domingo": "12:30"
+          "lunes": "12:29",
+          "martes": "12:29",
+          "miercoles": "12:29",
+          "jueves": "12:29",
+          "viernes": "12:29",
+          "sabado": "12:29",
+          "domingo": "12:29"
         }
       },
       "origen": "americano",
@@ -773,22 +773,22 @@
       "minutos_cierre": 10,
       "horarios": {
         "invierno": {
-          "lunes": "12:50",
-          "martes": "12:50",
-          "miercoles": "12:50",
-          "jueves": "12:50",
-          "viernes": "12:50",
-          "sabado": "12:50",
-          "domingo": "12:50"
+          "lunes": "12:59",
+          "martes": "12:59",
+          "miercoles": "12:59",
+          "jueves": "12:59",
+          "viernes": "12:59",
+          "sabado": "12:59",
+          "domingo": "12:59"
         },
         "verano": {
-          "lunes": "12:50",
-          "martes": "12:50",
-          "miercoles": "12:50",
-          "jueves": "12:50",
-          "viernes": "12:50",
-          "sabado": "12:50",
-          "domingo": "12:50"
+          "lunes": "12:59",
+          "martes": "12:59",
+          "miercoles": "12:59",
+          "jueves": "12:59",
+          "viernes": "12:59",
+          "sabado": "12:59",
+          "domingo": "12:59"
         }
       },
       "origen": "americano",
@@ -906,21 +906,21 @@
       "minutos_cierre": 10,
       "horarios": {
         "invierno": {
-          "lunes": "13:20",
-          "martes": "13:20",
-          "miercoles": "13:20",
-          "jueves": "13:20",
-          "viernes": "13:20",
-          "sabado": "13:20",
+          "lunes": "12:27",
+          "martes": "12:27",
+          "miercoles": "12:27",
+          "jueves": "12:27",
+          "viernes": "12:27",
+          "sabado": "12:27",
           "domingo": null
         },
         "verano": {
-          "lunes": "13:20",
-          "martes": "13:20",
-          "miercoles": "13:20",
-          "jueves": "13:20",
-          "viernes": "13:20",
-          "sabado": "13:20",
+          "lunes": "12:27",
+          "martes": "12:27",
+          "miercoles": "12:27",
+          "jueves": "12:27",
+          "viernes": "12:27",
+          "sabado": "12:27",
           "domingo": null
         }
       },
@@ -953,22 +953,22 @@
       "minutos_cierre": 10,
       "horarios": {
         "invierno": {
-          "lunes": "13:35",
-          "martes": "13:35",
-          "miercoles": "13:35",
-          "jueves": "13:35",
-          "viernes": "13:35",
-          "sabado": "13:35",
-          "domingo": "13:35"
+          "lunes": "13:30",
+          "martes": "13:30",
+          "miercoles": "13:30",
+          "jueves": "13:30",
+          "viernes": "13:30",
+          "sabado": "13:30",
+          "domingo": "13:30"
         },
         "verano": {
-          "lunes": "13:35",
-          "martes": "13:35",
-          "miercoles": "13:35",
-          "jueves": "13:35",
-          "viernes": "13:35",
-          "sabado": "13:35",
-          "domingo": "13:35"
+          "lunes": "13:30",
+          "martes": "13:30",
+          "miercoles": "13:30",
+          "jueves": "13:30",
+          "viernes": "13:30",
+          "sabado": "13:30",
+          "domingo": "13:30"
         }
       },
       "origen": "americano",
@@ -1478,22 +1478,22 @@
       "minutos_cierre": 10,
       "horarios": {
         "invierno": {
-          "lunes": "19:00",
-          "martes": "19:00",
-          "miercoles": "19:00",
-          "jueves": "19:00",
-          "viernes": "19:00",
-          "sabado": "19:00",
-          "domingo": "19:00"
+          "lunes": "18:59",
+          "martes": "18:59",
+          "miercoles": "18:59",
+          "jueves": "18:59",
+          "viernes": "18:59",
+          "sabado": "18:59",
+          "domingo": "18:59"
         },
         "verano": {
-          "lunes": "19:00",
-          "martes": "19:00",
-          "miercoles": "19:00",
-          "jueves": "19:00",
-          "viernes": "19:00",
-          "sabado": "19:00",
-          "domingo": "19:00"
+          "lunes": "18:59",
+          "martes": "18:59",
+          "miercoles": "18:59",
+          "jueves": "18:59",
+          "viernes": "18:59",
+          "sabado": "18:59",
+          "domingo": "18:59"
         }
       },
       "origen": "americano",
@@ -1526,21 +1526,21 @@
       "minutos_cierre": 10,
       "horarios": {
         "invierno": {
-          "lunes": "19:00",
-          "martes": "19:00",
-          "miercoles": "19:00",
-          "jueves": "19:00",
-          "viernes": "19:00",
-          "sabado": "19:00",
+          "lunes": "18:00",
+          "martes": "18:00",
+          "miercoles": "18:00",
+          "jueves": "18:00",
+          "viernes": "18:00",
+          "sabado": "18:00",
           "domingo": null
         },
         "verano": {
-          "lunes": "19:00",
-          "martes": "19:00",
-          "miercoles": "19:00",
-          "jueves": "19:00",
-          "viernes": "19:00",
-          "sabado": "19:00",
+          "lunes": "18:00",
+          "martes": "18:00",
+          "miercoles": "18:00",
+          "jueves": "18:00",
+          "viernes": "18:00",
+          "sabado": "18:00",
           "domingo": null
         }
       },
@@ -1991,22 +1991,22 @@
       "minutos_cierre": 10,
       "horarios": {
         "invierno": {
-          "lunes": "21:50",
-          "martes": "21:50",
-          "miercoles": "21:50",
-          "jueves": "21:50",
-          "viernes": "21:50",
-          "sabado": "21:50",
-          "domingo": "21:50"
+          "lunes": "21:45",
+          "martes": "21:45",
+          "miercoles": "21:45",
+          "jueves": "21:45",
+          "viernes": "21:45",
+          "sabado": "21:45",
+          "domingo": "21:45"
         },
         "verano": {
-          "lunes": "21:50",
-          "martes": "21:50",
-          "miercoles": "21:50",
-          "jueves": "21:50",
-          "viernes": "21:50",
-          "sabado": "21:50",
-          "domingo": "21:50"
+          "lunes": "21:45",
+          "martes": "21:45",
+          "miercoles": "21:45",
+          "jueves": "21:45",
+          "viernes": "21:45",
+          "sabado": "21:45",
+          "domingo": "21:45"
         }
       },
       "origen": "americano",
@@ -2125,22 +2125,22 @@
       "minutos_cierre": 10,
       "horarios": {
         "invierno": {
-          "lunes": "22:50",
-          "martes": "22:50",
-          "miercoles": "22:50",
-          "jueves": "22:50",
-          "viernes": "22:50",
-          "sabado": "22:50",
-          "domingo": "22:50"
+          "lunes": "22:57",
+          "martes": "22:57",
+          "miercoles": "22:57",
+          "jueves": "22:57",
+          "viernes": "22:57",
+          "sabado": "22:57",
+          "domingo": "22:57"
         },
         "verano": {
-          "lunes": "22:50",
-          "martes": "22:50",
-          "miercoles": "22:50",
-          "jueves": "22:50",
-          "viernes": "22:50",
-          "sabado": "22:50",
-          "domingo": "22:50"
+          "lunes": "22:57",
+          "martes": "22:57",
+          "miercoles": "22:57",
+          "jueves": "22:57",
+          "viernes": "22:57",
+          "sabado": "22:57",
+          "domingo": "22:57"
         }
       },
       "origen": "americano",
@@ -2172,21 +2172,21 @@
       "minutos_cierre": 10,
       "horarios": {
         "invierno": {
-          "lunes": "23:00",
-          "martes": "23:00",
-          "miercoles": "23:00",
-          "jueves": "23:00",
-          "viernes": "23:00",
-          "sabado": "23:00",
+          "lunes": "22:12",
+          "martes": "22:12",
+          "miercoles": "22:12",
+          "jueves": "22:12",
+          "viernes": "22:12",
+          "sabado": "22:12",
           "domingo": null
         },
         "verano": {
-          "lunes": "23:00",
-          "martes": "23:00",
-          "miercoles": "23:00",
-          "jueves": "23:00",
-          "viernes": "23:00",
-          "sabado": "23:00",
+          "lunes": "22:12",
+          "martes": "22:12",
+          "miercoles": "22:12",
+          "jueves": "22:12",
+          "viernes": "22:12",
+          "sabado": "22:12",
           "domingo": null
         }
       },
@@ -2219,22 +2219,22 @@
       "minutos_cierre": 10,
       "horarios": {
         "invierno": {
-          "lunes": "23:30",
-          "martes": "23:30",
-          "miercoles": "23:30",
-          "jueves": "23:30",
-          "viernes": "23:30",
-          "sabado": "23:30",
-          "domingo": "23:30"
+          "lunes": "23:34",
+          "martes": "23:34",
+          "miercoles": "23:34",
+          "jueves": "23:34",
+          "viernes": "23:34",
+          "sabado": "23:34",
+          "domingo": "23:34"
         },
         "verano": {
-          "lunes": "23:30",
-          "martes": "23:30",
-          "miercoles": "23:30",
-          "jueves": "23:30",
-          "viernes": "23:30",
-          "sabado": "23:30",
-          "domingo": "23:30"
+          "lunes": "23:34",
+          "martes": "23:34",
+          "miercoles": "23:34",
+          "jueves": "23:34",
+          "viernes": "23:34",
+          "sabado": "23:34",
+          "domingo": "23:34"
         }
       },
       "origen": "americano",
