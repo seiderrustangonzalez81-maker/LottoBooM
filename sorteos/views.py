@@ -37,7 +37,7 @@ def _ahora_cuba():
     """datetime.now() con el offset correcto de Cuba."""
     from datetime import timezone as _dt_tz
     utc = datetime.now(_dt_tz.utc)
-    return utc.astimezone(_tz_cuba(utc.date()))
+    return utc.astimezone(_tz_cuba(utc))
 
 
 
@@ -63,51 +63,20 @@ def _formas_de_sorteo(sorteo):
 
 
 def _hora_salida_hoy(sorteo, hoy):
-    dia_es = {0:'lunes',1:'martes',2:'miercoles',3:'jueves',
-              4:'viernes',5:'sabado',6:'domingo'}[hoy.weekday()]
-    temp = 'verano' if es_verano_cuba(hoy) else 'invierno'
-
-    if sorteo.horarios:
-        hora_str = (sorteo.horarios.get(temp) or {}).get(dia_es)
-        if not hora_str:
-            return None
-        try:
-            hh, mm = hora_str.split(':')
-            return time(int(hh), int(mm))
-        except Exception:
-            return None
-
-    return sorteo.hora_salida
+    """Hora de salida ya normalizada a Cuba desde el calendario maestro."""
+    return get_hora_salida(sorteo, hoy)
 
 
-def _calcular_estado(sorteo, hora_salida, ahora):
-    minutos = 10  # Cierre único y obligatorio
-    dt_salida = datetime.combine(ahora.date(), hora_salida, tzinfo=_tz_cuba(ahora.date()))
-    dt_cierre = dt_salida - timedelta(minutes=minutos)
-
-    if ahora < dt_cierre:
-        return {
-            'estado': 'abierto',
-            'segundos_restantes': int((dt_cierre - ahora).total_seconds()),
-            'hora_cierre': dt_cierre,
-        }
-    elif ahora < dt_salida:
-        return {
-            'estado': 'cerrado',
-            'segundos_restantes': int((dt_salida - ahora).total_seconds()),
-            'hora_cierre': dt_cierre,
-        }
-    else:
-        return {
-            'estado': 'salido',
-            'segundos_restantes': 0,
-            'hora_cierre': dt_cierre,
-        }
+def _calcular_estado(sorteo, hora_salida, ahora, fecha_operativa=None):
+    """Delegación al cálculo único de estado, zona horaria y cierre."""
+    if fecha_operativa is None:
+        fecha_operativa = (ahora - timedelta(hours=1)).date()
+    return calcular_estado_sorteo(sorteo, ahora, fecha_operativa)
 
 
 def lista_sorteos(request):
     ahora = _ahora_cuba()
-    hoy = ahora.date()
+    hoy = (ahora - timedelta(hours=1)).date()
 
     abiertos, cerrados, salidos = [], [], []
 
@@ -116,31 +85,17 @@ def lista_sorteos(request):
         if not hora_salida:
             continue
 
-        info = _calcular_estado(s, hora_salida, ahora)
+        info = _calcular_estado(s, hora_salida, ahora, hoy)
+        if info.estado_actual == 'no_programado':
+            continue
 
-        s.estado_actual = info['estado']
-        s.segundos_restantes = info['segundos_restantes']
-        s.hora_salida_str = hora_salida.strftime('%I:%M %p')
-        s.hora_cierre = info['hora_cierre']
-
-        s.hora_cierre_str = info['hora_cierre'].strftime('%I:%M %p') if info['hora_cierre'] else '—'
-        s.hora_salida = hora_salida
         s.formas_filtradas = _formas_de_sorteo(s)
-
-        # FIX_PROXIMO_EN_LISTA_V1: si ya salió, calcular segundos al próximo día
-        s.segundos_proximo = 0
-        if info['estado'] == 'salido':
-            try:
-                s.segundos_proximo = _seg_hasta_prox(s, ahora) or 0
-            except Exception:
-                s.segundos_proximo = 0
-
-        if info['estado'] == 'abierto':
-            abiertos.append(s)
-        elif info['estado'] == 'cerrado':
-            cerrados.append(s)
+        if info.estado_actual == 'abierto':
+            abiertos.append(info)
+        elif info.estado_actual == 'cerrado':
+            cerrados.append(info)
         else:
-            salidos.append(s)
+            salidos.append(info)
 
     abiertos.sort(key=lambda x: x.segundos_restantes)
     cerrados.sort(key=lambda x: x.segundos_restantes)
