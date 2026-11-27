@@ -64,7 +64,6 @@ MAPEO_NOMBRES = {
     "New Jersey 10:57 PM": "New Jersey 10:50 PM",
     "Georgia 6:59 PM": "Georgia 7 PM",
     "Georgia 11:34 PM": "Georgia 11:40 PM",
-    "Tennessee 6:30 PM": "Tennessee 7:20 PM",
 }
 
 def obtener_hora_cuba_actual():
