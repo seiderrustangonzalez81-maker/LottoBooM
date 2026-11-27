@@ -236,11 +236,14 @@ def _hora_enloteria(nombre, fecha):
         "king lottery 7 30 pm": (19, 30),
         "new york noche": (22, 30),
         "tennessee 10 20 am": (9, 28),
+        "tennessee 10 28 am": (9, 28),  # 10:28 ET = 9:28 CT
         "tennessee 9 28 am": (9, 28),
         "tennessee 1 20 pm": (12, 28),
+        "tennessee 1 28 pm": (12, 28),  # 1:28 ET = 12:28 CT
         "tennessee 12 28 pm": (12, 28),
         "tennessee 6 30 pm": (18, 28),
         "tennessee 7 20 pm": (18, 28),
+        "tennessee 7 28 pm": (18, 28),  # 7:28 ET = 6:28 CT
         "tennessee 6 28 pm": (18, 28),
         "florida 1 35 pm": (13, 30),
         "florida 9 50 pm": (21, 45),
@@ -388,6 +391,9 @@ ALIASES_NOMBRES_SORTEOS = {
     "tennessee 1:20 pm": "Tennessee 12:28 PM",
     "tennessee 6:30 pm": "Tennessee 6:28 PM",
     "tennessee 7:20 pm": "Tennessee 6:28 PM",
+    "tennessee 10:28 am": "Tennessee 9:28 AM",
+    "tennessee 1:28 pm": "Tennessee 12:28 PM",
+    "tennessee 7:28 pm": "Tennessee 6:28 PM",
     "loteka": "Loteka 7:55 PM",
     "loteka tarde": "Loteka Tarde",
     "lotedom noche": "Lotedom Noche",
