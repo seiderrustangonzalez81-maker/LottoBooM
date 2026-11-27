@@ -103,13 +103,7 @@ class ScraperCoverageTests(unittest.TestCase):
             "Sorteos USA esperados con configuración directa: 16/16",
             report,
         )
-        section = report.split("USA sin configuración directa:", 1)[-1]
-        missing = [
-            line.strip().removeprefix("- ")
-            for line in section.splitlines()
-            if line.strip().startswith("- ")
-        ]
-        self.assertEqual(missing, [])
+        self.assertNotIn("USA sin configuración directa:", report)
         self.assertEqual(
             namespace["canonizar_nombre_sorteo"]("Tennessee 6:30 PM"),
             "Tennessee 6:30 PM",
