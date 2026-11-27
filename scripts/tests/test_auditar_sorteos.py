@@ -9,7 +9,8 @@ class NormalizeTests(unittest.TestCase):
     def test_alias_results(self):
         self.assertEqual(audit.canon("El Quinielon Dia"), audit.canon("Quinielón"))
         self.assertEqual(audit.canon("Anguilla 8AM"), audit.canon("Anguila 8 AM"))
-        self.assertEqual(audit.canon("Loteka 1:30 PM"), audit.canon("Loteka 7:50 PM"))
+        self.assertEqual(audit.canon("Loteka 1:30 PM"), audit.canon("Loteka Tarde"))
+        self.assertEqual(audit.canon("Loteka 7:50 PM"), audit.canon("Loteka 7:55 PM"))
     def test_known_schedule_alias(self):
         self.assertEqual(audit.canon("Florida 9:45 PM"), audit.canon("Florida 9:50 PM"))
     def test_different_draws_not_collapsed(self):
@@ -99,7 +100,7 @@ class ScraperCoverageTests(unittest.TestCase):
             namespace["informar_cobertura"]([])
         report = output.getvalue()
         self.assertIn(
-            "Sorteos USA esperados con configuración directa: 13/16",
+            "Sorteos USA esperados con configuración directa: 14/16",
             report,
         )
         section = report.split("USA sin configuración directa:", 1)[-1]
@@ -110,7 +111,7 @@ class ScraperCoverageTests(unittest.TestCase):
         ]
         self.assertEqual(
             missing,
-            ["Texas 11 AM", "Texas 7 PM", "Tennessee 7:20 PM"],
+            ["Texas 11 AM", "Texas 7 PM"],
         )
         self.assertEqual(
             namespace["canonizar_nombre_sorteo"]("Tennessee 6:30 PM"),
