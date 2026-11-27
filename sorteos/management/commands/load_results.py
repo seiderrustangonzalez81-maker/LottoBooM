@@ -1,6 +1,7 @@
 import requests
 import unicodedata
 from datetime import datetime, timedelta, timezone
+from zoneinfo import ZoneInfo
 from LottoBooM.utils import es_verano_cuba
 from django.core.management.base import BaseCommand
 from django.utils.dateparse import parse_date
@@ -8,55 +9,67 @@ from django.contrib.auth.models import User
 from sorteos.models import Sorteo
 from resultados.models import Resultado
 from resultados.views import procesar_resultado
+from sorteos.utils import get_hora_salida
 
 URL_JSON = "https://raw.githubusercontent.com/seiderrustangonzalez81-maker/LottoBooM/main/resultados.json"
 
 MAPEO_NOMBRES = {
-    # DOMINICANAS Y OTRAS
-    "Anguilla 8AM": "Anguila 8 AM", "Anguilla 9AM": "Anguila 9 AM",
-    "Anguilla 10AM": "Anguila 10 AM", "Anguilla 11AM": "Anguila 11 AM",
-    "Anguilla 12PM": "Anguila 12 PM", "Anguilla 1PM": "Anguila 1 PM",
-    "Anguilla 2PM": "Anguila 2 PM", "Anguilla 3PM": "Anguila 3 PM",
-    "Anguilla 4PM": "Anguila 4 PM", "Anguilla 5PM": "Anguila 5 PM",
-    "Anguilla 6PM": "Anguila 6 PM", "Anguilla 7PM": "Anguila 7 PM",
-    "Anguilla 8PM": "Anguila 8 PM", "Anguilla 9PM": "Anguila 9 PM",
-    "Anguilla 10PM": "Anguila 10 PM",
-    "Haiti Bolet 9:30 AM": "Haiti Bolet 9:30 AM", "Haiti Bolet 10:30 AM": "Haiti Bolet 10:30 AM",
-    "Haiti Bolet 11:30 AM": "Haiti Bolet 11:30 AM", "Haiti Bolet 5:30 PM": "Haiti Bolet 5:30 PM",
-    "Haiti Bolet 6:30 PM": "Haiti Bolet 6:30 PM", "Haiti Bolet 7:30 PM": "Haiti Bolet 7:30 PM",
-    "Nacional Gana Más": "Nacional Gana Más", "Nacional Noche": "Nacional Noche",
-    "Leidsa": "Leidsa 8:55 PM", "Loteka Tarde": "Loteka 1:30 PM", "Loteka": "Loteka 7:55 PM",
-    "La Primera": "La Primera", "La Primera Noche": "La Primera Noche",
-    "La Suerte": "La Suerte", "La Suerte 6PM": "La Suerte 6PM",
-    "LoteDom": "Lotedom", "LoteDom Noche": "Lotedom Noche",
-    "King Lottery Día": "King Lottery 12:30 PM", "King Lottery Noche": "King Lottery 7:30 PM",
-    "El Quemaito Mayor": "El Quemaito Mayor", "El Quemaito Mayor Noche": "El Quemaito Mayor Noche",
-    "El Quinielón Día": "El Quinielón Día", "El Quinielón Noche": "El Quinielón Noche",
-    "Real": "Real", "Real Noche": "Real Noche",
-
-    # USA - LotteryUSA (Fuente Oficial)
-    "Texas 1:20 PM": "Texas 1:20 PM", "Texas 10:12 PM": "Texas 11 AM",
-    "Florida 1:35 PM": "Florida 1:35 PM", "Florida 9:45 PM": "Florida 9:50 PM",
-    "New York 2:30 PM": "New York 2:30 PM", "New York 10:30 PM": "New York 10:30 PM",
-    "New Jersey 12:50 PM": "New Jersey 12:50 PM", "New Jersey 10:57 PM": "New Jersey 10:50 PM",
-    "Georgia 12:30 PM": "Georgia 12:30 PM",
-    "Georgia 6:59 PM": "Georgia 7 PM",                    # ⬅️ BUG B CORREGIDO (Evening)
-    "Georgia 11:34 PM": "Georgia 11:40 PM",               # ⬅️ BUG A CORREGIDO (Night)
-    "Tennessee 10:20 AM": "Tennessee 10:20 AM", "Tennessee 1:20 PM": "Tennessee 1:20 PM", "Tennessee 6:30 PM": "Tennessee 7:20 PM",
-
-    # USA - Enloteria (Fallback para Fijo y Corridos)
-    "Florida Tarde": "Florida 9:50 PM",
-    "New York Tarde": "New York 10:30 PM",
-    "New Jersey Tarde": "New Jersey 10:50 PM",
-    "Georgia Tarde": "Georgia 7 PM",
-    "Texas Tarde": "Texas 7 PM",
-    "Tennessee Día": "Tennessee 1:20 PM",
+    **{nombre: nombre for nombre in [
+        "Anguila 8 AM", "Anguila 9 AM", "Anguila 10 AM", "Anguila 11 AM",
+        "Anguila 12 PM", "Anguila 1 PM", "Anguila 2 PM", "Anguila 3 PM",
+        "Anguila 4 PM", "Anguila 5 PM", "Anguila 6 PM", "Anguila 7 PM",
+        "Anguila 8 PM", "Anguila 9 PM", "Anguila 10 PM",
+        "Haití 1", "Haití 2", "Haití 3", "Haití 4", "Haití 5", "Haití 6",
+        "Lotedom", "Quemaito", "Primera", "Quinielón", "Suerte 12:30 PM",
+        "King Lottery 12:30 PM", "Georgia 12:30 PM", "Real 12:50 PM",
+        "New Yol Real 12:50 PM", "New Jersey 12:50 PM", "Tennessee 10:20 AM",
+        "Texas 11 AM", "Tennessee 1:20 PM", "Texas 1:20 PM",
+        "Florida 1:35 PM", "Anguila 1 PM", "Anguila 2 PM", "Gana Más 2:30 PM",
+        "New York 2:30 PM", "Anguila 3 PM", "Anguila 4 PM", "Anguila 5 PM",
+        "Suerte 6 PM", "Anguila 6 PM", "Anguila 7 PM", "Primera 7 PM",
+        "Georgia 7 PM", "Texas 7 PM", "Tennessee 7:20 PM",
+        "King Lottery 7:30 PM", "Loteka 7:50 PM", "Tok 3", "Anguila 8 PM",
+        "Nacional", "Leidsa 8:55 PM", "Pega 3+", "Anguila 9 PM",
+        "Florida 9:50 PM", "Anguila 10 PM", "New York 10:30 PM",
+        "New Jersey 10:50 PM", "Texas 11 PM", "Georgia 11:40 PM", "Real Noche",
+    ]},
+    **{f"Anguilla {h}{ampm}": f"Anguila {h} {ampm}" for h, ampm in [
+        ("8", "AM"), ("9", "AM"), ("10", "AM"), ("11", "AM"),
+        ("12", "PM"), ("1", "PM"), ("2", "PM"), ("3", "PM"),
+        ("4", "PM"), ("5", "PM"), ("6", "PM"), ("7", "PM"),
+        ("8", "PM"), ("9", "PM"), ("10", "PM"),
+    ]},
+    "Haiti Bolet 9:30 AM": "Haití 1",
+    "Haiti Bolet 10:30 AM": "Haití 2",
+    "Haiti Bolet 11:30 AM": "Haití 3",
+    "Haiti Bolet 5:30 PM": "Haití 4",
+    "Haiti Bolet 6:30 PM": "Haití 5",
+    "Haiti Bolet 7:30 PM": "Haití 6",
+    "El Quemaito Mayor": "Quemaito",
+    "El Quinielon Dia": "Quinielón",
+    "La Primera": "Primera",
+    "La Primera Noche": "Primera 7 PM",
+    "La Suerte": "Suerte 12:30 PM",
+    "La Suerte 6PM": "Suerte 6 PM",
+    "LoteDom": "Lotedom",
+    "King Lottery Día": "King Lottery 12:30 PM",
+    "King Lottery Noche": "King Lottery 7:30 PM",
+    "Real": "Real 12:50 PM",
+    "Nacional Noche": "Nacional",
+    "Nacional Gana Más": "Gana Más 2:30 PM",
+    "Leidsa": "Leidsa 8:55 PM",
+    "Texas 10:12 PM": "Texas 11 PM",
+    "Florida 9:45 PM": "Florida 9:50 PM",
+    "New Jersey 10:57 PM": "New Jersey 10:50 PM",
+    "Georgia 6:59 PM": "Georgia 7 PM",
+    "Georgia 11:34 PM": "Georgia 11:40 PM",
+    "Tennessee 6:30 PM": "Tennessee 7:20 PM",
 }
 
 def obtener_hora_cuba_actual():
     """Usa la regla operativa vigente de Cuba, sin depender de tzdata desactualizada."""
     ahora_utc = datetime.now(timezone.utc)
-    offset = -4 if es_verano_cuba(ahora_utc.date()) else -5
+    offset = -4 if es_verano_cuba(ahora_utc) else -5
     return ahora_utc.astimezone(timezone(timedelta(hours=offset)))
 TZ_ESTE = ZoneInfo('America/New_York')
 DIAS_ES = {0: 'lunes', 1: 'martes', 2: 'miercoles', 3: 'jueves', 4: 'viernes', 5: 'sabado', 6: 'domingo'}
@@ -167,12 +180,13 @@ class Command(BaseCommand):
         mapeo_normalizado = {normalizar_texto(k): v for k, v in MAPEO_NOMBRES.items()}
         ahora_cuba = obtener_hora_cuba_actual()
         hoy_cuba = ahora_cuba.date()
-        ayer_cuba = hoy_cuba - timedelta(days=1)
-        dia_actual = DIAS_ES[ahora_cuba.weekday()]
-        temporada = temporada_actual()
+        dia_operativo = (ahora_cuba - timedelta(hours=1)).date()
+        ayer_cuba = dia_operativo - timedelta(days=1)
+        dia_actual = DIAS_ES[dia_operativo.weekday()]
+        temporada = 'verano' if es_verano_cuba(dia_operativo) else 'invierno'
 
         self.stdout.write(f"Día actual: {dia_actual} | Temporada: {temporada}")
-        self.stdout.write(f"Fecha Cuba: {hoy_cuba} | Ayer: {ayer_cuba}")
+        self.stdout.write(f"Fecha/hora Cuba: {ahora_cuba.isoformat()} | Día operativo: {dia_operativo} (01:00–00:59)")
 
         creados = actualizados = errores = premios_ok = 0
 
@@ -202,24 +216,13 @@ class Command(BaseCommand):
                 continue
 
             fecha = parse_date(item.get("fecha", ""))
-            if not fecha or fecha > hoy_cuba:
+            if not fecha or fecha != dia_operativo:
+                self.stdout.write(self.style.WARNING(
+                    f"⏭️ Descartado {nombre_web} [{fecha}] (fuera del día operativo {dia_operativo})"
+                ))
                 continue
 
             fuente = item.get("fuente", "")
-
-            # ── Filtro estricto por fuente ──
-            if fuente == "enloteria":
-                if fecha != hoy_cuba:
-                    self.stdout.write(self.style.WARNING(
-                        f"⏭️ Descartado {nombre_web} [{fecha}] (enloteria, no es hoy {hoy_cuba})"
-                    ))
-                    continue
-            else:  # lotteryusa y otras
-                if fecha != hoy_cuba:
-                    self.stdout.write(self.style.WARNING(
-                        f"⏭️ Descartado {nombre_web} [{fecha}] (usa, no es hoy ni ayer)"
-                    ))
-                    continue
 
             resultado_existente = Resultado.objects.filter(sorteo=sorteo, fecha=fecha).first()
 
@@ -265,7 +268,7 @@ class Command(BaseCommand):
             derivados = calcular_derivados(pick2_val, pick3_val, pick4_val, fijo_val, corrido1_val, corrido2_val)
 
             datos = {
-                'sorteo': sorteo, 'fecha': fecha, 'hora': sorteo.hora_salida,
+                'sorteo': sorteo, 'fecha': fecha, 'hora': get_hora_salida(sorteo, fecha),
                 'pick2': pick2_val, 'pick3': pick3_val, 'pick4': pick4_val, 'pick5': pick5_val,
                 'fijo': fijo_val, 'corrido_1': corrido1_val, 'corrido_2': corrido2_val,
                 'pf': derivados['pf'],
