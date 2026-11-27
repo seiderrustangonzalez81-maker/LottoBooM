@@ -574,11 +574,6 @@ def main():
 
     informar_cobertura(todos_nuevos)
 
-    # Si el scraper no obtuvo absolutamente nada, no reemplazar el JSON por vacío.
-    if not todos_nuevos:
-        print("⚠️ No se obtuvo ningún resultado nuevo. Se conserva resultados.json sin cambios.")
-        raise SystemExit(1)
-
     guardados = []
     if os.path.exists(ARCHIVO_JSON):
         try:
@@ -613,8 +608,7 @@ def main():
 
     finales_filtrados = list(dic.values())
     if not finales_filtrados:
-        print("⚠️ No hay resultados de la fecha actual para guardar. Se conserva JSON previo.")
-        raise SystemExit(1)
+        print("⚠️ No hay resultados del día operativo. Se publicará [] para no conservar datos de una fecha anterior.")
 
     # Escritura atómica: evita dejar un JSON truncado si la ejecución falla.
     archivo_temporal = ARCHIVO_JSON + ".tmp"
