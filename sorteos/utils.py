@@ -1,6 +1,7 @@
 from LottoBooM.utils import es_verano_cuba
 # -*- coding: utf-8 -*-
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone as dt_timezone
+from zoneinfo import ZoneInfo
 from django.utils import timezone
 from .models import Sorteo
 
@@ -178,6 +179,8 @@ def calcular_estado_sorteo(sorteo, ahora=None, fecha_consulta=None):
 
     minutos_cierre = sorteo.minutos_cierre if sorteo.minutos_cierre is not None else 10
     dt_cierre = dt_salida - timedelta(minutes=minutos_cierre)
+    sorteo.proximo_datetime = dt_salida
+    sorteo.hora_cierre_datetime = dt_cierre
 
     sorteo.hora_salida = dt_salida.timetz().replace(tzinfo=None)
     sorteo.hora_salida_str = dt_salida.strftime("%I:%M %p").lstrip("0")
