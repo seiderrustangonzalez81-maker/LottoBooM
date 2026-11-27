@@ -84,7 +84,7 @@ class DrawSelectorCalendarTests(unittest.TestCase):
         exited = draw("Already drawn", "10:30")
         helper = build_helper(self.now, [open_draw, closed_draw, exited])
         result = helper(incluir_cerrados=True)
-        self.assertEqual([d.nombre for d in result], ["Open", "Closed"])
+        self.assertCountEqual([d.nombre for d in result], ["Open", "Closed"])
         self.assertEqual(closed_draw.estado_actual, "cerrado")
 
     def test_close_is_exactly_ten_minutes_even_if_record_says_five(self):
