@@ -56,6 +56,26 @@ class SundayDrawCalendarTests(unittest.TestCase):
                 self.assertEqual(schedule["verano"]["domingo"], summer)
 
 
+    def test_usa_catalog_keeps_official_source_local_draw_times(self):
+        expected = {
+            "Texas 11 AM": "10:00",
+            "Texas 1:20 PM": "12:27",
+            "Texas 7 PM": "18:00",
+            "Texas 11 PM": "22:12",
+            "Florida 1:35 PM": "13:30",
+            "Florida 9:50 PM": "21:45",
+            "Georgia 12:30 PM": "12:29",
+            "Georgia 7 PM": "18:59",
+            "Georgia 11:40 PM": "23:34",
+            "New Jersey 12:50 PM": "12:59",
+            "New Jersey 10:50 PM": "22:57",
+        }
+        for name, source_time in expected.items():
+            with self.subTest(draw=name):
+                for season in ("invierno", "verano"):
+                    for day in ("lunes", "martes", "miercoles", "jueves", "viernes", "sabado"):
+                        self.assertEqual(self.draws[name]["horarios"][season][day], source_time)
+
     def test_all_haiti_bolet_draws_run_every_day_and_use_source_local_time(self):
         source_times = {
             "Haití 1": "09:30", "Haití 2": "10:30", "Haití 3": "11:30",
