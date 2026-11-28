@@ -39,6 +39,10 @@ from sorteos.views import (  # noqa: E402
     _temporada_actual,
 )
 from resultados.views import es_verano_cuba as es_verano_cuba_resultados  # noqa: E402
+from sorteos.helpers import get_hora_cierre as get_hora_cierre_legacy  # noqa: E402
+from jugadas.management.commands.cancelar_sobrelimites import (  # noqa: E402
+    _obtener_cierre_jugada,
+)
 
 
 UTC = timezone.utc
