@@ -9,7 +9,9 @@ on:
     branches: [main]
 
 concurrency:
-  group: scrape-loterias-main
+  # Pull-request validation does not scrape or write resultados.json.
+  # Keep it out of the single serial group used by scheduled/manual scrapes.
+  group: ${{ github.event_name == 'pull_request' && format('scrape-loterias-pr-{0}', github.event.pull_request.number) || 'scrape-loterias-main' }}
   cancel-in-progress: false
 
 jobs:
