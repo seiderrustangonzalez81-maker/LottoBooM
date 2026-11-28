@@ -225,10 +225,20 @@
     "fuente": "lotteryusa",
     "pick2": "00",
     "pick3": "677",
-    "pick4": "",
-    "pick5": "",
+    "pick4": "9996",
+    "pick5": "06013",
     "fijo": "77",
-    "corrido_1": "",
-    "corrido_2": ""
+    "corrido_1": "99",
+    "corrido_2": "96"
+  },
+  {
+    "sorteo_nombre": "Nacional Gana Más",
+    "numeros": [
+      "20",
+      "96",
+      "41"
+    ],
+    "fecha": "2026-11-28",
+    "fuente": "enloteria"
   }
 ]
