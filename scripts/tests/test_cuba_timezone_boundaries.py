@@ -43,6 +43,10 @@ from sorteos.helpers import get_hora_cierre as get_hora_cierre_legacy  # noqa: E
 from jugadas.management.commands.cancelar_sobrelimites import (  # noqa: E402
     _obtener_cierre_jugada,
 )
+from sorteos.management.commands.load_results import (  # noqa: E402
+    obtener_ahora_cuba,
+    temporada_actual as temporada_load_results,
+)
 
 
 UTC = timezone.utc
@@ -61,8 +65,11 @@ def _sorteo_transicion():
 
 
 class WeekdayWithoutLocale:
+    def __init__(self, weekday):
+        self._weekday = weekday
+
     def weekday(self):
-        return 0
+        return self._weekday
 
     def strftime(self, *_args, **_kwargs):
         raise AssertionError("La selección del día no debe depender del locale")
@@ -165,16 +172,44 @@ class CubaTimezoneBoundaryTests(unittest.TestCase):
         self.assertTrue(is_today)
         self.assertEqual(next_draw, datetime(2027, 11, 7, 10, 0, tzinfo=timezone(timedelta(hours=-5))))
 
-    def test_weekday_selection_is_locale_independent(self):
-        draw = SimpleNamespace(
-            horarios={"verano": {"lunes": "08:00"}},
-            hora_salida=None,
-        )
+    def test_weekday_selection_is_locale_independent_for_all_days(self):
+        dias = ("lunes", "martes", "miercoles", "jueves", "viernes", "sabado", "domingo")
         with patch("sorteos.utils._temporada", return_value="verano"):
-            self.assertEqual(
-                obtener_hora_desde_horarios(draw, WeekdayWithoutLocale()),
-                time(8, 0),
+            for weekday, dia in enumerate(dias):
+                draw = SimpleNamespace(
+                    horarios={"verano": {dia: "08:00"}},
+                    hora_salida=None,
+                )
+                with self.subTest(dia=dia):
+                    self.assertEqual(
+                        obtener_hora_desde_horarios(draw, WeekdayWithoutLocale(weekday)),
+                        time(8, 0),
+                    )
+
+    def test_null_or_missing_schedule_returns_no_draw_time(self):
+        target = date(2026, 11, 28)
+        self.assertIsNone(
+            obtener_hora_desde_horarios(
+                SimpleNamespace(horarios=None, hora_salida=None),
+                target,
             )
+        )
+        self.assertIsNone(
+            get_hora_cierre(
+                SimpleNamespace(horarios={}, hora_salida=None, minutos_cierre=10),
+                target,
+            )
+        )
+
+    def test_results_loader_uses_shared_cuba_override(self):
+        instant = datetime(2026, 11, 28, 13, 0, tzinfo=UTC)
+        local = obtener_ahora_cuba(instant)
+        self.assertEqual(local.hour, 9)
+        self.assertEqual(local.utcoffset(), timedelta(hours=-4))
+        self.assertEqual(temporada_load_results(local), "verano")
+
+        winter = datetime(2026, 1, 15, 12, 0, tzinfo=UTC)
+        self.assertEqual(temporada_load_results(winter), "invierno")
 
     def test_tzdata_release_and_eastern_central_dst_rules(self):
         self.assertGreaterEqual(tzdata.IANA_VERSION, "2026f")
