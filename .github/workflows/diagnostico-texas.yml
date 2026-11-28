@@ -6,6 +6,7 @@ on:
       - diagnostico-texas-daily4
     paths:
       - diagnostico_texas_daily4.py
+      - scraper.py
       - .github/workflows/diagnostico-texas.yml
 
 permissions:
@@ -25,11 +26,11 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Instalar Playwright
+      - name: Instalar dependencias
         run: |
           python -m pip install --upgrade pip
-          pip install playwright
+          pip install beautifulsoup4==4.12.3 requests==2.32.3 playwright
           playwright install --with-deps chromium
 
-      - name: Inspeccionar tarjetas Texas Daily 4
+      - name: Probar Texas Daily 4 sin publicar resultados
         run: python diagnostico_texas_daily4.py

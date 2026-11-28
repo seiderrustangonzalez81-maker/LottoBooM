@@ -1,59 +1,159 @@
+from datetime import datetime, timedelta
+
+from bs4 import BeautifulSoup
 from playwright.sync_api import sync_playwright
 
-URL = "https://www.lotteryusa.com/texas/midday-4/"
+import scraper
 
-with sync_playwright() as p:
-    browser = p.chromium.launch(headless=True)
-    page = browser.new_page()
-    try:
-        response = page.goto(
-            URL,
-            wait_until="domcontentloaded",
-            timeout=60000,
+
+PRUEBAS = {
+    "Texas 1:20 PM": "https://www.lotteryusa.com/texas/midday-4/",
+    "Texas 10:12 PM": "https://www.lotteryusa.com/texas/daily-4/",
+}
+
+
+def comprobar_configuracion():
+    print("\n===== CONFIGURACION =====")
+
+    for nombre, url in PRUEBAS.items():
+        juegos = scraper.URLS_MULTI.get(nombre, {})
+
+        assert "pick3" in juegos, f"{nombre}: falta Pick 3"
+        assert "pick4" in juegos, f"{nombre}: falta Pick 4"
+        assert url in juegos["pick4"], f"{nombre}: URL Pick 4 incorrecta"
+
+        print(f"OK {nombre}: Pick 3 conservado y Pick 4 configurado")
+
+
+def comprobar_tarjeta(soup, nombre, fecha_esperada):
+    tarjetas = soup.select("tr.c-draw-card")
+    print("Tarjetas encontradas:", len(tarjetas))
+
+    for tarjeta in tarjetas:
+        fecha = scraper._extraer_fecha_lotteryusa(tarjeta, nombre)
+
+        if fecha != fecha_esperada:
+            continue
+
+        numeros = scraper._extraer_numeros_lotteryusa(tarjeta)
+
+        assert len(numeros) == 4, (
+            f"{nombre}: se esperaban 4 bolas; encontradas: {numeros}"
         )
-        print("HTTP:", response.status if response else "Sin respuesta")
-        print("TITULO:", page.title())
+        assert all(n.isdigit() and len(n) == 1 for n in numeros), (
+            f"{nombre}: bolas inválidas: {numeros}"
+        )
 
-        page.wait_for_timeout(5000)
+        pick4 = "".join(numeros)
+        corrido_1 = numeros[0] + numeros[1]
+        corrido_2 = numeros[2] + numeros[3]
 
-        print("\n===== ENLACES DE NAVEGACION =====")
-        enlaces = page.locator("a")
-        for i in range(enlaces.count()):
-            enlace = enlaces.nth(i)
-            texto = enlace.inner_text().strip()
-            href = enlace.get_attribute("href") or ""
-            if any(x in (texto + " " + href).lower()
-                   for x in ("day", "night", "morning", "evening")):
-                print("TEXTO:", texto, "| HREF:", href)
+        print("Fecha:", fecha)
+        print("Bolas:", numeros)
+        print("Pick 4:", pick4)
+        print("Corrido 1:", corrido_1)
+        print("Corrido 2:", corrido_2)
 
-        tarjetas = page.locator("tr.c-draw-card")
-        total = tarjetas.count()
-        print("\nTARJETAS COMPLETAS:", total)
+        bonus = tarjeta.select("li.c-result__bonus li.c-ball")
+        if bonus:
+            print("Fireball separado:", [b.get_text(strip=True) for b in bonus])
 
-        for i in range(total):
-            tarjeta = tarjetas.nth(i)
-            print("\n========== TARJETA", i + 1, "==========")
-            print("CLASE:", tarjeta.get_attribute("class"))
-            print("TEXTO:", tarjeta.inner_text().strip())
+        print(f"VALIDADO: {nombre}")
+        return True
 
-            fechas = tarjeta.locator("time")
-            for j in range(fechas.count()):
-                print("FECHA HTML:", fechas.nth(j).evaluate(
-                    "(e) => e.outerHTML"
-                ))
+    fechas = [
+        scraper._extraer_fecha_lotteryusa(t, nombre)
+        for t in tarjetas
+    ]
+    print("Fecha esperada:", fecha_esperada)
+    print("Fechas disponibles:", fechas)
+    return False
 
-            listas = tarjeta.locator(
-                "ul.c-result.c-draw-card__ball-list"
-            )
-            for j in range(listas.count()):
-                lista = listas.nth(j)
-                print("LISTA DE BOLAS HTML:", lista.evaluate(
-                    "(e) => e.outerHTML"
-                ))
-                bolas = lista.locator(":scope > li.c-ball")
-                print("BOLAS:", [
-                    bolas.nth(k).inner_text().strip()
-                    for k in range(bolas.count())
-                ])
-    finally:
-        browser.close()
+
+def sorteo_puede_seguir_pendiente(nombre):
+    zona = scraper.zona_horaria_sorteo_usa(nombre)
+    hora = scraper.parsear_hora_sorteo(nombre)
+
+    if not hora:
+        return False
+
+    ahora = datetime.now(zona)
+    limite = ahora.replace(
+        hour=hora[0],
+        minute=hora[1],
+        second=0,
+        microsecond=0,
+    ) + timedelta(minutes=30)
+
+    return ahora < limite
+
+
+def main():
+    comprobar_configuracion()
+    estados = {}
+
+    with sync_playwright() as p:
+        browser = p.chromium.launch(headless=True)
+
+        try:
+            page = browser.new_page()
+
+            for nombre, url in PRUEBAS.items():
+                print("\n" + "=" * 55)
+                print("PRUEBA:", nombre)
+                print("URL:", url)
+
+                fecha_local, fecha_cuba = (
+                    scraper.calcular_fechas_esperadas_usa(nombre)
+                )
+
+                print("Fecha LotteryUSA esperada:", fecha_local)
+                print("Fecha operativa Cuba:", fecha_cuba)
+
+                response = page.goto(
+                    url,
+                    wait_until="domcontentloaded",
+                    timeout=60000,
+                )
+
+                assert response is not None, f"{nombre}: sin respuesta HTTP"
+                assert response.status == 200, (
+                    f"{nombre}: HTTP {response.status}"
+                )
+
+                print("HTTP:", response.status)
+                print("Título:", page.title())
+
+                page.wait_for_timeout(4000)
+
+                soup = BeautifulSoup(page.content(), "html.parser")
+                validado = comprobar_tarjeta(soup, nombre, fecha_local)
+
+                if validado:
+                    estados[nombre] = "VALIDADO"
+                elif sorteo_puede_seguir_pendiente(nombre):
+                    estados[nombre] = "PENDIENTE"
+                    print("El sorteo todavía puede no estar publicado.")
+                else:
+                    raise AssertionError(
+                        f"{nombre}: falta el resultado después del margen "
+                        "de publicación."
+                    )
+
+        finally:
+            browser.close()
+
+    print("\n===== RESULTADO FINAL =====")
+    for nombre, estado in estados.items():
+        print(f"{nombre}: {estado}")
+
+    if all(estado == "VALIDADO" for estado in estados.values()):
+        print("AMBOS SORTEOS VALIDADOS.")
+    elif any(estado == "VALIDADO" for estado in estados.values()):
+        print("PRUEBA PARCIAL: queda al menos un sorteo pendiente.")
+    else:
+        print("NINGUN SORTEO VALIDADO.")
+
+
+if __name__ == "__main__":
+    main()
