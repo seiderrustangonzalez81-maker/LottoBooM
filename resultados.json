@@ -240,5 +240,25 @@
     ],
     "fecha": "2026-11-28",
     "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Loteka Tarde",
+    "numeros": [
+      "36",
+      "82",
+      "41"
+    ],
+    "fecha": "2026-11-28",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Anguilla 3PM",
+    "numeros": [
+      "66",
+      "10",
+      "12"
+    ],
+    "fecha": "2026-11-28",
+    "fuente": "enloteria"
   }
 ]
