@@ -1,6 +1,6 @@
 from playwright.sync_api import sync_playwright
 
-URL = "https://www.lotteryusa.com/texas/daily-4/"
+URL = "https://www.lotteryusa.com/texas/midday-4/"
 
 with sync_playwright() as p:
     browser = p.chromium.launch(headless=True)
