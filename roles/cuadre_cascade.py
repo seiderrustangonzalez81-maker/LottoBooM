@@ -1,7 +1,8 @@
 # roles/cuadre_cascade.py
 """FIX_CUADRE_CASCADE_V1"""
 import re
-from datetime import date as _date, timedelta as _td
+
+from django.utils import timezone
 
 
 def _hora_efectiva(s):
@@ -68,7 +69,7 @@ def puede_insertar_retroactiva(user):
 
 
 def validar_retroactiva(user, fecha_sorteo):
-    if fecha_sorteo is None or fecha_sorteo >= _date.today():
+    if fecha_sorteo is None or fecha_sorteo >= timezone.localdate():
         return True, None
     if not puede_insertar_retroactiva(user):
         return False, "Solo banco o superadmin pueden insertar jugadas con fecha pasada."
@@ -79,7 +80,7 @@ def cascadear_retroactivas(jugadas_creadas):
     from roles.services import CuadreService
     from django.contrib.auth import get_user_model
     User = get_user_model()
-    hoy = _date.today()
+    hoy = timezone.localdate()
     pendientes = {}
     for j in jugadas_creadas or []:
         if not j or not j.destinatario_id or not j.fecha_sorteo:

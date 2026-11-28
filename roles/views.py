@@ -3410,9 +3410,7 @@ def cuadre_diario_view(request):
             context["vista"] = "banco_comercial"
         else:
             # FIX_FECHA_CUADRE_URGENTE_V1: Forzar fecha a hoy si viene vacía
-            from datetime import datetime
-            from zoneinfo import ZoneInfo
-            _hoy_cuba = datetime.now(ZoneInfo('America/Havana')).strftime('%Y-%m-%d')
+            _hoy_cuba = timezone.localdate().isoformat()
             if not fecha: fecha = _hoy_cuba
             if not fecha_hasta: fecha_hasta = _hoy_cuba
             if not request.GET.get('fecha'):
@@ -3659,7 +3657,7 @@ def crear_numero_restringido(request):
             messages.error(request, "Fecha de vencimiento no válida.")
             return redirect('roles:crear_numero_restringido')
 
-        if fecha_vencimiento < timezone.now().date():
+        if fecha_vencimiento < timezone.localdate():
             messages.error(request, "La fecha de vencimiento no puede ser anterior a hoy.")
             return redirect('roles:crear_numero_restringido')
 
@@ -5723,7 +5721,7 @@ def responder_prestamo_view(request, prestamo_id):
 def _calcular_rango_periodo(periodo, hoy=None):
     """Devuelve (inicio, fin) como date según el período elegido."""
     if hoy is None:
-        hoy = timezone.now().date()
+        hoy = timezone.localdate()
 
     if periodo == 'dia':
         return hoy, hoy
@@ -6317,11 +6315,11 @@ def top_numeros(request):
     # ── Filtros ──
     sorteo_id = request.GET.get('sorteo') or ''
     fp_id = request.GET.get('forma_pago') or ''
-    fecha_str = request.GET.get('fecha') or date.today().isoformat()
+    fecha_str = request.GET.get('fecha') or timezone.localdate().isoformat()
     try:
         fecha = datetime.strptime(fecha_str, '%Y-%m-%d').date()
     except ValueError:
-        fecha = date.today()
+        fecha = timezone.localdate()
 
     # ── Gestor: para cliente se auto-detecta, para gestor se puede filtrar ──
     gestor = None
@@ -6440,11 +6438,11 @@ def top_limites(request):
     user = request.user
     es_gestor = has_role(user, 'comercial') or has_role(user, 'banco') or has_role(user, 'superadmin')
 
-    fecha_str = request.GET.get('fecha') or date.today().isoformat()
+    fecha_str = request.GET.get('fecha') or timezone.localdate().isoformat()
     try:
         fecha = datetime.strptime(fecha_str, '%Y-%m-%d').date()
     except ValueError:
-        fecha = date.today()
+        fecha = timezone.localdate()
 
     # Gestor objetivo
     if es_gestor:

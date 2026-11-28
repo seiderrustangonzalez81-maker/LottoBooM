@@ -60,7 +60,7 @@ def calcular_streak(user, dias=30):
     if not user or not user.is_authenticated:
         return 0
 
-    hoy = timezone.now().date()
+    hoy = timezone.localdate()
     limite = hoy - timedelta(days=dias)
 
     fechas = (
@@ -111,7 +111,7 @@ def calcular_sparkline(queryset, campo='monto', campo_fecha='creado_en', dias=7)
         campo_fecha: nombre del campo DateTimeField (default 'creado_en')
         dias: cuántos días mostrar
     """
-    hoy = timezone.now().date()
+    hoy = timezone.localdate()
     inicio = hoy - timedelta(days=dias - 1)
 
     filtro_fecha = f"{campo_fecha}__date__gte"
@@ -1052,7 +1052,7 @@ def historial_movimientos(request):
     Por defecto muestra los últimos 30 días.
     """
     user = request.user
-    hoy = timezone.now().date()
+    hoy = timezone.localdate()
 
     # ─── Filtros ─────────────────────────────────────────────
     fecha_desde_str = request.GET.get('fecha_desde', '').strip()

@@ -19,7 +19,6 @@ jobs:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     env:
-      PYTHONTZPATH: ""
       DEBUG: "true"
       SECRET_KEY: "ci-only-not-a-production-secret"
     steps:

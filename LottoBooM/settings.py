@@ -6,6 +6,13 @@ SIN allauth para evitar errores de importación.
 """
 
 import os
+
+# Force Python ZoneInfo to use project-pinned tzdata==2026.6 (IANA 2026f),
+# not possibly stale operating-system zone files on the deployment host.
+os.environ["PYTHONTZPATH"] = ""
+from zoneinfo import ZoneInfo, reset_tzpath
+reset_tzpath()
+ZoneInfo.clear_cache()
 from pathlib import Path
 from django.core.exceptions import ImproperlyConfigured
 

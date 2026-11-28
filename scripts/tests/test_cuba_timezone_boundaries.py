@@ -2,6 +2,7 @@ import ast
 import os
 import sys
 import unittest
+import zoneinfo
 from datetime import date, datetime, time, timedelta, timezone
 from pathlib import Path
 from types import SimpleNamespace
@@ -47,6 +48,7 @@ from sorteos.management.commands.load_results import (  # noqa: E402
     obtener_ahora_cuba,
     temporada_actual as temporada_load_results,
 )
+from django.utils import timezone as django_timezone  # noqa: E402
 
 
 UTC = timezone.utc
@@ -210,6 +212,26 @@ class CubaTimezoneBoundaryTests(unittest.TestCase):
 
         winter = datetime(2026, 1, 15, 12, 0, tzinfo=UTC)
         self.assertEqual(temporada_load_results(winter), "invierno")
+
+    def test_runtime_zoneinfo_uses_pinned_iana_data_for_cuba(self):
+        self.assertEqual(zoneinfo.TZPATH, ())
+        cuba = ZoneInfo("America/Havana")
+        instant_during_override = datetime(2026, 11, 28, 12, 0, tzinfo=UTC)
+        instant_after_override = datetime(2027, 11, 7, 5, 0, tzinfo=UTC)
+
+        self.assertEqual(
+            instant_during_override.astimezone(cuba).utcoffset(),
+            timedelta(hours=-4),
+        )
+        self.assertEqual(
+            instant_after_override.astimezone(cuba).utcoffset(),
+            timedelta(hours=-5),
+        )
+
+    def test_localdate_uses_cuba_day_across_utc_midnight(self):
+        instant = datetime(2026, 11, 28, 2, 0, tzinfo=UTC)
+        with patch("django.utils.timezone.now", return_value=instant):
+            self.assertEqual(django_timezone.localdate(), date(2026, 11, 27))
 
     def test_tzdata_release_and_eastern_central_dst_rules(self):
         self.assertGreaterEqual(tzdata.IANA_VERSION, "2026f")
