@@ -16,14 +16,23 @@ with sync_playwright() as p:
 
         page.wait_for_timeout(5000)
 
-        tarjetas = page.locator('[class*="draw-card"]')
+        print("\n===== ENLACES DE NAVEGACION =====")
+        enlaces = page.locator("a")
+        for i in range(enlaces.count()):
+            enlace = enlaces.nth(i)
+            texto = enlace.inner_text().strip()
+            href = enlace.get_attribute("href") or ""
+            if any(x in (texto + " " + href).lower()
+                   for x in ("day", "night", "morning", "evening")):
+                print("TEXTO:", texto, "| HREF:", href)
+
+        tarjetas = page.locator("tr.c-draw-card")
         total = tarjetas.count()
-        print("TARJETAS ENCONTRADAS:", total)
+        print("\nTARJETAS COMPLETAS:", total)
 
         for i in range(total):
             tarjeta = tarjetas.nth(i)
             print("\n========== TARJETA", i + 1, "==========")
-            print("TAG:", tarjeta.evaluate("(e) => e.tagName"))
             print("CLASE:", tarjeta.get_attribute("class"))
             print("TEXTO:", tarjeta.inner_text().strip())
 
@@ -33,12 +42,18 @@ with sync_playwright() as p:
                     "(e) => e.outerHTML"
                 ))
 
-            bolas = tarjeta.locator(
-                "li.c-ball, li.c-result__ball, .c-ball, .ball"
+            listas = tarjeta.locator(
+                "ul.c-result.c-draw-card__ball-list"
             )
-            print("NUMEROS:", [
-                bolas.nth(j).inner_text().strip()
-                for j in range(bolas.count())
-            ])
+            for j in range(listas.count()):
+                lista = listas.nth(j)
+                print("LISTA DE BOLAS HTML:", lista.evaluate(
+                    "(e) => e.outerHTML"
+                ))
+                bolas = lista.locator(":scope > li.c-ball")
+                print("BOLAS:", [
+                    bolas.nth(k).inner_text().strip()
+                    for k in range(bolas.count())
+                ])
     finally:
         browser.close()
