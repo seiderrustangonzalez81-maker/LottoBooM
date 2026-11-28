@@ -25,11 +25,18 @@ def _tz_cuba(fecha):
     return _dt_tz(timedelta(hours=-4 if es_verano_cuba(fecha) else -5))
 
 def _ahora_cuba():
-    """datetime.now() con el offset correcto de Cuba."""
+    """datetime.now() con el offset correcto de Cuba para este instante."""
     from datetime import timezone as _dt_tz
     utc = datetime.now(_dt_tz.utc)
-    return utc.astimezone(_tz_cuba(utc.date()))
+    return utc.astimezone(_tz_cuba(utc))
 
+
+
+DIAS_SEMANA_ES = ('Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo')
+
+
+def _temporada_actual(fecha):
+    return 'Verano' if es_verano_cuba(fecha) else 'Invierno'
 
 
 MAPEO_FJ = {
@@ -73,7 +80,8 @@ def _hora_salida_hoy(sorteo, hoy):
 
 def _calcular_estado(sorteo, hora_salida, ahora):
     minutos = sorteo.minutos_cierre if sorteo.minutos_cierre is not None else 60
-    dt_salida = datetime.combine(ahora.date(), hora_salida, tzinfo=_tz_cuba(ahora.date()))
+    salida_local = datetime.combine(ahora.date(), hora_salida)
+    dt_salida = salida_local.replace(tzinfo=_tz_cuba(salida_local))
     dt_cierre = dt_salida - timedelta(minutes=minutos)
 
     if ahora < dt_cierre:
@@ -139,11 +147,8 @@ def lista_sorteos(request):
 
     sorteos_ordenados = abiertos + cerrados + salidos
 
-    mes = hoy.month
-    if 4 <= mes <= 10:
-        temporada_actual, proxima_temporada = 'Verano', 'Invierno'
-    else:
-        temporada_actual, proxima_temporada = 'Invierno', 'Verano'
+    temporada_actual = _temporada_actual(hoy)
+    proxima_temporada = 'Invierno' if temporada_actual == 'Verano' else 'Verano'
 
     context = {
         'sorteos': sorteos_ordenados,
@@ -154,7 +159,7 @@ def lista_sorteos(request):
         'temporada_actual': temporada_actual,
         'proxima_temporada': proxima_temporada,
         'dias_restantes_cambio': 0,
-        'dia_semana_actual': hoy.strftime('%A'),
+        'dia_semana_actual': DIAS_SEMANA_ES[hoy.weekday()],
     }
     return render(request, 'sorteos/sorteos.html', context)
 
@@ -338,7 +343,8 @@ def api_proximos_sorteos(request, horas=4):
         hora_salida = _hora_salida_hoy(s, hoy)
         if not hora_salida:
             continue
-        dt_salida = datetime.combine(hoy, hora_salida, tzinfo=_tz_cuba(hoy))
+        salida_local = datetime.combine(hoy, hora_salida)
+        dt_salida = salida_local.replace(tzinfo=_tz_cuba(salida_local))
         if dt_salida <= ahora:
             continue
         seg = int((dt_salida - ahora).total_seconds())
@@ -441,7 +447,7 @@ def api_sorteos_compartir(request):
         0: 'Lunes', 1: 'Martes', 2: 'Miercoles', 3: 'Jueves',
         4: 'Viernes', 5: 'Sabado', 6: 'Domingo',
     }
-    dia_semana = DIAS_ES.get(hoy.weekday(), hoy.strftime('%A'))
+    dia_semana = DIAS_ES[hoy.weekday()]
     temporada = 'Verano' if es_verano_cuba(hoy) else 'Invierno'
 
     lines = []
