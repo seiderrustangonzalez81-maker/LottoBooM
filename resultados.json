@@ -84,9 +84,29 @@
   {
     "sorteo_nombre": "El Quinielon Dia",
     "numeros": [
+      "05",
       "53",
-      "17",
-      "80"
+      "17"
+    ],
+    "fecha": "2026-11-28",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "La Primera",
+    "numeros": [
+      "78",
+      "60",
+      "86"
+    ],
+    "fecha": "2026-11-28",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "LoteDom",
+    "numeros": [
+      "24",
+      "88",
+      "04"
     ],
     "fecha": "2026-11-28",
     "fuente": "enloteria"
