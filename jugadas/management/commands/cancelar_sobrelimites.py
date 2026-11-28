@@ -22,8 +22,14 @@ class Command(BaseCommand):
 
         canceladas = 0
         for jugada in jugadas:
-            cierre = get_hora_cierre(jugada.sorteo.horarios, jugada.sorteo)
-            if cierre and cierre < ahora:
+            cierre = _obtener_cierre_jugada(jugada)
+            if not cierre:
+                logger.warning(
+                    "No se cancela jugada #%s: falta fecha_sorteo o no hay horario válido.",
+                    jugada.id,
+                )
+                continue
+            if cierre < ahora:
                 # Cancelar la jugada
                 jugada.estado = 'cancelada'
                 jugada.save()
