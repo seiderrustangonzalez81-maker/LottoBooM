@@ -1,13 +1,13 @@
 import requests
 import unicodedata
-from datetime import datetime, timedelta
-from zoneinfo import ZoneInfo
+from datetime import datetime, timedelta, timezone as dt_timezone
 from django.core.management.base import BaseCommand
 from django.utils.dateparse import parse_date
 from django.contrib.auth.models import User
 from sorteos.models import Sorteo
 from resultados.models import Resultado
 from resultados.views import procesar_resultado
+from LottoBooM.utils import es_verano_cuba
 
 URL_JSON = "https://raw.githubusercontent.com/seiderrustangonzalez81-maker/LottoBooM/main/resultados.json"
 
@@ -53,8 +53,6 @@ MAPEO_NOMBRES = {
     "Tennessee Día": "Tennessee 1:20 PM",
 }
 
-TZ_CUBA = ZoneInfo('America/Havana')
-TZ_ESTE = ZoneInfo('America/New_York')
 DIAS_ES = {0: 'lunes', 1: 'martes', 2: 'miercoles', 3: 'jueves', 4: 'viernes', 5: 'sabado', 6: 'domingo'}
 
 def normalizar_texto(texto):
@@ -63,10 +61,22 @@ def normalizar_texto(texto):
     texto = ''.join(c for c in texto if unicodedata.category(c) != 'Mn')
     return texto.lower().strip()
 
-def temporada_actual():
-    # FIX_CARIBE_UTC4_2027: Cuba y Rep. Dominicana mantienen UTC-4 hasta nov 2027.
-    # No aplicar cambio de horario para sorteos del Caribe.
-    return 'verano'
+def obtener_ahora_cuba(ahora_utc=None):
+    """Obtener ahora en Cuba aplicando el override compartido por instante UTC."""
+    if ahora_utc is None:
+        ahora_utc = datetime.now(dt_timezone.utc)
+    elif ahora_utc.tzinfo is None:
+        ahora_utc = ahora_utc.replace(tzinfo=dt_timezone.utc)
+
+    offset = timedelta(hours=-4 if es_verano_cuba(ahora_utc) else -5)
+    return ahora_utc.astimezone(dt_timezone(offset))
+
+
+def temporada_actual(fecha=None):
+    """Temporada según el calendario real de Cuba, no un verano permanente."""
+    if fecha is None:
+        fecha = obtener_ahora_cuba()
+    return 'verano' if es_verano_cuba(fecha) else 'invierno'
 
 def sorteo_corre_hoy(sorteo, dia_actual, temporada):
     horarios = sorteo.horarios
@@ -161,11 +171,11 @@ class Command(BaseCommand):
         req = FakeRequest(admin)
 
         mapeo_normalizado = {normalizar_texto(k): v for k, v in MAPEO_NOMBRES.items()}
-        ahora_cuba = datetime.now(TZ_CUBA)
+        ahora_cuba = obtener_ahora_cuba()
         hoy_cuba = ahora_cuba.date()
         ayer_cuba = hoy_cuba - timedelta(days=1)
         dia_actual = DIAS_ES[ahora_cuba.weekday()]
-        temporada = temporada_actual()
+        temporada = temporada_actual(ahora_cuba)
 
         self.stdout.write(f"Día actual: {dia_actual} | Temporada: {temporada}")
         self.stdout.write(f"Fecha Cuba: {hoy_cuba} | Ayer: {ayer_cuba}")
