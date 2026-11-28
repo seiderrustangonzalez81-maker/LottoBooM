@@ -436,5 +436,15 @@
     ],
     "fecha": "2026-11-27",
     "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "LoteDom Noche",
+    "numeros": [
+      "10",
+      "85",
+      "03"
+    ],
+    "fecha": "2026-11-27",
+    "fuente": "enloteria"
   }
 ]
