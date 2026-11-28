@@ -8,6 +8,13 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+def _obtener_cierre_jugada(jugada):
+    """Calcular cierre solo con una fecha de sorteo explícita y canónica."""
+    fecha_sorteo = getattr(jugada, 'fecha_sorteo', None)
+    if not fecha_sorteo:
+        return None
+    return get_hora_cierre(jugada.sorteo, fecha_sorteo)
+
 
 class Command(BaseCommand):
     help = 'Cancela jugadas con sobrelímite pendiente que hayan superado la hora de cierre'
