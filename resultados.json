@@ -468,5 +468,27 @@
     "fijo": "39",
     "corrido_1": "94",
     "corrido_2": "08"
+  },
+  {
+    "sorteo_nombre": "New York Noche",
+    "numeros": [
+      "96",
+      "81",
+      "37"
+    ],
+    "fecha": "2026-11-27",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "New York 10:30 PM",
+    "fecha": "2026-11-27",
+    "fuente": "lotteryusa",
+    "pick2": "",
+    "pick3": "196",
+    "pick4": "8137",
+    "pick5": "",
+    "fijo": "96",
+    "corrido_1": "81",
+    "corrido_2": "37"
   }
 ]
