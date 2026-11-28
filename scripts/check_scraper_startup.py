@@ -1,11 +1,16 @@
 #!/usr/bin/env python3
-"""Guardia estática para evitar leer dia_operativo antes de inicializarlo."""
+"""Guardias estáticas del scraper y del catálogo importado por el cargador."""
 
 import ast
+import sys
 from pathlib import Path
 
-source = Path("scraper.py").read_text(encoding="utf-8")
-module = ast.parse(source, filename="scraper.py")
+ROOT = Path(__file__).resolve().parent.parent
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+source = ROOT / "scraper.py"
+module = ast.parse(source.read_text(encoding="utf-8"), filename="scraper.py")
 main = next(
     (node for node in module.body
      if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
@@ -52,3 +57,23 @@ if assignment_index >= min(read_indices):
     )
 
 print("OK: dia_operativo se inicializa antes de su primera lectura en main().")
+
+# El cargador de la matriz importa este módulo antes de acceder a Django/DB.
+# Validamos aquí el import y la estructura sin ejecutar el cargador destructivo.
+try:
+    from sorteos.constants import MATRIZ
+except Exception as exc:
+    raise SystemExit(f"ERROR: no se pudo importar sorteos.constants.MATRIZ: {exc}") from exc
+
+if not isinstance(MATRIZ, dict) or not MATRIZ:
+    raise SystemExit("ERROR: MATRIZ debe ser un diccionario no vacío")
+
+if any(
+    not isinstance(nombre, str)
+    or not isinstance(formas, list)
+    or any(not isinstance(forma, str) for forma in formas)
+    for nombre, formas in MATRIZ.items()
+):
+    raise SystemExit("ERROR: MATRIZ debe mapear nombres de sorteos a listas de formas")
+
+print(f"OK: MATRIZ importada y validada ({len(MATRIZ)} sorteos).")
