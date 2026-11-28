@@ -2524,4 +2524,3 @@ def api_resultado_status(request, resultado_id):
         'inicio': resultado.procesamiento_inicio.isoformat() if resultado.procesamiento_inicio else None,
         'fin': resultado.procesamiento_fin.isoformat() if resultado.procesamiento_fin else None,
     })
-remove always-summer local override
