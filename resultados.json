@@ -334,5 +334,25 @@
     "fijo": "54",
     "corrido_1": "18",
     "corrido_2": "66"
+  },
+  {
+    "sorteo_nombre": "Loteka",
+    "numeros": [
+      "27",
+      "17",
+      "90"
+    ],
+    "fecha": "2026-11-27",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Anguilla 8PM",
+    "numeros": [
+      "20",
+      "27",
+      "43"
+    ],
+    "fecha": "2026-11-27",
+    "fuente": "enloteria"
   }
 ]
