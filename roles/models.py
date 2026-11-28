@@ -1719,7 +1719,7 @@ class NumeroRestringido(models.Model):
     @classmethod
     def es_numero_restringido(cls, valor, sorteo, gestor=None, fecha=None):
         if fecha is None:
-            fecha = timezone.now().date()
+            fecha = timezone.localdate()
         qs = cls.objects.filter(
             sorteo=sorteo,
             valor=valor,

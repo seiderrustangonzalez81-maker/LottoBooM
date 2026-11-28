@@ -24,14 +24,15 @@ MAPA_DIAS = {
 
 
 def _ahora_local():
-    """Ahora, aware, en hora Cuba (America/Havana)."""
-    return timezone.localtime(timezone.now())
+    """Ahora, aware, en hora Cuba, usando el mismo override que el calendario."""
+    ahora_utc = timezone.now()
+    return ahora_utc.astimezone(_tz_cuba(ahora_utc))
 
 
 def _fecha_local(fecha=None):
     if fecha is None:
         return _ahora_local().date()
-    return fecha
+    return fecha.date() if isinstance(fecha, datetime) else fecha
 
 
 def _temporada(fecha):
@@ -48,9 +49,8 @@ def obtener_hora_desde_horarios(sorteo, fecha=None):
         return None
 
     fecha = _fecha_local(fecha)
-    dia_es = MAPA_DIAS.get(fecha.strftime('%A').lower())
-    if not dia_es:
-        return None
+    dias_semana_es = ('lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado', 'domingo')
+    dia_es = dias_semana_es[fecha.weekday()]
 
     temp = _temporada(fecha)
     if temp not in sorteo.horarios:
@@ -80,7 +80,8 @@ def get_hora_cierre(sorteo, fecha=None):
     if not hora_salida:
         return None
     minutos = sorteo.minutos_cierre if sorteo.minutos_cierre is not None else 60
-    salida_dt = datetime.combine(fecha, hora_salida).replace(tzinfo=_tz_cuba(fecha))
+    salida_local = datetime.combine(fecha, hora_salida)
+    salida_dt = salida_local.replace(tzinfo=_tz_cuba(salida_local))
     return salida_dt - timedelta(minutes=minutos)
 
 
@@ -102,11 +103,16 @@ def calcular_estado_sorteo(sorteo, ahora=None, fecha_consulta=None):
     if ahora is None:
         ahora = timezone.now()
 
-    ahora_local = ahora.astimezone(_tz_cuba(fecha_consulta if fecha_consulta else ahora.date()))
+    if ahora.tzinfo is None:
+        ahora = ahora.replace(tzinfo=_tz_cuba(ahora))
+    ahora_local = ahora.astimezone(_tz_cuba(ahora))
     if fecha_consulta is None:
         fecha_consulta = ahora_local.date()
         if (sorteo.nombre == 'Georgia 11:34 PM' and ahora_local.hour == 0 and ahora_local.minute < 25):
             fecha_consulta = fecha_consulta - timedelta(days=1)
+
+    else:
+        fecha_consulta = _fecha_local(fecha_consulta)
 
     # Determinar hora de salida para HOY (Cuba)
     if sorteo.horarios:
@@ -126,7 +132,8 @@ def calcular_estado_sorteo(sorteo, ahora=None, fecha_consulta=None):
 
     minutos_cierre = sorteo.minutos_cierre if sorteo.minutos_cierre is not None else 60
 
-    dt_salida = datetime.combine(fecha_consulta, hora_salida).replace(tzinfo=_tz_cuba(fecha_consulta))
+    salida_local = datetime.combine(fecha_consulta, hora_salida)
+    dt_salida = salida_local.replace(tzinfo=_tz_cuba(salida_local))
     dt_cierre = dt_salida - timedelta(minutes=minutos_cierre)
 
     # ── Estado ──
@@ -231,7 +238,11 @@ def get_proximo_datetime_sorteo(sorteo, ahora=None):
     Busca desde hoy hasta +7 días. None si no hay programación en la semana.
     """
     if ahora is None:
-        ahora = timezone.localtime(timezone.now())
+        ahora = _ahora_local()
+    elif ahora.tzinfo is None:
+        ahora = ahora.replace(tzinfo=_tz_cuba(ahora))
+    else:
+        ahora = ahora.astimezone(_tz_cuba(ahora))
 
     hoy = ahora.date()
     for offset in range(0, 8):
@@ -239,10 +250,8 @@ def get_proximo_datetime_sorteo(sorteo, ahora=None):
         hora = obtener_hora_desde_horarios(sorteo, fecha)
         if not hora:
             continue
-        dt = timezone.make_aware(
-            datetime.combine(fecha, hora),
-            timezone.get_current_timezone(),
-        )
+        salida_local = datetime.combine(fecha, hora)
+        dt = salida_local.replace(tzinfo=_tz_cuba(salida_local))
         if dt > ahora:
             return dt, (offset == 0)
     return None, None
@@ -251,7 +260,11 @@ def get_proximo_datetime_sorteo(sorteo, ahora=None):
 def segundos_hasta_proximo(sorteo, ahora=None):
     """Segundos hasta la próxima salida (aunque sea mañana o pasado)."""
     if ahora is None:
-        ahora = timezone.localtime(timezone.now())
+        ahora = _ahora_local()
+    elif ahora.tzinfo is None:
+        ahora = ahora.replace(tzinfo=_tz_cuba(ahora))
+    else:
+        ahora = ahora.astimezone(_tz_cuba(ahora))
     dt, _ = get_proximo_datetime_sorteo(sorteo, ahora)
     if not dt:
         return None

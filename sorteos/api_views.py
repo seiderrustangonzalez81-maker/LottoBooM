@@ -4,7 +4,7 @@ from sorteos.models import Sorteo
 from .utils import calcular_estado_sorteo
 
 def api_sorteos_data(request):
-    hoy = timezone.now().date()
+    hoy = timezone.localdate()
     ahora = timezone.now()
     # Obtener todos los sorteos activos (sin filtrar por fecha de creación)
     sorteos = Sorteo.objects.filter(activo=True)

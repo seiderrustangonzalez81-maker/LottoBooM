@@ -31,6 +31,7 @@ from .forms import ResultadoForm
 from jugadas.models import Jugada
 from sorteos.models import Sorteo
 from sorteos.utils import get_hora_salida
+from LottoBooM.utils import es_verano_cuba
 from roles.models import Fondo, MovimientoFondo, Notificacion, Rol, Subordinacion
 from roles.models import RelacionClienteGestor, RelacionComercialBanco
 
@@ -2523,9 +2524,3 @@ def api_resultado_status(request, resultado_id):
         'inicio': resultado.procesamiento_inicio.isoformat() if resultado.procesamiento_inicio else None,
         'fin': resultado.procesamiento_fin.isoformat() if resultado.procesamiento_fin else None,
     })
-# ============================================================
-# FIX_HORA_CUBA_V3: Función de horario de verano de Cuba
-# ============================================================
-def es_verano_cuba(fecha):
-    # FIX_VERANO_CUBA_2027: Cuba mantiene UTC-4 hasta el 7/11/2027
-    return True

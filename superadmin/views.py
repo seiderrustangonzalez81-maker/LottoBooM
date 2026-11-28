@@ -58,7 +58,7 @@ def superadmin_required(view_func):
 @login_required
 @superadmin_required
 def dashboard(request):
-    hoy = timezone.now().date()
+    hoy = timezone.localdate()
     ahora = timezone.now()
 
     total_usuarios = User.objects.filter(is_active=True).count()

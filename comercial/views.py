@@ -36,7 +36,7 @@ def comercial_required(view_func):
 @comercial_required
 def dashboard_comercial(request):
     user = request.user
-    hoy = timezone.now().date()
+    hoy = timezone.localdate()
 
     # Ventas de hoy
     ventas_hoy = Jugada.objects.filter(
@@ -77,7 +77,7 @@ def resumen_ventas_comercial(request):
     fecha_referencia = request.GET.get('fecha')
 
     # Calcular fechas según periodo
-    hoy = timezone.now().date()
+    hoy = timezone.localdate()
     if periodo == 'dia':
         fecha_inicio = hoy
         fecha_fin = hoy
