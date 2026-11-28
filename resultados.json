@@ -70,5 +70,25 @@
     ],
     "fecha": "2026-11-28",
     "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Anguilla 12PM",
+    "numeros": [
+      "93",
+      "98",
+      "24"
+    ],
+    "fecha": "2026-11-28",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "El Quinielon Dia",
+    "numeros": [
+      "53",
+      "17",
+      "80"
+    ],
+    "fecha": "2026-11-28",
+    "fuente": "enloteria"
   }
 ]
