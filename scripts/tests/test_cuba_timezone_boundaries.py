@@ -1,5 +1,6 @@
 import ast
 import os
+import sys
 import unittest
 from datetime import date, datetime, time, timedelta, timezone
 from pathlib import Path
@@ -8,6 +9,9 @@ from unittest.mock import patch
 from zoneinfo import ZoneInfo
 
 import tzdata
+
+ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT))
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "LottoBooM.settings")
 os.environ.setdefault("DEBUG", "true")
@@ -37,7 +41,6 @@ from sorteos.views import (  # noqa: E402
 from resultados.views import es_verano_cuba as es_verano_cuba_resultados  # noqa: E402
 
 
-ROOT = Path(__file__).resolve().parents[2]
 UTC = timezone.utc
 
 
