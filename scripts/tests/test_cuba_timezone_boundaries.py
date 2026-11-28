@@ -131,6 +131,27 @@ class CubaTimezoneBoundaryTests(unittest.TestCase):
         self.assertEqual(view_state["hora_cierre"], expected_close)
         self.assertEqual(view_state["estado"], "abierto")
 
+    def test_legacy_and_overlimit_closure_use_canonical_aware_datetime(self):
+        draw = _sorteo_transicion()
+        target = date(2027, 11, 7)
+        expected_close = datetime(
+            2027, 11, 7, 9, 50,
+            tzinfo=timezone(timedelta(hours=-5)),
+        )
+
+        self.assertEqual(get_hora_cierre_legacy(draw, target), expected_close)
+        self.assertEqual(
+            _obtener_cierre_jugada(
+                SimpleNamespace(sorteo=draw, fecha_sorteo=target)
+            ),
+            expected_close,
+        )
+        self.assertIsNone(
+            _obtener_cierre_jugada(
+                SimpleNamespace(sorteo=draw, fecha_sorteo=None)
+            )
+        )
+
     def test_next_draw_uses_explicit_cuba_offset(self):
         draw = _sorteo_transicion()
         instant = datetime(2027, 11, 7, 5, 30, tzinfo=UTC)
