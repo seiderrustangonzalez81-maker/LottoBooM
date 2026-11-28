@@ -416,5 +416,25 @@
     ],
     "fecha": "2026-11-27",
     "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Anguilla 9PM",
+    "numeros": [
+      "59",
+      "34",
+      "18"
+    ],
+    "fecha": "2026-11-27",
+    "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Nacional Noche",
+    "numeros": [
+      "91",
+      "11",
+      "26"
+    ],
+    "fecha": "2026-11-27",
+    "fuente": "enloteria"
   }
 ]
