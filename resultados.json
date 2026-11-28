@@ -218,5 +218,17 @@
     "fijo": "08",
     "corrido_1": "50",
     "corrido_2": "16"
+  },
+  {
+    "sorteo_nombre": "Florida 1:35 PM",
+    "fecha": "2026-11-28",
+    "fuente": "lotteryusa",
+    "pick2": "00",
+    "pick3": "677",
+    "pick4": "",
+    "pick5": "",
+    "fijo": "77",
+    "corrido_1": "",
+    "corrido_2": ""
   }
 ]
