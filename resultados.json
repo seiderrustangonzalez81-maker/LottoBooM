@@ -48,5 +48,17 @@
     ],
     "fecha": "2026-11-28",
     "fuente": "enloteria"
+  },
+  {
+    "sorteo_nombre": "Tennessee 10:20 AM",
+    "fecha": "2026-11-28",
+    "fuente": "lotteryusa",
+    "pick2": "",
+    "pick3": "578",
+    "pick4": "9269",
+    "pick5": "",
+    "fijo": "78",
+    "corrido_1": "92",
+    "corrido_2": "69"
   }
 ]
